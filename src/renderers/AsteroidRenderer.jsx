@@ -15,7 +15,6 @@ const _pos = new THREE.Vector3()
 const _rot = new THREE.Quaternion()
 const _scale = new THREE.Vector3(1, 1, 1)
 const _scaleOff = new THREE.Vector3(0, 0, 0)
-
 // Scratch objects for health bars — separate so they don't interfere
 const _barMat = new THREE.Matrix4()
 const _barPos = new THREE.Vector3()
@@ -85,11 +84,7 @@ export function AsteroidRenderer() {
             const fillWidth = BAR_WIDTH * pct
             const offsetX = (BAR_WIDTH - fillWidth) / 2  // shift left to stay left-anchored
 
-            _barPos.set(
-                Position.x[eid] - offsetX,
-                Position.y[eid] + BAR_OFFSET,
-                0.01  // just in front of bg bar
-            )
+            _barPos.set(Position.x[eid] - offsetX, Position.y[eid] + BAR_OFFSET, 0.01)
             _barScale.set(fillWidth, BAR_HEIGHT, 1)
             _barMat.compose(_barPos, _barRot, _barScale)
             fgBar.setMatrixAt(i, _barMat)
@@ -108,7 +103,7 @@ export function AsteroidRenderer() {
 
     return (
         <>
-            {/* Enemy bodies */}
+            {/* Asteroid bodies */}
             <instancedMesh ref={meshRef} args={[null, null, MAX_ASTEROIDS]} frustumCulled={false}>
                 <octahedronGeometry args={[0.5]} />
                 <meshStandardMaterial color="#ff4466" emissive="#330011" />
