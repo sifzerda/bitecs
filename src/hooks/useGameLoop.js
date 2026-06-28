@@ -10,9 +10,9 @@ export function useGameLoop(tick) {
 
   useEffect(() => {
     function loop(now) {
-      world.time.delta  = Math.min((now - world.time.then) / 1000, 0.05)
+      world.time.delta = Math.min((now - world.time.then) / 1000, 0.05)
       world.time.elapsed += world.time.delta
-      world.time.then   = now
+      world.time.then = now
 
       tickRef.current()
       rafRef.current = requestAnimationFrame(loop)
