@@ -1,12 +1,22 @@
 //src/ecs/systems/movement.js
-import { query } from 'bitecs'
-import { world } from '../world.js'
-import { Position, Velocity } from '../components.js'
+import { movingQuery } from "../queries";
 
-export function movementSystem() {
-  const dt = world.time.delta
-  for (const eid of query(world, [Position, Velocity])) {
-    Position.x[eid] += Velocity.x[eid] * dt
-    Position.y[eid] += Velocity.y[eid] * dt
-  }
+import { Position,Velocity } from "../components";
+
+import { world } from "../world";
+
+export function movementSystem(){
+
+    const dt=world.time.delta;
+
+    const entities = movingQuery();
+    for(let i=0;i<entities.length;i++){
+
+        const id=entities[i];
+
+        Position.x[id]+=Velocity.x[id]*dt;
+        Position.y[id]+=Velocity.y[id]*dt;
+
+    }
+
 }

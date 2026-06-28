@@ -2,7 +2,7 @@
 
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { query } from 'bitecs'
+import { bulletQuery } from '../ecs/queries.js'
 import * as THREE from 'three'
 import { world } from '../ecs/world.js'
 import { Position, BulletTag } from '../ecs/components.js'
@@ -21,7 +21,7 @@ export function BulletRenderer() {
         const mesh = meshRef.current
         if (!mesh) return
 
-        const bullets = query(world, [Position, BulletTag])
+        const bullets = bulletQuery(world)
 
         for (let i = 0; i < bullets.length; i++) {
             const eid = bullets[i]

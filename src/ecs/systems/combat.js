@@ -2,33 +2,43 @@
 
 import { query, removeEntity } from 'bitecs'
 import { world } from '../world.js'
-import { Position, Health, Lifetime, BulletTag, EnemyTag } from '../components.js'
+import { bulletQuery, asteroidQuery } from "../queries"
+import { Position, Health, Lifetime, BulletTag, AsteroidTag } from '../components.js'
 import { gameState } from '../../state/gameState.js'
 
 const HIT_RADIUS = 0.6
 
 export function combatSystem() {
   const dt = world.time.delta
-  const bullets = [...query(world, [Position, Lifetime, BulletTag])]
-  const enemies = [...query(world, [Position, Health, EnemyTag])]
+  const bullets = bulletQuery();
+  const asteroids = asteroidQuery()
 
-  for (const bid of bullets) {
+  for (let i = 0; i < bullets.length; i++) {
+    const bid = bullets[i]
+
     Lifetime.remaining[bid] -= dt
+
     if (Lifetime.remaining[bid] <= 0) {
       removeEntity(world, bid)
       continue
     }
 
-    for (const eid of enemies) {
+    for (let j = 0; j < asteroids.length; j++) {
+      const eid = asteroids[j]
+
       const dx = Position.x[bid] - Position.x[eid]
       const dy = Position.y[bid] - Position.y[eid]
+
       if (dx * dx + dy * dy < HIT_RADIUS * HIT_RADIUS) {
         Health.current[eid] -= 10
+
         removeEntity(world, bid)
+
         if (Health.current[eid] <= 0) {
           removeEntity(world, eid)
           gameState.score += 100
         }
+
         break
       }
     }
