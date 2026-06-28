@@ -1,0 +1,70 @@
+// src/pages/Home.jsx
+
+import { useEffect, useRef, useState } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { spawnPlayer, spawnEnemy } from '../ecs/entities.js'
+import { Scene } from '../renderers/Scene.jsx'
+import { gameState } from '../state/gameState.js'
+import { HUD } from '../components/HUD'
+
+export default function Home() {
+
+    const keysRef = useRef({})
+    const playerRef = useRef(null)
+    const shootTimerRef = useRef(0)
+    const initialised = useRef(false)
+    const [paused, setPaused] = useState(false)
+
+    useEffect(() => {
+        if (initialised.current) return
+        initialised.current = true
+        playerRef.current = spawnPlayer(0, 0)
+        for (let i = 0; i < 8; i++) {
+            spawnEnemy(
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 14
+            )
+        }
+    }, [])
+
+    useEffect(() => {
+        const down = e => {
+            keysRef.current[e.key] = true
+            if (e.key === 'Escape') handlePause()
+        }
+        const up = e => { keysRef.current[e.key] = false }
+        window.addEventListener('keydown', down)
+        window.addEventListener('keyup', up)
+        return () => {
+            window.removeEventListener('keydown', down)
+            window.removeEventListener('keyup', up)
+        }
+    }, [])
+
+    function handlePause() {
+        gameState.paused = !gameState.paused
+        setPaused(gameState.paused)
+    }
+
+    return (
+        <div className="border-2 border-green-400">
+
+            <div className="flex-1 h-[calc(100vh-120px)] items-center justify-center px-4">
+
+     
+                <HUD onPause={handlePause} paused={paused} />
+                <Canvas
+                    orthographic
+                    camera={{ zoom: 60, position: [0, 0, 10], near: 0.1, far: 100 }}
+                    style={{ width: '100%', height: '100%', display: 'block' }}>
+                    <Scene
+                        keysRef={keysRef}
+                        playerRef={playerRef}
+                        shootTimerRef={shootTimerRef}
+                        paused={paused} />
+                </Canvas>
+
+            </div>
+        </div>
+    )
+}
