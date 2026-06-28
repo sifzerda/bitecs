@@ -3,11 +3,12 @@
 import { query, removeEntity } from 'bitecs'
 import { world } from '../world.js'
 import { Position, Health, Lifetime, BulletTag, EnemyTag } from '../components.js'
+import { gameState } from '../../state/gameState.js'
 
 const HIT_RADIUS = 0.6
 
 export function combatSystem() {
-  const dt      = world.time.delta
+  const dt = world.time.delta
   const bullets = [...query(world, [Position, Lifetime, BulletTag])]
   const enemies = [...query(world, [Position, Health, EnemyTag])]
 
@@ -26,6 +27,7 @@ export function combatSystem() {
         removeEntity(world, bid)
         if (Health.current[eid] <= 0) {
           removeEntity(world, eid)
+          gameState.score += 100
         }
         break
       }
