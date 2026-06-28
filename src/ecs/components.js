@@ -1,35 +1,28 @@
 //src/ecs/components.js
-// equivalent of Miniplex queries
-const MAX_ENTITIES = 10_000
 
-// Position in world space
+const MAX = 10000;
+
 export const Position = {
-  x: new Float32Array(MAX_ENTITIES),
-  y: new Float32Array(MAX_ENTITIES),
-}
+    x: new Float32Array(MAX),
+    y: new Float32Array(MAX),
+};
 
-// Velocity (units/sec)
 export const Velocity = {
-  x: new Float32Array(MAX_ENTITIES),
-  y: new Float32Array(MAX_ENTITIES),
-}
+    x: new Float32Array(MAX),
+    y: new Float32Array(MAX),
+};
 
-// Rotation in radians
-export const Rotation = new Float32Array(MAX_ENTITIES)
+export const Rotation = new Float32Array(MAX);
 
-// Health
 export const Health = {
-  current: new Float32Array(MAX_ENTITIES),
-  max:     new Float32Array(MAX_ENTITIES),
-}
+    current: new Float32Array(MAX),
+    max: new Float32Array(MAX),
+};
 
-// Lifetime — entities that expire (bullets, particles)
 export const Lifetime = {
-  remaining: new Float32Array(MAX_ENTITIES),
-}
+    remaining: new Float32Array(MAX),
+};
 
-// Tag components — no data, just membership
-// addComponent(world, eid, PlayerTag) marks it as the player
-export const PlayerTag  = {}
-export const EnemyTag   = {}
-export const BulletTag  = {}
+export const PlayerTag = {};
+export const BulletTag = {};
+export const AsteroidTag = {};

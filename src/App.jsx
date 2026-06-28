@@ -11,11 +11,9 @@ export default function App() {
     <div className="min-h-screen bg-black flex flex-col">
 
       <Header />
-
       <main className="flex-1 flex flex-col overflow-hidden">
         <Outlet />
       </main>
-
       <Footer />
 
     </div>
