@@ -3,7 +3,6 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-
 import { playerQuery } from '../ecs/queries.js';
 import { Position, Rotation } from '../ecs/components.js';
 
@@ -31,10 +30,7 @@ export function PlayerRenderer() {
     ]);
 
     const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute(
-      'position',
-      new THREE.BufferAttribute(vertices, 3)
-    );
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
     geometry.computeVertexNormals();
 
     return geometry;
@@ -59,10 +55,7 @@ export function PlayerRenderer() {
     ]);
 
     const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute(
-      'position',
-      new THREE.BufferAttribute(vertices, 3)
-    );
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
     geometry.computeVertexNormals();
 
     return geometry;
