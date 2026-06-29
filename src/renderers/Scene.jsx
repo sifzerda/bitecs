@@ -1,7 +1,7 @@
 // src/renderers/Scene.jsx
 
 import { useFrame } from '@react-three/fiber'
-import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise } from '@react-three/postprocessing';
+import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing'
 import { Sparkles, Trail, Float } from '@react-three/drei'
 import { useRef } from 'react'
@@ -43,7 +43,7 @@ export function Scene({ keysRef, paused }) {
                 <Noise opacity={0.025} />
                 <Vignette eskil={false} offset={0.12} darkness={0.9} />
             </EffectComposer>
-
+            <SMAA />
         </>
     )
 }
