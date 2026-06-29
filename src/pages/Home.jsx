@@ -128,7 +128,10 @@ export default function Home() {
 
 
                 <Canvas
-
+  gl={{
+    antialias: false,
+    powerPreference: 'high-performance'
+  }}
                     orthographic
 
                     camera={{
