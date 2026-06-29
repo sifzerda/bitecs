@@ -1,7 +1,17 @@
 // src/renderers/Scene.jsx
 
 import { useFrame } from '@react-three/fiber'
-import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA } from '@react-three/postprocessing';
+import {
+    EffectComposer,
+    Bloom,
+    ChromaticAberration,
+    Vignette,
+    Noise,
+    SMAA,
+    //   ShockWave,
+    // Glitch
+
+} from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing'
 import { Sparkles, Trail, Float } from '@react-three/drei'
 import { useRef } from 'react'
@@ -37,11 +47,24 @@ export function Scene({ keysRef, paused }) {
             <AsteroidRenderer />
             <BulletRenderer />
 
-            <EffectComposer>
-                <Bloom intensity={2.5} luminanceThreshold={0.2} luminanceSmoothing={0.9} mipmapBlur />
-                <ChromaticAberration blendFunction={BlendFunction.NORMAL} offset={[0.0015, 0.0012]} />
+            <EffectComposer multisampling={0}>
+                <Bloom
+                    intensity={2.5}
+                    luminanceThreshold={0.2}
+                    luminanceSmoothing={0.9}
+                    mipmapBlur />
+                <ChromaticAberration
+                    blendFunction={BlendFunction.NORMAL}
+                    offset={[0.0015, 0.0012]} />
                 <Noise opacity={0.025} />
-                <Vignette eskil={false} offset={0.12} darkness={0.9} />
+                <Vignette
+                    eskil={false}
+                    offset={0.12}
+                    darkness={0.9} />
+
+                {/* <ShockWave active position={[-0.2, -0.2, 0]} speed={1.5} maxRadius={5} waveSize={0.25} amplitude={0.4} /> */}
+                {/* <Glitch blendFunction={BlendFunction.NORMAL} active offset={0.12} strength={0.1} mode={0} /> */}
+
             </EffectComposer>
             <SMAA />
         </>
