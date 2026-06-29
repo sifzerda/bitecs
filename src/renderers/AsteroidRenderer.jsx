@@ -240,12 +240,6 @@ export function AsteroidRenderer() {
                     attach="geometry"
                 />
 
-                {/*
-                    vertexColors: instance colors are the sole color source
-                    No color= prop — that would multiply/tint the vertex colors
-                    High roughness = matte chalk rock, not plastic
-                    No emissive — rocks shouldn't glow, let your scene lights do the work
-                */}
                 <meshStandardMaterial
                     vertexColors
                     color="red"
@@ -264,7 +258,7 @@ export function AsteroidRenderer() {
             >
                 <planeGeometry args={[1, 1]} />
                 <meshBasicMaterial
-                    color="#222222"
+                    color="red"
                     transparent
                     opacity={0.9}
                 />
