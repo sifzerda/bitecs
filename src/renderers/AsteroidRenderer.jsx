@@ -10,7 +10,7 @@ import { Position, Health } from '../ecs/components.js'
 
 const MAX_ASTEROIDS = 64
 
-// More varied, realistic rock tones — grays, tans, dark browns
+// ------------------------------------------------------
 const colours = [
     new THREE.Color("#5a5752"),
     new THREE.Color("#6b6560"),
@@ -233,12 +233,11 @@ export function AsteroidRenderer() {
                 args={[null, null, MAX_ASTEROIDS]}
                 frustumCulled={false}
                 castShadow
-                receiveShadow
-            >
+                receiveShadow>
+
                 <primitive
                     object={asteroidGeometry}
-                    attach="geometry"
-                />
+                    attach="geometry" />
 
                 <meshStandardMaterial
                     vertexColors
@@ -246,30 +245,27 @@ export function AsteroidRenderer() {
                     roughness={0.85}
                     metalness={0.0}
                     emissive="white"
-                    emissiveIntensity={0.1}
-                />
+                    emissiveIntensity={0.1} />
             </instancedMesh>
 
             {/* Health Bar Background */}
             <instancedMesh
                 ref={bgBarRef}
                 args={[null, null, MAX_ASTEROIDS]}
-                frustumCulled={false}
-            >
+                frustumCulled={false}>
                 <planeGeometry args={[1, 1]} />
                 <meshBasicMaterial
                     color="red"
                     transparent
-                    opacity={0.9}
-                />
+                    opacity={0.9} />
             </instancedMesh>
 
             {/* Health Bar Fill */}
             <instancedMesh
                 ref={fgBarRef}
                 args={[null, null, MAX_ASTEROIDS]}
-                frustumCulled={false}
-            >
+                frustumCulled={false}>
+
                 <planeGeometry args={[1, 1]} />
                 <meshBasicMaterial color="#44ff88" />
             </instancedMesh>
