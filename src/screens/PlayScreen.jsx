@@ -42,13 +42,23 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                 <Canvas
                     orthographic
-                    camera={{ zoom: 60, position: [0, 0, 10], near: 0.1, far: 100 }}
-                    gl={{ antialias: false, powerPreference: "high-performance" }}>
+                    camera={{
+                        zoom: 60,
+                        position: [0, 0, 10],
+                        near: 0.1,
+                        far: 100,
+                    }}
+                    gl={{
+                        antialias: false,
+                        powerPreference: "high-performance",
+                    }}
+                    dpr={[1, 2]}
+                >
                     <GameLoop keysRef={keysRef} paused={paused} />
 
-                    <ambientLight intensity={0.7} />
-                    <directionalLight position={[5, 5, 5]} intensity={1} />
-                    <pointLight position={[0, 0, 5]} intensity={2} />
+                    <ambientLight intensity={0.4} />
+                    <directionalLight position={[5, 5, 5]} intensity={1.0} />
+                    <pointLight position={[0, 0, 5]} intensity={2} color="#ffffff" />
 
                     <PlayerRenderer />
                     <AsteroidRenderer />
@@ -57,23 +67,27 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <EffectComposer multisampling={0}>
 
                         <Bloom
-                            intensity={2.5}
-                            blendFunction={BlendFunction.DARKEN}
-                            luminanceThreshold={0.02}
-                            luminanceSmoothing={0.2}
-                            height={300}
+                            intensity={2.2}
+                            luminanceThreshold={0.05}
+                            luminanceSmoothing={0.35}
                             mipmapBlur
                         />
 
-                        <ChromaticAberration blendFunction={BlendFunction.DARKEN} offset={[0.0025, 0.0025]} />
-                        <Noise opacity={0.025} />
-                        <Vignette
-                            blendFunction={BlendFunction.DARKEN}
-                            eskil={false}
-                            offset={0.12}
-                            darkness={0.9}
+                        {/* Slight RGB split near screen edges */}
+                        <ChromaticAberration
+                            blendFunction={BlendFunction.NORMAL}
+                            offset={[0.0015, 0.001]}
                         />
 
+                        {/* Darken screen edges */}
+                        <Vignette
+                            eskil={false}
+                            offset={0.18}
+                            darkness={0.8}
+                        />
+
+                        <Noise opacity={0.02} />
+                        {/* postprocessing */}
                     </EffectComposer>
 
                     <SMAA />
