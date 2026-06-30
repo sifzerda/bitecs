@@ -21,6 +21,7 @@ import { PlayerRenderer } from '../renderers/PlayerRenderer.jsx'
 import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
 import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
 import { UfoRenderer } from '../renderers/UfoRenderer.jsx'
+import { EnemyBulletRenderer } from '../renderers/EnemyBulletRenderer.jsx'
 
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
@@ -60,6 +61,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <AsteroidRenderer />
                     <BulletRenderer />
                     <UfoRenderer />
+                    <EnemyBulletRenderer />
 
                     <EffectComposer multisampling={0}>
 
