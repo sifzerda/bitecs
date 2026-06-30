@@ -1,20 +1,23 @@
 // src/ecs/systems/spawnDirector.js
 
 import { world } from "../constants/world"
-import { asteroidQuery } from "../constants/queries"
+import { asteroidQuery, ufoQuery } from "../constants/queries"
 import { spawnAsteroid } from "../spawn"
+import { spawnUfo } from "../spawnUfo"
 import { gameStats } from "../../state/gameStats"
-import { Velocity, Health } from "../components"
+import { Velocity, Health, UfoHealth } from "../components"
 
+let spawnTimer = 0
 const spawnRadius = 16
+
 const MIN_INTERVAL = 0.20
 const MAX_INTERVAL = 2.0
+
 const BASE_MAX_ASTEROIDS = 8
 const MAX_ASTEROIDS_PER_DIFFICULTY = 1.2
 const ABSOLUTE_MAX_ASTEROIDS = 40
-const BOSS_WAVE_INTERVAL = 5
 
-let spawnTimer = 0
+const BOSS_WAVE_INTERVAL = 5
 let lastBossWave = 0
 
 export function spawnDirectorSystem() {
@@ -24,9 +27,6 @@ export function spawnDirectorSystem() {
 
     //-------------------------------------------------
     // Boss wave check
-    //
-    // Triggers once, the moment the wave counter crosses
-    // a multiple of BOSS_WAVE_INTERVAL.
     //-------------------------------------------------
 
     const isBossWave = wave % BOSS_WAVE_INTERVAL === 0
@@ -34,16 +34,18 @@ export function spawnDirectorSystem() {
     if (isBossWave && wave !== lastBossWave) {
         lastBossWave = wave
         spawnBoss(wave, difficulty)
-        // skip normal spawning this tick so the boss entrance reads clearly
         return
     }
 
     //-------------------------------------------------
-    // Normal spawning (suppressed during an active boss wave
-    // so the arena doesn't get cluttered mid-fight)
+    // Suppress normal spawning while a boss is alive
     //-------------------------------------------------
 
-    if (isBossWave) return
+    if (ufoQuery().length > 0) return
+
+    //-------------------------------------------------
+    // Normal spawning
+    //-------------------------------------------------
 
     spawnTimer -= dt
 
@@ -104,30 +106,19 @@ function applyDifficultyToAsteroid(id, difficulty) {
 }
 
 //-------------------------------------------------
-// Boss spawn
-//
-// One large, tanky asteroid, scaled by how many boss
-// waves have passed (wave 5 -> 1st boss, wave 10 -> 2nd, etc)
-// Enters from a fixed edge so the player can brace for it.
+// Boss spawn — now a UFO, not an asteroid
 //-------------------------------------------------
 
 function spawnBoss(wave, difficulty) {
     const bossNumber = wave / BOSS_WAVE_INTERVAL
 
     const angle = Math.random() * Math.PI * 2
-    const x = Math.cos(angle) * spawnRadius
-    const y = Math.sin(angle) * spawnRadius
+    const x = Math.cos(angle) * (spawnRadius * 0.6) // enters a bit closer in than asteroids
+    const y = Math.sin(angle) * (spawnRadius * 0.6)
 
-    const id = spawnAsteroid(x, y, true)
+    const id = spawnUfo(x, y)
 
-    // Slow and deliberate, not fast — it should feel like a wall, not a bullet
-    const inwardX = -Math.sign(x)
-    const inwardY = -Math.sign(y)
-    Velocity.x[id] = inwardX * (1 + difficulty * 0.03)
-    Velocity.y[id] = inwardY * (1 + difficulty * 0.03)
-
-    // Health scales hard per boss encountered, on top of normal difficulty scaling
-    const bossHealth = Math.round(20 * (4 + bossNumber * 2.5) * (1 + difficulty * 0.04))
-    Health.current[id] = bossHealth
-    Health.max[id] = bossHealth
+    const bossHealth = Math.round(80 * (1 + bossNumber * 0.6) * (1 + difficulty * 0.04))
+    UfoHealth.current[id] = bossHealth
+    UfoHealth.max[id] = bossHealth
 }
