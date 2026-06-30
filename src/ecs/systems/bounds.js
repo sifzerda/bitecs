@@ -16,7 +16,6 @@ export function boundsSystem() {
 
         Position.x[eid] = Math.max(-BOUND_X, Math.min(BOUND_X, Position.x[eid]));
         Position.y[eid] = Math.max(-BOUND_Y, Math.min(BOUND_Y, Position.y[eid]));
-
     }
 
     const asteroids = asteroidQuery();

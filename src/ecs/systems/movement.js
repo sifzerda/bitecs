@@ -15,5 +15,5 @@ export function movementSystem(){
         Position.x[id]+=Velocity.x[id]*dt;
         Position.y[id]+=Velocity.y[id]*dt;
     }
-
+    
 }
