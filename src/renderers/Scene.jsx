@@ -1,16 +1,9 @@
 // src/renderers/Scene.jsx
 
 import { useFrame } from '@react-three/fiber'
-import {
-    EffectComposer,
-    Bloom,
-    ChromaticAberration,
-    Vignette,
-    Noise,
-    SMAA,
+import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
     //   ShockWave,
     // Glitch
-
 } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing'
 import { Sparkles, Trail, Float } from '@react-three/drei'
