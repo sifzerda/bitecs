@@ -53,8 +53,7 @@ export function HUD({ onPause, paused }) {
         onClick={(e) => {
           e.currentTarget.blur()
           onPause()
-        }}
-      >
+        }}>
         {paused ? '▶ RESUME (P)' : '⏸ PAUSE (P)'}
       </button>
 
