@@ -1,21 +1,24 @@
 // src/screens/PlayScreen.jsx
 
 import { useFrame } from '@react-three/fiber'
-import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
-    //   ShockWave,
+import {
+    EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
+    // ShockWave,
     // Glitch
 } from '@react-three/postprocessing';
+import { Canvas } from '@react-three/fiber'
 import { BlendFunction } from 'postprocessing'
 import { Sparkles, Trail, Float } from '@react-three/drei'
 import { useRef } from 'react'
+import { HUD } from '../components/HUD.jsx'
 import { world } from '../ecs/constants/world.js'
 import { gameLoop } from '../ecs/systems/gameLoop.js'
+
 import { PlayerRenderer } from '../renderers/PlayerRenderer.jsx'
 import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
 import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
 
-export function PlayScreen({ keysRef, paused }) {
-
+export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
 
     useFrame((_, delta) => {
@@ -27,39 +30,66 @@ export function PlayScreen({ keysRef, paused }) {
         gameLoop(keysRef.current, shootState.current)
     })
 
+    return null
+}
+
+export function PlayScreen({ keysRef, paused, onPause }) {
     return (
-        <>
-            <ambientLight intensity={0.7} />
-            <directionalLight position={[5, 5, 5]} intensity={1} />
-            <pointLight
-                position={[0, 0, 5]}
-                intensity={2}
-                color="#ffffff"
-            />
-            <PlayerRenderer />
-            <AsteroidRenderer />
-            <BulletRenderer />
+        <div className="border-2 border-green-400">
+            <div className="relative flex-1 h-[calc(100vh-120px)] px-4">
 
-            <EffectComposer multisampling={0}>
-                <Bloom
-                    intensity={2.5}
-                    luminanceThreshold={0.2}
-                    luminanceSmoothing={0.9}
-                    mipmapBlur />
-                <ChromaticAberration
-                    blendFunction={BlendFunction.NORMAL}
-                    offset={[0.0015, 0.0012]} />
-                <Noise opacity={0.025} />
-                <Vignette
-                    eskil={false}
-                    offset={0.12}
-                    darkness={0.9} />
+                <HUD paused={paused} onPause={onPause} />
 
-                {/* <ShockWave active position={[-0.2, -0.2, 0]} speed={1.5} maxRadius={5} waveSize={0.25} amplitude={0.4} /> */}
-                {/* <Glitch blendFunction={BlendFunction.NORMAL} active offset={0.12} strength={0.1} mode={0} /> */}
+                <Canvas
+                    orthographic
+                    camera={{
+                        zoom: 60,
+                        position: [0, 0, 10],
+                        near: 0.1,
+                        far: 100,
+                    }}
+                    gl={{
+                        antialias: false,
+                        powerPreference: "high-performance",
+                    }}>
+                    <GameLoop keysRef={keysRef} paused={paused} />
 
-            </EffectComposer>
-            <SMAA />
-        </>
+                    <ambientLight intensity={0.7} />
+                    <directionalLight position={[5, 5, 5]} intensity={1} />
+                    <pointLight position={[0, 0, 5]} intensity={2} />
+
+                    <PlayerRenderer />
+                    <AsteroidRenderer />
+                    <BulletRenderer />
+
+                    <EffectComposer multisampling={0}>
+
+                        <Bloom
+                            intensity={2.5}
+                            blendFunction={BlendFunction.DARKEN}
+                            luminanceThreshold={0.02}
+                            luminanceSmoothing={0.2}
+                            height={300}
+                            mipmapBlur
+                        />
+
+                        <ChromaticAberration
+                            blendFunction={BlendFunction.DARKEN} offset={[0.0025, 0.0025]}
+                        />
+                        <Noise opacity={0.025} />
+                        <Vignette
+                            blendFunction={BlendFunction.DARKEN}
+                            eskil={false}
+                            offset={0.12}
+                            darkness={0.9}
+                        />
+
+                    </EffectComposer>
+
+                    <SMAA />
+                </Canvas>
+
+            </div>
+        </div>
     )
 }
