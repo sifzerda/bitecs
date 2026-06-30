@@ -42,18 +42,10 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                 <Canvas
                     orthographic
-                    camera={{
-                        zoom: 60,
-                        position: [0, 0, 10],
-                        near: 0.1,
-                        far: 100,
-                    }}
-                    gl={{
-                        antialias: false,
-                        powerPreference: "high-performance",
-                    }}
-                    dpr={[1, 2]}
-                >
+                    camera={{ zoom: 60, position: [0, 0, 10], near: 0.1, far: 100 }}
+                    gl={{ antialias: false, powerPreference: "high-performance" }}
+                    dpr={[1, 2]}>
+
                     <GameLoop keysRef={keysRef} paused={paused} />
 
                     <ambientLight intensity={0.4} />
@@ -74,17 +66,10 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                         />
 
                         {/* Slight RGB split near screen edges */}
-                        <ChromaticAberration
-                            blendFunction={BlendFunction.NORMAL}
-                            offset={[0.0015, 0.001]}
-                        />
+                        <ChromaticAberration blendFunction={BlendFunction.NORMAL} offset={[0.0015, 0.001]} />
 
                         {/* Darken screen edges */}
-                        <Vignette
-                            eskil={false}
-                            offset={0.18}
-                            darkness={0.8}
-                        />
+                        <Vignette eskil={false} offset={0.18} darkness={0.8} />
 
                         <Noise opacity={0.02} />
                         {/* postprocessing */}
