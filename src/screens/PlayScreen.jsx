@@ -1,4 +1,4 @@
-// src/renderers/Scene.jsx
+// src/screens/PlayScreen.jsx
 
 import { useFrame } from '@react-three/fiber'
 import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
@@ -10,11 +10,11 @@ import { Sparkles, Trail, Float } from '@react-three/drei'
 import { useRef } from 'react'
 import { world } from '../ecs/constants/world.js'
 import { gameLoop } from '../ecs/systems/gameLoop.js'
-import { PlayerRenderer } from './PlayerRenderer.jsx'
-import { AsteroidRenderer } from './AsteroidRenderer.jsx'
-import { BulletRenderer } from './BulletRenderer.jsx'
+import { PlayerRenderer } from '../renderers/PlayerRenderer.jsx'
+import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
+import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
 
-export function Scene({ keysRef, paused }) {
+export function PlayScreen({ keysRef, paused }) {
 
     const shootState = useRef({ timer: 0 })
 

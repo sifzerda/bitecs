@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { spawnPlayer, spawnAsteroid } from '../ecs/spawn.js'
-import { Scene } from '../renderers/Scene.jsx'
+import { PlayScreen } from '../screens/PlayScreen.jsx'
 import { gameStats } from '../state/gameStats.js'
 import { HUD } from '../components/HUD'
 
@@ -70,7 +70,7 @@ export default function Home() {
                         height: '100%',
                         display: 'block'
                     }}>
-                    <Scene
+                    <PlayScreen
                         keysRef={keysRef}
                         paused={paused}
                     />
