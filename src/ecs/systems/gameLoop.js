@@ -6,6 +6,7 @@ import { boundsSystem } from "./bounds.js"
 import { combatSystem } from "./combat.js"
 import { difficultySystem } from "./difficultySystem.js"
 import { spawnDirectorSystem } from "./spawnDirector.js"
+import { ufoMovementSystem } from "./ufoMovementSystem.js"
 
 export function gameLoop(keys, shootState) {
 
@@ -22,6 +23,7 @@ export function gameLoop(keys, shootState) {
 
     playerControlSystem(keys, shootState)
     movementSystem()
+    ufoMovementSystem()
     boundsSystem()
     combatSystem()
 }
