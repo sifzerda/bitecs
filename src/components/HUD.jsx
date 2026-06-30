@@ -16,6 +16,7 @@ export function HUD({ onPause, paused }) {
       setLives(gameStats.lives)
       setWave(gameStats.wave)
     }, 50)
+
     return () => clearInterval(id)
   }, [])
 
@@ -25,8 +26,8 @@ export function HUD({ onPause, paused }) {
   return (
     <div className="w-200 h-12 flex items-center justify-between px-4 bg-[#0a0a14] border-b-0 font-mono text-green-400 gap-3">
 
-      <span className="text-sm tracking-widest uppercase whitespace-nowrap">⚡ Space Shooter</span>
-      <span className="text-[#ff4466] text-sm tracking-widest whitespace-nowrap">{'♥ '.repeat(lives).trim()}</span>
+      <span className="text-sm tracking-widest uppercase whitespace-nowrap">Asteroids</span>
+      <span className="text-[#ff4466] text-sm tracking-widest whitespace-nowrap">{'🚀 '.repeat(lives).trim()}</span>
 
       <div className="flex items-center gap-2 text-xs text-gray-400 whitespace-nowrap">
         <span>HP</span>
@@ -45,9 +46,16 @@ export function HUD({ onPause, paused }) {
       <span className="text-xs text-yellow-300 whitespace-nowrap">SCORE {score}</span>
       <span className="text-xs text-yellow-300 whitespace-nowrap">WAVE {wave}</span>
 
-      <button className="bg-transparent border-2 border-green-400 text-green-400 font-mono text-xs px-2 py-1 cursor-pointer tracking-wide whitespace-nowrap hover:bg-green-400 hover:text-black transition-colors"
-        onClick={onPause}>
-        {paused ? '▶ RESUME' : '⏸ PAUSE'}
+      <button
+        type="button"
+        tabIndex={-1}
+        className="bg-transparent border-2 border-green-400 text-green-400 font-mono text-xs px-2 py-1 tracking-wide whitespace-nowrap hover:bg-green-400 hover:text-black transition-colors"
+        onClick={(e) => {
+          e.currentTarget.blur()
+          onPause()
+        }}
+      >
+        {paused ? '▶ RESUME (P)' : '⏸ PAUSE (P)'}
       </button>
 
     </div>
