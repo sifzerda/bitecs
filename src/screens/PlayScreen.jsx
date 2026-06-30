@@ -61,8 +61,8 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                         count={100}
                         size={2}
                         scale={[30, 20, 5]}
-                        speed={0.15}
-                        opacity={0.5}
+                        speed={0.1}
+                        opacity={0.2}
                         color="white"
                     />
 
@@ -73,9 +73,9 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <EffectComposer multisampling={0}>
 
                         <Bloom
-                            intensity={2.2}
-                            luminanceThreshold={0.05}
-                            luminanceSmoothing={0.35}
+                            intensity={1.2}
+                            luminanceThreshold={0.4}
+                            luminanceSmoothing={0.7}
                             mipmapBlur
                         />
 
