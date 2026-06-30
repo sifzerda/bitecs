@@ -8,7 +8,11 @@ import {
 } from '@react-three/postprocessing';
 import { Canvas } from '@react-three/fiber'
 import { BlendFunction } from 'postprocessing'
-import { Sparkles, Trail, Float } from '@react-three/drei'
+import {
+    Sparkles,
+    //Trail -- effect to make moving things trail 
+    //Float -- effect for floating power-ups
+} from '@react-three/drei'
 import { useRef } from 'react'
 import { HUD } from '../components/HUD.jsx'
 import { world } from '../ecs/constants/world.js'
@@ -51,6 +55,16 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <ambientLight intensity={0.4} />
                     <directionalLight position={[5, 5, 5]} intensity={1.0} />
                     <pointLight position={[0, 0, 5]} intensity={2} color="#ffffff" />
+
+                    {/* Background sparkle field */}
+                    <Sparkles
+                        count={100}
+                        size={2}
+                        scale={[30, 20, 5]}
+                        speed={0.15}
+                        opacity={0.5}
+                        color="white"
+                    />
 
                     <PlayerRenderer />
                     <AsteroidRenderer />
