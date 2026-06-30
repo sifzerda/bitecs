@@ -37,6 +37,7 @@ export function combatSystem() {
         if (Health.current[eid] <= 0) {
           removeEntity(world, eid)
           gameStats.score += 100
+          gameStats.enemiesDestroyed++
         }
 
         break

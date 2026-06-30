@@ -9,7 +9,6 @@ import {
 import { Canvas } from '@react-three/fiber'
 import { BlendFunction } from 'postprocessing'
 import {
-    Sparkles,
     //Trail -- effect to make moving things trail 
     //Float -- effect for floating power-ups
 } from '@react-three/drei'
@@ -21,6 +20,7 @@ import { gameLoop } from '../ecs/systems/gameLoop.js'
 import { PlayerRenderer } from '../renderers/PlayerRenderer.jsx'
 import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
 import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
+import { UfoRenderer } from '../renderers/UfoRenderer.jsx'
 
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
@@ -56,19 +56,10 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <directionalLight position={[5, 5, 5]} intensity={1.0} />
                     <pointLight position={[0, 0, 5]} intensity={2} color="#ffffff" />
 
-                    {/* Background sparkle field */}
-                    <Sparkles
-                        count={100}
-                        size={2}
-                        scale={[30, 20, 5]}
-                        speed={0.1}
-                        opacity={0.2}
-                        color="white"
-                    />
-
                     <PlayerRenderer />
                     <AsteroidRenderer />
                     <BulletRenderer />
+                    <UfoRenderer />
 
                     <EffectComposer multisampling={0}>
 
