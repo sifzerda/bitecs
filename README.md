@@ -14,3 +14,22 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+
+## TASKS
+
+Priority:
+- [ ] gameloop difficulty scaling
+- [ ] optimize components
+
+Post: 
+- [ ] exhaust rendering
+- [ ] gun types/ bullet types
+- [ ] floating health packs, powerups, weapon upgrades
+- [ ] collision, damage, death
+- [ ] Enhance and Optimize Renderers
+- [ ] Enhance HUD vfx
+- [ ] Add game screens
+- [ ] Score
+- [ ] settings, mouse control support/toggling
+- [ ] modular ship parts for upgrade and modular gun parts for upgrade
