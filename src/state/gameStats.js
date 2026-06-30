@@ -1,7 +1,7 @@
-//src/state/gameState.js
+//src/state/gameStats.js
 
 // game stats that can be passed to a HUD status bar
-export const gameState = { 
+export const gameStats = { 
     score: 0, 
     health: 100, 
     lives: 3, 

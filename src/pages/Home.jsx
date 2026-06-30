@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { spawnPlayer, spawnAsteroid } from '../ecs/entities.js'
+import { spawnPlayer, spawnAsteroid } from '../ecs/spawn.js'
 import { Scene } from '../renderers/Scene.jsx'
-import { gameState } from '../state/gameState.js'
+import { gameStats } from '../state/gameStats.js'
 import { HUD } from '../components/HUD'
 
 export default function Home() {
@@ -44,8 +44,8 @@ export default function Home() {
     }, [])
 
     function handlePause() {
-        gameState.paused = !gameState.paused
-        setPaused(gameState.paused)
+        gameStats.paused = !gameStats.paused
+        setPaused(gameStats.paused)
     }
 
     return (

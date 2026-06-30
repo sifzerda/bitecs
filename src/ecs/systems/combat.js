@@ -1,10 +1,10 @@
 //src/ecs/systems/combat.js
 
 import { query, removeEntity } from 'bitecs'
-import { world } from '../world.js'
-import { bulletQuery, asteroidQuery } from "../queries"
+import { world } from '../constants/world.js'
+import { bulletQuery, asteroidQuery } from "../constants/queries"
 import { Position, Health, Lifetime, BulletTag, AsteroidTag } from '../components.js'
-import { gameState } from '../../state/gameState.js'
+import { gameStats } from '../../state/gameStats.js'
 
 const HIT_RADIUS = 0.6
 
@@ -36,7 +36,7 @@ export function combatSystem() {
 
         if (Health.current[eid] <= 0) {
           removeEntity(world, eid)
-          gameState.score += 100
+          gameStats.score += 100
         }
 
         break

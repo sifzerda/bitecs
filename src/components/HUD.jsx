@@ -1,39 +1,32 @@
 // src/components/HUD.jsx
 
 import { useEffect, useState } from 'react'
-import { gameState } from '../state/gameState.js'
+import { gameStats } from '../state/gameStats.js'
 
 export function HUD({ onPause, paused }) {
-  const [score,  setScore]  = useState(0)
+  const [score, setScore] = useState(0)
   const [health, setHealth] = useState(100)
-  const [lives,  setLives]  = useState(3)
-  const [wave,   setWave]   = useState(1)
+  const [lives, setLives] = useState(3)
+  const [wave, setWave] = useState(1)
 
   useEffect(() => {
     const id = setInterval(() => {
-      setScore(gameState.score)
-      setHealth(gameState.health)
-      setLives(gameState.lives)
-      setWave(gameState.wave)
+      setScore(gameStats.score)
+      setHealth(gameStats.health)
+      setLives(gameStats.lives)
+      setWave(gameStats.wave)
     }, 50)
     return () => clearInterval(id)
   }, [])
 
-  const healthPct   = Math.max(0, health / 100)
-  const healthColor = healthPct > 0.5 ? '#44ff88'
-                    : healthPct > 0.25 ? '#ffdd44'
-                    : '#ff4466'
+  const healthPct = Math.max(0, health / 100)
+  const healthColor = healthPct > 0.5 ? '#44ff88' : healthPct > 0.25 ? '#ffdd44' : '#ff4466'
 
   return (
     <div className="w-200 h-12 flex items-center justify-between px-4 bg-[#0a0a14] border-b-0 font-mono text-green-400 gap-3">
 
-      <span className="text-sm tracking-widest uppercase whitespace-nowrap">
-        ⚡ Space Shooter
-      </span>
-
-      <span className="text-[#ff4466] text-sm tracking-widest whitespace-nowrap">
-        {'♥ '.repeat(lives).trim()}
-      </span>
+      <span className="text-sm tracking-widest uppercase whitespace-nowrap">⚡ Space Shooter</span>
+      <span className="text-[#ff4466] text-sm tracking-widest whitespace-nowrap">{'♥ '.repeat(lives).trim()}</span>
 
       <div className="flex items-center gap-2 text-xs text-gray-400 whitespace-nowrap">
         <span>HP</span>
@@ -49,18 +42,11 @@ export function HUD({ onPause, paused }) {
         <span>{health}</span>
       </div>
 
-      <span className="text-xs text-yellow-300 whitespace-nowrap">
-        SCORE {score}
-      </span>
+      <span className="text-xs text-yellow-300 whitespace-nowrap">SCORE {score}</span>
+      <span className="text-xs text-yellow-300 whitespace-nowrap">WAVE {wave}</span>
 
-      <span className="text-xs text-yellow-300 whitespace-nowrap">
-        WAVE {wave}
-      </span>
-
-      <button
-        className="bg-transparent border-2 border-green-400 text-green-400 font-mono text-xs px-2 py-1 cursor-pointer tracking-wide whitespace-nowrap hover:bg-green-400 hover:text-black transition-colors"
-        onClick={onPause}
-      >
+      <button className="bg-transparent border-2 border-green-400 text-green-400 font-mono text-xs px-2 py-1 cursor-pointer tracking-wide whitespace-nowrap hover:bg-green-400 hover:text-black transition-colors"
+        onClick={onPause}>
         {paused ? '▶ RESUME' : '⏸ PAUSE'}
       </button>
 

@@ -1,22 +1,8 @@
-// src/ecs/entities.js
+// src/ecs/spawn.js
 
-import {
-    addEntity,
-    addComponent
-} from "bitecs";
-
-import { world } from "./world";
-
-import {
-    Position,
-    Velocity,
-    Rotation,
-    Health,
-    Lifetime,
-    PlayerTag,
-    BulletTag,
-    AsteroidTag
-} from "./components";
+import { addEntity, addComponent } from "bitecs";
+import { world } from "../ecs/constants/world";
+import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, AsteroidTag } from "./components";
 
 export function spawnPlayer(x,y){
 
