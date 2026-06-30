@@ -27,7 +27,7 @@ export function HUD({ onPause, paused }) {
     <div className="w-200 h-12 flex items-center justify-between px-4 bg-[#0a0a14] border-b-0 font-mono text-green-400 gap-3">
 
       <span className="text-sm tracking-widest uppercase whitespace-nowrap">Asteroids</span>
-      <span className="text-[#ff4466] text-sm tracking-widest whitespace-nowrap">{'🚀 '.repeat(lives).trim()}</span>
+      <span className="text-[#ff4466] text-sm tracking-widest whitespace-nowrap">{'❤︎ '.repeat(lives).trim()}</span>
 
       <div className="flex items-center gap-2 text-xs text-gray-400 whitespace-nowrap">
         <span>HP</span>
