@@ -42,16 +42,8 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                 <Canvas
                     orthographic
-                    camera={{
-                        zoom: 60,
-                        position: [0, 0, 10],
-                        near: 0.1,
-                        far: 100,
-                    }}
-                    gl={{
-                        antialias: false,
-                        powerPreference: "high-performance",
-                    }}>
+                    camera={{ zoom: 60, position: [0, 0, 10], near: 0.1, far: 100 }}
+                    gl={{ antialias: false, powerPreference: "high-performance" }}>
                     <GameLoop keysRef={keysRef} paused={paused} />
 
                     <ambientLight intensity={0.7} />
@@ -73,9 +65,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                             mipmapBlur
                         />
 
-                        <ChromaticAberration
-                            blendFunction={BlendFunction.DARKEN} offset={[0.0025, 0.0025]}
-                        />
+                        <ChromaticAberration blendFunction={BlendFunction.DARKEN} offset={[0.0025, 0.0025]} />
                         <Noise opacity={0.025} />
                         <Vignette
                             blendFunction={BlendFunction.DARKEN}
