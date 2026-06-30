@@ -11,13 +11,14 @@ const MAX_ASTEROIDS = 64
 
 // ------------------------------------------------------
 const colours = [
-    new THREE.Color("#5a5752"),
-    new THREE.Color("#6b6560"),
-    new THREE.Color("#4e4b46"),
-    new THREE.Color("#7a7068"),
-    new THREE.Color("#3e3c38"),
-    new THREE.Color("#635e58"),
-    new THREE.Color("#8a7f74"),
+    new THREE.Color("#9a7b58"), // sandstone
+    new THREE.Color("#8c684a"), // brown
+    new THREE.Color("#72645d"), // slate
+    new THREE.Color("#5c4d45"), // dark rock
+    new THREE.Color("#a08d70"), // dusty tan
+    new THREE.Color("#6f5e53"), // basalt
+    new THREE.Color("#b28c63"), // iron rich
+    new THREE.Color("#837058"), // weathered
 ]
 
 // ------------------------------------------------------
@@ -53,7 +54,7 @@ export function AsteroidRenderer() {
 
     const asteroidGeometry = useMemo(() => {
 
-        const geo = new THREE.IcosahedronGeometry(0.55, 3)
+        const geo = new THREE.IcosahedronGeometry(0.55, 2)
 
         const pos = geo.attributes.position
         const v = new THREE.Vector3()
@@ -64,20 +65,28 @@ export function AsteroidRenderer() {
 
             const dir = v.clone().normalize()
 
-            // Higher frequency + stronger amplitude = chunkier, craggier rock
             const noise =
-                Math.sin(dir.x * 5.1) * 0.20 +
-                Math.sin(dir.y * 6.3) * 0.18 +
-                Math.sin(dir.z * 4.7) * 0.22 +
-                Math.sin(dir.x * 2.3 + dir.z * 3.1) * 0.10 +   // cross-term for asymmetry
-                Math.sin(dir.y * 7.8 + dir.x * 1.9) * 0.08
+                Math.sin(dir.x * 2.3) * 0.25 +
+                Math.sin(dir.y * 5.7) * 0.18 +
+                Math.sin(dir.z * 9.1) * 0.12 +
+                Math.sin((dir.x + dir.y) * 7.0) * 0.10 +
+                Math.sin((dir.x - dir.z) * 11.0) * 0.06
 
-            const scale = 1 + noise
-
-            v.multiplyScalar(scale)
+            v.multiplyScalar(1 + noise)
 
             pos.setXYZ(i, v.x, v.y, v.z)
         }
+
+        geo.scale(
+            0.9 + Math.random() * 0.3,
+            0.9 + Math.random() * 0.3,
+            0.9 + Math.random() * 0.3
+        )
+
+        // NEW: random orientation so the silhouette isn't aligned
+        geo.rotateX(Math.random() * Math.PI * 2)
+        geo.rotateY(Math.random() * Math.PI * 2)
+        geo.rotateZ(Math.random() * Math.PI * 2)
 
         pos.needsUpdate = true
         geo.computeVertexNormals()
@@ -92,26 +101,43 @@ export function AsteroidRenderer() {
 
     const asteroidData = useMemo(() => {
 
-        return Array.from({ length: MAX_ASTEROIDS }, () => ({
+        return Array.from({ length: MAX_ASTEROIDS }, () => {
 
-            scale: 0.8 + Math.random() * 0.7,
+            const scale = 0.8 + Math.random() * 0.7
 
-            rotation: new THREE.Euler(
-                Math.random() * Math.PI * 2,
-                Math.random() * Math.PI * 2,
-                Math.random() * Math.PI * 2
-            ),
+            const spinScale = 0.35 / scale
 
-            // Slightly slower spin — heavy rocks feel more massive
-            spin: new THREE.Vector3(
-                (Math.random() - 0.5) * 0.3,
-                (Math.random() - 0.5) * 0.3,
-                (Math.random() - 0.5) * 0.3
-            ),
+            const color =
+                colours[Math.floor(Math.random() * colours.length)].clone()
 
-            color: colours[Math.floor(Math.random() * colours.length)].clone()
+            // slight brightness variation
+            color.offsetHSL(
+                (Math.random() - 0.5) * 0.02,
+                (Math.random() - 0.5) * 0.10,
+                (Math.random() - 0.5) * 0.18
+            )
 
-        }))
+            return {
+
+                scale,
+
+                rotation: new THREE.Euler(
+                    Math.random() * Math.PI * 2,
+                    Math.random() * Math.PI * 2,
+                    Math.random() * Math.PI * 2
+                ),
+
+                spin: new THREE.Vector3(
+                    (Math.random() - 0.5) * spinScale,
+                    (Math.random() - 0.5) * spinScale,
+                    (Math.random() - 0.5) * spinScale
+                ),
+
+                color
+
+            }
+
+        })
 
     }, [])
 
@@ -164,13 +190,9 @@ export function AsteroidRenderer() {
         _scale.set(0, 0, 0)
         _pos.set(0, 0, 0)
 
-        for (let i = asteroids.length; i < MAX_ASTEROIDS; i++) {
-            _mat.compose(_pos, _rot, _scale)
-            mesh.setMatrixAt(i, _mat)
-        }
 
         mesh.instanceMatrix.needsUpdate = true
-        mesh.count = MAX_ASTEROIDS
+        mesh.count = asteroids.length
 
         // Health Bar Background
 
@@ -187,13 +209,8 @@ export function AsteroidRenderer() {
         _barPos.set(0, 0, 0)
         _barScale.set(0, 0, 0)
 
-        for (let i = asteroids.length; i < MAX_ASTEROIDS; i++) {
-            _barMat.compose(_barPos, _barRot, _barScale)
-            bgBar.setMatrixAt(i, _barMat)
-        }
-
         bgBar.instanceMatrix.needsUpdate = true
-        bgBar.count = MAX_ASTEROIDS
+        bgBar.count = asteroids.length
 
         // Health Bar Fill
 
@@ -214,13 +231,8 @@ export function AsteroidRenderer() {
         _barPos.set(0, 0, 0)
         _barScale.set(0, 0, 0)
 
-        for (let i = asteroids.length; i < MAX_ASTEROIDS; i++) {
-            _barMat.compose(_barPos, _barRot, _barScale)
-            fgBar.setMatrixAt(i, _barMat)
-        }
-
         fgBar.instanceMatrix.needsUpdate = true
-        fgBar.count = MAX_ASTEROIDS
+        fgBar.count = asteroids.length
 
     })
 
@@ -240,11 +252,10 @@ export function AsteroidRenderer() {
 
                 <meshStandardMaterial
                     vertexColors
-                    color="red"
-                    roughness={0.85}
-                    metalness={0.0}
-                    emissive="white"
-                    emissiveIntensity={0.1} />
+                    flatShading
+                    roughness={0.95}
+                    metalness={0.02}
+                />
             </instancedMesh>
 
             {/* Health Bar Background */}
