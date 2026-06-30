@@ -15,7 +15,7 @@ import {
 import { BlendFunction } from 'postprocessing'
 import { Sparkles, Trail, Float } from '@react-three/drei'
 import { useRef } from 'react'
-import { world } from '../ecs/world.js'
+import { world } from '../ecs/constants/world.js'
 import { gameLoop } from '../ecs/systems/gameLoop.js'
 import { PlayerRenderer } from './PlayerRenderer.jsx'
 import { AsteroidRenderer } from './AsteroidRenderer.jsx'

@@ -1,9 +1,7 @@
 //src/ecs/systems/movement.js
-import { movingQuery } from "../queries";
-
+import { movingQuery } from "../constants/queries";
 import { Position,Velocity } from "../components";
-
-import { world } from "../world";
+import { world } from "../constants/world";
 
 export function movementSystem(){
 
@@ -16,7 +14,6 @@ export function movementSystem(){
 
         Position.x[id]+=Velocity.x[id]*dt;
         Position.y[id]+=Velocity.y[id]*dt;
-
     }
 
 }

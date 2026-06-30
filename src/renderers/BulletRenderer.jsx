@@ -2,9 +2,9 @@
 
 import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { bulletQuery } from '../ecs/queries.js'
+import { bulletQuery } from '../ecs/constants/queries.js'
 import * as THREE from 'three'
-import { world } from '../ecs/world.js'
+import { world } from '../ecs/constants/world.js'
 import { Position, BulletTag } from '../ecs/components.js'
 
 const MAX_BULLETS = 256

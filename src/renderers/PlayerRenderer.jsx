@@ -3,7 +3,7 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { playerQuery } from '../ecs/queries.js';
+import { playerQuery } from '../ecs/constants/queries.js';
 import { Position, Rotation } from '../ecs/components.js';
 
 export function PlayerRenderer() {
