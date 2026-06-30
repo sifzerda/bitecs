@@ -2,7 +2,7 @@
 
 import { addEntity, addComponent } from "bitecs";
 import { world } from "../ecs/constants/world";
-import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, AsteroidTag } from "./components";
+import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, AsteroidTag, BossTag } from "./components";
 
 export function spawnPlayer(x,y){
 
@@ -45,7 +45,7 @@ export function spawnBullet(x,y,rot){
     return id;
 }
 
-export function spawnAsteroid(x,y){
+export function spawnAsteroid(x, y, isBoss = false){
 
     const id=addEntity(world);
 
@@ -62,6 +62,6 @@ export function spawnAsteroid(x,y){
 
     Health.current[id]=20;
     Health.max[id]=20;
-
+ 
     return id;
 }

@@ -8,6 +8,7 @@ export function HUD({ onPause, paused }) {
   const [health, setHealth] = useState(100)
   const [lives, setLives] = useState(3)
   const [wave, setWave] = useState(1)
+  const [difficulty, setDifficulty] = useState(1)
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -15,6 +16,7 @@ export function HUD({ onPause, paused }) {
       setHealth(gameStats.health)
       setLives(gameStats.lives)
       setWave(gameStats.wave)
+      setDifficulty(gameStats.difficulty)
     }, 50)
 
     return () => clearInterval(id)
@@ -41,6 +43,9 @@ export function HUD({ onPause, paused }) {
           }} />
         </div>
         <span>{health}</span>
+
+        <span> Difficulty: {difficulty.toFixed(1)}</span>
+
       </div>
 
       <span className="text-xs text-yellow-300 whitespace-nowrap">SCORE {score}</span>

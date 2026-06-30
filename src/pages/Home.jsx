@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { spawnPlayer, spawnAsteroid } from '../ecs/spawn.js'
+import { spawnUfo } from '../ecs/spawnUfo.js'
 import { PlayScreen } from '../screens/PlayScreen.jsx'
 import { gameStats } from '../state/gameStats.js'
 
@@ -17,11 +18,8 @@ export default function Home() {
         initialised.current = true
         // create player entity
         spawnPlayer(0, 0)
+        spawnUfo(0, 4)
 
-        // create asteroids
-        for (let i = 0; i < 8; i++) {
-            spawnAsteroid((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 14)
-        }
     }, [])
 
     useEffect(() => {
