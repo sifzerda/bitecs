@@ -2,63 +2,136 @@
 
 import { useEffect, useState } from 'react'
 import { gameStats } from '../state/gameStats.js'
+import { progressionState } from '../progression/progressionState'
 
 export function HUD({ onPause, paused }) {
-  const [score, setScore] = useState(0)
-  const [health, setHealth] = useState(100)
-  const [lives, setLives] = useState(3)
-  const [wave, setWave] = useState(1)
-  const [difficulty, setDifficulty] = useState(1)
+
+  const [hud, setHud] = useState({
+    score: 0,
+    health: 100,
+    lives: 3,
+
+    wave: 1,
+    level: 1,
+
+    asteroidHealth: 20,
+    asteroidSpeed: 1,
+    spawnInterval: 2,
+    burst: 1,
+    asteroidCap: 8,
+
+    enemiesRemaining: 0,
+    enemyTarget: 0
+  })
 
   useEffect(() => {
+
     const id = setInterval(() => {
-      setScore(gameStats.score)
-      setHealth(gameStats.health)
-      setLives(gameStats.lives)
-      setWave(gameStats.wave)
-      setDifficulty(gameStats.difficulty)
-    }, 50)
+
+      setHud({
+        score: gameStats.score,
+        health: gameStats.health,
+        lives: gameStats.lives,
+
+        wave: progressionState.wave.number,
+        level: progressionState.difficulty.level,
+
+        asteroidHealth: progressionState.difficulty.asteroidHealth,
+        asteroidSpeed: progressionState.difficulty.asteroidSpeed,
+        spawnInterval: progressionState.difficulty.spawnInterval,
+        burst: progressionState.difficulty.burst,
+        asteroidCap: progressionState.difficulty.asteroidCap,
+
+        enemiesRemaining: progressionState.wave.enemiesRemaining,
+        enemyTarget: progressionState.wave.enemyTarget
+      })
+
+    }, 100)
 
     return () => clearInterval(id)
+
   }, [])
 
-  const healthPct = Math.max(0, health / 100)
-  const healthColor = healthPct > 0.5 ? '#44ff88' : healthPct > 0.25 ? '#ffdd44' : '#ff4466'
+  const healthPct = Math.max(0, hud.health / 100)
+
+  const healthColor =
+    healthPct > 0.5
+      ? '#44ff88'
+      : healthPct > 0.25
+        ? '#ffdd44'
+        : '#ff4466'
 
   return (
-    <div className="w-200 h-12 flex items-center justify-between px-4 bg-[#0a0a14] border-b-0 font-mono text-green-400 gap-3">
+    <div className="w-200 h-12 flex items-center justify-between px-4 bg-[#0a0a14] font-mono text-green-400 gap-3">
 
-      <span className="text-sm tracking-widest uppercase whitespace-nowrap">Asteroids</span>
-      <span className="text-[#ff4466] text-sm tracking-widest whitespace-nowrap">{'❤︎ '.repeat(lives).trim()}</span>
+      <span className="text-sm tracking-widest uppercase">
+        Asteroids
+      </span>
 
-      <div className="flex items-center gap-2 text-xs text-gray-400 whitespace-nowrap">
+      <span className="text-[#ff4466] text-sm">
+        {'❤︎ '.repeat(hud.lives).trim()}
+      </span>
+
+      <div className="flex items-center gap-2 text-xs">
+
         <span>HP</span>
-        <div className="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
-          <div style={{
-            width: `${healthPct * 100}%`,
-            height: '100%',
-            background: healthColor,
-            borderRadius: 4,
-            transition: 'width 0.1s, background 0.3s',
-          }} />
-        </div>
-        <span>{health}</span>
 
-        <span> Difficulty: {difficulty.toFixed(1)}</span>
+        <div className="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
+          <div
+            style={{
+              width: `${healthPct * 100}%`,
+              height: '100%',
+              background: healthColor,
+              transition: 'width .15s'
+            }}
+          />
+        </div>
+
+        <span>{hud.health}</span>
+
+        <div className="flex gap-3 text-[11px]">
+
+          <span>LV {hud.level}</span>
+
+          <span>AST HP {hud.asteroidHealth}</span>
+
+          <span>SPD {hud.asteroidSpeed.toFixed(2)}</span>
+
+          <span>INT {hud.spawnInterval.toFixed(2)}</span>
+
+          <span>BURST {hud.burst}</span>
+
+          <span>CAP {hud.asteroidCap}</span>
+
+        </div>
 
       </div>
 
-      <span className="text-xs text-yellow-300 whitespace-nowrap">SCORE {score}</span>
-      <span className="text-xs text-yellow-300 whitespace-nowrap">WAVE {wave}</span>
+      <span className="text-xs text-yellow-300">
+        SCORE {hud.score}
+      </span>
+
+      <div className="flex flex-col leading-none">
+
+        <span>
+          WAVE {hud.wave}
+        </span>
+
+        <span className="text-[10px] text-cyan-300">
+          {hud.enemiesRemaining} / {hud.enemyTarget}
+        </span>
+
+      </div>
 
       <button
         type="button"
         tabIndex={-1}
-        className="bg-transparent border-2 border-green-400 text-green-400 font-mono text-xs px-2 py-1 tracking-wide whitespace-nowrap hover:bg-green-400 hover:text-black transition-colors"
+        className="bg-transparent border-2 border-green-400 text-green-400 font-mono text-xs px-2 py-1 hover:bg-green-400 hover:text-black transition-colors"
         onClick={(e) => {
           e.currentTarget.blur()
           onPause()
-        }}>
+        }}
+      >
         {paused ? '▶ RESUME (P)' : '⏸ PAUSE (P)'}
       </button>
 

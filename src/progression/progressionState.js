@@ -13,12 +13,22 @@ export const progressionState = {
         number: 1,
         active: false,
         completed: false,
+        state: "SPAWNING",
         enemyTarget: 8,
         enemiesSpawned: 0,
         enemiesRemaining: 0
     },
 
-    difficulty: 1,
+    difficulty: {
+
+    level: 1,
+    asteroidHealth: 20,
+    asteroidSpeed: 1,
+    spawnInterval: 2,
+    burst: 1,
+    asteroidCap: 8
+
+},
 
     bossWaveInterval: 5,
 
