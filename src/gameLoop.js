@@ -1,13 +1,13 @@
 // src/ecs/systems/gameLoop.js
 
-import playerControlSystem from "./playerControlSystem.js"
-import { movementSystem } from "./movement.js"
-import { boundsSystem } from "./bounds.js"
-import { combatSystem } from "./combat.js"
- 
-import { ufoMovementSystem } from "./ufoMovementSystem.js"
-import { ufoShootSystem } from "./ufoShootSystem.js"
-import { gameDirectorSystem } from "../../progression/GameDirector.js"
+import playerControlSystem from "./ecs/systems/playerControlSystem"
+import { movementSystem } from "./ecs/systems/movement"
+import { boundsSystem } from "./ecs/systems/bounds.js"
+import { combatSystem } from "./ecs/systems/combat.js"
+import { gameDirectorSystem } from "./progression/GameDirector"
+
+import { updateMovement } from "./bosses/ufo/movement"
+import { updateShooting } from "./bosses/ufo/shooting"
 
 export function gameLoop(keys, shootState) {
 
@@ -26,8 +26,8 @@ export function gameLoop(keys, shootState) {
     //-------------------------
     // AI
     //-------------------------
-    ufoMovementSystem()
-    ufoShootSystem()
+    updateMovement()
+    updateShooting()
 
     //-------------------------
     // Physics
