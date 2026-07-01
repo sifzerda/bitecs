@@ -5,7 +5,6 @@ import { spawnPlayer, spawnAsteroid } from '../ecs/spawn.js'
 import { spawnUfo } from '../ecs/spawnUfo.js'
 import { PlayScreen } from '../screens/PlayScreen.jsx'
 import { gameStats } from '../state/gameStats.js'
-import { beginWave } from '../progression/waveManager.js'
 
 export default function Home() {
 
@@ -19,9 +18,7 @@ export default function Home() {
         initialised.current = true
         // create player entity
         spawnPlayer(0, 0)
-        requestAnimationFrame(() => {
-            beginWave()
-        })
+
         //   spawnUfo(0, 4) // test, delete once Ufo works
 
     }, [])

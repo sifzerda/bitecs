@@ -2,12 +2,16 @@
 
 export const progressionState = {
 
-    wave: {
-        number: 1,
-        state: "SPAWNING",
-        enemyTarget: 8,
-        enemiesSpawned: 0,
-        enemiesRemaining: 0
-    }
+    wave: 1,
+
+    state: "STARTING",
+
+    enemyTarget: 0,
+
+    enemiesSpawned: 0,
+
+    enemiesRemaining: 0,
+
+    bossActive: false
 
 }

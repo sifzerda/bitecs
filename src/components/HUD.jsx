@@ -32,11 +32,11 @@ export function HUD({ onPause, paused }) {
         health: gameStats.health,
         lives: gameStats.lives,
 
-        wave: progressionState.wave.number,
+        wave: progressionState.wave,
  
 
-        enemiesRemaining: progressionState.wave.enemiesRemaining,
-        enemyTarget: progressionState.wave.enemyTarget
+        enemiesRemaining: progressionState.enemiesRemaining,
+        enemyTarget: progressionState.enemyTarget
       })
 
     }, 100)

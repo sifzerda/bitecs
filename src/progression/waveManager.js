@@ -1,55 +1,78 @@
 // src/progression/waveManager.js
 
 import { progressionState } from "./progressionState"
-import { spawnWave } from "./waveSpawner"
-import { spawnBossForWave } from "./spawnBoss"
+import { bossRegistry } from "./bossRegistry"
+import { bossSchedule } from "./bossSchedule"
+
+import { spawnAsteroid } from "../ecs/spawn"
+
+const ASTEROID_SPAWN_RADIUS = 16
+const BOSS_SPAWN_RADIUS = 6
+
+//--------------------------------------------------
+// Main system
+//--------------------------------------------------
 
 export function waveManagerSystem() {
 
-    const wave = progressionState.wave
+    switch (progressionState.state) {
 
-    switch (wave.state) {
+        //------------------------------------------
+        // Start a brand new wave
+        //------------------------------------------
 
-        case "SPAWNING":
+        case "STARTING":
 
-            if (wave.enemiesSpawned >= wave.enemyTarget) {
-                wave.state = "CLEARING"
-            }
+            startWave()
 
             break
+
+        //------------------------------------------
+        // Waiting for asteroids to die
+        //------------------------------------------
 
         case "CLEARING":
 
-            if (wave.enemiesRemaining > 0)
-                break
+            if (progressionState.enemiesRemaining > 0)
+                return
 
-            if (wave.number % 5 === 0) {
+            if (hasBossWave()) {
 
-                wave.state = "BOSS"
+                spawnBoss()
 
-                spawnBossForWave(wave.number)
+                progressionState.state = "BOSS"
 
-            } else {
+            }
+            else {
 
                 finishWave()
 
             }
 
             break
+
+        //------------------------------------------
+        // Waiting for boss death
+        //------------------------------------------
 
         case "BOSS":
 
-            if (wave.enemiesRemaining === 0) {
+            if (progressionState.enemiesRemaining > 0)
+                return
 
-                finishWave()
-
-            }
+            finishWave()
 
             break
 
+        //------------------------------------------
+        // Advance
+        //------------------------------------------
+
         case "COMPLETE":
 
-            beginWave()
+            progressionState.wave++
+
+            progressionState.state = "STARTING"
 
             break
 
@@ -57,49 +80,120 @@ export function waveManagerSystem() {
 
 }
 
+//--------------------------------------------------
+// Start Wave
+//--------------------------------------------------
+
+function startWave() {
+
+    progressionState.enemyTarget = getEnemyTarget()
+
+    progressionState.enemiesSpawned = 0
+    progressionState.enemiesRemaining = 0
+    progressionState.bossActive = false
+
+    spawnAsteroidWave()
+
+    progressionState.state = "CLEARING"
+
+}
+
+//--------------------------------------------------
+// Spawn asteroid wave
+//--------------------------------------------------
+
+function spawnAsteroidWave() {
+
+    for (let i = 0; i < progressionState.enemyTarget; i++) {
+
+        const angle = Math.random() * Math.PI * 2
+
+        const x = Math.cos(angle) * ASTEROID_SPAWN_RADIUS
+        const y = Math.sin(angle) * ASTEROID_SPAWN_RADIUS
+
+        spawnAsteroid(x, y)
+
+        registerEnemySpawn()
+
+    }
+
+}
+
+//--------------------------------------------------
+// Boss?
+//--------------------------------------------------
+
+function hasBossWave() {
+
+    return bossSchedule[progressionState.wave] !== undefined
+
+}
+
+//--------------------------------------------------
+// Spawn boss
+//--------------------------------------------------
+
+function spawnBoss() {
+
+    const bossId = bossSchedule[progressionState.wave]
+
+    if (!bossId)
+        return
+
+    const boss = bossRegistry[bossId]
+
+    if (!boss)
+        return
+
+    const angle = Math.random() * Math.PI * 2
+
+    const x = Math.cos(angle) * BOSS_SPAWN_RADIUS
+    const y = Math.sin(angle) * BOSS_SPAWN_RADIUS
+
+    boss.spawn(x, y, progressionState.wave)
+
+    progressionState.bossActive = true
+
+    registerEnemySpawn()
+
+}
+
+//--------------------------------------------------
+// Finish
+//--------------------------------------------------
+
 function finishWave() {
 
-    progressionState.wave.state = "COMPLETE"
+    progressionState.state = "COMPLETE"
 
 }
 
-export function beginWave() {
+//--------------------------------------------------
+// Enemy scaling
+//--------------------------------------------------
 
-    const wave = progressionState.wave
+function getEnemyTarget() {
 
-    wave.number++
-
-    wave.state = "SPAWNING"
-
-    wave.enemiesSpawned = 0
-    wave.enemiesRemaining = 0
-
-    wave.enemyTarget = getWaveTarget(wave.number)
-
-    spawnWave()
+    return 6 + progressionState.wave * 2
 
 }
 
-function getWaveTarget(wave) {
-
-    return 6 + wave * 2
-
-}
+//--------------------------------------------------
+// Tracking
+//--------------------------------------------------
 
 export function registerEnemySpawn() {
 
-    const wave = progressionState.wave
-
-    wave.enemiesSpawned++
-    wave.enemiesRemaining++
+    progressionState.enemiesSpawned++
+    progressionState.enemiesRemaining++
 
 }
 
 export function enemyDestroyed() {
 
-    const wave = progressionState.wave
-
-    if (wave.enemiesRemaining > 0)
-        wave.enemiesRemaining--
+    progressionState.enemiesRemaining = Math.max(
+        0,
+        progressionState.enemiesRemaining - 1
+    )
 
 }
