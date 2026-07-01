@@ -1,80 +1,133 @@
 // src/pages/Home.jsx
 
-import { useEffect, useRef, useState } from 'react'
-import { spawnPlayer, spawnAsteroid } from '../ecs/spawn.js'
-import { spawnUfo } from '../ecs/spawnUfo.js'
-import { PlayScreen } from '../screens/PlayScreen.jsx'
-import { gameStats } from '../state/gameStats.js'
+// src/pages/Home.jsx
+
+import { useEffect, useRef, useState } from "react"
+
+import { PlayScreen } from "../screens/PlayScreen"
+
+import { initializeGame } from "../startGame.js"
+
+import { gameStats } from "../state/gameStats"
 
 export default function Home() {
 
     const keysRef = useRef({})
-    const initialised = useRef(false)
+    const initialized = useRef(false)
+
     const [paused, setPaused] = useState(false)
+
+    //----------------------------------
+    // Initialize game once
+    //----------------------------------
 
     useEffect(() => {
 
-        if (initialised.current) return
-        initialised.current = true
-        // create player entity
-        spawnPlayer(0, 0)
+        if (initialized.current) return
 
-        //   spawnUfo(0, 4) // test, delete once Ufo works
+        initialized.current = true
+
+        initializeGame()
 
     }, [])
 
+    //----------------------------------
+    // Keyboard
+    //----------------------------------
+
     useEffect(() => {
-        const down = (e) => {
+
+        function keyDown(e) {
+
             keysRef.current[e.key] = true
 
             if (e.code === "KeyP") {
-                handlePause()
+
+                togglePause()
+
             }
+
         }
 
-        const up = (e) => {
+        function keyUp(e) {
+
             keysRef.current[e.key] = false
+
         }
 
-        const handleBlur = () => {
-            // Clear any held keys so they don't get "stuck"
+        function handleBlur() {
+
             keysRef.current = {}
 
             if (!gameStats.paused) {
+
                 gameStats.paused = true
                 setPaused(true)
+
             }
+
         }
 
-        const handleVisibilityChange = () => {
+        function handleVisibility() {
+
             if (document.hidden) {
+
                 handleBlur()
+
             }
+
         }
 
-        window.addEventListener("keydown", down)
-        window.addEventListener("keyup", up)
+        window.addEventListener("keydown", keyDown)
+        window.addEventListener("keyup", keyUp)
         window.addEventListener("blur", handleBlur)
-        document.addEventListener("visibilitychange", handleVisibilityChange)
+        document.addEventListener(
+            "visibilitychange",
+            handleVisibility
+        )
 
         return () => {
-            window.removeEventListener("keydown", down)
-            window.removeEventListener("keyup", up)
+
+            window.removeEventListener("keydown", keyDown)
+            window.removeEventListener("keyup", keyUp)
             window.removeEventListener("blur", handleBlur)
-            document.removeEventListener("visibilitychange", handleVisibilityChange)
+            document.removeEventListener(
+                "visibilitychange",
+                handleVisibility
+            )
+
         }
+
     }, [])
 
-    function handlePause() {
+    //----------------------------------
+    // Pause
+    //----------------------------------
+
+    function togglePause() {
+
         gameStats.paused = !gameStats.paused
+
         setPaused(gameStats.paused)
+
     }
 
+    //----------------------------------
+    // Render
+    //----------------------------------
+
     return (
+
         <PlayScreen
+
             keysRef={keysRef}
+
             paused={paused}
-            onPause={handlePause}
+
+            onPause={togglePause}
+
         />
+
     )
+
 }
