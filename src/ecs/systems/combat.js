@@ -5,6 +5,7 @@ import { world } from '../constants/world.js'
 import { bulletQuery, asteroidQuery, ufoQuery, enemyBulletQuery, playerQuery } from "../constants/queries"
 import { Position, Health, UfoHealth, Lifetime, BulletTag, AsteroidTag } from '../components.js'
 import { gameStats } from '../../state/gameStats.js'
+import { enemyDestroyed } from "../../progression/waveManager"
 
 const HIT_RADIUS = 0.7
 const UFO_HIT_RADIUS = 0.9
@@ -46,6 +47,7 @@ export function combatSystem() {
 
         if (UfoHealth.current[uid] <= 0) {
           removeEntity(world, uid)
+          enemyDestroyed()
           gameStats.score += 1000
           gameStats.enemiesDestroyed++
         }
@@ -69,6 +71,7 @@ export function combatSystem() {
 
         if (Health.current[eid] <= 0) {
           removeEntity(world, eid)
+          enemyDestroyed()
           gameStats.score += 100
           gameStats.enemiesDestroyed++
         }

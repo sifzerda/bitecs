@@ -7,6 +7,7 @@ export const progressionState = {
     //----------------------------------
 
     stage: 1,
+
     wave: {
 
         number: 1,
@@ -15,8 +16,8 @@ export const progressionState = {
         enemyTarget: 8,
         enemiesSpawned: 0,
         enemiesRemaining: 0
-
     },
+
     difficulty: 1,
 
     bossWaveInterval: 5,
