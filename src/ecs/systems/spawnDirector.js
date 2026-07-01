@@ -30,10 +30,7 @@ export function spawnDirectorSystem() {
 
     const bossWave = isBossWave()
 
-    if (
-        bossWave &&
-        !progressionState.bossSpawnedThisWave
-    ) {
+    if (bossWave && !progressionState.bossSpawnedThisWave) {
         spawnBoss(wave, difficulty)
         bossSpawned()
         return
@@ -50,10 +47,7 @@ export function spawnDirectorSystem() {
 
     spawnTimer -= dt
 
-    const cap = Math.min(
-        ABSOLUTE_MAX_ASTEROIDS,
-        BASE_MAX_ASTEROIDS + difficulty * MAX_ASTEROIDS_PER_DIFFICULTY
-    )
+    const cap = Math.min(ABSOLUTE_MAX_ASTEROIDS, BASE_MAX_ASTEROIDS + difficulty * MAX_ASTEROIDS_PER_DIFFICULTY)
 
     const currentCount = asteroidQuery().length
 
@@ -121,12 +115,7 @@ function spawnBoss(wave, difficulty) {
 
     const id = spawnUfo(x, y)
 
-    const bossHealth =
-        Math.round(
-            80 *
-            (1 + bossNumber * 0.6) *
-            (1 + difficulty * 0.04)
-        )
+    const bossHealth = Math.round(80 * (1 + bossNumber * 0.6) * (1 + difficulty * 0.04))
 
     UfoHealth.current[id] = bossHealth
     UfoHealth.max[id] = bossHealth
