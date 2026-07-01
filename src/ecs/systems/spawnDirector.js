@@ -7,6 +7,7 @@ import { spawnUfo } from "../spawnUfo"
 import { gameStats } from "../../state/gameStats"
 import { Velocity, Health, UfoHealth } from "../components"
 import { progressionState, isBossWave, bossSpawned } from "../../progression/progressionState"
+import { registerEnemySpawn, enemyDestroyed } from "../../progression/waveManager"
 
 let spawnTimer = 0
 const spawnRadius = 16
@@ -19,10 +20,12 @@ const MAX_ASTEROIDS_PER_DIFFICULTY = 1.2
 const ABSOLUTE_MAX_ASTEROIDS = 40
 
 
+
+
 export function spawnDirectorSystem() {
     const dt = world.time.delta
     const difficulty = progressionState.difficulty;
-    const wave = progressionState.wave;
+    const wave = progressionState.wave.number;
 
     //-------------------------------------------------
     // Boss wave check
@@ -82,6 +85,8 @@ function spawnAtEdge(difficulty) {
 
     const id = spawnAsteroid(x, y)
     applyDifficultyToAsteroid(id, difficulty)
+
+    registerEnemySpawn()
 }
 
 function applyDifficultyToAsteroid(id, difficulty) {
