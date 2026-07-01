@@ -10,6 +10,5 @@ export function initializeGame() {
     initialized = true
 
     spawnPlayer(0, 0)
-
     beginWave()
 }
