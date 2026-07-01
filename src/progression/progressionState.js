@@ -7,7 +7,16 @@ export const progressionState = {
     //----------------------------------
 
     stage: 1,
-    wave: 1,
+    wave: {
+
+        number: 1,
+        active: false,
+        completed: false,
+        enemyTarget: 8,
+        enemiesSpawned: 0,
+        enemiesRemaining: 0
+
+    },
     difficulty: 1,
 
     bossWaveInterval: 5,
@@ -38,7 +47,10 @@ export const progressionState = {
 //-----------------------------------------------------
 
 export function isBossWave() {
-    return progressionState.wave % progressionState.bossWaveInterval === 0
+    return (
+        progressionState.wave.number %
+        progressionState.bossWaveInterval
+    ) === 0
 }
 
 export function bossSpawned() {
@@ -54,7 +66,13 @@ export function bossKilled() {
 
 export function advanceWave() {
 
-    progressionState.wave++
+    progressionState.wave.number++
+
+    progressionState.wave.active = false
+    progressionState.wave.completed = false
+    progressionState.wave.enemiesSpawned = 0
+    progressionState.wave.enemiesRemaining = 0
+
     progressionState.bossSpawnedThisWave = false
     progressionState.bossDefeated = false
 
