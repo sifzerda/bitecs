@@ -5,12 +5,8 @@ import { bossSchedule } from "../bosses/bossSchedule"
 import { getBoss } from "../bosses/bossRegistry"
 import { spawnAsteroid } from "../ecs/spawn"
 
-const ASTEROID_SPAWN_RADIUS = 16
-const BOSS_SPAWN_RADIUS = 6
-
-//--------------------------------------------------
-// MAIN SYSTEM
-//--------------------------------------------------
+const ASTEROID_RADIUS = 16
+const BOSS_RADIUS = 6
 
 export function waveManagerSystem() {
     switch (progressionState.state) {
@@ -42,85 +38,58 @@ export function waveManagerSystem() {
     }
 }
 
-//--------------------------------------------------
-// WAVE START
-//--------------------------------------------------
-
-export function beginWave() {
-    progressionState.state = "STARTING"
-}
-
 function startWave() {
-    progressionState.enemyTarget = getEnemyTarget()
-
-    progressionState.enemiesSpawned = 0
     progressionState.enemiesRemaining = 0
+    progressionState.enemiesSpawned = 0
 
-    progressionState.bossActive = false
-    progressionState.currentBoss = null
-
-    spawnWave()
-    progressionState.state = "CLEARING"
-}
-
-//--------------------------------------------------
-// ASTEROID SPAWNING
-//--------------------------------------------------
-
-function spawnWave() {
-    const count = progressionState.enemyTarget
+    const count = getEnemyTarget()
+    progressionState.enemyTarget = count
 
     for (let i = 0; i < count; i++) {
         spawnAsteroidAtRandom()
     }
+
+    progressionState.state = "CLEARING"
 }
 
 function spawnAsteroidAtRandom() {
     const angle = Math.random() * Math.PI * 2
 
-    const x = Math.cos(angle) * ASTEROID_SPAWN_RADIUS
-    const y = Math.sin(angle) * ASTEROID_SPAWN_RADIUS
+    const x = Math.cos(angle) * ASTEROID_RADIUS
+    const y = Math.sin(angle) * ASTEROID_RADIUS
 
     spawnAsteroid(x, y)
+
     registerEnemySpawn()
 }
 
-//--------------------------------------------------
-// BOSS SYSTEM (EVERY 5 WAVES)
-//--------------------------------------------------
-
 function hasBoss() {
-    return progressionState.wave % 5 === 0
+    return bossSchedule[progressionState.wave] !== undefined
 }
 
 function spawnBoss() {
-    const boss = getBoss(progressionState.wave)
+    const bossId = bossSchedule[progressionState.wave]
+    const boss = getBoss(bossId)
     if (!boss) return
 
     const angle = Math.random() * Math.PI * 2
 
-    const x = Math.cos(angle) * BOSS_SPAWN_RADIUS
-    const y = Math.sin(angle) * BOSS_SPAWN_RADIUS
+    const x = Math.cos(angle) * BOSS_RADIUS
+    const y = Math.sin(angle) * BOSS_RADIUS
 
-    const entity = boss.spawn(x, y, progressionState.wave)
+    boss.spawn(x, y, progressionState.wave)
 
     progressionState.currentBoss = boss
-    progressionState.bossActive = true
-
     registerEnemySpawn()
 }
-
-//--------------------------------------------------
-// FINISH WAVE
-//--------------------------------------------------
 
 function finishWave() {
     progressionState.state = "COMPLETE"
 }
 
-//--------------------------------------------------
-// TRACKING
-//--------------------------------------------------
+function getEnemyTarget() {
+    return 6 + progressionState.wave * 2
+}
 
 export function registerEnemySpawn() {
     progressionState.enemiesSpawned++
@@ -132,10 +101,7 @@ export function enemyDestroyed() {
         Math.max(0, progressionState.enemiesRemaining - 1)
 }
 
-//--------------------------------------------------
-// SCALE
-//--------------------------------------------------
-
-function getEnemyTarget() {
-    return 6 + progressionState.wave * 2
+export function beginWave() {
+    progressionState.state = "STARTING"
+    progressionState.currentBoss = null
 }

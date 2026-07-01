@@ -4,7 +4,7 @@ import { playerQuery } from "../../ecs/constants/queries"
 import { Position } from "../../ecs/components"
 import { spawnEnemyBullet } from "../../ecs/spawnEnemyBullet"
 
-import { UFO_BOSS } from "./config"
+import { UFO_CONFIG } from "./config"
 import { getBossState } from "./state"
 
 export function updateShooting(id, dt) {
@@ -23,7 +23,7 @@ export function updateShooting(id, dt) {
     if (state.fireTimer > 0)
         return
 
-    state.fireTimer = UFO_BOSS.fireInterval
+    state.fireTimer = UFO_CONFIG.fireInterval
 
     const dx =
         Position.x[player] -
@@ -36,7 +36,7 @@ export function updateShooting(id, dt) {
     const angle =
         Math.atan2(dy, dx) +
         (Math.random() - 0.5) *
-        UFO_BOSS.aimSpread
+        UFO_CONFIG.aimSpread
 
     spawnEnemyBullet(
 

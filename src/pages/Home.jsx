@@ -10,6 +10,8 @@ import { initializeGame } from "../startGame.js"
 
 import { gameStats } from "../state/gameStats"
 
+import { spawnDebugBoss } from "../debug/debugBoss.js"
+
 export default function Home() {
 
     const keysRef = useRef({})
@@ -115,19 +117,34 @@ export default function Home() {
     //----------------------------------
     // Render
     //----------------------------------
-
+    
     return (
+        <div style={{ position: "relative", width: "100%", height: "100%" }}>
 
-        <PlayScreen
+            <button
+                onClick={() => spawnDebugBoss("ufo", 5)}
+                style={{
+                    position: "absolute",
+                    top: 10,
+                    right: 10,
+                    zIndex: 9999,
+                    padding: "8px 12px",
+                    border: "1px solid #39ff14",
+                    background: "black",
+                    color: "#39ff14",
+                    fontFamily: "monospace",
+                    cursor: "pointer"
+                }}
+            >
+                SPAWN UFO BOSS
+            </button>
 
-            keysRef={keysRef}
+            <PlayScreen
+                keysRef={keysRef}
+                paused={paused}
+                onPause={togglePause}
+            />
 
-            paused={paused}
-
-            onPause={togglePause}
-
-        />
-
+        </div>
     )
-
 }
