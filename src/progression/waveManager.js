@@ -1,184 +1,105 @@
 // src/progression/waveManager.js
 
-import {
-    progressionState,
-    increaseDifficulty,
-    isBossWave
-} from "./progressionState"
-
-import { spawnUfo } from "../ecs/spawnUfo"
-import { UfoHealth } from "../ecs/components"
-import { spawnAsteroid } from "../ecs/spawn" 
-
-/*
--------------------------------------------------------
-WAVE COMPLETION (ASTEROIDS DONE)
--------------------------------------------------------
-*/
-
-function completeWave() {
-    const wave = progressionState.wave
-
-    wave.state = "COMPLETE"
-    increaseDifficulty()
-}
-
-/*
--------------------------------------------------------
-MAIN SYSTEM
--------------------------------------------------------
-*/
+import { progressionState } from "./progressionState"
+import { spawnWave } from "./waveSpawner"
+import { spawnBossForWave } from "./spawnBoss"
 
 export function waveManagerSystem() {
-    checkWaveComplete()
-    checkBossTrigger()
-    tryAdvanceWave()
-}
 
-/*
--------------------------------------------------------
-STEP 1: MOVE FROM SPAWNING → CLEARING
--------------------------------------------------------
-*/
-
-function checkWaveComplete() {
     const wave = progressionState.wave
 
-    if (
-        wave.state === "SPAWNING" &&
-        wave.enemiesSpawned >= wave.enemyTarget
-    ) {
-        wave.state = "CLEARING"
+    switch (wave.state) {
+
+        case "SPAWNING":
+
+            if (wave.enemiesSpawned >= wave.enemyTarget) {
+                wave.state = "CLEARING"
+            }
+
+            break
+
+        case "CLEARING":
+
+            if (wave.enemiesRemaining > 0)
+                break
+
+            if (wave.number % 5 === 0) {
+
+                wave.state = "BOSS"
+
+                spawnBossForWave(wave.number)
+
+            } else {
+
+                finishWave()
+
+            }
+
+            break
+
+        case "BOSS":
+
+            if (wave.enemiesRemaining === 0) {
+
+                finishWave()
+
+            }
+
+            break
+
+        case "COMPLETE":
+
+            beginWave()
+
+            break
+
     }
+
 }
 
-/*
--------------------------------------------------------
-STEP 2: SPAWN BOSS AT WAVE BOUNDARY
--------------------------------------------------------
-*/
+function finishWave() {
 
-function checkBossTrigger() {
-    const wave = progressionState.wave
+    progressionState.wave.state = "COMPLETE"
 
-    const bossWave = isBossWave()
-
-    if (
-        wave.state === "CLEARING" &&
-        wave.enemiesRemaining === 0 &&
-        bossWave &&
-        !progressionState.bossSpawnedThisWave
-    ) {
-        spawnBossAtWaveBoundary()
-        wave.state = "BOSS"
-    }
 }
-
-/*
--------------------------------------------------------
-STEP 3: MOVE TO NEXT WAVE
--------------------------------------------------------
-*/
-
-function tryAdvanceWave() {
-    const wave = progressionState.wave
-
-    if (wave.state === "COMPLETE") {
-        beginWave()
-    }
-}
-
-function spawnFullWave() {
-    const wave = progressionState.wave
-    const count = wave.enemyTarget
-
-    for (let i = 0; i < count; i++) {
-        spawnAsteroidAtWaveStart()
-    }
-}
-
-/*
--------------------------------------------------------
-WAVE START
--------------------------------------------------------
-*/
 
 export function beginWave() {
+
     const wave = progressionState.wave
 
+    wave.number++
+
     wave.state = "SPAWNING"
+
     wave.enemiesSpawned = 0
     wave.enemiesRemaining = 0
 
     wave.enemyTarget = getWaveTarget(wave.number)
 
-    progressionState.bossSpawnedThisWave = false
+    spawnWave()
 
-    spawnFullWave()
 }
 
-function getWaveTarget(waveNumber) {
-    return 6 + Math.floor(waveNumber * 1.5)
-}
+function getWaveTarget(wave) {
 
-/*
--------------------------------------------------------
-ENEMY TRACKING
--------------------------------------------------------
-*/
+    return 6 + wave * 2
+
+}
 
 export function registerEnemySpawn() {
-    const wave = progressionState.wave
 
-    if (wave.enemiesSpawned >= wave.enemyTarget) return
+    const wave = progressionState.wave
 
     wave.enemiesSpawned++
     wave.enemiesRemaining++
+
 }
 
 export function enemyDestroyed() {
-  const wave = progressionState.wave
-  // prevent underflow (THIS fixes negative / flicker issues)
-  wave.enemiesRemaining = Math.max(0, wave.enemiesRemaining - 1)
-}
-
-/*
--------------------------------------------------------
-BOSS SPAWN
--------------------------------------------------------
-*/
-
-function spawnBossAtWaveBoundary() {
 
     const wave = progressionState.wave
-    const difficulty = progressionState.difficulty
 
-    const angle = Math.random() * Math.PI * 2
+    if (wave.enemiesRemaining > 0)
+        wave.enemiesRemaining--
 
-    const x = Math.cos(angle) * 6
-    const y = Math.sin(angle) * 6
-
-    const id = spawnUfo(x, y)
-
-    const bossHealth =
-        80 * (1 + wave.number * 0.6) *
-        (1 + difficulty.level * 0.1)
-
-    UfoHealth.current[id] = bossHealth
-    UfoHealth.max[id] = bossHealth
-
-    progressionState.bossSpawnedThisWave = true
-}
-
-function spawnAsteroidAtWaveStart() {
-    const angle = Math.random() * Math.PI * 2
-
-    const x = Math.cos(angle) * 16
-    const y = Math.sin(angle) * 16
-
-    const id = spawnAsteroid(x, y)
-
-    registerEnemySpawn()
-
-    return id
 }

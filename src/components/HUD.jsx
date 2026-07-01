@@ -12,13 +12,12 @@ export function HUD({ onPause, paused }) {
     lives: 3,
 
     wave: 1,
-    level: 1,
+ 
 
-    asteroidHealth: 20,
-    asteroidSpeed: 1,
-    spawnInterval: 2,
-    burst: 1,
-    asteroidCap: 8,
+  
+  
+ 
+ 
 
     enemiesRemaining: 0,
     enemyTarget: 0
@@ -34,13 +33,7 @@ export function HUD({ onPause, paused }) {
         lives: gameStats.lives,
 
         wave: progressionState.wave.number,
-        level: progressionState.difficulty.level,
-
-        asteroidHealth: progressionState.difficulty.asteroidHealth,
-        asteroidSpeed: progressionState.difficulty.asteroidSpeed,
-        spawnInterval: progressionState.difficulty.spawnInterval,
-        burst: progressionState.difficulty.burst,
-        asteroidCap: progressionState.difficulty.asteroidCap,
+ 
 
         enemiesRemaining: progressionState.wave.enemiesRemaining,
         enemyTarget: progressionState.wave.enemyTarget
@@ -91,35 +84,17 @@ export function HUD({ onPause, paused }) {
 
         <div className="flex gap-3 text-[11px]">
 
-          <span>LV {hud.level}</span>
-
-          <span>AST HP {hud.asteroidHealth}</span>
-
-          <span>SPD {hud.asteroidSpeed.toFixed(2)}</span>
-
-          <span>INT {hud.spawnInterval.toFixed(2)}</span>
-
-          <span>BURST {hud.burst}</span>
-
-          <span>CAP {hud.asteroidCap}</span>
+   
 
         </div>
 
       </div>
 
-      <span className="text-xs text-yellow-300">
-        SCORE {hud.score}
-      </span>
-
+      <span className="text-xs text-yellow-300">SCORE {hud.score}</span>
       <div className="flex flex-col leading-none">
-
-        <span>
-          WAVE {hud.wave}
-        </span>
-
-        <span className="text-[10px] text-cyan-300">
-          {hud.enemiesRemaining} / {hud.enemyTarget}
-        </span>
+        <span>WAVE {hud.wave}</span>
+        <span>Asteroids Spawned: {hud.enemiesSpawned}</span>
+        <span className="text-[10px] text-cyan-300">Remaining: {hud.enemiesRemaining} / Target: {hud.enemyTarget}</span>
 
       </div>
 
@@ -130,8 +105,8 @@ export function HUD({ onPause, paused }) {
         onClick={(e) => {
           e.currentTarget.blur()
           onPause()
-        }}
-      >
+        }}>
+
         {paused ? '▶ RESUME (P)' : '⏸ PAUSE (P)'}
       </button>
 
