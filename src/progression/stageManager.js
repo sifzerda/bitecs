@@ -1,17 +1,15 @@
 // src/progression/stageManager.js
 
-import { progressionState } from "./progressionState";
+import { progressionState } from "./progressionState"
+import { gameStats } from "../state/gameStats"
 
 export function stageManagerSystem() {
 
-    //---------------------------------------
-    // Keep compatibility with current game.
-    //---------------------------------------
+    //------------------------------------
+    // Temporary compatibility
+    //------------------------------------
 
-    progressionState.wave = progressionState.wave;
-}
+    gameStats.wave = progressionState.wave
+    gameStats.difficulty = progressionState.difficulty
 
-export function bossSpawned() {
-    progressionState.bossAlive = true;
-    progressionState.bossSpawnedThisWave = true;
 }

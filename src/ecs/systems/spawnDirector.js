@@ -6,7 +6,7 @@ import { spawnAsteroid } from "../spawn"
 import { spawnUfo } from "../spawnUfo"
 import { gameStats } from "../../state/gameStats"
 import { Velocity, Health, UfoHealth } from "../components"
-import { progressionState } from "../../progression/progressionState";
+import { progressionState, isBossWave, bossSpawned } from "../../progression/progressionState"
 
 let spawnTimer = 0
 const spawnRadius = 16
@@ -18,8 +18,6 @@ const BASE_MAX_ASTEROIDS = 8
 const MAX_ASTEROIDS_PER_DIFFICULTY = 1.2
 const ABSOLUTE_MAX_ASTEROIDS = 40
 
-const BOSS_WAVE_INTERVAL = 5
-progressionState.bossSpawnedThisWave
 
 export function spawnDirectorSystem() {
     const dt = world.time.delta
@@ -30,14 +28,16 @@ export function spawnDirectorSystem() {
     // Boss wave check
     //-------------------------------------------------
 
-    const isBossWave = wave % BOSS_WAVE_INTERVAL === 0
+    const bossWave = isBossWave()
 
-    if (isBossWave && wave !== lastBossWave) {
-        lastBossWave = wave
+    if (
+        bossWave &&
+        !progressionState.bossSpawnedThisWave
+    ) {
         spawnBoss(wave, difficulty)
+        bossSpawned()
         return
     }
-
     //-------------------------------------------------
     // Suppress normal spawning while a boss is alive
     //-------------------------------------------------
@@ -111,17 +111,23 @@ function applyDifficultyToAsteroid(id, difficulty) {
 //-------------------------------------------------
 
 function spawnBoss(wave, difficulty) {
-const isBossWave = wave % progressionState.bossWaveInterval === 0;
 
-if (
-    isBossWave &&
-    !progressionState.bossSpawnedThisWave
-){
-    spawnBoss();
+    const bossNumber = wave / progressionState.bossWaveInterval
 
-    progressionState.bossSpawnedThisWave=true;
-    progressionState.bossAlive=true;
+    const angle = Math.random() * Math.PI * 2
 
-    return;
-}
+    const x = Math.cos(angle) * (spawnRadius * 0.6)
+    const y = Math.sin(angle) * (spawnRadius * 0.6)
+
+    const id = spawnUfo(x, y)
+
+    const bossHealth =
+        Math.round(
+            80 *
+            (1 + bossNumber * 0.6) *
+            (1 + difficulty * 0.04)
+        )
+
+    UfoHealth.current[id] = bossHealth
+    UfoHealth.max[id] = bossHealth
 }
