@@ -2,13 +2,10 @@
 
 import { ufoBoss } from "./ufo"
 
-const bosses = {
+export const bossRegistry = {
     ufo: ufoBoss
 }
 
-export function getBoss(wave) {
-    if (wave % 5 === 0) {
-        return bosses.ufo
-    }
-    return null
+export function getBoss(id) {
+    return bossRegistry[id]
 }

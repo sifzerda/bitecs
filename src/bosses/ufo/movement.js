@@ -1,7 +1,7 @@
 // src/bosses/ufo/movement.js
 
 import { Position, Velocity } from "../../ecs/components"
-import { UFO_BOSS } from "./config"
+import { UFO_CONFIG } from "./config"
 import { getBossState } from "./state"
 
 export function updateMovement(id, dt) {
@@ -20,11 +20,11 @@ export function updateMovement(id, dt) {
     if (state.moveTimer <= 0) {
 
         const angle = Math.random() * Math.PI * 2
-        const distance = Math.random() * UFO_BOSS.wanderRadius
+        const distance = Math.random() * UFO_CONFIG.wanderRadius
 
         state.targetX = state.anchorX + Math.cos(angle) * distance
         state.targetY = state.anchorY + Math.sin(angle) * distance
-        state.moveTimer = UFO_BOSS.directionChangeInterval
+        state.moveTimer = UFO_CONFIG.directionChangeInterval
 
     }
 
@@ -33,11 +33,11 @@ export function updateMovement(id, dt) {
 
     const length = Math.hypot(dx, dy) || 1
 
-    const desiredX = dx / length * UFO_BOSS.maxSpeed
-    const desiredY = dy / length * UFO_BOSS.maxSpeed
+    const desiredX = dx / length * UFO_CONFIG.maxSpeed
+    const desiredY = dy / length * UFO_CONFIG.maxSpeed
 
-    Velocity.x[id] += (desiredX - Velocity.x[id]) * UFO_BOSS.steerStrength * dt
-    Velocity.y[id] += (desiredY - Velocity.y[id]) * UFO_BOSS.steerStrength * dt
+    Velocity.x[id] += (desiredX - Velocity.x[id]) * UFO_CONFIG.steerStrength * dt
+    Velocity.y[id] += (desiredY - Velocity.y[id]) * UFO_CONFIG.steerStrength * dt
 
     Position.x[id] += Velocity.x[id] * dt
     Position.y[id] += Velocity.y[id] * dt

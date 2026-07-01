@@ -8,25 +8,15 @@ import { UfoHealth } from "../../ecs/components"
 export const ufoBoss = {
 
     id: "ufo",
+    name: "Scout UFO",
 
     spawn(x, y, wave) {
-        const id = spawnUfoBoss(x, y)
-
-        const hp = this.getHealth(wave)
-
-        UfoHealth.current[id] = hp
-        UfoHealth.max[id] = hp
-
-        this.entity = id
-
-        return id
-    },
-
-    getHealth(wave) {
-        return 200 + wave * 40
+        return spawnUfoBoss(x, y, wave)
     },
 
     isAlive() {
         return ufoQuery().length > 0
-    }
+    },
+
+ 
 }
