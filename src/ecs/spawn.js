@@ -2,7 +2,7 @@
 
 import { addEntity, addComponent } from "bitecs";
 import { world } from "../ecs/constants/world";
-import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, AsteroidTag, BossTag } from "./components";
+import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, AsteroidTag } from "./components";
 
 export function spawnPlayer(x,y){
 

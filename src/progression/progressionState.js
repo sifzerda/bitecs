@@ -9,7 +9,4 @@ export const progressionState = {
     enemyTarget: 0,
     enemiesSpawned: 0,
     enemiesRemaining: 0,
-
-    bossActive: false,
-    currentBoss: null
 }
