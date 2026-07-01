@@ -19,8 +19,10 @@ export default function Home() {
         initialised.current = true
         // create player entity
         spawnPlayer(0, 0)
-        beginWave()
-        spawnUfo(0, 4) // test, delete once Ufo works
+        requestAnimationFrame(() => {
+            beginWave()
+        })
+        //   spawnUfo(0, 4) // test, delete once Ufo works
 
     }, [])
 

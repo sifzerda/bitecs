@@ -13,7 +13,7 @@ import {
     //Float -- effect for floating power-ups
 } from '@react-three/drei'
 import { useRef } from 'react'
-//import { HUD } from '../components/HUD.jsx'
+import { HUD } from '../components/HUD.jsx'
 import { world } from '../ecs/constants/world.js'
 import { gameLoop } from '../ecs/systems/gameLoop.js'
 
@@ -43,7 +43,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
         <div className="border-2 border-green-400">
             <div className="relative flex-1 h-[calc(100vh-120px)] px-4">
 
-                {/* <HUD paused={paused} onPause={onPause} /> */}
+                <HUD paused={paused} onPause={onPause} />
 
                 <Canvas
                     orthographic

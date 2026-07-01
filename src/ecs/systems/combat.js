@@ -48,8 +48,7 @@ export function combatSystem() {
         if (UfoHealth.current[uid] <= 0) {
           removeEntity(world, uid)
           enemyDestroyed()
-          gameStats.score += 1000
-          gameStats.enemiesDestroyed++
+
         }
 
         break
@@ -72,6 +71,7 @@ export function combatSystem() {
         if (Health.current[eid] <= 0) {
           removeEntity(world, eid)
           enemyDestroyed()
+
           gameStats.score += 100
           gameStats.enemiesDestroyed++
         }
