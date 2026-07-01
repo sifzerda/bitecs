@@ -1,56 +1,13 @@
-import { spawnUfo } from "../ecs/spawnUfo"
-import { UfoHealth } from "../ecs/components"
+// src/progression/bossRegistry.js
 
-/*
--------------------------------------------------------
-BOSS REGISTRY
--------------------------------------------------------
+import { ufoBoss } from "./bosses/ufoBoss"
+// import { Boss 2 } from "./bosses/boss2"
+// import { Boss 3 } from "./bosses/boss3"
 
-Every boss lives here.
+export const bossRegistry = {
 
-Later you'll simply add another object to this array.
-
-wave: first wave it appears
-
-spawn: function that creates it
-
--------------------------------------------------------
-*/
-
-export const bosses = [
-
-    {
-        wave: 5,
-
-        name: "UFO",
-
-        health(wave) {
-            return 150 + wave * 20
-        },
-
-        spawn(x, y, wave) {
-
-            const id = spawnUfo(x, y)
-
-            const hp = this.health(wave)
-
-            UfoHealth.current[id] = hp
-            UfoHealth.max[id] = hp
-
-            return id
-        }
-    }
-
-]
-
-/*
--------------------------------------------------------
-Returns boss for current wave
--------------------------------------------------------
-*/
-
-export function getBossForWave(wave) {
-
-    return bosses.find(b => b.wave === wave)
+    ufo: ufoBoss
+    //boss 2
+    // boss 3
 
 }
