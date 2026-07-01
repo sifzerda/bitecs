@@ -94,3 +94,43 @@ Post:
 - [ ] Score
 - [ ] settings, mouse control support/toggling
 - [ ] modular ship parts for upgrade and modular gun parts for upgrade
+
+
+
+- [ ] general game progression: n asteroid waves, then boss with new gun.
+Defeating boss drops/awards gun. Gun can be applied. N1 asteroid wave and next boss with new gun etc.
+
+
+Shot gun - space cowboy
+Machine gun - Military ship
+Charge gun - 
+acid sprayer - insectoid boss
+flamethrower - 
+homing missiles - 
+laser - 
+plasma gun - 
+
+Arc gun electric - 
+particle beam - 
+cluster cannon - 
+proximity mines - 
+prism beam - 
+cryo cannon - 
+
+some of these boss dropped weapons, some upgrades 
+
+Arc Gun – Lightning jumps between nearby asteroids.
+Particle Beam – Continuous beam that ramps up damage the longer it stays on target.
+
+Ricochet Gun – Bullets bounce off asteroids or screen edges.
+Cluster Cannon – Projectile splits into multiple fragments mid-flight.
+Proximity Mine Layer – Deploys floating mines.
+Grenade Launcher – Arcing explosive rounds.
+Prism Beam – Splits into several smaller beams.
+
+Dark Matter Launcher – Leaves damaging clouds.
+Nano Swarm – Nanobots chew through asteroids over time.
+Cryo Cannon – Freezes asteroids, making them easier to destroy.
+Acid Sprayer – Leaves corrosive puddles in space.
+Orbital Drones – Satellites orbit the ship and fire automatically.
+Pulse Wave – Expanding ring of energy from the ship.

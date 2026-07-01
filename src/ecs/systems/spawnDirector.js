@@ -6,6 +6,7 @@ import { spawnAsteroid } from "../spawn"
 import { spawnUfo } from "../spawnUfo"
 import { gameStats } from "../../state/gameStats"
 import { Velocity, Health, UfoHealth } from "../components"
+import { progressionState } from "../../progression/progressionState";
 
 let spawnTimer = 0
 const spawnRadius = 16
@@ -18,12 +19,12 @@ const MAX_ASTEROIDS_PER_DIFFICULTY = 1.2
 const ABSOLUTE_MAX_ASTEROIDS = 40
 
 const BOSS_WAVE_INTERVAL = 5
-let lastBossWave = 0
+progressionState.bossSpawnedThisWave
 
 export function spawnDirectorSystem() {
     const dt = world.time.delta
-    const difficulty = gameStats.difficulty
-    const wave = gameStats.wave
+    const difficulty = progressionState.difficulty;
+    const wave = progressionState.wave;
 
     //-------------------------------------------------
     // Boss wave check
@@ -110,15 +111,17 @@ function applyDifficultyToAsteroid(id, difficulty) {
 //-------------------------------------------------
 
 function spawnBoss(wave, difficulty) {
-    const bossNumber = wave / BOSS_WAVE_INTERVAL
+const isBossWave = wave % progressionState.bossWaveInterval === 0;
 
-    const angle = Math.random() * Math.PI * 2
-    const x = Math.cos(angle) * (spawnRadius * 0.6) // enters a bit closer in than asteroids
-    const y = Math.sin(angle) * (spawnRadius * 0.6)
+if (
+    isBossWave &&
+    !progressionState.bossSpawnedThisWave
+){
+    spawnBoss();
 
-    const id = spawnUfo(x, y)
+    progressionState.bossSpawnedThisWave=true;
+    progressionState.bossAlive=true;
 
-    const bossHealth = Math.round(80 * (1 + bossNumber * 0.6) * (1 + difficulty * 0.04))
-    UfoHealth.current[id] = bossHealth
-    UfoHealth.max[id] = bossHealth
+    return;
+}
 }
