@@ -4,14 +4,14 @@ import { playerQuery, asteroidQuery, bossQuery } from "../constants/queries.js";
 import { Position, Velocity } from "../constants/components.js";
 import { world } from "../constants/world.js";
 
-const BOUND_X = 6.6
-const BOUND_Y = 5.0
+const BOUND_X = 16.0
+const BOUND_Y = 6.6
 const BOSS_MARGIN = 1.5
 
 export function boundsSystem() {
 
     //-------------------------
-    // Player Clamp
+    // Player Wrap
     //-------------------------
 
     const players = playerQuery()
@@ -20,8 +20,17 @@ export function boundsSystem() {
 
         const id = players[i]
 
-        Position.x[id] = Math.max(-BOUND_X, Math.min(BOUND_X, Position.x[id]))
-        Position.y[id] = Math.max(-BOUND_Y, Math.min(BOUND_Y, Position.y[id]))
+        if (Position.x[id] > BOUND_X)
+            Position.x[id] = -BOUND_X
+
+        else if (Position.x[id] < -BOUND_X)
+            Position.x[id] = BOUND_X
+
+        if (Position.y[id] > BOUND_Y)
+            Position.y[id] = -BOUND_Y
+
+        else if (Position.y[id] < -BOUND_Y)
+            Position.y[id] = BOUND_Y
     }
 
     //-------------------------

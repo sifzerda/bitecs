@@ -8,11 +8,17 @@ import { world } from '../ecs/constants/world.js'
 import { Position, Rotation, Velocity } from '../ecs/constants/components.js'
 import { gameStats } from '../state/gameStats.js'
 
-const MAX_PARTICLES = 80
-const EMIT_PER_FRAME = 2
-const PARTICLE_LIFE = 0.4
-const SPEED = 3.5
-const SPREAD = 0.5
+const MAX_PARTICLES = 100
+const EMIT_PER_FRAME = 3
+const PARTICLE_LIFE_MIN = 0.25
+const PARTICLE_LIFE_MAX = 0.5
+const SPEED_MIN = 2.0
+const SPEED_MAX = 4.5
+const CONE_ANGLE = 0.5          // radians, spread cone behind the ship
+const PARTICLE_DRAG = 0.90      // per-frame velocity decay — stops the "string" look
+const VELOCITY_INHERIT = 0.05   // was 0.2 — high values lock particles to ship motion
+const SIZE_MIN = 0.12
+const SIZE_MAX = 0.28
 
 const _matrix = new THREE.Matrix4()
 const _position = new THREE.Vector3()
@@ -25,13 +31,14 @@ export function BoostRenderer() {
 
     const meshRef = useRef()
 
-    // particle pool: plain arrays, mutated in place, never trigger React renders
     const pool = useMemo(() => ({
         x: new Float32Array(MAX_PARTICLES),
         y: new Float32Array(MAX_PARTICLES),
         vx: new Float32Array(MAX_PARTICLES),
         vy: new Float32Array(MAX_PARTICLES),
-        life: new Float32Array(MAX_PARTICLES),   // <=0 means dead
+        life: new Float32Array(MAX_PARTICLES),
+        maxLife: new Float32Array(MAX_PARTICLES),
+        size: new Float32Array(MAX_PARTICLES),
         cursor: 0
     }), [])
 
@@ -50,23 +57,31 @@ export function BoostRenderer() {
 
             const pid = players[0]
 
-            const facingX = Math.sin(-Rotation[pid])
-            const facingY = Math.cos(-Rotation[pid])
+            const facingAngle = Math.atan2(Math.sin(-Rotation[pid]), Math.cos(-Rotation[pid]))
 
             for (let n = 0; n < EMIT_PER_FRAME; n++) {
 
                 const slot = pool.cursor
                 pool.cursor = (pool.cursor + 1) % MAX_PARTICLES
 
-                const spread = (Math.random() - 0.5) * SPREAD
+                // random angle within a cone pointing backward from the ship
+                const angle = facingAngle + Math.PI + (Math.random() - 0.5) * CONE_ANGLE
+                const speed = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN)
 
-                pool.x[slot] = Position.x[pid] - facingX * 0.4
-                pool.y[slot] = Position.y[pid] - facingY * 0.4
+                const dirX = Math.cos(angle)
+                const dirY = Math.sin(angle)
 
-                pool.vx[slot] = -facingX * SPEED + spread + Velocity.x[pid] * 0.2
-                pool.vy[slot] = -facingY * SPEED + spread + Velocity.y[pid] * 0.2
+                pool.x[slot] = Position.x[pid] - Math.sin(-Rotation[pid]) * 0.4
+                pool.y[slot] = Position.y[pid] - Math.cos(-Rotation[pid]) * 0.4
 
-                pool.life[slot] = PARTICLE_LIFE
+                pool.vx[slot] = dirX * speed + Velocity.x[pid] * VELOCITY_INHERIT
+                pool.vy[slot] = dirY * speed + Velocity.y[pid] * VELOCITY_INHERIT
+
+                const life = PARTICLE_LIFE_MIN + Math.random() * (PARTICLE_LIFE_MAX - PARTICLE_LIFE_MIN)
+                pool.life[slot] = life
+                pool.maxLife[slot] = life
+
+                pool.size[slot] = SIZE_MIN + Math.random() * (SIZE_MAX - SIZE_MIN)
             }
         }
 
@@ -83,18 +98,27 @@ export function BoostRenderer() {
             }
 
             pool.life[i] -= delta
+
+            // drag: particles slow down and clump instead of stringing out in a line
+            pool.vx[i] *= PARTICLE_DRAG
+            pool.vy[i] *= PARTICLE_DRAG
+
             pool.x[i] += pool.vx[i] * delta
             pool.y[i] += pool.vy[i] * delta
 
-            const t = Math.max(0, pool.life[i] / PARTICLE_LIFE)   // 1 -> 0
-            const s = 0.25 * t
+            const t = Math.max(0, pool.life[i] / pool.maxLife[i])   // 1 -> 0
+
+            // eased falloff: holds size briefly then shrinks fast (spark snap, not linear fade)
+            const eased = t * t
+            const s = pool.size[i] * eased
 
             _position.set(pool.x[i], pool.y[i], 0)
             _scale.set(s, s, s)
             _matrix.compose(_position, _rotation, _scale)
             mesh.setMatrixAt(i, _matrix)
 
-            _color.setHSL(0.55, 1, 0.5 + 0.3 * t)
+            // hot white-cyan at birth, cooling to deep blue and darkening as it dies
+            _color.setHSL(0.55 - 0.05 * (1 - t), 1, 0.35 + 0.5 * eased)
             mesh.setColorAt(i, _color)
         }
 
@@ -111,7 +135,7 @@ export function BoostRenderer() {
             frustumCulled={false}>
             <sphereGeometry args={[0.5, 6, 6]} />
             <meshBasicMaterial
-                color="#66ddff"
+                color="#88eeff"
                 transparent
                 opacity={0.85}
                 blending={THREE.AdditiveBlending}
