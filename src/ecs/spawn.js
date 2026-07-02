@@ -19,7 +19,7 @@ function setHealth(id, hp) {
     Health.max[id] = hp
 }
 
-// ============= ======= ============//
+// ============= Player Ship ============//
 
 export function spawnPlayer(x, y) {
 
@@ -33,6 +33,8 @@ export function spawnPlayer(x, y) {
     
     return id
 }
+
+// ============= Bullets ============//
 
 export function spawnBullet(x,y,rot){
 
@@ -56,6 +58,8 @@ export function spawnBullet(x,y,rot){
     return id;
 }
 
+// ============= Exhaust ============//
+
 export function spawnExhaust(x,y,rot){
 
     const id = addEntity(world);
@@ -78,6 +82,8 @@ export function spawnExhaust(x,y,rot){
     return id;
 }
 
+// ============= Asteroids ============//
+
 export function spawnAsteroid(x, y) {
 
     const id = addEntity(world)
@@ -93,6 +99,8 @@ export function spawnAsteroid(x, y) {
 
     return id
 }
+
+// ============= Boss ============//
 
 export function spawnBoss() {
 
@@ -120,6 +128,8 @@ export function spawnBoss() {
 
     return id
 }
+
+// ============= Boss Bullets ============//
 
 export function spawnBossBullet(x, y, vx, vy) {
 
