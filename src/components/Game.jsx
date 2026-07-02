@@ -20,10 +20,6 @@ export function Game() {
     }
 
     return (
-
-        <PlayScreen
-            paused={paused}
-            onPause={togglePause}
-        />
+        <PlayScreen paused={paused} onPause={togglePause} />
     )
 }
