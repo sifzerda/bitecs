@@ -5,7 +5,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { asteroidQuery } from '../ecs/constants/queries.js'
 import { world } from '../ecs/constants/world.js'
-import { Position, Health } from '../ecs/components.js'
+import { Position, Health } from '../ecs/constants/components.js'
 
 const MAX_ASTEROIDS = 64
 

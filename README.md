@@ -101,6 +101,14 @@ Post:
 Defeating boss drops/awards gun. Gun can be applied. N1 asteroid wave and next boss with new gun etc.
 
 
+
+
+
+
+
+//////
+
+
 Shot gun - space cowboy
 Machine gun - Military ship
 Charge gun - 
@@ -134,3 +142,13 @@ Cryo Cannon – Freezes asteroids, making them easier to destroy.
 Acid Sprayer – Leaves corrosive puddles in space.
 Orbital Drones – Satellites orbit the ship and fire automatically.
 Pulse Wave – Expanding ring of energy from the ship.
+
+
+
+ - [ ] if add bosses, make one kind and swap out guns, probably after gun system
+ - [ ] make one kind of boss behaviour and logic, and switch renderer (ship appearance) and gun type
+ - [ ] also potentially later boss has satelites that orbit it and help, or shield etc
+
+ - [ ]add in shockwave effect for explosive weapons
+
+ 
