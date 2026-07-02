@@ -23,7 +23,13 @@ export const Lifetime = {
     remaining: new Float32Array(MAX),
 };
 
+export const BossAI = {
+    moveTimer: new Float32Array(MAX),
+    shootTimer: new Float32Array(MAX),
+};
+
 export const PlayerTag = {};
 export const BulletTag = {};
 export const AsteroidTag = {};
 export const BossTag = {};
+export const EnemyBulletTag = {};

@@ -3,14 +3,14 @@
 import { removeEntity } from "bitecs"
 
 import { world } from "../constants/world.js"
-import { bulletQuery, asteroidQuery, bossQuery } from "../constants/queries.js"
+import { bulletQuery, asteroidQuery, bossQuery, bossBulletQuery, playerQuery } from "../constants/queries.js"
 import { Position, Health, Lifetime } from "../constants/components.js"
 import { spawnAsteroid, spawnBoss } from "../spawn.js"
 import { gameStats } from "../../state/gameStats.js"
 
 const HIT_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
-const SPAWN_RADIUS = 16
+const PLAYER_HIT_RADIUS = 0.6
 
 export function combatSystem() {
 
@@ -88,11 +88,47 @@ export function combatSystem() {
                     gameStats.score += 1000
 
                     gameStats.bossAlive = false
- 
+
                     gameStats.asteroidsRemaining = 0
                 }
 
                 break
+            }
+        }
+    }
+
+    // -------------------------
+    // BOSS BULLETS vs PLAYER
+    // -------------------------
+
+    const bossBullets = bossBulletQuery()
+    const players = playerQuery()
+    const pid = players.length > 0 ? players[0] : null
+
+    for (let i = 0; i < bossBullets.length; i++) {
+
+        const eid = bossBullets[i]
+
+        Lifetime.remaining[eid] -= dt
+
+        if (Lifetime.remaining[eid] <= 0) {
+            removeEntity(world, eid)
+            continue
+        }
+
+        if (pid === null) continue
+
+        const dx = Position.x[eid] - Position.x[pid]
+        const dy = Position.y[eid] - Position.y[pid]
+
+        if (dx * dx + dy * dy <= PLAYER_HIT_RADIUS * PLAYER_HIT_RADIUS) {
+
+            Health.current[pid] -= 10
+            removeEntity(world, eid)
+
+            if (Health.current[pid] <= 0) {
+                gameStats.lives--
+                Health.current[pid] = Health.max[pid]   // placeholder respawn-in-place
             }
         }
     }
