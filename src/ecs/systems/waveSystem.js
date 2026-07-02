@@ -11,23 +11,25 @@ export function waveSystem() {
     if (gameStats.asteroidsRemaining > 0 || gameStats.bossAlive)
         return
 
-    const isBossWave = gameStats.wave % 3 === 0
-
     // -------------------------
-    // BOSS WAVE
+    // BOSS CHECK
+    // (only fires once per 3-wave cycle, after asteroids are cleared)
     // -------------------------
-    if (isBossWave) {
+    if (gameStats.wave > 0 && gameStats.wave % 3 === 0 && !gameStats.bossDone) {
 
         spawnBoss()
         gameStats.bossAlive = true
-        gameStats.asteroidsRemaining = 0
+        gameStats.bossDone = true
 
         return
     }
 
     // -------------------------
-    // ASTEROID WAVE
+    // NEXT ASTEROID WAVE
     // -------------------------
+    gameStats.wave++
+    gameStats.bossDone = false
+
     const count = 4 + gameStats.wave * 2
     gameStats.asteroidsRemaining = count
 
@@ -40,6 +42,4 @@ export function waveSystem() {
             Math.sin(angle) * SPAWN_RADIUS
         )
     }
-
-    gameStats.wave++
 }
