@@ -88,7 +88,7 @@ export function combatSystem() {
                     gameStats.score += 1000
 
                     gameStats.bossAlive = false
-                    gameStats.bossActive = false
+ 
                     gameStats.asteroidsRemaining = 0
                 }
 

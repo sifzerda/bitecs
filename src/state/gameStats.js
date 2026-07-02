@@ -6,8 +6,9 @@ export const gameStats = {
     score: 0,
     lives: 3,
     paused: false,
-    wave: 1,
+    wave: 0,              // starts at 0, first asteroid wave becomes 1
     asteroidsRemaining: 0,
-    bossAlive: false 
+    bossAlive: false,
+    bossDone: false        // tracks whether this wave-cycle's boss already spawned
 
 }
