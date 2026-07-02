@@ -3,7 +3,7 @@
 import { playerQuery } from "../constants/queries.js"
 import { world } from "../constants/world.js"
 import { Position, Velocity, Rotation } from "../constants/components.js"
-import { spawnBullet } from "../spawn.js"
+import { spawnBullet, spawnExhaust } from "../spawn.js"
 import { input } from "./input.js"
 import { gameStats } from "../../state/gameStats.js"
 
@@ -44,6 +44,7 @@ export default function playerControlSystem(shootState) {
     if (input.thrust) {
         Velocity.x[pid] += Math.sin(-Rotation[pid]) * THRUST * dt
         Velocity.y[pid] += Math.cos(-Rotation[pid]) * THRUST * dt
+        spawnExhaust(Position.x[pid], Position.y[pid], Rotation[pid])
     }
 
     //----------------------------------

@@ -22,6 +22,7 @@ import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
 import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
 import { BossBulletRenderer } from '../renderers/BossBulletRenderer.jsx'
+import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 import { BoostRenderer } from '../renderers/BoostRenderer.jsx'
 
 export function GameLoop({ keysRef, paused }) {
@@ -60,6 +61,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <pointLight position={[0, 0, 5]} intensity={2} color="#ffffff" />
 
                     <PlayerRenderer />
+                    <ExhaustRenderer />
                     <BoostRenderer />
                     <AsteroidRenderer />
                     <BulletRenderer />

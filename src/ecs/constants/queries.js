@@ -7,6 +7,9 @@ import {
     Velocity,
     PlayerTag,
     BulletTag,
+
+    ExhaustTag,
+
     AsteroidTag,
     BossTag,
     Lifetime,
@@ -20,6 +23,8 @@ export const bulletQuery = () => query(world, [Position, BulletTag, Lifetime])
 export const asteroidQuery = () => query(world, [Position, Health, AsteroidTag])
 export const bossQuery = () => query(world, [Position, Health, BossTag])
 export const movingQuery = () => query(world, [Position, Velocity])
+
+export const exhaustQuery = () => query(world, [Position, ExhaustTag, Lifetime])
 
 export const bossAIQuery = () => query(world, [Position, Velocity, BossAI, BossTag])
 export const bossBulletQuery = () => query(world, [Position, BossBulletTag, Lifetime])
