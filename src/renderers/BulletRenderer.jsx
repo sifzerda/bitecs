@@ -46,25 +46,10 @@ export function BulletRenderer() {
     const haloRef = useRef()
     const trailRef = useRef()
 
-    const coreGeometry = useMemo(
-        () => new THREE.CapsuleGeometry(CORE_WIDTH, CORE_LENGTH, 2, 6),
-        []
-    )
-
-    const glowGeometry = useMemo(
-        () => new THREE.CapsuleGeometry(GLOW_WIDTH, GLOW_LENGTH, 2, 6),
-        []
-    )
-
-    const haloGeometry = useMemo(
-        () => new THREE.CapsuleGeometry(HALO_WIDTH, HALO_LENGTH, 2, 6),
-        []
-    )
-
-    const trailGeometry = useMemo(
-        () => new THREE.SphereGeometry(0.5, 5, 5),
-        []
-    )
+    const coreGeometry = useMemo(() => new THREE.CapsuleGeometry(CORE_WIDTH, CORE_LENGTH, 2, 6), [])
+    const glowGeometry = useMemo(() => new THREE.CapsuleGeometry(GLOW_WIDTH, GLOW_LENGTH, 2, 6), [])
+    const haloGeometry = useMemo(() => new THREE.CapsuleGeometry(HALO_WIDTH, HALO_LENGTH, 2, 6), [])
+    const trailGeometry = useMemo(() => new THREE.SphereGeometry(0.5, 5, 5), [])
 
     const trailPool = useMemo(() => ({
         x: new Float32Array(MAX_TRAIL),
