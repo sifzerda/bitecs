@@ -5,6 +5,7 @@ import { world } from "../constants/world.js"
 import { Position, Velocity, Rotation } from "../constants/components.js"
 import { spawnBullet } from "../spawn.js"
 import { input } from "./input.js"
+import { gameStats } from "../../state/gameStats.js"
 
 const TURN_SPEED = 4.5
 const THRUST = 28
@@ -12,6 +13,12 @@ const BRAKE = 18
 const MAX_SPEED = 24
 const DRAG = 0.995
 const FIRE_RATE = 0.15
+
+const BOOST_IMPULSE = 20      // instant kick added on activation
+const BOOST_MAX_SPEED = 40    // higher speed cap allowed while boosting
+export const BOOST_DURATION = 0.35   // seconds the raised speed cap lasts
+export const BOOST_COOLDOWN = 2.0    // seconds before it can be used again
+
 
 export default function playerControlSystem(shootState) {
 
@@ -49,16 +56,34 @@ export default function playerControlSystem(shootState) {
     }
 
     //----------------------------------
+    // Boost
+    //----------------------------------
+
+    gameStats.boostCooldown = Math.max(0, gameStats.boostCooldown - dt)
+    gameStats.boostActive = Math.max(0, gameStats.boostActive - dt)
+
+    if (input.boost && gameStats.boostCooldown <= 0) {
+
+        Velocity.x[pid] += Math.sin(-Rotation[pid]) * BOOST_IMPULSE
+        Velocity.y[pid] += Math.cos(-Rotation[pid]) * BOOST_IMPULSE
+
+        gameStats.boostActive = BOOST_DURATION
+        gameStats.boostCooldown = BOOST_COOLDOWN
+    }
+
+    //----------------------------------
     // Clamp speed
     //----------------------------------
+
+    const currentMaxSpeed = gameStats.boostActive > 0 ? BOOST_MAX_SPEED : MAX_SPEED
 
     const speed = Math.hypot(
         Velocity.x[pid],
         Velocity.y[pid]
     )
 
-    if (speed > MAX_SPEED) {
-        const scale = MAX_SPEED / speed
+    if (speed > currentMaxSpeed) {
+        const scale = currentMaxSpeed / speed
         Velocity.x[pid] *= scale
         Velocity.y[pid] *= scale
     }

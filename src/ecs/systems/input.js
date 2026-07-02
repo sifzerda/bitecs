@@ -5,7 +5,8 @@ export const input = {
     right: false,
     thrust: false,
     brake: false,
-    fire: false
+    fire: false,
+    boost: false
 }
 
 const bindings = {
@@ -18,7 +19,8 @@ const bindings = {
     KeyW: "thrust",
     KeyS: "brake",
     Space: "fire",
-    Spacebar: "fire"
+    Spacebar: "fire",
+    KeyB: "boost"
 }
 
 let initialized = false
