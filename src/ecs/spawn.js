@@ -2,7 +2,7 @@
 
 import { addEntity, addComponent } from "bitecs";
 import { world } from "./constants/world"
-import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, AsteroidTag, BossTag, BossAI, BossBulletTag } from "./constants/components";
+import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, ExhaustTag, AsteroidTag, BossTag, BossAI, BossBulletTag } from "./constants/components";
 import { gameStats } from "../state/gameStats";
 
 // ============= helpers ============//
@@ -42,6 +42,28 @@ export function spawnBullet(x,y,rot){
     addComponent(world,id,Velocity);
     addComponent(world,id,Lifetime);
     addComponent(world,id,BulletTag);
+
+    Position.x[id]=x;
+    Position.y[id]=y;
+
+    const speed=18;
+
+    Velocity.x[id]=Math.sin(-rot)*speed;
+    Velocity.y[id]=Math.cos(-rot)*speed;
+
+    Lifetime.remaining[id]=1.2;
+
+    return id;
+}
+
+export function spawnExhaust(x,y,rot){
+
+    const id = addEntity(world);
+
+    addComponent(world,id,Position);
+    addComponent(world,id,Velocity);
+    addComponent(world,id,Lifetime);
+    addComponent(world,id,ExhaustTag);
 
     Position.x[id]=x;
     Position.y[id]=y;

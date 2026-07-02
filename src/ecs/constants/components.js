@@ -30,6 +30,7 @@ export const BossAI = {
 
 export const PlayerTag = {};
 export const BulletTag = {};
+export const ExhaustTag = {};
 export const AsteroidTag = {};
 export const BossTag = {};
 export const BossBulletTag = {};
