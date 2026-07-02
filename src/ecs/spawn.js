@@ -1,8 +1,9 @@
 // src/ecs/spawn.js
 
 import { addEntity, addComponent } from "bitecs";
-import { world } from "../ecs/constants/world";
-import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, AsteroidTag } from "./constants/components";
+import { world } from "./constants/world"
+import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, AsteroidTag, BossTag } from "./constants/components";
+import { gameStats } from "../state/gameStats";
 
 // ============= helpers ============//
 
@@ -60,13 +61,36 @@ export function spawnAsteroid(x, y) {
     const id = addEntity(world)
 
     setPosition(id, x, y)
+
     addComponent(world, id, Velocity)
-    addComponent(world, id, AsteroidTag)
+    addComponent(world, id, AsteroidTag)   // ONLY this
     setHealth(id, 20)
 
     Velocity.x[id] = (Math.random() - 0.5) * 2
     Velocity.y[id] = (Math.random() - 0.5) * 2
 
     return id
+}
 
+export function spawnBoss() {
+
+    const id = addEntity(world)
+
+    addComponent(world, id, Position)
+    addComponent(world, id, Velocity)
+    addComponent(world, id, Health)
+    addComponent(world, id, BossTag)
+
+    Position.x[id] = 0
+    Position.y[id] = 0
+
+    Velocity.x[id] = 0
+    Velocity.y[id] = 0
+
+    Health.current[id] = 300
+    Health.max[id] = 300
+
+    gameStats.bossAlive = true
+
+    return id
 }
