@@ -5,14 +5,11 @@ import { movementSystem } from "./ecs/systems/movement.js"
 import { boundsSystem } from "./ecs/systems/bounds.js"
 import { combatSystem } from "./ecs/systems/combat.js"
 
-export function gameLoop(keys, shootState) {
+export function gameLoop(shootState) {
 
-    playerControlSystem(keys, shootState)
-
+    playerControlSystem(shootState)
     movementSystem()
-
     boundsSystem()
-
     combatSystem()
 
 }

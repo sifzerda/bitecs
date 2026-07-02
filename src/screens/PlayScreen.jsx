@@ -30,7 +30,7 @@ export function GameLoop({ keysRef, paused }) {
 
         world.time.delta = Math.min(delta, 0.05)
         world.time.elapsed += world.time.delta
-        gameLoop(keysRef.current, shootState.current)
+        gameLoop(shootState.current)
     })
 
     return null
