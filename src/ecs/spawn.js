@@ -2,7 +2,20 @@
 
 import { addEntity, addComponent } from "bitecs";
 import { world } from "./constants/world"
-import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, ExhaustTag, AsteroidTag, BossTag, BossAI, BossBulletTag } from "./constants/components";
+import { 
+    Position, 
+    Velocity, 
+    Rotation, 
+    Health, 
+    Lifetime, 
+    PlayerTag, 
+    BulletTag, 
+    ExhaustTag, 
+    AsteroidTag, 
+    BossTag, 
+    BossAI, 
+    BossBulletTag 
+} from "./constants/components";
 import { gameStats } from "../state/gameStats";
 
 // ============= helpers ============//
