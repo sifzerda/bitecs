@@ -10,18 +10,15 @@ export const input = {
 
 const bindings = {
     ArrowLeft: "left",
-    KeyA: "left",
-
     ArrowRight: "right",
-    KeyD: "right",
-
     ArrowUp: "thrust",
-    KeyW: "thrust",
-
     ArrowDown: "brake",
+    KeyA: "left",
+    KeyD: "right",
+    KeyW: "thrust",
     KeyS: "brake",
-
-    Space: "fire"
+    Space: "fire",
+    Spacebar: "fire"
 }
 
 let initialized = false
@@ -41,7 +38,8 @@ export function initializeInput(onPause) {
 
     function keyDown(e) {
 
-        const action = bindings[e.code]
+        const key = e.code || e.key
+        const action = bindings[key]
 
         if (action) {
             input[action] = true
@@ -54,7 +52,8 @@ export function initializeInput(onPause) {
 
     function keyUp(e) {
 
-        const action = bindings[e.code]
+        const key = e.code || e.key
+        const action = bindings[key]
 
         if (action) {
             input[action] = false
@@ -63,7 +62,7 @@ export function initializeInput(onPause) {
 
     function clearInput() {
 
-        for (const action of Object.values(bindings)) {
+        for (const action of new Set(Object.values(bindings))) {
             input[action] = false
         }
 

@@ -26,3 +26,4 @@ export const Lifetime = {
 export const PlayerTag = {};
 export const BulletTag = {};
 export const AsteroidTag = {};
+export const BossTag = {};

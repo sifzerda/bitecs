@@ -20,6 +20,7 @@ import { gameLoop } from '../state/gameLoop.js'
 import { PlayerRenderer } from '../renderers/PlayerRenderer.jsx'
 import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
 import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
+import { BossRenderer } from '../renderers/BossRenderer.jsx'
 
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
@@ -58,7 +59,8 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <PlayerRenderer />
                     <AsteroidRenderer />
                     <BulletRenderer />
-
+                    <BossRenderer />
+                    
                     <EffectComposer multisampling={0}>
 
                         <Bloom

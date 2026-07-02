@@ -16,11 +16,8 @@ const FIRE_RATE = 0.15
 export default function playerControlSystem(shootState) {
 
     const dt = world.time.delta
-
     const players = playerQuery()
-
     if (players.length === 0) return
-
     const pid = players[0]
 
     //----------------------------------
@@ -38,10 +35,8 @@ export default function playerControlSystem(shootState) {
     //----------------------------------
 
     if (input.thrust) {
-
         Velocity.x[pid] += Math.sin(-Rotation[pid]) * THRUST * dt
         Velocity.y[pid] += Math.cos(-Rotation[pid]) * THRUST * dt
-
     }
 
     //----------------------------------
@@ -49,10 +44,8 @@ export default function playerControlSystem(shootState) {
     //----------------------------------
 
     if (input.brake) {
-
         Velocity.x[pid] -= Math.sin(-Rotation[pid]) * BRAKE * dt
         Velocity.y[pid] -= Math.cos(-Rotation[pid]) * BRAKE * dt
-
     }
 
     //----------------------------------
@@ -65,12 +58,9 @@ export default function playerControlSystem(shootState) {
     )
 
     if (speed > MAX_SPEED) {
-
         const scale = MAX_SPEED / speed
-
         Velocity.x[pid] *= scale
         Velocity.y[pid] *= scale
-
     }
 
     //----------------------------------
@@ -87,15 +77,8 @@ export default function playerControlSystem(shootState) {
     shootState.timer -= dt
 
     if (input.fire && shootState.timer <= 0) {
-
-        spawnBullet(
-            Position.x[pid],
-            Position.y[pid],
-            Rotation[pid]
-        )
-
+        spawnBullet(Position.x[pid], Position.y[pid], Rotation[pid])
         shootState.timer = FIRE_RATE
-
     }
 
 }

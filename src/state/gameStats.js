@@ -1,4 +1,5 @@
 // src/state/gameStats.js
+// sent to hud
 
 export const gameStats = {
 
@@ -6,6 +7,7 @@ export const gameStats = {
     lives: 3,
     paused: false,
     wave: 1,
-    asteroidsRemaining: 0
+    asteroidsRemaining: 0,
+    bossAlive: false 
 
 }
