@@ -72,7 +72,7 @@ export function HUD({ onPause, paused }) {
 
 
 
- <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-2 text-xs">
 
                 <span>BOOST</span>
 

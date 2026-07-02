@@ -41,10 +41,11 @@ export function GameLoop({ keysRef, paused }) {
 
 export function PlayScreen({ keysRef, paused, onPause }) {
     return (
-        <div className="border-2 border-green-400">
-            <div className="relative flex-1 h-[calc(100vh-120px)] px-4">
+        <div className="border-2 border-green-400 flex flex-col h-[calc(100vh-120px)]">
 
-                <HUD paused={paused} onPause={onPause} />
+            <HUD paused={paused} onPause={onPause} />
+
+            <div className="relative flex-1 px-4">
 
                 <Canvas
                     orthographic

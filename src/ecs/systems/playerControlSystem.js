@@ -14,10 +14,10 @@ const MAX_SPEED = 24
 const DRAG = 0.995
 const FIRE_RATE = 0.15
 
-const BOOST_IMPULSE = 20      // instant kick added on activation
-const BOOST_MAX_SPEED = 40    // higher speed cap allowed while boosting
-export const BOOST_DURATION = 0.35   // seconds the raised speed cap lasts
-export const BOOST_COOLDOWN = 2.0    // seconds before it can be used again
+const BOOST_THRUST = 90       // 
+const BOOST_MAX_SPEED = 40
+export const BOOST_DURATION = 0.35
+export const BOOST_COOLDOWN = 2.0
 
 
 export default function playerControlSystem(shootState) {
@@ -62,13 +62,17 @@ export default function playerControlSystem(shootState) {
     gameStats.boostCooldown = Math.max(0, gameStats.boostCooldown - dt)
     gameStats.boostActive = Math.max(0, gameStats.boostActive - dt)
 
-    if (input.boost && gameStats.boostCooldown <= 0) {
-
-        Velocity.x[pid] += Math.sin(-Rotation[pid]) * BOOST_IMPULSE
-        Velocity.y[pid] += Math.cos(-Rotation[pid]) * BOOST_IMPULSE
-
+    // trigger: only allowed to start a fresh boost window when off cooldown
+    if (input.boost && gameStats.boostCooldown <= 0 && gameStats.boostActive <= 0) {
         gameStats.boostActive = BOOST_DURATION
         gameStats.boostCooldown = BOOST_COOLDOWN
+    }
+
+    // continuous thrust for as long as the boost window is active,
+    // re-reads Rotation every frame so it curves with turning
+    if (gameStats.boostActive > 0) {
+        Velocity.x[pid] += Math.sin(-Rotation[pid]) * BOOST_THRUST * dt
+        Velocity.y[pid] += Math.cos(-Rotation[pid]) * BOOST_THRUST * dt
     }
 
     //----------------------------------
