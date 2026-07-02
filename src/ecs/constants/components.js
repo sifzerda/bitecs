@@ -32,4 +32,4 @@ export const PlayerTag = {};
 export const BulletTag = {};
 export const AsteroidTag = {};
 export const BossTag = {};
-export const EnemyBulletTag = {};
+export const BossBulletTag = {};

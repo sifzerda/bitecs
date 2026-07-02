@@ -7,7 +7,7 @@ import * as THREE from 'three'
 import { world } from '../ecs/constants/world.js'
 import { Position } from '../ecs/constants/components.js'
 
-const MAX_ENEMY_BULLETS = 128
+const MAX_BOSS_BULLETS = 128
 const _matrix = new THREE.Matrix4()
 const _position = new THREE.Vector3()
 const _rotation = new THREE.Quaternion()
@@ -32,17 +32,17 @@ export function BossBulletRenderer() {
 
         _position.set(0, 0, 0)
 
-        for (let i = bullets.length; i < MAX_ENEMY_BULLETS; i++) {
+        for (let i = bullets.length; i < MAX_BOSS_BULLETS; i++) {
             _matrix.compose(_position, _rotation, _scaleZero)
             mesh.setMatrixAt(i, _matrix)
         }
 
         mesh.instanceMatrix.needsUpdate = true
-        mesh.count = MAX_ENEMY_BULLETS
+        mesh.count = MAX_BOSS_BULLETS
     })
 
     return (
-        <instancedMesh ref={meshRef} args={[null, null, MAX_ENEMY_BULLETS]} frustumCulled={false}>
+        <instancedMesh ref={meshRef} args={[null, null, MAX_BOSS_BULLETS]} frustumCulled={false}>
             <sphereGeometry args={[0.14, 6, 6]} />
             <meshStandardMaterial color="#ff5522" emissive="#552200" />
         </instancedMesh>
