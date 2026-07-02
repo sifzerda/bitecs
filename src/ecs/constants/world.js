@@ -2,6 +2,7 @@
 import { createWorld } from "bitecs";
 
 export const world = createWorld({
+    
     time: {
         delta: 0,
         elapsed: 0
