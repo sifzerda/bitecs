@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { gameStats } from '../state/gameStats.js'
 import { skipWave } from '../ecs/systems/waveSystem.js'
+import { BOOST_COOLDOWN } from '../ecs/systems/playerControlSystem.js'
 
 export function HUD({ onPause, paused }) {
 
@@ -11,7 +12,8 @@ export function HUD({ onPause, paused }) {
         health: gameStats.health,
         lives: gameStats.lives,
         wave: gameStats.wave,
-        asteroidsRemaining: gameStats.asteroidsRemaining
+        asteroidsRemaining: gameStats.asteroidsRemaining,
+        boostCooldown: gameStats.boostCooldown
     })
 
     useEffect(() => {
@@ -23,7 +25,8 @@ export function HUD({ onPause, paused }) {
                 health: gameStats.health,
                 lives: gameStats.lives,
                 wave: gameStats.wave,
-                asteroidsRemaining: gameStats.asteroidsRemaining
+                asteroidsRemaining: gameStats.asteroidsRemaining,
+                boostCooldown: gameStats.boostCooldown
             })
 
         }, 100)
@@ -34,6 +37,10 @@ export function HUD({ onPause, paused }) {
 
     const healthPct = Math.max(0, hud.health / 100)
     const healthColor = healthPct > 0.5 ? "#44ff88" : healthPct > 0.25 ? "#ffdd44" : "#ff4466"
+
+    const boostPct = Math.max(0, Math.min(1, 1 - hud.boostCooldown / BOOST_COOLDOWN))
+    const boostReady = boostPct >= 1
+    const boostColor = boostReady ? "#44ddff" : "#2a6a80"
 
     return (
 
@@ -61,13 +68,38 @@ export function HUD({ onPause, paused }) {
                 <span>{hud.health}</span>
             </div>
 
+
+
+
+
+ <div className="flex items-center gap-2 text-xs">
+
+                <span>BOOST</span>
+
+                <div className="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
+
+                    <div
+                        style={{
+                            width: `${boostPct * 100}%`,
+                            height: "100%",
+                            background: boostColor,
+                            transition: "width .1s linear"
+                        }}
+                    />
+
+                </div>
+
+            </div>
+
+
+
+
+
             <span className="text-xs text-yellow-300">SCORE {hud.score}</span>
             <div className="flex flex-col leading-none text-right">
                 <span>WAVE {hud.wave}</span>
                 <span className="text-[10px] text-cyan-300">ASTEROIDS {hud.asteroidsRemaining}</span>
             </div>
-
-
 
             {!paused && (
                 <button type="button" tabIndex={-1}
@@ -79,8 +111,6 @@ export function HUD({ onPause, paused }) {
                     ⏭ SKIP WAVE
                 </button>
             )}
-
-
 
             <button type="button" tabIndex={-1}
                 className="bg-transparent border-2 border-green-400 text-green-400 font-mono text-xs px-2 py-1 hover:bg-green-400 hover:text-black transition-colors"
