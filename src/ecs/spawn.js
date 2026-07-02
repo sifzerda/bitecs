@@ -2,7 +2,7 @@
 
 import { addEntity, addComponent } from "bitecs";
 import { world } from "./constants/world"
-import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, AsteroidTag, BossTag } from "./constants/components";
+import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, AsteroidTag, BossTag, BossAI, EnemyBulletTag } from "./constants/components";
 import { gameStats } from "../state/gameStats";
 
 // ============= helpers ============//
@@ -80,6 +80,7 @@ export function spawnBoss() {
     addComponent(world, id, Velocity)
     addComponent(world, id, Health)
     addComponent(world, id, BossTag)
+    addComponent(world, id, BossAI)
 
     Position.x[id] = 0
     Position.y[id] = 0
@@ -90,7 +91,30 @@ export function spawnBoss() {
     Health.current[id] = 300
     Health.max[id] = 300
 
+    BossAI.moveTimer[id] = 0     // pick a direction immediately
+    BossAI.shootTimer[id] = 1    // small delay before first shot
+
     gameStats.bossAlive = true
+
+    return id
+}
+
+export function spawnEnemyBullet(x, y, vx, vy) {
+
+    const id = addEntity(world)
+
+    addComponent(world, id, Position)
+    addComponent(world, id, Velocity)
+    addComponent(world, id, Lifetime)
+    addComponent(world, id, EnemyBulletTag)
+
+    Position.x[id] = x
+    Position.y[id] = y
+
+    Velocity.x[id] = vx
+    Velocity.y[id] = vy
+
+    Lifetime.remaining[id] = 3.0
 
     return id
 }

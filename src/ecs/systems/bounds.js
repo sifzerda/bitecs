@@ -1,11 +1,12 @@
 // src/ecs/systems/bounds.js
 
-import { playerQuery, asteroidQuery } from "../constants/queries.js";
-import { Position } from "../constants/components.js";
+import { playerQuery, asteroidQuery, bossQuery } from "../constants/queries.js";
+import { Position, Velocity } from "../constants/components.js";
 import { world } from "../constants/world.js";
 
 const BOUND_X = 6.6
 const BOUND_Y = 5.0
+const BOSS_MARGIN = 1.5
 
 export function boundsSystem() {
 
@@ -46,4 +47,32 @@ export function boundsSystem() {
             Position.y[id] = BOUND_Y
     }
 
+    //-------------------------
+    // Boss Clamp + Bounce
+    //-------------------------
+
+    const bosses = bossQuery()
+    const bx = BOUND_X - BOSS_MARGIN
+    const by = BOUND_Y - BOSS_MARGIN
+
+    for (let i = 0; i < bosses.length; i++) {
+
+        const id = bosses[i]
+
+        if (Position.x[id] > bx) {
+            Position.x[id] = bx
+            Velocity.x[id] = -Math.abs(Velocity.x[id])
+        } else if (Position.x[id] < -bx) {
+            Position.x[id] = -bx
+            Velocity.x[id] = Math.abs(Velocity.x[id])
+        }
+
+        if (Position.y[id] > by) {
+            Position.y[id] = by
+            Velocity.y[id] = -Math.abs(Velocity.y[id])
+        } else if (Position.y[id] < -by) {
+            Position.y[id] = -by
+            Velocity.y[id] = Math.abs(Velocity.y[id])
+        }
+    }
 }
