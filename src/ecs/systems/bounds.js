@@ -1,39 +1,49 @@
 // src/ecs/systems/bounds.js
 
 import { playerQuery, asteroidQuery } from "../constants/queries.js";
-import { Position } from "../components.js";
+import { Position } from "../constants/components.js";
+import { world } from "../constants/world.js";
 
-const BOUND_X = 6.6;
-const BOUND_Y = 5.0;
+const BOUND_X = 6.6
+const BOUND_Y = 5.0
 
 export function boundsSystem() {
 
-    const players = playerQuery();
+    //-------------------------
+    // Player Clamp
+    //-------------------------
+
+    const players = playerQuery()
 
     for (let i = 0; i < players.length; i++) {
 
-        const eid = players[i];
+        const id = players[i]
 
-        Position.x[eid] = Math.max(-BOUND_X, Math.min(BOUND_X, Position.x[eid]));
-        Position.y[eid] = Math.max(-BOUND_Y, Math.min(BOUND_Y, Position.y[eid]));
+        Position.x[id] = Math.max(-BOUND_X, Math.min(BOUND_X, Position.x[id]))
+        Position.y[id] = Math.max(-BOUND_Y, Math.min(BOUND_Y, Position.y[id]))
     }
 
-    const asteroids = asteroidQuery();
+    //-------------------------
+    // Asteroid Wrap
+    //-------------------------
+
+    const asteroids = asteroidQuery()
 
     for (let i = 0; i < asteroids.length; i++) {
 
-        const eid = asteroids[i];
+        const id = asteroids[i]
 
-        if (Position.x[eid] > BOUND_X)
-            Position.x[eid] = -BOUND_X;
+        if (Position.x[id] > BOUND_X)
+            Position.x[id] = -BOUND_X
 
-        if (Position.x[eid] < -BOUND_X)
-            Position.x[eid] = BOUND_X;
+        else if (Position.x[id] < -BOUND_X)
+            Position.x[id] = BOUND_X
 
-        if (Position.y[eid] > BOUND_Y)
-            Position.y[eid] = -BOUND_Y;
+        if (Position.y[id] > BOUND_Y)
+            Position.y[id] = -BOUND_Y
 
-        if (Position.y[eid] < -BOUND_Y)
-            Position.y[eid] = BOUND_Y;
+        else if (Position.y[id] < -BOUND_Y)
+            Position.y[id] = BOUND_Y
     }
+
 }

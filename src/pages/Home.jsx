@@ -1,13 +1,8 @@
 // src/pages/Home.jsx
 
-// src/pages/Home.jsx
-
 import { useEffect, useRef, useState } from "react"
-
 import { PlayScreen } from "../screens/PlayScreen"
-
-import { initializeGame } from "../startGame.js"
-
+import { spawnPlayer } from "../ecs/spawn"
 import { gameStats } from "../state/gameStats"
 
 export default function Home() {
@@ -22,13 +17,7 @@ export default function Home() {
     //----------------------------------
 
     useEffect(() => {
-
-        if (initialized.current) return
-
-        initialized.current = true
-
-        initializeGame()
-
+        spawnPlayer(0, 0)
     }, [])
 
     //----------------------------------
@@ -40,27 +29,20 @@ export default function Home() {
         function keyDown(e) {
 
             keysRef.current[e.key] = true
-
             if (e.code === "KeyP") {
-
                 togglePause()
-
             }
 
         }
 
         function keyUp(e) {
-
             keysRef.current[e.key] = false
-
         }
 
         function handleBlur() {
 
             keysRef.current = {}
-
             if (!gameStats.paused) {
-
                 gameStats.paused = true
                 setPaused(true)
 
@@ -71,9 +53,7 @@ export default function Home() {
         function handleVisibility() {
 
             if (document.hidden) {
-
                 handleBlur()
-
             }
 
         }
@@ -95,7 +75,6 @@ export default function Home() {
                 "visibilitychange",
                 handleVisibility
             )
-
         }
 
     }, [])
@@ -107,7 +86,6 @@ export default function Home() {
     function togglePause() {
 
         gameStats.paused = !gameStats.paused
-
         setPaused(gameStats.paused)
 
     }

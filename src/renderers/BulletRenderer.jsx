@@ -5,7 +5,7 @@ import { useFrame } from '@react-three/fiber'
 import { bulletQuery } from '../ecs/constants/queries.js'
 import * as THREE from 'three'
 import { world } from '../ecs/constants/world.js'
-import { Position, BulletTag } from '../ecs/components.js'
+import { Position, BulletTag } from '../ecs/constants/components.js'
 
 const MAX_BULLETS = 256
 const _matrix = new THREE.Matrix4()

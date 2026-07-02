@@ -2,7 +2,7 @@
 
 import { playerQuery } from "../constants/queries.js"
 import { world } from "../constants/world.js"
-import { Position, Velocity, Rotation } from "../components.js"
+import { Position, Velocity, Rotation } from "../constants/components.js"
 import { spawnBullet } from "../spawn.js"
 
 const TURN_SPEED = 4.5
@@ -10,54 +10,64 @@ const THRUST = 28
 const BRAKE = 18
 const MAX_SPEED = 24
 const DRAG = 0.995
+const FIRE_RATE = 0.15
+
 export default function playerControlSystem(keys, shootState) {
 
     const dt = world.time.delta
-    const players = playerQuery()
+
+    const players = playerQuery(world)
 
     if (players.length === 0) return
 
     const pid = players[0]
 
-    // turning
+    // Turn
     if (keys["ArrowLeft"] || keys["a"])
         Rotation[pid] += TURN_SPEED * dt
+
     if (keys["ArrowRight"] || keys["d"])
         Rotation[pid] -= TURN_SPEED * dt
 
-    // thrust
+    // Forward thrust
     if (keys["ArrowUp"] || keys["w"]) {
         Velocity.x[pid] += Math.sin(-Rotation[pid]) * THRUST * dt
         Velocity.y[pid] += Math.cos(-Rotation[pid]) * THRUST * dt
     }
 
-    // reverse thrust
+    // Reverse thrust
     if (keys["ArrowDown"] || keys["s"]) {
         Velocity.x[pid] -= Math.sin(-Rotation[pid]) * BRAKE * dt
         Velocity.y[pid] -= Math.cos(-Rotation[pid]) * BRAKE * dt
     }
 
-    // speed limit
+    // Clamp speed
     const speed = Math.hypot(
         Velocity.x[pid],
         Velocity.y[pid]
     )
 
     if (speed > MAX_SPEED) {
-        Velocity.x[pid] = (Velocity.x[pid] / speed) * MAX_SPEED
-        Velocity.y[pid] = (Velocity.y[pid] / speed) * MAX_SPEED
+        const scale = MAX_SPEED / speed
+        Velocity.x[pid] *= scale
+        Velocity.y[pid] *= scale
     }
 
-    // space drag
+    // Drag
     Velocity.x[pid] *= DRAG
     Velocity.y[pid] *= DRAG
 
-    // shooting
+    // Shooting
     shootState.timer -= dt
 
     if (keys[" "] && shootState.timer <= 0) {
-        spawnBullet(Position.x[pid], Position.y[pid], Rotation[pid])
-        shootState.timer = 0.15
-    }
 
+        spawnBullet(
+            Position.x[pid],
+            Position.y[pid],
+            Rotation[pid]
+        )
+
+        shootState.timer = FIRE_RATE
+    }
 }

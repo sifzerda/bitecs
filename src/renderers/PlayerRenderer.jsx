@@ -4,7 +4,8 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { playerQuery } from '../ecs/constants/queries.js';
-import { Position, Rotation } from '../ecs/components.js';
+import { Position, Rotation } from '../ecs/constants/components.js';
+import { world } from '../ecs/constants/world.js';
 
 export function PlayerRenderer() {
   const shipRef = useRef();
@@ -62,7 +63,7 @@ export function PlayerRenderer() {
   }, []);
 
   useFrame(() => {
-    const ids = playerQuery();
+    const ids = playerQuery(world);
     if (!ids.length) return;
 
     const id = ids[0];

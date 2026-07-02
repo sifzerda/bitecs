@@ -2,25 +2,35 @@
 
 import { addEntity, addComponent } from "bitecs";
 import { world } from "../ecs/constants/world";
-import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, AsteroidTag } from "./components";
+import { Position, Velocity, Rotation, Health, Lifetime, PlayerTag, BulletTag, AsteroidTag } from "./constants/components";
 
-export function spawnPlayer(x,y){
+// ============= helpers ============//
 
-    const id = addEntity(world);
+function setPosition(id, x, y) {
+    addComponent(world, id, Position)
+    Position.x[id] = x
+    Position.y[id] = y
+}
 
-    addComponent(world,id,Position);
-    addComponent(world,id,Velocity);
-    addComponent(world,id,Rotation);
-    addComponent(world,id,Health);
-    addComponent(world,id,PlayerTag);
+function setHealth(id, hp) {
+    addComponent(world, id, Health)
+    Health.current[id] = hp
+    Health.max[id] = hp
+}
 
-    Position.x[id]=x;
-    Position.y[id]=y;
+// ============= ======= ============//
 
-    Health.current[id]=100;
-    Health.max[id]=100;
+export function spawnPlayer(x, y) {
 
-    return id;
+    const id = addEntity(world)
+
+    setPosition(id, x, y)
+    addComponent(world, id, Velocity)
+    addComponent(world, id, Rotation)
+    addComponent(world, id, PlayerTag)
+    setHealth(id, 100)
+    
+    return id
 }
 
 export function spawnBullet(x,y,rot){
@@ -45,23 +55,18 @@ export function spawnBullet(x,y,rot){
     return id;
 }
 
-export function spawnAsteroid(x, y, isBoss = false){
+export function spawnAsteroid(x, y) {
 
-    const id=addEntity(world);
+    const id = addEntity(world)
 
-    addComponent(world,id,Position);
-    addComponent(world,id,Velocity);
-    addComponent(world,id,Health);
-    addComponent(world,id,AsteroidTag);
+    setPosition(id, x, y)
+    addComponent(world, id, Velocity)
+    addComponent(world, id, AsteroidTag)
+    setHealth(id, 20)
 
-    Position.x[id]=x;
-    Position.y[id]=y;
+    Velocity.x[id] = (Math.random() - 0.5) * 2
+    Velocity.y[id] = (Math.random() - 0.5) * 2
 
-    Velocity.x[id]=(Math.random()-0.5)*2;
-    Velocity.y[id]=(Math.random()-0.5)*2;
+    return id
 
-    Health.current[id]=20;
-    Health.max[id]=20;
- 
-    return id;
 }
