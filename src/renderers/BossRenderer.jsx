@@ -9,7 +9,6 @@ import { world } from "../ecs/constants/world.js"
 import { Position, Health } from "../ecs/constants/components.js"
 
 const MAX_BOSSES = 4
-
 const BAR_WIDTH = 3.0
 const BAR_HEIGHT = 0.2
 const BAR_OFFSET = 2.2
