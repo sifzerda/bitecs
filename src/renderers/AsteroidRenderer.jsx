@@ -11,14 +11,21 @@ const MAX_ASTEROIDS = 64
 
 // ------------------------------------------------------
 const colours = [
-    new THREE.Color("#9a7b58"), // sandstone
-    new THREE.Color("#8c684a"), // brown
-    new THREE.Color("#72645d"), // slate
-    new THREE.Color("#5c4d45"), // dark rock
-    new THREE.Color("#a08d70"), // dusty tan
-    new THREE.Color("#6f5e53"), // basalt
-    new THREE.Color("#b28c63"), // iron rich
-    new THREE.Color("#837058"), // weathered
+    new THREE.Color("#b89878"), // sandstone
+    new THREE.Color("#a8846a"), // brown
+    new THREE.Color("#928077"), // slate
+    new THREE.Color("#7c6d63"), // dark rock
+    new THREE.Color("#c0ac8c"), // dusty tan
+    new THREE.Color("#8f7d6f"), // basalt
+    new THREE.Color("#d0a878"), // iron rich
+    new THREE.Color("#a3907a"), // weathered
+    new THREE.Color("#9a9a9e"), // steel grey
+    new THREE.Color("#c4c4c8"), // pale stone
+    new THREE.Color("#b8b8bc"), // silver
+    new THREE.Color("#8a8a88"), // granite
+    new THREE.Color("#a0a0a4"), // silver
+    new THREE.Color("#b0b0b4"), // steel grey
+
 ]
 
 // ------------------------------------------------------
@@ -64,17 +71,28 @@ export function AsteroidRenderer() {
             v.fromBufferAttribute(pos, i)
 
             const dir = v.clone().normalize()
+            // low-frequency base shape (large bumps/dents)
+           const base =
+            Math.sin(dir.x * 2.3) * 0.22 +
+            Math.sin(dir.y * 5.7) * 0.15 +
+            Math.sin(dir.z * 9.1) * 0.10
 
-            const noise =
-                Math.sin(dir.x * 2.3) * 0.25 +
-                Math.sin(dir.y * 5.7) * 0.18 +
-                Math.sin(dir.z * 9.1) * 0.12 +
-                Math.sin((dir.x + dir.y) * 7.0) * 0.10 +
-                Math.sin((dir.x - dir.z) * 11.0) * 0.06
+        const jagged =
+            Math.sin(dir.x * 18.0 + dir.y * 7.0) * 0.08 +
+            Math.sin(dir.y * 23.0 + dir.z * 11.0) * 0.07 +
+            Math.sin(dir.z * 27.0 + dir.x * 13.0) * 0.06
 
-            v.multiplyScalar(1 + noise)
+        // reduced from 0.12 and removed pow(3) — steep power curves are
+        // what fold geometry into itself and invert normals
+        const spike =
+            Math.abs(Math.sin(dir.x * 31.0 + dir.z * 17.0)) * 0.05 *
+            (Math.random() > 0.7 ? 1 : 0)
 
-            pos.setXYZ(i, v.x, v.y, v.z)
+        const noise = base + jagged + spike
+
+        v.multiplyScalar(1 + noise)
+
+        pos.setXYZ(i, v.x, v.y, v.z)
         }
 
         geo.scale(
@@ -253,9 +271,13 @@ export function AsteroidRenderer() {
                 <meshStandardMaterial
                     vertexColors
                     flatShading
-                    roughness={0.95}
-                    metalness={0.02}
+                    roughness={0.85}
+                    metalness={0.15}
+                    emissive="#7a6a5a"
+                    emissiveIntensity={0.40}
+                    side={THREE.DoubleSide}
                 />
+
             </instancedMesh>
 
             {/* Health Bar Background */}

@@ -80,11 +80,11 @@ This project is incomplete and requires further development.
 ## Tasks
 
 Priority:
-- [ ] gameloop difficulty scaling
+- [x] gameloop difficulty scaling
 - [ ] optimize components
 
 Post: 
-- [ ] exhaust rendering
+- [x] exhaust rendering
 - [ ] gun types/ bullet types
 - [ ] floating health packs, powerups, weapon upgrades
 - [ ] collision, damage, death
@@ -149,6 +149,11 @@ Pulse Wave – Expanding ring of energy from the ship.
  - [ ] make one kind of boss behaviour and logic, and switch renderer (ship appearance) and gun type
  - [ ] also potentially later boss has satelites that orbit it and help, or shield etc
 
- - [ ]add in shockwave effect for explosive weapons
+ - [ ] add in shockwave effect for explosive weapons
 
  
+
+
+
+ - [ ] make boost exhaust a part of normal exhaust rendering i.e. if keyB pressed, 
+ boost exhaust is rendered
