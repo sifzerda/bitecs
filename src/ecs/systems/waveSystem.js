@@ -1,7 +1,10 @@
 //src/ecs/systems/waveSystem.js
 
+import { removeEntity } from "bitecs"
+import { world } from "../constants/world.js"
 import { gameStats } from "../../state/gameStats.js"
 import { spawnAsteroid, spawnBoss } from "../spawn.js"
+import { asteroidQuery, bossQuery } from "../constants/queries.js"
 
 const SPAWN_RADIUS = 16
 
@@ -42,4 +45,25 @@ export function waveSystem() {
             Math.sin(angle) * SPAWN_RADIUS
         )
     }
+}
+
+
+// -------------------------
+// DEBUG: force-clear the current wave so waveSystem
+// spawns the next one on its next tick
+// -------------------------
+export function skipWave() {
+
+    const asteroids = asteroidQuery()
+    for (let i = 0; i < asteroids.length; i++) {
+        removeEntity(world, asteroids[i])
+    }
+
+    const bosses = bossQuery()
+    for (let i = 0; i < bosses.length; i++) {
+        removeEntity(world, bosses[i])
+    }
+
+    gameStats.asteroidsRemaining = 0
+    gameStats.bossAlive = false
 }

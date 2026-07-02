@@ -11,7 +11,7 @@ import {
     BossTag,
     Lifetime,
     Health,
-    EnemyBulletTag,
+    BossBulletTag,
     BossAI
 } from "./components";
 
@@ -22,4 +22,4 @@ export const bossQuery = () => query(world, [Position, Health, BossTag])
 export const movingQuery = () => query(world, [Position, Velocity])
 
 export const bossAIQuery = () => query(world, [Position, Velocity, BossAI, BossTag])
-export const bossBulletQuery = () => query(world, [Position, EnemyBulletTag, Lifetime])
+export const bossBulletQuery = () => query(world, [Position, BossBulletTag, Lifetime])

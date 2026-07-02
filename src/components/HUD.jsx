@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { gameStats } from '../state/gameStats.js'
+import { skipWave } from '../ecs/systems/waveSystem.js'
 
 export function HUD({ onPause, paused }) {
 
@@ -65,6 +66,21 @@ export function HUD({ onPause, paused }) {
                 <span>WAVE {hud.wave}</span>
                 <span className="text-[10px] text-cyan-300">ASTEROIDS {hud.asteroidsRemaining}</span>
             </div>
+
+
+
+            {!paused && (
+                <button type="button" tabIndex={-1}
+                    className="bg-transparent border-2 border-cyan-400 text-cyan-400 font-mono text-xs px-2 py-1 hover:bg-cyan-400 hover:text-black transition-colors"
+                    onClick={(e) => {
+                        e.currentTarget.blur()
+                        skipWave()
+                    }}>
+                    ⏭ SKIP WAVE
+                </button>
+            )}
+
+
 
             <button type="button" tabIndex={-1}
                 className="bg-transparent border-2 border-green-400 text-green-400 font-mono text-xs px-2 py-1 hover:bg-green-400 hover:text-black transition-colors"

@@ -3,7 +3,7 @@
 import { world } from "../constants/world.js"
 import { bossAIQuery, playerQuery } from "../constants/queries.js"
 import { Position, Velocity, BossAI } from "../constants/components.js"
-import { spawnEnemyBullet } from "../spawn.js"
+import { spawnBossBullet } from "../spawn.js"
 
 const MOVE_SPEED = 4
 const MOVE_INTERVAL = 2.0      // seconds between direction changes
@@ -52,7 +52,7 @@ export function bossAISystem() {
             const dy = Position.y[pid] - Position.y[id]
             const dist = Math.hypot(dx, dy) || 1
 
-            spawnEnemyBullet(
+            spawnBossBullet(
                 Position.x[id],
                 Position.y[id],
                 (dx / dist) * BULLET_SPEED,
