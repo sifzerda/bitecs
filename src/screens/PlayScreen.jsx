@@ -15,7 +15,7 @@ import {
 import { useRef } from 'react'
 import { HUD } from '../components/HUD.jsx'
 import { world } from '../ecs/constants/world.js'
-import { gameLoop } from '../gameLoop.js'
+import { gameLoop } from '../state/gameLoop.js'
 
 import { PlayerRenderer } from '../renderers/PlayerRenderer.jsx'
 import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
