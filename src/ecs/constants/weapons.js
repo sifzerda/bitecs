@@ -41,6 +41,7 @@ export const WEAPONS = [
     {
         id: 3,
         name: "missilegun",
+        isMissile: true,
         fireRate: 0.8,
         speed: 10,          // slower than bullets, turn rate does the work
         lifetime: 3.0,
