@@ -33,6 +33,10 @@ export const Spark = {
     maxLife: new Float32Array(MAX),
 };
 
+export const Bullet = {
+    type: new Uint8Array(MAX),   // index into WEAPONS
+};
+
 export const PlayerTag = {};
 export const BulletTag = {};
  export const SparkTag = {};

@@ -1,5 +1,8 @@
 // src/ecs/systems/input.js
 
+import { gameState } from "../../state/gameState.js"
+import { WEAPONS } from "../constants/weapons.js"
+
 export const input = {
     left: false,
     right: false,
@@ -49,6 +52,19 @@ export function initializeInput(onPause) {
 
         if (e.code === "KeyP") {
             onPause?.()
+        }
+        // ---- weapon switching (fires once per keypress) ----
+
+        if (e.code === "Digit1") gameState.currentWeapon = 0
+        if (e.code === "Digit2") gameState.currentWeapon = 1
+        if (e.code === "Digit3") gameState.currentWeapon = 2
+
+        if (e.code === "KeyQ") {
+            gameState.currentWeapon = (gameState.currentWeapon - 1 + WEAPONS.length) % WEAPONS.length
+        }
+
+        if (e.code === "KeyE") {
+            gameState.currentWeapon = (gameState.currentWeapon + 1) % WEAPONS.length
         }
     }
 

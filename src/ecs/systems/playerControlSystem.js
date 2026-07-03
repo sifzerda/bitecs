@@ -6,6 +6,7 @@ import { Position, Velocity, Rotation } from "../constants/components.js"
 import { spawnBullet, spawnExhaust } from "../spawn.js"
 import { input } from "./input.js"
 import { gameState } from "../../state/gameState.js"
+import { getWeapon } from "../constants/weapons.js"
 
 const TURN_SPEED = 4.5
 const THRUST = 28
@@ -107,8 +108,9 @@ export default function playerControlSystem(shootState) {
     shootState.timer -= dt
 
     if (input.fire && shootState.timer <= 0) {
-        spawnBullet(Position.x[pid], Position.y[pid], Rotation[pid])
-        shootState.timer = FIRE_RATE
+        const weapon = getWeapon(gameState.currentWeapon)
+        spawnBullet(Position.x[pid], Position.y[pid], Rotation[pid], weapon.id)
+        shootState.timer = weapon.fireRate
     }
 
 }

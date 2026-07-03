@@ -1,20 +1,23 @@
 //src/renderers/BulletRenderer.jsx
 
 import { useMemo, useRef } from 'react'
+import { createRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { bulletQuery } from '../ecs/constants/queries.js'
 import * as THREE from 'three'
-import { world } from '../ecs/constants/world.js'
-import { Position, Velocity } from '../ecs/constants/components.js'
+import { Position, Velocity, Bullet } from '../ecs/constants/components.js'
+import { WEAPONS } from '../ecs/constants/weapons.js'
 
-const MAX_BULLETS = 256
+const MAX_BULLETS = 128
 
 const _matrix = new THREE.Matrix4()
 const _position = new THREE.Vector3()
 const _rotation = new THREE.Quaternion()
-const _scale = new THREE.Vector3()
+const _scale = new THREE.Vector3(1, 1, 1)
 const _scaleZero = new THREE.Vector3(0, 0, 0)
 const _euler = new THREE.Euler()
+const _zeroPos = new THREE.Vector3(0, 0, 0)
+const _identityRot = new THREE.Quaternion()
 
 const CORE_LENGTH = 0.55
 const CORE_WIDTH = 0.09
@@ -24,11 +27,11 @@ const HALO_LENGTH = 1.1
 const HALO_WIDTH = 0.4
 
 // -------------------------
-// Trail particles
+// Trail particles (shared across all weapon types for now)
 // -------------------------
 
 const MAX_TRAIL = 320
-const TRAIL_PER_BULLET_PER_FRAME = 1   // how many trail dots each bullet drops per frame
+const TRAIL_PER_BULLET_PER_FRAME = 1
 const TRAIL_LIFE = 0.22
 const TRAIL_SIZE_MIN = 0.16
 const TRAIL_SIZE_MAX = 0.30
@@ -41,10 +44,15 @@ const _trailRotation = new THREE.Quaternion()
 
 export function BulletRenderer() {
 
-    const coreRef = useRef()
-    const glowRef = useRef()
-    const haloRef = useRef()
     const trailRef = useRef()
+
+    // one {core, glow, halo} ref set per weapon type — adding a weapon to WEAPONS
+    // automatically gets its own render layer here, no other code changes needed
+    const meshRefs = useRef(WEAPONS.map(() => ({
+        core: createRef(),
+        glow: createRef(),
+        halo: createRef(),
+    })))
 
     const coreGeometry = useMemo(() => new THREE.CapsuleGeometry(CORE_WIDTH, CORE_LENGTH, 2, 6), [])
     const glowGeometry = useMemo(() => new THREE.CapsuleGeometry(GLOW_WIDTH, GLOW_LENGTH, 2, 6), [])
@@ -62,17 +70,22 @@ export function BulletRenderer() {
 
     useFrame((_, delta) => {
 
-        const core = coreRef.current
-        const glow = glowRef.current
-        const halo = haloRef.current
         const trail = trailRef.current
-        if (!core || !glow || !halo || !trail) return
+        if (!trail) return
 
-        const bullets = bulletQuery(world)
+        const bullets = bulletQuery()
+        const counters = new Array(WEAPONS.length).fill(0)
 
         for (let i = 0; i < bullets.length; i++) {
 
             const eid = bullets[i]
+            const type = Bullet.type[eid]
+            const refs = meshRefs.current[type]
+
+            if (!refs || !refs.core.current || !refs.glow.current || !refs.halo.current) continue
+
+            const idx = counters[type]
+            if (idx >= MAX_BULLETS) continue   // safety cap if a burst overflows
 
             _position.set(Position.x[eid], Position.y[eid], 0)
 
@@ -80,11 +93,12 @@ export function BulletRenderer() {
             _euler.set(0, 0, angle)
             _rotation.setFromEuler(_euler)
 
-            _scale.set(1, 1, 1)
             _matrix.compose(_position, _rotation, _scale)
-            core.setMatrixAt(i, _matrix)
-            glow.setMatrixAt(i, _matrix)
-            halo.setMatrixAt(i, _matrix)
+            refs.core.current.setMatrixAt(idx, _matrix)
+            refs.glow.current.setMatrixAt(idx, _matrix)
+            refs.halo.current.setMatrixAt(idx, _matrix)
+
+            counters[type]++
 
             // -------------------------
             // Drop trail particles behind this bullet
@@ -103,24 +117,28 @@ export function BulletRenderer() {
             }
         }
 
-        _position.set(0, 0, 0)
-        _rotation.identity()
+        // zero out unused instances per weapon type, then flag updates
+        for (let t = 0; t < WEAPONS.length; t++) {
 
-        for (let i = bullets.length; i < MAX_BULLETS; i++) {
-            _matrix.compose(_position, _rotation, _scaleZero)
-            core.setMatrixAt(i, _matrix)
-            glow.setMatrixAt(i, _matrix)
-            halo.setMatrixAt(i, _matrix)
+            const refs = meshRefs.current[t]
+            if (!refs || !refs.core.current || !refs.glow.current || !refs.halo.current) continue
+
+            for (let i = counters[t]; i < MAX_BULLETS; i++) {
+                _matrix.compose(_zeroPos, _identityRot, _scaleZero)
+                refs.core.current.setMatrixAt(i, _matrix)
+                refs.glow.current.setMatrixAt(i, _matrix)
+                refs.halo.current.setMatrixAt(i, _matrix)
+            }
+
+            refs.core.current.instanceMatrix.needsUpdate = true
+            refs.core.current.count = MAX_BULLETS
+
+            refs.glow.current.instanceMatrix.needsUpdate = true
+            refs.glow.current.count = MAX_BULLETS
+
+            refs.halo.current.instanceMatrix.needsUpdate = true
+            refs.halo.current.count = MAX_BULLETS
         }
-
-        core.instanceMatrix.needsUpdate = true
-        core.count = MAX_BULLETS
-
-        glow.instanceMatrix.needsUpdate = true
-        glow.count = MAX_BULLETS
-
-        halo.instanceMatrix.needsUpdate = true
-        halo.count = MAX_BULLETS
 
         // -------------------------
         // Update + draw trail particles
@@ -157,7 +175,7 @@ export function BulletRenderer() {
 
     return (
         <>
-            {/* Trail — fading streak left behind each bolt */}
+            {/* Trail — shared across weapon types */}
             <instancedMesh ref={trailRef} args={[null, null, MAX_TRAIL]} frustumCulled={false}>
                 <primitive object={trailGeometry} attach="geometry" />
                 <meshBasicMaterial
@@ -169,41 +187,45 @@ export function BulletRenderer() {
                 />
             </instancedMesh>
 
-            {/* Outer halo — largest, faintest, adds soft fuzz */}
-            <instancedMesh ref={haloRef} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
-                <primitive object={haloGeometry} attach="geometry" />
-                <meshBasicMaterial
-                    color="#77ffdd"
-                    transparent
-                    opacity={0.15}
-                    blending={THREE.AdditiveBlending}
-                    depthWrite={false}
-                />
-            </instancedMesh>
+            {/* One core/glow/halo trio per weapon type */}
+            {WEAPONS.map((weapon, i) => (
+                <group key={weapon.id}>
 
-            {/* Mid glow */}
-            <instancedMesh ref={glowRef} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
-                <primitive object={glowGeometry} attach="geometry" />
-                <meshBasicMaterial
-                    color="#66ffcc"
-                    transparent
-                    opacity={0.4}
-                    blending={THREE.AdditiveBlending}
-                    depthWrite={false}
-                />
-            </instancedMesh>
+                    <instancedMesh ref={meshRefs.current[i].halo} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
+                        <primitive object={haloGeometry} attach="geometry" />
+                        <meshBasicMaterial
+                            color={weapon.haloColor}
+                            transparent
+                            opacity={0.15}
+                            blending={THREE.AdditiveBlending}
+                            depthWrite={false}
+                        />
+                    </instancedMesh>
 
-            {/* Bright core */}
-            <instancedMesh ref={coreRef} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
-                <primitive object={coreGeometry} attach="geometry" />
-                <meshBasicMaterial
-                    color="#e8fff5"
-                    transparent
-                    opacity={0.95}
-                    blending={THREE.AdditiveBlending}
-                    depthWrite={false}
-                />
-            </instancedMesh>
+                    <instancedMesh ref={meshRefs.current[i].glow} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
+                        <primitive object={glowGeometry} attach="geometry" />
+                        <meshBasicMaterial
+                            color={weapon.glowColor}
+                            transparent
+                            opacity={0.4}
+                            blending={THREE.AdditiveBlending}
+                            depthWrite={false}
+                        />
+                    </instancedMesh>
+
+                    <instancedMesh ref={meshRefs.current[i].core} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
+                        <primitive object={coreGeometry} attach="geometry" />
+                        <meshBasicMaterial
+                            color={weapon.color}
+                            transparent
+                            opacity={0.95}
+                            blending={THREE.AdditiveBlending}
+                            depthWrite={false}
+                        />
+                    </instancedMesh>
+
+                </group>
+            ))}
         </>
     )
 }

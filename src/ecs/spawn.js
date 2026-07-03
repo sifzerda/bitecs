@@ -9,6 +9,7 @@ import {
     Health,
     Lifetime,
     PlayerTag,
+    Bullet,
     BulletTag,
     Spark,
     SparkTag,
@@ -19,6 +20,7 @@ import {
     BossBulletTag
 } from "./constants/components";
 import { gameState } from "../state/gameState";
+import { getWeapon } from "./constants/weapons";
 
 // ============= helpers ============//
 
@@ -51,27 +53,46 @@ export function spawnPlayer(x, y) {
 
 // ============= Bullets ============//
 
-export function spawnBullet(x, y, rot) {
+export function spawnBullet(x, y, rot, weaponId = 0) {
 
-    const id = addEntity(world);
+    const weapon = getWeapon(weaponId)
+    const count = weapon.projectileCount
+    const spread = weapon.spreadAngle
 
-    addComponent(world, id, Position);
-    addComponent(world, id, Velocity);
-    addComponent(world, id, Lifetime);
-    addComponent(world, id, BulletTag);
+    const ids = []
 
-    Position.x[id] = x;
-    Position.y[id] = y;
+    for (let i = 0; i < count; i++) {
 
-    const speed = 18;
+        // spread evenly across the total spread angle, single shot has 0 offset
+        const offset = count > 1
+            ? -spread / 2 + (spread / (count - 1)) * i
+            : 0
 
-    Velocity.x[id] = Math.sin(-rot) * speed;
-    Velocity.y[id] = Math.cos(-rot) * speed;
+        const shotRot = rot + offset
 
-    Lifetime.remaining[id] = 1.2;
+        const id = addEntity(world)
 
-    return id;
+        addComponent(world, id, Position)
+        addComponent(world, id, Velocity)
+        addComponent(world, id, Lifetime)
+        addComponent(world, id, BulletTag)
+        addComponent(world, id, Bullet)
+
+        Position.x[id] = x
+        Position.y[id] = y
+
+        Velocity.x[id] = Math.sin(-shotRot) * weapon.speed
+        Velocity.y[id] = Math.cos(-shotRot) * weapon.speed
+
+        Lifetime.remaining[id] = weapon.lifetime
+        Bullet.type[id] = weapon.id
+
+        ids.push(id)
+    }
+
+    return ids
 }
+
 
 // ============= Sparks ============//
 
@@ -103,8 +124,8 @@ function spawnSpark(x, y, speed, size, life) {
 
 export function spawnSparkBurst(x, y, options = {}) {
 
-    const count = options.count ?? 28        // was 16 — denser burst
-    const speed = options.speed ?? 10        // was 6 — sparks fly further/faster
+    const count = options.count ?? 28       
+    const speed = options.speed ?? 10     
     const big = options.big ?? false
 
     // one oversized, ultra-short-lived flash spark for the initial "punch"
