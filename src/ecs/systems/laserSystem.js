@@ -1,6 +1,5 @@
 // src/ecs/systems/laserSystem.js
 
-import { removeEntity } from "bitecs"
 import { world } from "../constants/world.js"
 import { playerQuery, asteroidQuery, bossQuery } from "../constants/queries.js"
 import { Position, Rotation, Health } from "../constants/components.js"
@@ -9,6 +8,7 @@ import { gameState } from "../../state/gameState.js"
 import { getWeapon } from "../constants/weapons.js"
 import { laserState } from "../../state/laserState.js"
 import { spawnSparkBurst } from "../spawn.js"
+import { killAsteroid, killBoss } from "./entityDeath.js"
 
 const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
@@ -24,8 +24,8 @@ function findNearestHit(list, radius, originX, originY, dirX, dirY, maxT) {
         const cx = Position.x[eid] - originX
         const cy = Position.y[eid] - originY
 
-        const t = cx * dirX + cy * dirY          // projection of target onto beam direction
-        if (t < 0 || t > bestT) continue          // behind ship, or farther than current closest hit
+        const t = cx * dirX + cy * dirY
+        if (t < 0 || t > bestT) continue
 
         const closestX = dirX * t
         const closestY = dirY * t
@@ -66,10 +66,6 @@ export function laserSystem() {
     const dirX = Math.sin(-Rotation[pid])
     const dirY = Math.cos(-Rotation[pid])
 
-    // -------------------------
-    // Find nearest hit along the beam (boss takes priority if closer than any asteroid)
-    // -------------------------
-
     const asteroidHit = findNearestHit(asteroidQuery(), ASTEROID_RADIUS, laserState.originX, laserState.originY, dirX, dirY, weapon.range)
     const bossHit = findNearestHit(bossQuery(), BOSS_RADIUS, laserState.originX, laserState.originY, dirX, dirY, asteroidHit.id !== -1 ? asteroidHit.t : weapon.range)
 
@@ -108,17 +104,10 @@ export function laserSystem() {
 
     if (Health.current[hitId] <= 0) {
 
-        removeEntity(world, hitId)
-
         if (hitType === "asteroid") {
-            gameState.asteroidsRemaining--
-            gameState.score += 100
-            spawnSparkBurst(laserState.hitX, laserState.hitY, { count: 45, speed: 13, big: true })
+            killAsteroid(hitId, laserState.hitX, laserState.hitY)
         } else {
-            gameState.score += 1000
-            gameState.bossAlive = false
-            gameState.asteroidsRemaining = 0
-            spawnSparkBurst(laserState.hitX, laserState.hitY, { count: 90, speed: 16, big: true })
+            killBoss(hitId, laserState.hitX, laserState.hitY)
         }
     }
 }
