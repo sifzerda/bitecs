@@ -1,7 +1,6 @@
 // src/ecs/systems/combat.js
 
 import { removeEntity } from "bitecs"
-
 import { world } from "../constants/world.js"
 import { bulletQuery, asteroidQuery, bossQuery, bossBulletQuery, playerQuery } from "../constants/queries.js"
 import { Position, Health, Lifetime } from "../constants/components.js"
@@ -22,7 +21,6 @@ export function combatSystem() {
     for (let i = 0; i < bullets.length; i++) {
 
         const bid = bullets[i]
-
         Lifetime.remaining[bid] -= dt
 
         if (Lifetime.remaining[bid] <= 0) {
@@ -39,7 +37,6 @@ export function combatSystem() {
         for (let j = 0; j < asteroids.length; j++) {
 
             const aid = asteroids[j]
-
             const dx = Position.x[bid] - Position.x[aid]
             const dy = Position.y[bid] - Position.y[aid]
 
@@ -72,7 +69,6 @@ export function combatSystem() {
 
             const dx = Position.x[bid] - Position.x[bossId]
             const dy = Position.y[bid] - Position.y[bossId]
-
             const dist2 = dx * dx + dy * dy
 
             if (dist2 <= BOSS_RADIUS * BOSS_RADIUS) {
@@ -86,9 +82,7 @@ export function combatSystem() {
                     removeEntity(world, bossId)
 
                     gameState.score += 1000
-
                     gameState.bossAlive = false
-
                     gameState.asteroidsRemaining = 0
                 }
 
@@ -108,7 +102,6 @@ export function combatSystem() {
     for (let i = 0; i < bossBullets.length; i++) {
 
         const eid = bossBullets[i]
-
         Lifetime.remaining[eid] -= dt
 
         if (Lifetime.remaining[eid] <= 0) {
