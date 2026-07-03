@@ -128,7 +128,7 @@ export function combatSystem() {
 
             if (Health.current[pid] <= 0) {
                 gameState.lives--
-                Health.current[pid] = Health.max[pid]   // placeholder respawn-in-place
+                Health.current[pid] = Health.max[pid]    
             }
         }
     }
