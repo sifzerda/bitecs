@@ -6,7 +6,7 @@ import * as THREE from 'three'
 import { playerQuery } from '../ecs/constants/queries.js'
 import { world } from '../ecs/constants/world.js'
 import { Position, Rotation, Velocity } from '../ecs/constants/components.js'
-import { gameStats } from '../state/gameStats.js'
+import { gameState } from '../state/gameState.js'
 
 const MAX_PARTICLES = 100
 const EMIT_PER_FRAME = 3
@@ -53,7 +53,7 @@ export function BoostRenderer() {
         // Emit new particles while boosting
         // -------------------------
 
-        if (gameStats.boostActive > 0 && players.length > 0) {
+        if (gameState.boostActive > 0 && players.length > 0) {
 
             const pid = players[0]
 

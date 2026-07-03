@@ -2,7 +2,7 @@
 
 import { removeEntity } from "bitecs"
 import { world } from "../constants/world.js"
-import { gameStats } from "../../state/gameStats.js"
+import { gameState } from "../../state/gameState.js"
 import { spawnAsteroid, spawnBoss } from "../spawn.js"
 import { asteroidQuery, bossQuery } from "../constants/queries.js"
 
@@ -11,18 +11,18 @@ const SPAWN_RADIUS = 16
 export function waveSystem() {
 
     // still enemies alive → do nothing
-    if (gameStats.asteroidsRemaining > 0 || gameStats.bossAlive)
+    if (gameState.asteroidsRemaining > 0 || gameState.bossAlive)
         return
 
     // -------------------------
     // BOSS CHECK
     // (only fires once per 3-wave cycle, after asteroids are cleared)
     // -------------------------
-    if (gameStats.wave > 0 && gameStats.wave % 3 === 0 && !gameStats.bossDone) {
+    if (gameState.wave > 0 && gameState.wave % 3 === 0 && !gameState.bossDone) {
 
         spawnBoss()
-        gameStats.bossAlive = true
-        gameStats.bossDone = true
+        gameState.bossAlive = true
+        gameState.bossDone = true
 
         return
     }
@@ -30,11 +30,11 @@ export function waveSystem() {
     // -------------------------
     // NEXT ASTEROID WAVE
     // -------------------------
-    gameStats.wave++
-    gameStats.bossDone = false
+    gameState.wave++
+    gameState.bossDone = false
 
-    const count = 4 + gameStats.wave * 2
-    gameStats.asteroidsRemaining = count
+    const count = 4 + gameState.wave * 2
+    gameState.asteroidsRemaining = count
 
     for (let i = 0; i < count; i++) {
 
@@ -64,6 +64,6 @@ export function skipWave() {
         removeEntity(world, bosses[i])
     }
 
-    gameStats.asteroidsRemaining = 0
-    gameStats.bossAlive = false
+    gameState.asteroidsRemaining = 0
+    gameState.bossAlive = false
 }

@@ -1,10 +1,11 @@
 //src/state/Game.jsx
+// this is the 'startGame' equivalent from v.3
 
 import { useEffect, useRef, useState } from "react"
 import { PlayScreen } from "../screens/PlayScreen.jsx"
 import { spawnPlayer } from "../ecs/spawn.js"
 import { initializeInput } from "../ecs/systems/input.js"
-import { gameStats } from "../state/gameStats.js"
+import { gameState } from "../state/gameState.js"
 
 export function Game() {
     const [paused, setPaused] = useState(false)
@@ -15,8 +16,8 @@ export function Game() {
     }, [])
 
     function togglePause() {
-        gameStats.paused = !gameStats.paused
-        setPaused(gameStats.paused)
+        gameState.paused = !gameState.paused
+        setPaused(gameState.paused)
     }
 
     return (

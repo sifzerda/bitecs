@@ -5,7 +5,7 @@ import { world } from "../constants/world.js"
 import { Position, Velocity, Rotation } from "../constants/components.js"
 import { spawnBullet, spawnExhaust } from "../spawn.js"
 import { input } from "./input.js"
-import { gameStats } from "../../state/gameStats.js"
+import { gameState } from "../../state/gameState.js"
 
 const TURN_SPEED = 4.5
 const THRUST = 28
@@ -60,18 +60,18 @@ export default function playerControlSystem(shootState) {
     // Boost
     //----------------------------------
 
-    gameStats.boostCooldown = Math.max(0, gameStats.boostCooldown - dt)
-    gameStats.boostActive = Math.max(0, gameStats.boostActive - dt)
+    gameState.boostCooldown = Math.max(0, gameState.boostCooldown - dt)
+    gameState.boostActive = Math.max(0, gameState.boostActive - dt)
 
     // trigger: only allowed to start a fresh boost window when off cooldown
-    if (input.boost && gameStats.boostCooldown <= 0 && gameStats.boostActive <= 0) {
-        gameStats.boostActive = BOOST_DURATION
-        gameStats.boostCooldown = BOOST_COOLDOWN
+    if (input.boost && gameState.boostCooldown <= 0 && gameState.boostActive <= 0) {
+        gameState.boostActive = BOOST_DURATION
+        gameState.boostCooldown = BOOST_COOLDOWN
     }
 
     // continuous thrust for as long as the boost window is active,
     // re-reads Rotation every frame so it curves with turning
-    if (gameStats.boostActive > 0) {
+    if (gameState.boostActive > 0) {
         Velocity.x[pid] += Math.sin(-Rotation[pid]) * BOOST_THRUST * dt
         Velocity.y[pid] += Math.cos(-Rotation[pid]) * BOOST_THRUST * dt
     }
@@ -80,7 +80,7 @@ export default function playerControlSystem(shootState) {
     // Clamp speed
     //----------------------------------
 
-    const currentMaxSpeed = gameStats.boostActive > 0 ? BOOST_MAX_SPEED : MAX_SPEED
+    const currentMaxSpeed = gameState.boostActive > 0 ? BOOST_MAX_SPEED : MAX_SPEED
 
     const speed = Math.hypot(
         Velocity.x[pid],

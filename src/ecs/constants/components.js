@@ -1,4 +1,4 @@
-//src/ecs/components.js
+//src/ecs/constants/components.js
 
 const MAX = 10000;
 
@@ -30,7 +30,11 @@ export const BossAI = {
 
 export const PlayerTag = {};
 export const BulletTag = {};
+ 
+
 export const ExhaustTag = {};
 export const AsteroidTag = {};
 export const BossTag = {};
 export const BossBulletTag = {};
+
+ 
