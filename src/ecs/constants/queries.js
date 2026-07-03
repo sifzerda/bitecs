@@ -6,6 +6,7 @@ import {
     Position,
     Velocity,
     PlayerTag,
+    Bullet,
     BulletTag,
     Spark,
     SparkTag,
@@ -19,7 +20,7 @@ import {
 } from "./components";
 
 export const playerQuery = () => query(world, [Position, PlayerTag])
-export const bulletQuery = () => query(world, [Position, Velocity, BulletTag, Lifetime])
+export const bulletQuery = () => query(world, [Position, Velocity, BulletTag, Bullet, Lifetime])
  export const sparkQuery = () => query(world, [Position, Velocity, Spark, SparkTag, Lifetime])
 export const asteroidQuery = () => query(world, [Position, Health, AsteroidTag])
 export const bossQuery = () => query(world, [Position, Health, BossTag])

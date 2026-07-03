@@ -1,0 +1,44 @@
+// src/ecs/constants/weapons.js
+
+export const WEAPONS = [
+    {
+        id: 0,
+        name: "raygun",
+        fireRate: 0.15,
+        speed: 18,
+        lifetime: 1.2,
+        projectileCount: 1,
+        spreadAngle: 0,
+        color: "#e8fff5",
+        glowColor: "#66ffcc",
+        haloColor: "#77ffdd",
+    },
+    {
+        id: 1,
+        name: "shotgun",
+        fireRate: 0.35,
+        speed: 16,
+        lifetime: 1.0,
+        projectileCount: 3,
+        spreadAngle: 0.35,   // total spread in radians across all projectiles
+        color: "#fff2b0",
+        glowColor: "#ffaa33",
+        haloColor: "#ff8800",
+    },
+    {
+        id: 2,
+        name: "machinegun",
+        fireRate: 0.07,
+        speed: 22,
+        lifetime: 0.9,
+        projectileCount: 1,
+        spreadAngle: 0.05,   // tiny jitter, feels less precise at high fire rate
+        color: "#c9e8ff",
+        glowColor: "#5599ff",
+        haloColor: "#3366ff",
+    },
+]
+
+export function getWeapon(id) {
+    return WEAPONS[id] ?? WEAPONS[0]
+}
