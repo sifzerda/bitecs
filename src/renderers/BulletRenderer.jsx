@@ -188,49 +188,49 @@ export function BulletRenderer() {
             </instancedMesh>
 
             {/* One core/glow/halo trio per weapon type */}
-        {WEAPONS
-    .filter(weapon => !weapon.isMissile && !weapon.isBeam)
-    .map((weapon) => {
-        const i = weapon.id   // index must match Bullet.type values used elsewhere
-        return (
-            <group key={weapon.id}>
+            {WEAPONS
+                .filter(weapon => !weapon.isMissile && !weapon.isBeam)
+                .map((weapon) => {
+                    const i = weapon.id   // index must match Bullet.type values used elsewhere
+                    return (
+                        <group key={weapon.id}>
 
-                <instancedMesh ref={meshRefs.current[i].halo} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
-                    <primitive object={haloGeometry} attach="geometry" />
-                    <meshBasicMaterial
-                        color={weapon.haloColor}
-                        transparent
-                        opacity={0.15}
-                        blending={THREE.AdditiveBlending}
-                        depthWrite={false}
-                    />
-                </instancedMesh>
+                            <instancedMesh ref={meshRefs.current[i].halo} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
+                                <primitive object={haloGeometry} attach="geometry" />
+                                <meshBasicMaterial
+                                    color={weapon.haloColor}
+                                    transparent
+                                    opacity={0.15}
+                                    blending={THREE.AdditiveBlending}
+                                    depthWrite={false}
+                                />
+                            </instancedMesh>
 
-                <instancedMesh ref={meshRefs.current[i].glow} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
-                    <primitive object={glowGeometry} attach="geometry" />
-                    <meshBasicMaterial
-                        color={weapon.glowColor}
-                        transparent
-                        opacity={0.4}
-                        blending={THREE.AdditiveBlending}
-                        depthWrite={false}
-                    />
-                </instancedMesh>
+                            <instancedMesh ref={meshRefs.current[i].glow} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
+                                <primitive object={glowGeometry} attach="geometry" />
+                                <meshBasicMaterial
+                                    color={weapon.glowColor}
+                                    transparent
+                                    opacity={0.4}
+                                    blending={THREE.AdditiveBlending}
+                                    depthWrite={false}
+                                />
+                            </instancedMesh>
 
-                <instancedMesh ref={meshRefs.current[i].core} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
-                    <primitive object={coreGeometry} attach="geometry" />
-                    <meshBasicMaterial
-                        color={weapon.color}
-                        transparent
-                        opacity={0.95}
-                        blending={THREE.AdditiveBlending}
-                        depthWrite={false}
-                    />
-                </instancedMesh>
+                            <instancedMesh ref={meshRefs.current[i].core} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
+                                <primitive object={coreGeometry} attach="geometry" />
+                                <meshBasicMaterial
+                                    color={weapon.color}
+                                    transparent
+                                    opacity={0.95}
+                                    blending={THREE.AdditiveBlending}
+                                    depthWrite={false}
+                                />
+                            </instancedMesh>
 
-            </group>
-        )
-    })}
+                        </group>
+                    )
+                })}
         </>
     )
 }
