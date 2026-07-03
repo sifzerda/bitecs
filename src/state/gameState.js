@@ -5,10 +5,13 @@ export const gameState = {
 
     score: 0,
     lives: 3,
+    currentWeapon: 0,
     paused: false,
     wave: 0,              // starts at 0, first asteroid wave becomes 1
     asteroidsRemaining: 0,
     
+
+
     bossAlive: false,
     bossDone: false,        // tracks whether this wave-cycle's boss already spawned
 

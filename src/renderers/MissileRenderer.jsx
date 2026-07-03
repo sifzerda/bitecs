@@ -159,7 +159,7 @@ export function MissileRenderer() {
             <instancedMesh ref={smokeRef} args={[null, null, MAX_SMOKE]} frustumCulled={false}>
                 <primitive object={smokeGeometry} attach="geometry" />
                 <meshBasicMaterial
-                    color="#888888"
+                    color="#7DF9FF"
                     transparent
                     opacity={0.3}
                     depthWrite={false}
