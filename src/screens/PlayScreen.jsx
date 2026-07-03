@@ -20,12 +20,11 @@ import { gameLoop } from '../state/gameLoop.js'
 import { PlayerRenderer } from '../renderers/PlayerRenderer.jsx'
 import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
 import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
+import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
 import { BossBulletRenderer } from '../renderers/BossBulletRenderer.jsx'
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 import { BoostRenderer } from '../renderers/BoostRenderer.jsx'
-
- 
 
 
 export function GameLoop({ keysRef, paused }) {
@@ -68,8 +67,8 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <BoostRenderer />
                     <AsteroidRenderer />
                     <BulletRenderer />
+                    <SparkRenderer />
 
- 
 
                     <BossRenderer />
                     <BossBulletRenderer />

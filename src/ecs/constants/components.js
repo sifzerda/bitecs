@@ -28,9 +28,14 @@ export const BossAI = {
     shootTimer: new Float32Array(MAX),
 };
 
+export const Spark = {
+    size: new Float32Array(MAX),
+    maxLife: new Float32Array(MAX),
+};
+
 export const PlayerTag = {};
 export const BulletTag = {};
- 
+ export const SparkTag = {};
 
 export const ExhaustTag = {};
 export const AsteroidTag = {};
