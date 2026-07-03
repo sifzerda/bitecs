@@ -16,7 +16,7 @@ import {
     BossAI, 
     BossBulletTag 
 } from "./constants/components";
-import { gameStats } from "../state/gameStats";
+import { gameState } from "../state/gameState";
 
 // ============= helpers ============//
 
@@ -137,7 +137,7 @@ export function spawnBoss() {
     BossAI.moveTimer[id] = 0     // pick a direction immediately
     BossAI.shootTimer[id] = 1    // small delay before first shot
 
-    gameStats.bossAlive = true
+    gameState.bossAlive = true
 
     return id
 }

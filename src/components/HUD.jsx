@@ -1,19 +1,19 @@
 // src/components/HUD.jsx
 
 import { useEffect, useState } from 'react'
-import { gameStats } from '../state/gameStats.js'
+import { gameState } from '../state/gameState.js'
 import { skipWave } from '../ecs/systems/waveSystem.js'
 import { BOOST_COOLDOWN } from '../ecs/systems/playerControlSystem.js'
 
 export function HUD({ onPause, paused }) {
 
     const [hud, setHud] = useState({
-        score: gameStats.score,
-        health: gameStats.health,
-        lives: gameStats.lives,
-        wave: gameStats.wave,
-        asteroidsRemaining: gameStats.asteroidsRemaining,
-        boostCooldown: gameStats.boostCooldown
+        score: gameState.score,
+        health: gameState.health,
+        lives: gameState.lives,
+        wave: gameState.wave,
+        asteroidsRemaining: gameState.asteroidsRemaining,
+        boostCooldown: gameState.boostCooldown
     })
 
     useEffect(() => {
@@ -21,12 +21,12 @@ export function HUD({ onPause, paused }) {
         const id = setInterval(() => {
 
             setHud({
-                score: gameStats.score,
-                health: gameStats.health,
-                lives: gameStats.lives,
-                wave: gameStats.wave,
-                asteroidsRemaining: gameStats.asteroidsRemaining,
-                boostCooldown: gameStats.boostCooldown
+                score: gameState.score,
+                health: gameState.health,
+                lives: gameState.lives,
+                wave: gameState.wave,
+                asteroidsRemaining: gameState.asteroidsRemaining,
+                boostCooldown: gameState.boostCooldown
             })
 
         }, 100)

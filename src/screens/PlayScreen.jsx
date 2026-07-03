@@ -25,6 +25,9 @@ import { BossBulletRenderer } from '../renderers/BossBulletRenderer.jsx'
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 import { BoostRenderer } from '../renderers/BoostRenderer.jsx'
 
+ 
+
+
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
 
@@ -65,9 +68,12 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <BoostRenderer />
                     <AsteroidRenderer />
                     <BulletRenderer />
+
+ 
+
                     <BossRenderer />
                     <BossBulletRenderer />
-                    
+
                     <EffectComposer multisampling={0}>
 
                         <Bloom

@@ -1,7 +1,7 @@
-// src/state/gameStats.js
+// src/state/gameState.js
 // sent to hud
 
-export const gameStats = {
+export const gameState = {
 
     score: 0,
     lives: 3,
