@@ -103,20 +103,56 @@ function spawnSpark(x, y, speed, size, life) {
 
 export function spawnSparkBurst(x, y, options = {}) {
 
-    const count = options.count ?? 16
-    const speed = options.speed ?? 6
+    const count = options.count ?? 28        // was 16 — denser burst
+    const speed = options.speed ?? 10        // was 6 — sparks fly further/faster
     const big = options.big ?? false
+
+    // one oversized, ultra-short-lived flash spark for the initial "punch"
+    {
+        const id = addEntity(world)
+        addComponent(world, id, Position)
+        addComponent(world, id, Velocity)
+        addComponent(world, id, Lifetime)
+        addComponent(world, id, Spark)
+        addComponent(world, id, SparkTag)
+
+        Position.x[id] = x
+        Position.y[id] = y
+        Velocity.x[id] = 0
+        Velocity.y[id] = 0
+
+        const life = 0.1
+        Lifetime.remaining[id] = life
+        Spark.maxLife[id] = life
+        Spark.size[id] = (big ? 1.8 : 1.0)   // much bigger than regular embers
+    }
 
     for (let i = 0; i < count; i++) {
 
-        const life = 0.25 + Math.random() * 0.3
-        const size = (0.08 + Math.random() * 0.14) * (big ? 1.6 : 1)
+        const id = addEntity(world)
 
-        spawnSpark(x, y, speed, size, life)
+        addComponent(world, id, Position)
+        addComponent(world, id, Velocity)
+        addComponent(world, id, Lifetime)
+        addComponent(world, id, Spark)
+        addComponent(world, id, SparkTag)
+
+        Position.x[id] = x
+        Position.y[id] = y
+
+        const angle = Math.random() * Math.PI * 2
+        const s = speed * (0.3 + Math.random() * 1.1)   // wider speed variance -> more chaotic spread
+
+        Velocity.x[id] = Math.cos(angle) * s
+        Velocity.y[id] = Math.sin(angle) * s
+
+        const life = 0.3 + Math.random() * 0.45          // was 0.25-0.55 -> lives a bit longer, more visible travel
+        const size = (0.1 + Math.random() * 0.22) * (big ? 2.0 : 1.3)   // bigger base + bigger "big" multiplier
+
+        Lifetime.remaining[id] = life
+        Spark.maxLife[id] = life
+        Spark.size[id] = size
     }
-
-    // one short-lived, larger "flash" spark for the initial punch
-    spawnSpark(x, y, speed * 0.15, (big ? 0.9 : 0.5), 0.12)
 }
 
 // ============= Exhaust ============//
