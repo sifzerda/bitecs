@@ -6,6 +6,7 @@ import { bulletQuery, asteroidQuery, bossQuery, bossBulletQuery, playerQuery } f
 import { Position, Health, Lifetime } from "../constants/components.js"
 import { spawnAsteroid, spawnBoss, spawnSparkBurst } from "../spawn.js"
 import { gameState } from "../../state/gameState.js"
+import { killAsteroid, killBoss } from "./entityDeath.js"
 
 const HIT_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
@@ -46,10 +47,7 @@ export function combatSystem() {
                 spawnSparkBurst(Position.x[bid], Position.y[bid], { count: 20, speed: 8 })
 
                 if (Health.current[aid] <= 0) {
-                    removeEntity(world, aid)
-                    gameState.asteroidsRemaining--
-                    gameState.score += 100
-                    spawnSparkBurst(Position.x[aid], Position.y[aid], { count: 45, speed: 13, big: true })
+                    killAsteroid(aid, Position.x[aid], Position.y[aid])
                 }
 
                 removeEntity(world, bid)
@@ -81,13 +79,7 @@ export function combatSystem() {
                 removeEntity(world, bid)
 
                 if (Health.current[bossId] <= 0) {
-
-                    removeEntity(world, bossId)
-
-                    gameState.score += 1000
-                    gameState.bossAlive = false
-                    gameState.asteroidsRemaining = 0
-                    spawnSparkBurst(Position.x[bossId], Position.y[bossId], { count: 90, speed: 16, big: true })
+                    killBoss(bossId, Position.x[bossId], Position.y[bossId])
                 }
 
                 break
