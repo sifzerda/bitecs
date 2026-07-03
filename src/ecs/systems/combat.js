@@ -6,7 +6,7 @@ import { world } from "../constants/world.js"
 import { bulletQuery, asteroidQuery, bossQuery, bossBulletQuery, playerQuery } from "../constants/queries.js"
 import { Position, Health, Lifetime } from "../constants/components.js"
 import { spawnAsteroid, spawnBoss } from "../spawn.js"
-import { gameStats } from "../../state/gameStats.js"
+import { gameState } from "../../state/gameState.js"
 
 const HIT_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
@@ -49,8 +49,8 @@ export function combatSystem() {
 
                 if (Health.current[aid] <= 0) {
                     removeEntity(world, aid)
-                    gameStats.asteroidsRemaining--
-                    gameStats.score += 100
+                    gameState.asteroidsRemaining--
+                    gameState.score += 100
                 }
 
                 removeEntity(world, bid)
@@ -85,11 +85,11 @@ export function combatSystem() {
 
                     removeEntity(world, bossId)
 
-                    gameStats.score += 1000
+                    gameState.score += 1000
 
-                    gameStats.bossAlive = false
+                    gameState.bossAlive = false
 
-                    gameStats.asteroidsRemaining = 0
+                    gameState.asteroidsRemaining = 0
                 }
 
                 break
@@ -127,7 +127,7 @@ export function combatSystem() {
             removeEntity(world, eid)
 
             if (Health.current[pid] <= 0) {
-                gameStats.lives--
+                gameState.lives--
                 Health.current[pid] = Health.max[pid]   // placeholder respawn-in-place
             }
         }
