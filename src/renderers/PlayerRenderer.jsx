@@ -15,7 +15,7 @@ import { Position, Rotation } from '../ecs/constants/components.js'
 const SHIP_CONFIG = {
 
     nose: {
-        color: "#e33b2e",
+      color: "#00ff37",
         length: 0.6,        // tip y-position
         baseY: 0.45,         // where the base of the triangle sits
         baseWidth: 0.35,     // full width at the base (half-width used internally)
@@ -23,7 +23,7 @@ const SHIP_CONFIG = {
     },
 
     wing: {
-        color: "#ff8a1e",
+       color: "#3fd0d8",
         rootX: 0.165,         // inner point, near body, top
         rootY: 0.45,
         tipX: 0.80,          // outer wingtip position
@@ -36,7 +36,7 @@ const SHIP_CONFIG = {
     },
 
     wingtip: {
-        color: "#3fa62e",
+       color: "#00ff37",
         width: 0.05,
         height: 0.40,
         offsetX: 0.75,        // matches wing.tipX roughly, positions the cap
@@ -53,7 +53,7 @@ const SHIP_CONFIG = {
     },
 
     pod: {
-        color: "#3f4fcc",
+       color: "#00ff37",
         width: 0.12,
         height: 0.32,
         cornerRadius: 0.06,
