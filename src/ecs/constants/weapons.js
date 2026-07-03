@@ -37,6 +37,33 @@ export const WEAPONS = [
         glowColor: "#5599ff",
         haloColor: "#3366ff",
     },
+
+    {
+        id: 3,
+        name: "missilegun",
+        fireRate: 0.8,
+        speed: 10,          // slower than bullets, turn rate does the work
+        lifetime: 3.0,
+        projectileCount: 1,
+        spreadAngle: 0,
+        color: "#ffaa00",
+        glowColor: "#ff6600",
+        haloColor: "#ff2200",
+        turnRate: 3.0,       // radians/sec it can steer, only missiles use this
+    },
+    {
+        id: 4,
+        name: "lasergun",
+        isBeam: true,              // no ECS bullet entity at all — driven by laserState instead
+        range: 30,
+        damagePerSecond: 60,
+        beamWidth: 0.11,
+        tickSparkInterval: 0.05,
+        color: "#ffe0ee",
+        glowColor: "#ff0055",
+        haloColor: "#ff0033",
+    },
+
 ]
 
 export function getWeapon(id) {

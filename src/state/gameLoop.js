@@ -7,17 +7,21 @@ import { combatSystem } from "../ecs/systems/combat"
 import { sparkSystem } from "../ecs/systems/sparkSystem"
 import { waveSystem } from "../ecs/systems/waveSystem"
 import { bossAISystem } from "../ecs/systems/bossAISystem"
+import { laserSystem } from "../ecs/systems/laserSystem"
+import { missileSystem } from "../ecs/systems/missileSystem"
 
 
 export function gameLoop(shootState) {
 
     playerControlSystem(shootState)
     bossAISystem()
+    missileSystem()
 
     movementSystem()
     boundsSystem()
     waveSystem()
     combatSystem()
+    laserSystem()
     sparkSystem()
-    
+
 }
