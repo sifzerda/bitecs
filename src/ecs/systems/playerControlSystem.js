@@ -105,12 +105,17 @@ export default function playerControlSystem(shootState) {
     // Shooting
     //----------------------------------
 
-    shootState.timer -= dt
+ const weapon = getWeapon(gameState.currentWeapon)
 
-    if (input.fire && shootState.timer <= 0) {
-        const weapon = getWeapon(gameState.currentWeapon)
-        spawnBullet(Position.x[pid], Position.y[pid], Rotation[pid], weapon.id)
-        shootState.timer = weapon.fireRate
+    if (weapon.isBeam) {
+        // beam weapons are handled entirely by laserSystem — no discrete spawn/cooldown here
+    } else {
+        shootState.timer -= dt
+
+        if (input.fire && shootState.timer <= 0) {
+            spawnBullet(Position.x[pid], Position.y[pid], Rotation[pid], weapon.id)
+            shootState.timer = weapon.fireRate
+        }
     }
 
 }
