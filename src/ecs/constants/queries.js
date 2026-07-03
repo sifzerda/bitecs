@@ -7,7 +7,8 @@ import {
     Velocity,
     PlayerTag,
     BulletTag,
- 
+    Spark,
+    SparkTag,
     ExhaustTag,
     AsteroidTag,
     BossTag,
@@ -19,7 +20,7 @@ import {
 
 export const playerQuery = () => query(world, [Position, PlayerTag])
 export const bulletQuery = () => query(world, [Position, Velocity, BulletTag, Lifetime])
- 
+ export const sparkQuery = () => query(world, [Position, Velocity, Spark, SparkTag, Lifetime])
 export const asteroidQuery = () => query(world, [Position, Health, AsteroidTag])
 export const bossQuery = () => query(world, [Position, Health, BossTag])
 export const movingQuery = () => query(world, [Position, Velocity])

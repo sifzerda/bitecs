@@ -4,7 +4,7 @@ import { removeEntity } from "bitecs"
 import { world } from "../constants/world.js"
 import { bulletQuery, asteroidQuery, bossQuery, bossBulletQuery, playerQuery } from "../constants/queries.js"
 import { Position, Health, Lifetime } from "../constants/components.js"
-import { spawnAsteroid, spawnBoss } from "../spawn.js"
+import { spawnAsteroid, spawnBoss, spawnSparkBurst } from "../spawn.js"
 import { gameState } from "../../state/gameState.js"
 
 const HIT_RADIUS = 0.7
@@ -36,18 +36,20 @@ export function combatSystem() {
 
         for (let j = 0; j < asteroids.length; j++) {
 
-            const aid = asteroids[j]
+                     const aid = asteroids[j]
             const dx = Position.x[bid] - Position.x[aid]
             const dy = Position.y[bid] - Position.y[aid]
 
             if (dx * dx + dy * dy <= HIT_RADIUS * HIT_RADIUS) {
 
                 Health.current[aid] -= 10
+                spawnSparkBurst(Position.x[bid], Position.y[bid], { count: 14, speed: 6 })
 
                 if (Health.current[aid] <= 0) {
                     removeEntity(world, aid)
                     gameState.asteroidsRemaining--
                     gameState.score += 100
+                    spawnSparkBurst(Position.x[aid], Position.y[aid], { count: 30, speed: 9, big: true })
                 }
 
                 removeEntity(world, bid)
@@ -63,7 +65,7 @@ export function combatSystem() {
         // BOSSES
         // -------------------------
 
-        for (let j = 0; j < bosses.length; j++) {
+for (let j = 0; j < bosses.length; j++) {
 
             const bossId = bosses[j]
 
@@ -74,6 +76,7 @@ export function combatSystem() {
             if (dist2 <= BOSS_RADIUS * BOSS_RADIUS) {
 
                 Health.current[bossId] -= 10
+                spawnSparkBurst(Position.x[bid], Position.y[bid], { count: 18, speed: 7, big: true })
 
                 removeEntity(world, bid)
 
@@ -84,6 +87,7 @@ export function combatSystem() {
                     gameState.score += 1000
                     gameState.bossAlive = false
                     gameState.asteroidsRemaining = 0
+                    spawnSparkBurst(Position.x[bossId], Position.y[bossId], { count: 60, speed: 12, big: true })
                 }
 
                 break
