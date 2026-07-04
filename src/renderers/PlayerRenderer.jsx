@@ -6,13 +6,6 @@ import { playerQuery } from '../ecs/constants/queries.js'
 import { Position, Rotation } from '../ecs/constants/components.js'
 
 // ============================================================
-// FULLY LOCKED-IN ship config. No leva controls remain in this
-// component — every shape, color, and material parameter (including
-// cockpit glass) is now a static value below. Cockpit glass uses an
-// iridescent thin-film setup tuned to pick up color from the scene's
-// <Environment> (see PlayScreen.jsx) — green/turquoise/yellow
-// skyscraper-glass shimmer that shifts with viewing angle.
-// ============================================================
 
 const SHIP_CONFIG = {
     fuselage: {
