@@ -1,17 +1,22 @@
 
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { useControls } from 'leva'
 import * as THREE from 'three'
 import { playerQuery } from '../ecs/constants/queries.js'
 import { Position, Rotation } from '../ecs/constants/components.js'
 
 // ============================================================
+// FULLY LOCKED-IN ship config. No leva controls remain in this
+// component — every shape, color, and material parameter (including
+// cockpit glass) is now a static value below. Cockpit glass uses an
+// iridescent thin-film setup tuned to pick up color from the scene's
+// <Environment> (see PlayScreen.jsx) — green/turquoise/yellow
+// skyscraper-glass shimmer that shifts with viewing angle.
 // ============================================================
 
 const SHIP_CONFIG = {
     fuselage: {
-        color: '#e030d8',
+        color: '#cfe8ff',
         tipY: 0.78,
         shoulderY: 0.50,
         shoulderWidth: 0.18,
@@ -21,9 +26,8 @@ const SHIP_CONFIG = {
         tailWidth: 0.30,
         notchY: -0.37,
     },
-
     cockpit: {
-        color: '#a8c93c',
+        color: '#0070ff',
         topY: 0.62,
         topWidth: 0.06,
         midY: 0.14,
@@ -31,9 +35,8 @@ const SHIP_CONFIG = {
         bottomY: 0.04,
         bottomWidth: 0.09,
     },
-
     wing: {
-        color: '#e8362c',
+        color: '#cfe8ff',
         rootX: 0.20,
         rootY: 0.40,
         tipX: 0.79,
@@ -43,54 +46,52 @@ const SHIP_CONFIG = {
         innerX: 0.14,
         innerY: -0.24,
     },
-
     wingPanel: {
-        color: '#f4d93c',
+        color: '#cfe8ff',
         inset: 0.08,
     },
-
     wingtip: {
-        color: '#e030d8',
+        color: '#00ff10',
         width: 0.04,
         height: 0.43,
         offsetX: 0.77,
         offsetY: -0.35,
     },
-
-    // Locked in — was Ship.Decal
     decal: {
         enabled: true,
-        color: '#e8362c',
+        color: '#00ff10',
         width: 0.06,
         length: 0.65,
         offsetX: 0.30,
         offsetY: 0.00,
         tiltDeg: -11,
     },
-
-    // Locked in — was Ship.CockpitGlass
+ 
     cockpitGlass: {
         enabled: true,
-        color: '#cfe8ff',
-        metalness: 1,
-        roughness: 0.20,
-        clearcoat: 1,
-        clearcoatRoughness: 0.24,
         inset: 0.08,
         zOffset: 0.05,
+        color: '#00a9ff',
+        metalness: 0.9,
+        roughness: 0.06,
+        clearcoat: 1,
+        clearcoatRoughness: 0.04,
+        envMapIntensity: 2.2,
+        transmission: 0,
+        ior: 1.4,
+        iridescence: 1,
+        iridescenceIOR: 1.3,
+        iridescenceThicknessMin: 180,
+        iridescenceThicknessMax: 480,
     },
-
-    // Locked in — was Ship.EngineIntake
     engineIntake: {
         enabled: true,
-        color: '#0019ff',
+        color: '#00a9ff',
         width: 0.09,
         height: 0.30,
         offsetX: 0.40,
         offsetY: -0.28,
     },
-
-    // Locked in — was Ship.HullVent
     hullVent: {
         enabled: true,
         color: '#2000ff',
@@ -101,24 +102,31 @@ const SHIP_CONFIG = {
         offsetX: 0.21,
         offsetY: -0.08,
     },
-
-    // Locked in — was Ship.RacingStripe
     racingStripe: {
         enabled: true,
-        color: '#ff0000',
+        color: '#00ff10',
         width: 0.04,
         length: 0.94,
         offsetX: 0.30,
         offsetY: -0.14,
         tiltDeg: -10,
     },
-
-    // Locked in — was Ship.NoseSpike
     noseSpike: {
         enabled: true,
         color: '#00ff10',
         length: 0.26,
         width: 0.07,
+    },
+    tailFin: {
+        enabled: true,
+        color: '#7cfff4',
+        type: 'shark',
+        length: 0.25,
+        width: 0.35,
+        sweep: 0.50,
+        offsetX: 0.14,
+        offsetY: -0.33,
+        splayDeg: 0,
     },
     general: {
         extrudeDepth: 0.03,
@@ -206,8 +214,7 @@ function buildWingtipShape(cfg) {
     return shape
 }
 
-// Thin stripe rectangle — reused for the locked decal AND the
-// locked racing stripe (same shape, different instance/config).
+// Thin stripe rectangle — reused for the decal AND racing stripe.
 function buildStripeShape(cfg) {
     const halfW = cfg.width / 2
     const halfL = cfg.length / 2
@@ -219,10 +226,6 @@ function buildStripeShape(cfg) {
     shape.closePath()
     return shape
 }
-
-// ============================================================
-// NEW shape builders
-// ============================================================
 
 // Engine intake scoop — trapezoid mounted on the fuselage flank.
 function buildEngineIntakeShape(cfg) {
@@ -261,10 +264,10 @@ function buildNoseSpikeShape(cfg) {
 }
 
 // ============================================================
-// Tail fin shape builders — selectable via Ship.TailFin `type`
+// Tail fin shape builders — locked to type: 'shark' in SHIP_CONFIG,
+// all four kept here in case `type` is unlocked again later.
 // ============================================================
 
-// "kite" — swept kite-style tail fin (the original locked-in shape).
 function buildKiteTailShape(cfg) {
     const shape = new THREE.Shape()
     shape.moveTo(0, cfg.length / 2)
@@ -275,7 +278,6 @@ function buildKiteTailShape(cfg) {
     return shape
 }
 
-// "delta" — simple straight-edged triangle fin.
 function buildDeltaTailShape(cfg) {
     const shape = new THREE.Shape()
     shape.moveTo(0, cfg.length / 2)
@@ -285,8 +287,6 @@ function buildDeltaTailShape(cfg) {
     return shape
 }
 
-// "shark" — asymmetric swept fin, like a dorsal fin leaning back.
-// Mirroring left/right (via rotation.y = PI) flips the lean naturally.
 function buildSharkTailShape(cfg) {
     const halfW = cfg.width / 2
     const halfL = cfg.length / 2
@@ -300,7 +300,6 @@ function buildSharkTailShape(cfg) {
     return shape
 }
 
-// "box" — flat rectangular tail fin, no sweep.
 function buildBoxTailShape(cfg) {
     const halfW = cfg.width / 2
     const halfL = cfg.length / 2
@@ -335,53 +334,31 @@ export function PlayerRenderer() {
 
     const groupRef = useRef()
 
-    // -------------------------
-    // The ONLY leva control now: TailFin (type + shared params).
-    // EngineIntake / HullVent / RacingStripe / NoseSpike are locked
-    // into SHIP_CONFIG. Decal / CockpitGlass remain locked too.
-    // -------------------------
-
-    const tailFin = useControls('Ship.TailFin', {
-        enabled: true,
-        type: { value: 'shark', options: ['kite', 'delta', 'shark', 'box'] },
-        color: '#33ff00',
-        length: { value: 0.25, min: 0.1, max: 1.2, step: 0.01 },
-        width: { value: 0.35, min: 0.05, max: 1.0, step: 0.01 },
-        sweep: { value: 0.50, min: 0, max: 0.5, step: 0.01 },
-        offsetX: { value: 0.14, min: 0, max: 0.5, step: 0.005 },
-        offsetY: { value: -0.33, min: -0.5, max: 0.5, step: 0.01 },
-        splayDeg: { value: 0, min: -45, max: 45, step: 1 },
-    })
-
-    // Locked-in configs, aliased so the JSX below stays unchanged.
+    // No leva controls remain — every visual parameter, including
+    // cockpit glass material, is now static config above.
+    const tailFin = SHIP_CONFIG.tailFin
     const engineIntake = SHIP_CONFIG.engineIntake
     const hullVent = SHIP_CONFIG.hullVent
     const racingStripe = SHIP_CONFIG.racingStripe
     const noseSpike = SHIP_CONFIG.noseSpike
+    const cockpitGlass = SHIP_CONFIG.cockpitGlass
 
     const extrude = useMemo(() => ({ depth: SHIP_CONFIG.general.extrudeDepth, bevelEnabled: false }), [])
     const thinExtrude = useMemo(() => ({ depth: SHIP_CONFIG.general.extrudeDepth * 0.5, bevelEnabled: false }), [])
 
-    // Base hull geometries — built once, config is static.
-    const fuselageGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildFuselageShape(SHIP_CONFIG.fuselage), extrude), [extrude])
-    const cockpitGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildCockpitShape(SHIP_CONFIG.cockpit), extrude), [extrude])
-    const wingGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildWingShape(SHIP_CONFIG.wing), extrude),
-        [extrude]
+    // All geometries are fully static — built once, nothing in this
+    // component is live anymore.
+    const fuselageGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildFuselageShape(SHIP_CONFIG.fuselage), extrude), [])
+    const cockpitGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildCockpitShape(SHIP_CONFIG.cockpit), extrude), [])
+    const wingGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildWingShape(SHIP_CONFIG.wing), extrude), [])
+    const wingPanelGeometry = useMemo(
+        () => new THREE.ExtrudeGeometry(buildWingPanelShape(SHIP_CONFIG.wing, SHIP_CONFIG.wingPanel.inset), extrude),
+        []
     )
-    const wingPanelGeometry = useMemo(() => new THREE.ExtrudeGeometry(
-        buildWingPanelShape(SHIP_CONFIG.wing, SHIP_CONFIG.wingPanel.inset),
-        extrude
-    ),
-        [extrude]
-    )
-    const wingtipGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildWingtipShape(SHIP_CONFIG.wingtip), extrude),
-        [extrude]
-    )
-    const decalGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildStripeShape(SHIP_CONFIG.decal), thinExtrude),
-        [thinExtrude]
-    )
+    const wingtipGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildWingtipShape(SHIP_CONFIG.wingtip), extrude), [])
+    const decalGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildStripeShape(SHIP_CONFIG.decal), thinExtrude), [])
     const cockpitGlassGeometry = useMemo(() => {
-        const g = SHIP_CONFIG.cockpitGlass
+        const g = cockpitGlass
         const shrunk = {
             topY: SHIP_CONFIG.cockpit.topY - g.inset,
             topWidth: Math.max(0.01, SHIP_CONFIG.cockpit.topWidth - g.inset * 0.4),
@@ -391,30 +368,15 @@ export function PlayerRenderer() {
             bottomWidth: Math.max(0.01, SHIP_CONFIG.cockpit.bottomWidth - g.inset),
         }
         return new THREE.ExtrudeGeometry(buildCockpitShape(shrunk), thinExtrude)
-    }, [thinExtrude])
-    const decalTiltRad = useMemo(() => (SHIP_CONFIG.decal.tiltDeg * Math.PI) / 180,
-        []
-    )
+    }, [])
+    const decalTiltRad = useMemo(() => (SHIP_CONFIG.decal.tiltDeg * Math.PI) / 180, [])
 
-    // Locked-part geometries — static, built once from SHIP_CONFIG.
-    const engineIntakeGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildEngineIntakeShape(engineIntake), extrude),
-        [extrude]
-    )
-    const hullVentGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildHullVentShape(hullVent), thinExtrude),
-        [thinExtrude]
-    )
-    const racingStripeGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildStripeShape(racingStripe), thinExtrude),
-        [thinExtrude]
-    )
-    const noseSpikeGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildNoseSpikeShape(noseSpike), extrude),
-        [extrude]
-    )
-    const racingStripeTiltRad = useMemo(() => (racingStripe.tiltDeg * Math.PI) / 180,
-        []
-    )
+    const engineIntakeGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildEngineIntakeShape(engineIntake), extrude), [])
+    const hullVentGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildHullVentShape(hullVent), thinExtrude), [])
+    const racingStripeGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildStripeShape(racingStripe), thinExtrude), [])
+    const noseSpikeGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildNoseSpikeShape(noseSpike), extrude), [])
+    const racingStripeTiltRad = useMemo(() => (racingStripe.tiltDeg * Math.PI) / 180, [])
 
-    // Vent row offsets — static now, but kept memoized in case
-    // hullVent config is ever made live again.
     const ventOffsets = useMemo(() => {
         const offsets = []
         const total = (hullVent.count - 1) * hullVent.spacing
@@ -424,13 +386,9 @@ export function PlayerRenderer() {
         return offsets
     }, [])
 
-    // Tail fin geometry — live, reacts to type + shared params.
-    const tailFinGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildTailFinShape(tailFin), extrude),
-        [tailFin, extrude]
-    )
-    const tailFinSplayRad = useMemo(() => (tailFin.splayDeg * Math.PI) / 180,
-        [tailFin.splayDeg]
-    )
+    // Tail fin geometry — locked to SHIP_CONFIG.tailFin (type: 'shark').
+    const tailFinGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildTailFinShape(tailFin), extrude), [])
+    const tailFinSplayRad = useMemo(() => (tailFin.splayDeg * Math.PI) / 180, [])
 
     useFrame(() => {
 
@@ -479,7 +437,7 @@ export function PlayerRenderer() {
                 <meshStandardMaterial color={SHIP_CONFIG.wingtip.color} metalness={0.2} roughness={0.6} side={THREE.DoubleSide} />
             </mesh>
 
-            {/* Tail fins — both sides, LIVE via Ship.TailFin menu */}
+            {/* Tail fins — both sides */}
             {tailFin.enabled && (
                 <>
                     <mesh
@@ -541,7 +499,7 @@ export function PlayerRenderer() {
                 </mesh>
             )}
 
-            {/* Decal stripes — both sides of fuselage, locked in */}
+            {/* Decal stripes — both sides of fuselage */}
             {SHIP_CONFIG.decal.enabled && (
                 <>
                     <mesh
@@ -561,7 +519,7 @@ export function PlayerRenderer() {
                 </>
             )}
 
-            {/* Racing stripes — secondary decal, both sides, locked in */}
+            {/* Racing stripes — secondary decal, both sides */}
             {racingStripe.enabled && (
                 <>
                     <mesh
@@ -586,15 +544,21 @@ export function PlayerRenderer() {
                 <meshStandardMaterial color={SHIP_CONFIG.cockpit.color} metalness={0.3} roughness={0.3} side={THREE.DoubleSide} />
             </mesh>
 
-            {/* Cockpit glass — locked in */}
-            {SHIP_CONFIG.cockpitGlass.enabled && (
-                <mesh geometry={cockpitGlassGeometry} position={[0, 0, 0.05 + SHIP_CONFIG.cockpitGlass.zOffset]}>
+            {/* Cockpit glass — fully locked in, tuned for the scene's Environment */}
+            {cockpitGlass.enabled && (
+                <mesh geometry={cockpitGlassGeometry} position={[0, 0, 0.05 + cockpitGlass.zOffset]}>
                     <meshPhysicalMaterial
-                        color={SHIP_CONFIG.cockpitGlass.color}
-                        metalness={SHIP_CONFIG.cockpitGlass.metalness}
-                        roughness={SHIP_CONFIG.cockpitGlass.roughness}
-                        clearcoat={SHIP_CONFIG.cockpitGlass.clearcoat}
-                        clearcoatRoughness={SHIP_CONFIG.cockpitGlass.clearcoatRoughness}
+                        color={cockpitGlass.color}
+                        metalness={cockpitGlass.metalness}
+                        roughness={cockpitGlass.roughness}
+                        clearcoat={cockpitGlass.clearcoat}
+                        clearcoatRoughness={cockpitGlass.clearcoatRoughness}
+                        envMapIntensity={cockpitGlass.envMapIntensity}
+                        transmission={cockpitGlass.transmission}
+                        ior={cockpitGlass.ior}
+                        iridescence={cockpitGlass.iridescence}
+                        iridescenceIOR={cockpitGlass.iridescenceIOR}
+                        iridescenceThicknessRange={[cockpitGlass.iridescenceThicknessMin, cockpitGlass.iridescenceThicknessMax]}
                         side={THREE.DoubleSide}
                     />
                 </mesh>

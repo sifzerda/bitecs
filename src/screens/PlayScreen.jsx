@@ -1,5 +1,7 @@
 // src/screens/PlayScreen.jsx
 
+// src/screens/PlayScreen.jsx
+
 import { useFrame } from '@react-three/fiber'
 import {
     EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
@@ -9,6 +11,7 @@ import {
 import { Canvas } from '@react-three/fiber'
 import { BlendFunction } from 'postprocessing'
 import {
+    Environment,
     //Trail -- effect to make moving things trail 
     //Float -- effect for floating power-ups
 } from '@react-three/drei'
@@ -61,6 +64,11 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     dpr={[1, 2]}>
 
                     <GameLoop keysRef={keysRef} paused={paused} />
+
+                    {/* Feeds colorful reflections (skyscraper-glass cockpit, chrome, etc.)
+                        into materials without rendering a visible skybox — background={false}
+                        keeps your actual scene background untouched. */}
+                    <Environment preset="city" background={false} />
 
                     <ambientLight intensity={1.1} />
                     <directionalLight position={[5, 8, 6]} intensity={2.0} />
