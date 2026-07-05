@@ -2,14 +2,13 @@
 
 import { world } from "../constants/world.js"
 import { bossAIQuery, playerQuery } from "../constants/queries.js"
-import { Position, Velocity, BossAI } from "../constants/components.js"
+import { Position, Velocity, BossAI, BULLET_OWNER } from "../constants/components.js"
 import { spawnBullet } from "../spawn.js"
-import { BULLET_OWNER } from "../constants/components.js"
+import { getWeapon } from "../constants/weapons.js"
 
 const MOVE_SPEED = 4
-const MOVE_INTERVAL = 2.0      // seconds between direction changes
-const SHOOT_INTERVAL = 1.4     // seconds between shots
-const BULLET_SPEED = 10
+const MOVE_INTERVAL = 2.0
+const SHOOT_INTERVAL = 1.4
 
 export function bossAISystem() {
 
@@ -32,12 +31,9 @@ export function bossAISystem() {
         BossAI.moveTimer[id] -= dt
 
         if (BossAI.moveTimer[id] <= 0) {
-
             const angle = Math.random() * Math.PI * 2
-
             Velocity.x[id] = Math.cos(angle) * MOVE_SPEED
             Velocity.y[id] = Math.sin(angle) * MOVE_SPEED
-
             BossAI.moveTimer[id] = MOVE_INTERVAL
         }
 
@@ -47,22 +43,20 @@ export function bossAISystem() {
 
         BossAI.shootTimer[id] -= dt
 
-       if (BossAI.shootTimer[id] <= 0 && hasPlayer) {
+        if (BossAI.shootTimer[id] <= 0 && hasPlayer) {
 
-    const dx = Position.x[pid] - Position.x[id]
-    const dy = Position.y[pid] - Position.y[id]
+            const weapon = getWeapon(BossAI.weapon[id])
 
-    const rot = -Math.atan2(dx, dy)
+            if (weapon.category !== "beam") {
 
-    spawnBullet(
-        Position.x[id],
-        Position.y[id],
-        rot,
-        BossAI.weapon[id],
-        BULLET_OWNER.ENEMY
-    )
+                const dx = Position.x[pid] - Position.x[id]
+                const dy = Position.y[pid] - Position.y[id]
+                const rot = -Math.atan2(dx, dy)
 
-    BossAI.shootTimer[id] = SHOOT_INTERVAL
-}
+                spawnBullet(Position.x[id], Position.y[id], rot, weapon.id, BULLET_OWNER.ENEMY)
+            }
+
+            BossAI.shootTimer[id] = SHOOT_INTERVAL
+        }
     }
 }

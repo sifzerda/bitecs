@@ -107,7 +107,7 @@ export default function playerControlSystem(shootState) {
 
     const weapon = getWeapon(gameState.currentWeapon)
 
-    if (weapon.isBeam) {
+    if (weapon.category === "beam") {
         // beam weapons are handled entirely by laserSystem — no discrete spawn/cooldown here
     } else {
         shootState.timer -= dt

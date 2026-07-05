@@ -56,6 +56,11 @@ export function spawnPlayer(x, y) {
 export function spawnBullet(x, y, rot, weaponId = 0, owner) {
 
     const weapon = getWeapon(weaponId)
+
+    // beams have no ECS bullet entity — laserSystem handles them entirely.
+    // Guarding here (not just at call sites) means ANY future caller is safe by default.
+    if (weapon.category === "beam") return []
+
     const count = weapon.projectileCount
     const spread = weapon.spreadAngle
 
@@ -63,7 +68,6 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
 
     for (let i = 0; i < count; i++) {
 
-        // spread evenly across the total spread angle, single shot has 0 offset
         const offset = count > 1
             ? -spread / 2 + (spread / (count - 1)) * i
             : 0

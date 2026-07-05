@@ -21,6 +21,7 @@ import {
 import { spawnSparkBurst } from "../spawn.js"
 import { gameState } from "../../state/gameState.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
+import { getWeapon } from "../constants/weapons.js"
 
 const HIT_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
@@ -40,6 +41,7 @@ export function combatSystem() {
     for (let i = 0; i < bullets.length; i++) {
 
         const bid = bullets[i]
+        const weapon = getWeapon(Bullet.type[bid])
 
         //----------------------------------
         // Lifetime
@@ -71,9 +73,9 @@ export function combatSystem() {
                 const dx = Position.x[bid] - Position.x[aid]
                 const dy = Position.y[bid] - Position.y[aid]
 
-                if (dx * dx + dy * dy <= HIT_RADIUS * HIT_RADIUS) {
+                if (dx * dx + dy * dy <= weapon.hitRadius * weapon.hitRadius) {
 
-                    Health.current[aid] -= 10
+                    Health.current[aid] -= weapon.damage
 
                     spawnSparkBurst(
                         Position.x[bid],
@@ -82,11 +84,7 @@ export function combatSystem() {
                     )
 
                     if (Health.current[aid] <= 0) {
-                        killAsteroid(
-                            aid,
-                            Position.x[aid],
-                            Position.y[aid]
-                        )
+                        killAsteroid(aid, Position.x[aid], Position.y[aid])
                     }
 
                     removeEntity(world, bid)
@@ -95,42 +93,37 @@ export function combatSystem() {
                 }
             }
 
-            if (hit)
-                continue
+            if (hit) continue
 
             // -------------------------
             // Bosses
             // -------------------------
 
-            for (let j = 0; j < bosses.length; j++) {
+           for (let j = 0; j < bosses.length; j++) {
 
                 const bossId = bosses[j]
 
                 const dx = Position.x[bid] - Position.x[bossId]
                 const dy = Position.y[bid] - Position.y[bossId]
 
-                if (dx * dx + dy * dy <= BOSS_RADIUS * BOSS_RADIUS) {
+                // boss is a much bigger target than an asteroid — keep a fixed
+                // multiplier on the weapon's own hitRadius rather than a separate constant
+                const bossRadius = weapon.hitRadius * 3
 
-                    Health.current[bossId] -= 10
+                if (dx * dx + dy * dy <= bossRadius * bossRadius) {
+
+                    Health.current[bossId] -= weapon.damage
 
                     spawnSparkBurst(
                         Position.x[bid],
                         Position.y[bid],
-                        {
-                            count: 26,
-                            speed: 10,
-                            big: true
-                        }
+                        { count: 26, speed: 10, big: true }
                     )
 
                     removeEntity(world, bid)
 
                     if (Health.current[bossId] <= 0) {
-                        killBoss(
-                            bossId,
-                            Position.x[bossId],
-                            Position.y[bossId]
-                        )
+                        killBoss(bossId, Position.x[bossId], Position.y[bossId])
                     }
 
                     break
@@ -145,22 +138,19 @@ export function combatSystem() {
 
         else {
 
-            if (pid === null)
-                continue
+            if (pid === null) continue
 
             const dx = Position.x[bid] - Position.x[pid]
             const dy = Position.y[bid] - Position.y[pid]
 
             if (dx * dx + dy * dy <= PLAYER_HIT_RADIUS * PLAYER_HIT_RADIUS) {
 
-                Health.current[pid] -= 10
+                Health.current[pid] -= weapon.damage
 
                 removeEntity(world, bid)
 
                 if (Health.current[pid] <= 0) {
-
                     gameState.lives--
-
                     Health.current[pid] = Health.max[pid]
                 }
             }
