@@ -50,9 +50,6 @@ function emitParticles(pool, cfg, pid, count) {
         pool.size[slot] = cfg.sizeMin + Math.random() * (cfg.sizeMax - cfg.sizeMin)
     }
 }
-
-// Advances physics for every particle in `pool` (position, drag, life decay)
-// and caches per-particle values (t, speed) reused by both visual layers.
 function advanceParticles(pool, cfg, delta) {
     const max = pool.x.length
 
