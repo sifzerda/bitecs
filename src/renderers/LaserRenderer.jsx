@@ -1,6 +1,7 @@
 // src/renderers/LaserRenderer.jsx
 
 import { useMemo, useRef } from 'react'
+import { createRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { laserState } from '../state/laserState.js'
@@ -11,95 +12,107 @@ const CORE_WIDTH_MULT = 1
 const GLOW_WIDTH_MULT = 2.6
 const HALO_WIDTH_MULT = 4.5
 
+const MAX_BEAMS = 3   // matches the highest beamCount across all beam weapons (prism beam)
+
 export function LaserRenderer() {
 
-    const coreRef = useRef()
-    const glowRef = useRef()
-    const haloRef = useRef()
+    // one {core, glow, halo} ref-set per possible simultaneous beam slot
+    const beamRefs = useRef(
+        Array.from({ length: MAX_BEAMS }, () => ({
+            core: createRef(),
+            glow: createRef(),
+            halo: createRef(),
+        }))
+    )
 
     // unit cylinder, height 1, axis along Y by default — scale.y stretches it to beam length
     const geometry = useMemo(() => new THREE.CylinderGeometry(1, 1, 1, 8), [])
 
     useFrame(() => {
 
-        const core = coreRef.current
-        const glow = glowRef.current
-        const halo = haloRef.current
-        if (!core || !glow || !halo) return
+        const weapon = getWeapon(gameState.currentWeapon)
+        const isBeamWeapon = weapon.category === "beam"
+        const active = isBeamWeapon && laserState.active && laserState.hits && laserState.hits.length > 0
 
-        const active = gameState.currentWeapon === 4 && laserState.active && laserState.length > 0.01
+        for (let slot = 0; slot < MAX_BEAMS; slot++) {
 
-        if (!active) {
-            core.visible = false
-            glow.visible = false
-            halo.visible = false
-            return
+            const refs = beamRefs.current[slot]
+            if (!refs.core.current || !refs.glow.current || !refs.halo.current) continue
+
+            const hitData = active ? laserState.hits[slot] : null
+            const visible = !!hitData && hitData.hitT > 0.01
+
+            refs.core.current.visible = visible
+            refs.glow.current.visible = visible
+            refs.halo.current.visible = visible
+
+            if (!visible) continue
+
+            const dirX = hitData.dirX
+            const dirY = hitData.dirY
+            const length = hitData.hitT
+
+            const midX = laserState.originX + dirX * length * 0.5
+            const midY = laserState.originY + dirY * length * 0.5
+
+            const angle = Math.atan2(dirY, dirX) - Math.PI / 2   // align cylinder's Y axis with beam direction
+            const width = weapon.beamWidth
+
+            refs.core.current.position.set(midX, midY, 0.02)
+            refs.glow.current.position.set(midX, midY, 0.015)
+            refs.halo.current.position.set(midX, midY, 0.01)
+
+            refs.core.current.rotation.set(0, 0, angle)
+            refs.glow.current.rotation.set(0, 0, angle)
+            refs.halo.current.rotation.set(0, 0, angle)
+
+            refs.core.current.scale.set(width * CORE_WIDTH_MULT, length, width * CORE_WIDTH_MULT)
+            refs.glow.current.scale.set(width * GLOW_WIDTH_MULT, length, width * GLOW_WIDTH_MULT)
+            refs.halo.current.scale.set(width * HALO_WIDTH_MULT, length, width * HALO_WIDTH_MULT)
+
+            // colors now driven by the equipped weapon's own palette instead of a fixed red/pink
+            refs.core.current.material.color.set(weapon.color)
+            refs.glow.current.material.color.set(weapon.glowColor)
+            refs.halo.current.material.color.set(weapon.haloColor)
         }
-
-        core.visible = true
-        glow.visible = true
-        halo.visible = true
-
-        const weapon = getWeapon(4)
-
-        const dx = laserState.hitX - laserState.originX
-        const dy = laserState.hitY - laserState.originY
-        const length = laserState.length
-
-        const midX = laserState.originX + dx * 0.5
-        const midY = laserState.originY + dy * 0.5
-
-        const angle = Math.atan2(dy, dx) - Math.PI / 2   // align cylinder's Y axis with beam direction
-        const width = weapon.beamWidth
-
-        core.position.set(midX, midY, 0.02)
-        glow.position.set(midX, midY, 0.015)
-        halo.position.set(midX, midY, 0.01)
-
-        core.rotation.set(0, 0, angle)
-        glow.rotation.set(0, 0, angle)
-        halo.rotation.set(0, 0, angle)
-
-        core.scale.set(width * CORE_WIDTH_MULT, length, width * CORE_WIDTH_MULT)
-        glow.scale.set(width * GLOW_WIDTH_MULT, length, width * GLOW_WIDTH_MULT)
-        halo.scale.set(width * HALO_WIDTH_MULT, length, width * HALO_WIDTH_MULT)
 
     })
 
     return (
         <>
-            <mesh ref={haloRef} geometry={geometry} frustumCulled={false}>
-                <meshBasicMaterial
-                    color="#ff0033"
-                    transparent
-                    opacity={0.18}
-                    blending={THREE.AdditiveBlending}
-                    depthWrite={false}
-                    side={THREE.DoubleSide}
-                />
-            </mesh>
+            {beamRefs.current.map((refs, i) => (
+                <group key={i}>
+                    <mesh ref={refs.halo} geometry={geometry} frustumCulled={false}>
+                        <meshBasicMaterial
+                            transparent
+                            opacity={0.18}
+                            blending={THREE.AdditiveBlending}
+                            depthWrite={false}
+                            side={THREE.DoubleSide}
+                        />
+                    </mesh>
 
-            <mesh ref={glowRef} geometry={geometry} frustumCulled={false}>
-                <meshBasicMaterial
-                    color="#ff0055"
-                    transparent
-                    opacity={0.4}
-                    blending={THREE.AdditiveBlending}
-                    depthWrite={false}
-                    side={THREE.DoubleSide}
-                />
-            </mesh>
+                    <mesh ref={refs.glow} geometry={geometry} frustumCulled={false}>
+                        <meshBasicMaterial
+                            transparent
+                            opacity={0.4}
+                            blending={THREE.AdditiveBlending}
+                            depthWrite={false}
+                            side={THREE.DoubleSide}
+                        />
+                    </mesh>
 
-            <mesh ref={coreRef} geometry={geometry} frustumCulled={false}>
-                <meshBasicMaterial
-                    color="#ffe0ee"
-                    transparent
-                    opacity={0.95}
-                    blending={THREE.AdditiveBlending}
-                    depthWrite={false}
-                    side={THREE.DoubleSide}
-                />
-            </mesh>
+                    <mesh ref={refs.core} geometry={geometry} frustumCulled={false}>
+                        <meshBasicMaterial
+                            transparent
+                            opacity={0.95}
+                            blending={THREE.AdditiveBlending}
+                            depthWrite={false}
+                            side={THREE.DoubleSide}
+                        />
+                    </mesh>
+                </group>
+            ))}
         </>
     )
 }

@@ -9,4 +9,9 @@ export const laserState = {
     length: 0,
     hit: false,
     sparkTimer: 0,
+
+    lockTargetId: -1,   // tracks which entity the beam has been continuously locked on (particle beam ramp)
+    lockTime: 0,         // seconds spent locked on lockTargetId, resets when target changes
+
+    hits: [],            // one entry per active beam: {dirX, dirY, hitT, hitX, hitY, hit} — length 1 for normal beams, 3 for prism
 }

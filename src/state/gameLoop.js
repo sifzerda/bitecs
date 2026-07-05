@@ -9,6 +9,8 @@ import { waveSystem } from "../ecs/systems/waveSystem"
 import { bossAISystem } from "../ecs/systems/bossAISystem"
 import { laserSystem } from "../ecs/systems/laserSystem"
 import { missileSystem } from "../ecs/systems/missileSystem"
+import { ricochetSystem } from "../ecs/systems/ricochetSystem"
+import { hazardSystem } from "../ecs/systems/hazardSystem"
 
 
 export function gameLoop(shootState) {
@@ -20,6 +22,9 @@ export function gameLoop(shootState) {
     movementSystem()
     boundsSystem()
     waveSystem()
+
+    ricochetSystem()
+    hazardSystem()
     combatSystem()
     laserSystem()
     sparkSystem()

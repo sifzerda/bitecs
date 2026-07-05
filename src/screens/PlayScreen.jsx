@@ -23,10 +23,14 @@ import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
 import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
 import { MissileRenderer } from '../renderers/MissileRenderer.jsx'
 import { LaserRenderer } from '../renderers/LaserRenderer.jsx'
+import { ArcRenderer } from '../renderers/ArcRenderer.jsx'
+
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
- 
+
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
+// debug
+import { GodPanel } from '../debug/GodPanel.jsx'
 
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
@@ -48,6 +52,11 @@ export function PlayScreen({ keysRef, paused, onPause }) {
         <div className="border-2 border-green-400 flex flex-col h-[calc(100vh-120px)]">
 
             <HUD paused={paused} onPause={onPause} />
+
+
+            <GodPanel />
+
+            
 
             <div className="relative flex-1 px-4">
 
@@ -72,11 +81,12 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <MissileRenderer />
                     <LaserRenderer />
+                    <ArcRenderer />
 
                     <SparkRenderer />
 
                     <BossRenderer />
- 
+
 
                     <EffectComposer multisampling={0}>
 
