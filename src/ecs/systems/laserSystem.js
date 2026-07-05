@@ -46,7 +46,7 @@ export function laserSystem() {
     const dt = world.time.delta
     const weapon = getWeapon(gameState.currentWeapon)
 
-    if (!weapon.isBeam) {
+    if (!weapon.category === "beam") {
         laserState.active = false
         return
     }

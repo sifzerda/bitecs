@@ -189,7 +189,7 @@ export function BulletRenderer() {
 
             {/* One core/glow/halo trio per weapon type */}
             {WEAPONS
-                .filter(weapon => !weapon.isMissile && !weapon.isBeam)
+                .filter(weapon => weapon.category === "bullet")
                 .map((weapon) => {
                     const i = weapon.id   // index must match Bullet.type values used elsewhere
                     return (
