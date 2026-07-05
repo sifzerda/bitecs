@@ -110,6 +110,9 @@ export default function playerControlSystem(shootState) {
 
     if (weapon.category === "beam") {
         // beam weapons are handled entirely by laserSystem — no discrete spawn/cooldown here
+    } else if (weapon.category === "flame") {
+        // handled entirely by flameSystem
+
     } else if (weapon.category === "pulse") {
         shootState.timer -= dt
         if (input.fire && shootState.timer <= 0) {
@@ -131,6 +134,8 @@ export default function playerControlSystem(shootState) {
                 spawnDrone(Position.x[pid], Position.y[pid], weapon.id, i, weapon.droneCount)
             }
         }
+
+
 
     } else {
         shootState.timer -= dt

@@ -293,6 +293,19 @@ export const WEAPONS = [
         haloColor: "#cc00cc",
     },
 
+    {
+        id: 18,
+        name: "flamethrower",
+        category: "flame",
+        range: 6,                 // short range — flamethrowers are a close-quarters weapon
+        coneAngle: 0.6,            // radians, full cone width
+        damagePerSecond: 35,       // at point-blank; falls off with distance (see flameSystem)
+        tickSparkInterval: 0.06,
+        color: "#ffcc66",
+        glowColor: "#ff6600",
+        haloColor: "#ff2200",
+    },
+
 ]
 
 export function getWeapon(id) {

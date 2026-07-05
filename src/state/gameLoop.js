@@ -11,6 +11,7 @@ import { laserSystem } from "../ecs/systems/laserSystem"
 import { missileSystem } from "../ecs/systems/missileSystem"
 import { ricochetSystem } from "../ecs/systems/ricochetSystem"
 import { hazardSystem } from "../ecs/systems/hazardSystem"
+import { flameSystem } from "../ecs/systems/flameSystem"
 
 
 export function gameLoop(shootState) {
@@ -28,5 +29,6 @@ export function gameLoop(shootState) {
     combatSystem()
     laserSystem()
     sparkSystem()
+    flameSystem()
 
 }
