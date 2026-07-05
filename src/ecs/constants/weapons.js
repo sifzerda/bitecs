@@ -20,7 +20,7 @@ export const WEAPONS = [
         speed: 16,
         lifetime: 1.0,
         projectileCount: 3,
-        spreadAngle: 0.35,   // total spread in radians across all projectiles
+        spreadAngle: 0.20,    
         color: "#fff2b0",
         glowColor: "#ffaa33",
         haloColor: "#ff8800",

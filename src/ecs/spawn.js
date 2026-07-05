@@ -17,7 +17,7 @@ import {
     AsteroidTag,
     BossTag,
     BossAI,
-    BossBulletTag
+
 } from "./constants/components";
 import { gameState } from "../state/gameState";
 import { getWeapon } from "./constants/weapons";
@@ -53,7 +53,7 @@ export function spawnPlayer(x, y) {
 
 // ============= Bullets ============//
 
-export function spawnBullet(x, y, rot, weaponId = 0) {
+export function spawnBullet(x, y, rot, weaponId = 0, owner) {
 
     const weapon = getWeapon(weaponId)
     const count = weapon.projectileCount
@@ -86,6 +86,7 @@ export function spawnBullet(x, y, rot, weaponId = 0) {
 
         Lifetime.remaining[id] = weapon.lifetime
         Bullet.type[id] = weapon.id
+        Bullet.owner[id] = owner
 
         ids.push(id)
     }
@@ -124,8 +125,8 @@ function spawnSpark(x, y, speed, size, life) {
 
 export function spawnSparkBurst(x, y, options = {}) {
 
-    const count = options.count ?? 28       
-    const speed = options.speed ?? 10     
+    const count = options.count ?? 28
+    const speed = options.speed ?? 10
     const big = options.big ?? false
 
     // one oversized, ultra-short-lived flash spark for the initial "punch"
@@ -220,7 +221,7 @@ export function spawnAsteroid(x, y) {
 
 // ============= Boss ============//
 
-export function spawnBoss() {
+export function spawnBoss(weaponId) {
 
     const id = addEntity(world)
 
@@ -241,30 +242,10 @@ export function spawnBoss() {
 
     BossAI.moveTimer[id] = 0     // pick a direction immediately
     BossAI.shootTimer[id] = 1    // small delay before first shot
+    BossAI.weapon[id] = weaponId
 
     gameState.bossAlive = true
 
     return id
 }
 
-// ============= Boss Bullets ============//
-
-export function spawnBossBullet(x, y, vx, vy) {
-
-    const id = addEntity(world)
-
-    addComponent(world, id, Position)
-    addComponent(world, id, Velocity)
-    addComponent(world, id, Lifetime)
-    addComponent(world, id, BossBulletTag)
-
-    Position.x[id] = x
-    Position.y[id] = y
-
-    Velocity.x[id] = vx
-    Velocity.y[id] = vy
-
-    Lifetime.remaining[id] = 3.0
-
-    return id
-}

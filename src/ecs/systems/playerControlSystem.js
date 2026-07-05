@@ -2,7 +2,7 @@
 
 import { playerQuery } from "../constants/queries.js"
 import { world } from "../constants/world.js"
-import { Position, Velocity, Rotation } from "../constants/components.js"
+import { Position, Velocity, Rotation, BULLET_OWNER } from "../constants/components.js"
 import { spawnBullet, spawnExhaust } from "../spawn.js"
 import { input } from "./input.js"
 import { gameState } from "../../state/gameState.js"
@@ -105,7 +105,7 @@ export default function playerControlSystem(shootState) {
     // Shooting
     //----------------------------------
 
- const weapon = getWeapon(gameState.currentWeapon)
+    const weapon = getWeapon(gameState.currentWeapon)
 
     if (weapon.isBeam) {
         // beam weapons are handled entirely by laserSystem — no discrete spawn/cooldown here
@@ -113,7 +113,13 @@ export default function playerControlSystem(shootState) {
         shootState.timer -= dt
 
         if (input.fire && shootState.timer <= 0) {
-            spawnBullet(Position.x[pid], Position.y[pid], Rotation[pid], weapon.id)
+            spawnBullet(
+                Position.x[pid],
+                Position.y[pid],
+                Rotation[pid],
+                weapon.id,
+                BULLET_OWNER.PLAYER
+            )
             shootState.timer = weapon.fireRate
         }
     }

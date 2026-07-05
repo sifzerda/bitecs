@@ -3,7 +3,8 @@
 import { world } from "../constants/world.js"
 import { bossAIQuery, playerQuery } from "../constants/queries.js"
 import { Position, Velocity, BossAI } from "../constants/components.js"
-import { spawnBossBullet } from "../spawn.js"
+import { spawnBullet } from "../spawn.js"
+import { BULLET_OWNER } from "../constants/components.js"
 
 const MOVE_SPEED = 4
 const MOVE_INTERVAL = 2.0      // seconds between direction changes
@@ -46,20 +47,22 @@ export function bossAISystem() {
 
         BossAI.shootTimer[id] -= dt
 
-        if (BossAI.shootTimer[id] <= 0 && hasPlayer) {
+       if (BossAI.shootTimer[id] <= 0 && hasPlayer) {
 
-            const dx = Position.x[pid] - Position.x[id]
-            const dy = Position.y[pid] - Position.y[id]
-            const dist = Math.hypot(dx, dy) || 1
+    const dx = Position.x[pid] - Position.x[id]
+    const dy = Position.y[pid] - Position.y[id]
 
-            spawnBossBullet(
-                Position.x[id],
-                Position.y[id],
-                (dx / dist) * BULLET_SPEED,
-                (dy / dist) * BULLET_SPEED
-            )
+    const rot = -Math.atan2(dx, dy)
 
-            BossAI.shootTimer[id] = SHOOT_INTERVAL
-        }
+    spawnBullet(
+        Position.x[id],
+        Position.y[id],
+        rot,
+        BossAI.weapon[id],
+        BULLET_OWNER.ENEMY
+    )
+
+    BossAI.shootTimer[id] = SHOOT_INTERVAL
+}
     }
 }
