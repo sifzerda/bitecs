@@ -82,6 +82,217 @@ export const WEAPONS = [
         haloColor: "#ff0033",
     },
 
+    {
+        id: 5,
+        name: "ricochetgun",
+        category: "bullet",
+        damage: 8,
+        maxBullets: 128,
+        hitRadius: 0.5,
+        fireRate: 0.25,
+        speed: 16,
+        lifetime: 2.5,          // longer lifetime so bounces are actually visible
+        projectileCount: 1,
+        spreadAngle: 0,
+        maxBounces: 3,          // how many times it can bounce before dying like a normal bullet
+        color: "#d0ffe0",
+        glowColor: "#33ff88",
+        haloColor: "#22cc66",
+    },
+
+    {
+        id: 6,
+        name: "grenadelauncher",
+        category: "bullet",
+        explosive: true,          // triggers AOE explosion instead of single-target damage
+        explosionRadius: 2.5,
+        damage: 25,               // full damage to everything caught in the explosion radius
+        maxBullets: 32,           // low count — these are slow, one-at-a-time weapons
+        hitRadius: 0.6,           // still used for the initial "did it hit something" check
+        fireRate: 0.9,
+        speed: 12,
+        lifetime: 1.6,            // expires (and explodes) if it doesn't hit anything first
+        projectileCount: 1,
+        spreadAngle: 0,
+        color: "#ffcf80",
+        glowColor: "#ff9933",
+        haloColor: "#ff7700",
+    },
+
+    {
+        id: 7,
+        name: "darkmatterlauncher",
+        category: "bullet",
+        leavesHazard: true,       // on hit or expiry, drops a static damage cloud instead of direct damage
+        damage: 0,                // no direct hit damage — the cloud does the work
+        hazardRadius: 3.0,
+        hazardDamage: 6,
+        hazardTickInterval: 0.5,
+        hazardDuration: 4.0,
+        maxBullets: 32,
+        hitRadius: 0.5,
+        fireRate: 1.0,
+        speed: 14,
+        lifetime: 2.0,
+        projectileCount: 1,
+        spreadAngle: 0,
+        color: "#c9a3ff",
+        glowColor: "#7a33ff",
+        haloColor: "#4d0099",
+    },
+    {
+        id: 8,
+        name: "acidsprayer",
+        category: "bullet",
+        leavesHazard: true,
+        damage: 3,                 // small direct tick on impact, puddle does the rest
+        hazardRadius: 1.5,
+        hazardDamage: 4,
+        hazardTickInterval: 0.3,
+        hazardDuration: 3.0,
+        maxBullets: 96,
+        hitRadius: 0.4,
+        fireRate: 0.12,             // fast fire rate to feel like a "spray"
+        speed: 15,
+        lifetime: 0.8,
+        projectileCount: 1,
+        spreadAngle: 0.08,
+        color: "#ccff66",
+        glowColor: "#99ff00",
+        haloColor: "#669900",
+    },
+    {
+        id: 9,
+        name: "nanoswarm",
+        category: "bullet",
+        attachHazard: true,        // on hit, attaches DoT to the specific asteroid instead of area damage
+        damage: 0,                 // no direct hit damage — swarm chews over time
+        hazardDamage: 5,
+        hazardTickInterval: 0.4,
+        hazardDuration: 5.0,
+        maxBullets: 32,
+        hitRadius: 0.5,
+        fireRate: 0.6,
+        speed: 16,
+        lifetime: 1.5,
+        projectileCount: 1,
+        spreadAngle: 0,
+        color: "#baffc9",
+        glowColor: "#33cc66",
+        haloColor: "#1f7a3f",
+    },
+
+    {
+        id: 10,
+        name: "pulsewave",
+        category: "pulse",          // new category — no bullet entity, triggered instantly
+        damage: 18,
+        explosionRadius: 4.5,
+        fireRate: 1.2,
+        color: "#aeefff",
+        glowColor: "#33ccff",
+        haloColor: "#0088cc",
+    },
+
+    {
+        id: 11,
+        name: "clustercannon",
+        category: "bullet",
+        splitsInto: 4,              // fragments spawned on split
+        splitWeapon: 2,             // fragments use machinegun's stats/visuals — avoids duplicating a whole weapon def
+        damage: 14,
+        maxBullets: 32,
+        hitRadius: 0.6,
+        fireRate: 0.6,
+        speed: 14,
+        lifetime: 0.9,               // splits when this runs out, OR on first hit — whichever comes first
+        projectileCount: 1,
+        spreadAngle: 0,
+        color: "#ffd9a0",
+        glowColor: "#ff9900",
+        haloColor: "#cc6600",
+    },
+
+    {
+        id: 12,
+        name: "proximityminelayer",
+        category: "mine",           // new category — dropped instantly at ship position, not fired forward
+        hazardRadius: 2.0,
+        hazardDamage: 40,           // mines hit hard since they're a deliberate placement, not spam-fire
+        hazardTickInterval: 999,    // effectively "detonate once" — see armed-check below
+        hazardDuration: 8.0,
+        fireRate: 1.0,
+        color: "#ff6666",
+        glowColor: "#ff2222",
+        haloColor: "#aa0000",
+    },
+
+    {
+        id: 13,
+        name: "cryocannon",
+        category: "bullet",
+        freezeDuration: 2.5,
+        damage: 4,                  // low direct damage — the value is in the freeze setup
+        maxBullets: 64,
+        hitRadius: 0.5,
+        fireRate: 0.3,
+        speed: 17,
+        lifetime: 1.2,
+        projectileCount: 1,
+        spreadAngle: 0,
+        color: "#c9f5ff",
+        glowColor: "#66e0ff",
+        haloColor: "#0099cc",
+    },
+
+    {
+        id: 14,
+        name: "arcgun",
+        category: "bullet",
+        damage: 10,
+        chainCount: 3,        // additional asteroids it jumps to after the first hit
+        chainRange: 6,
+        maxBullets: 64,
+        hitRadius: 0.5,
+        fireRate: 0.4,
+        speed: 20,
+        lifetime: 1.0,
+        projectileCount: 1,
+        spreadAngle: 0,
+        color: "#e0d9ff",
+        glowColor: "#9966ff",
+        haloColor: "#6600ff",
+    },
+
+    {
+        id: 15,
+        name: "particlebeam",
+        category: "beam",
+        range: 25,
+        damagePerSecond: 15,        // starting DPS
+        maxDamagePerSecond: 60,     // DPS after fully ramped
+        rampTime: 2.0,              // seconds of continuous lock to reach max DPS
+        beamWidth: 0.15,
+        color: "#ffffff",
+        glowColor: "#88ddff",
+        haloColor: "#3399ff",
+    },
+
+    {
+        id: 16,
+        name: "prismbeam",
+        category: "beam",
+        range: 20,
+        damagePerSecond: 18,
+        beamCount: 3,
+        beamSpread: 0.35,
+        tickSparkInterval: 0.08,
+        beamWidth: 0.08,
+        color: "#ffe0ff",
+        glowColor: "#ff66ff",
+        haloColor: "#cc00cc",
+    },
+
 ]
 
 export function getWeapon(id) {

@@ -7,24 +7,26 @@ import {
     bulletQuery,
     asteroidQuery,
     bossQuery,
-    playerQuery
+    playerQuery,
+    droneQuery
 } from "../constants/queries.js"
 
 import {
     Position,
     Health,
     Lifetime,
+    Velocity,
     Bullet,
+    StatusEffect,
     BULLET_OWNER
 } from "../constants/components.js"
 
-import { spawnSparkBurst } from "../spawn.js"
+import { spawnSparkBurst, spawnHazard } from "../spawn.js"
 import { gameState } from "../../state/gameState.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { getWeapon } from "../constants/weapons.js"
+import { explodeAt, splitBullet, chainLightning } from "./weaponEffects.js"
 
-const HIT_RADIUS = 0.7
-const BOSS_RADIUS = 2.0
 const PLAYER_HIT_RADIUS = 0.6
 
 export function combatSystem() {
@@ -50,6 +52,15 @@ export function combatSystem() {
         Lifetime.remaining[bid] -= dt
 
         if (Lifetime.remaining[bid] <= 0) {
+
+            if (weapon.explosive) {
+                explodeAt(Position.x[bid], Position.y[bid], weapon, asteroids, bosses)
+            } else if (weapon.leavesHazard) {
+                spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], -1)
+            } else if (weapon.splitsInto) {
+                splitBullet(Position.x[bid], Position.y[bid], weapon, Bullet.owner[bid])
+            }
+
             removeEntity(world, bid)
             continue
         }
@@ -69,22 +80,69 @@ export function combatSystem() {
             for (let j = 0; j < asteroids.length; j++) {
 
                 const aid = asteroids[j]
-
                 const dx = Position.x[bid] - Position.x[aid]
                 const dy = Position.y[bid] - Position.y[aid]
 
                 if (dx * dx + dy * dy <= weapon.hitRadius * weapon.hitRadius) {
 
-                    Health.current[aid] -= weapon.damage
+                    if (weapon.explosive) {
 
-                    spawnSparkBurst(
-                        Position.x[bid],
-                        Position.y[bid],
-                        { count: 20, speed: 8 }
-                    )
+                        explodeAt(Position.x[bid], Position.y[bid], weapon, asteroids, bosses)
 
-                    if (Health.current[aid] <= 0) {
-                        killAsteroid(aid, Position.x[aid], Position.y[aid])
+                    } else if (weapon.leavesHazard) {
+
+                        if (weapon.damage > 0) Health.current[aid] -= weapon.damage
+                        spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], -1)
+
+                        if (Health.current[aid] <= 0) {
+                            killAsteroid(aid, Position.x[aid], Position.y[aid])
+                        }
+
+                    } else if (weapon.attachHazard) {
+
+                        spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], aid)
+
+                    } else if (weapon.splitsInto) {
+
+                        Health.current[aid] -= weapon.damage
+                        if (Health.current[aid] <= 0) killAsteroid(aid, Position.x[aid], Position.y[aid])
+                        splitBullet(Position.x[bid], Position.y[bid], weapon, Bullet.owner[bid])
+
+                    } else if (weapon.freezeDuration) {
+
+                        Health.current[aid] -= weapon.damage
+                        StatusEffect.frozen[aid] = weapon.freezeDuration
+                        if (Health.current[aid] <= 0) killAsteroid(aid, Position.x[aid], Position.y[aid])
+
+                    } else if (weapon.chainCount) {
+
+                        Health.current[aid] -= weapon.damage
+                        if (Health.current[aid] <= 0) killAsteroid(aid, Position.x[aid], Position.y[aid])
+                        chainLightning(Position.x[aid], Position.y[aid], weapon, asteroids, aid)
+
+                    } else {
+
+                        Health.current[aid] -= weapon.damage
+                        spawnSparkBurst(Position.x[bid], Position.y[bid], { count: 20, speed: 8 })
+
+                        if (Health.current[aid] <= 0) {
+                            killAsteroid(aid, Position.x[aid], Position.y[aid])
+                        }
+
+                        if (Bullet.bounces[bid] > 0) {
+
+                            const dist = Math.sqrt(dx * dx + dy * dy) || 1
+                            const nx = dx / dist
+                            const ny = dy / dist
+                            const dot = Velocity.x[bid] * nx + Velocity.y[bid] * ny
+
+                            Velocity.x[bid] -= 2 * dot * nx
+                            Velocity.y[bid] -= 2 * dot * ny
+                            Bullet.bounces[bid] -= 1
+
+                            hit = true
+                            continue
+                        }
                     }
 
                     removeEntity(world, bid)
@@ -96,40 +154,88 @@ export function combatSystem() {
             if (hit) continue
 
             // -------------------------
-            // Bosses
+            // Bosses — now mirrors the asteroid branch above so every
+            // weapon type does something meaningful against a boss,
+            // instead of only explosive weapons being handled specially.
             // -------------------------
 
-           for (let j = 0; j < bosses.length; j++) {
+            for (let j = 0; j < bosses.length; j++) {
 
                 const bossId = bosses[j]
 
                 const dx = Position.x[bid] - Position.x[bossId]
                 const dy = Position.y[bid] - Position.y[bossId]
-
-                // boss is a much bigger target than an asteroid — keep a fixed
-                // multiplier on the weapon's own hitRadius rather than a separate constant
                 const bossRadius = weapon.hitRadius * 3
 
                 if (dx * dx + dy * dy <= bossRadius * bossRadius) {
 
-                    Health.current[bossId] -= weapon.damage
+                    if (weapon.explosive) {
 
-                    spawnSparkBurst(
-                        Position.x[bid],
-                        Position.y[bid],
-                        { count: 26, speed: 10, big: true }
-                    )
+                        explodeAt(Position.x[bid], Position.y[bid], weapon, asteroids, bosses)
 
-                    removeEntity(world, bid)
+                    } else if (weapon.leavesHazard) {
 
-                    if (Health.current[bossId] <= 0) {
-                        killBoss(bossId, Position.x[bossId], Position.y[bossId])
+                        if (weapon.damage > 0) Health.current[bossId] -= weapon.damage
+                        spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], -1)
+
+                        if (Health.current[bossId] <= 0) {
+                            killBoss(bossId, Position.x[bossId], Position.y[bossId])
+                        }
+
+                    } else if (weapon.attachHazard) {
+
+                        // attach the DoT to the boss itself rather than an asteroid
+                        spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], bossId)
+
+                    } else if (weapon.splitsInto) {
+
+                        Health.current[bossId] -= weapon.damage
+                        if (Health.current[bossId] <= 0) killBoss(bossId, Position.x[bossId], Position.y[bossId])
+                        splitBullet(Position.x[bid], Position.y[bid], weapon, Bullet.owner[bid])
+
+                    } else if (weapon.freezeDuration) {
+
+                        Health.current[bossId] -= weapon.damage
+                        StatusEffect.frozen[bossId] = weapon.freezeDuration
+                        if (Health.current[bossId] <= 0) killBoss(bossId, Position.x[bossId], Position.y[bossId])
+
+                    } else if (weapon.chainCount) {
+
+                        Health.current[bossId] -= weapon.damage
+                        if (Health.current[bossId] <= 0) killBoss(bossId, Position.x[bossId], Position.y[bossId])
+                        // chains out from the boss into nearby asteroids —
+                        // bossId isn't in the asteroids list, so no exclude needed
+                        chainLightning(Position.x[bossId], Position.y[bossId], weapon, asteroids, -1)
+
+                    } else {
+
+                        Health.current[bossId] -= weapon.damage
+                        spawnSparkBurst(Position.x[bid], Position.y[bid], { count: 26, speed: 10, big: true })
+
+                        if (Health.current[bossId] <= 0) {
+                            killBoss(bossId, Position.x[bossId], Position.y[bossId])
+                        }
+
+                        // ricochet bullets bounce off bosses too, same as asteroids
+                        if (Bullet.bounces[bid] > 0) {
+
+                            const dist = Math.sqrt(dx * dx + dy * dy) || 1
+                            const nx = dx / dist
+                            const ny = dy / dist
+                            const dot = Velocity.x[bid] * nx + Velocity.y[bid] * ny
+
+                            Velocity.x[bid] -= 2 * dot * nx
+                            Velocity.y[bid] -= 2 * dot * ny
+                            Bullet.bounces[bid] -= 1
+
+                            break // stop checking other bosses this frame, but don't remove the bullet
+                        }
                     }
 
+                    removeEntity(world, bid)
                     break
                 }
             }
-
         }
 
         //----------------------------------
@@ -146,12 +252,16 @@ export function combatSystem() {
             if (dx * dx + dy * dy <= PLAYER_HIT_RADIUS * PLAYER_HIT_RADIUS) {
 
                 Health.current[pid] -= weapon.damage
-
                 removeEntity(world, bid)
 
                 if (Health.current[pid] <= 0) {
                     gameState.lives--
                     Health.current[pid] = Health.max[pid]
+
+                    const drones = droneQuery()
+                    for (let i = 0; i < drones.length; i++) {
+                        removeEntity(world, drones[i])
+                    }
                 }
             }
         }

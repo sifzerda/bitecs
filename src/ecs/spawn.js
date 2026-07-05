@@ -17,6 +17,9 @@ import {
     AsteroidTag,
     BossTag,
     BossAI,
+    HazardZone,
+    HazardTag,
+    StatusEffect
 
 } from "./constants/components";
 import { gameState } from "../state/gameState";
@@ -91,6 +94,7 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
         Lifetime.remaining[id] = weapon.lifetime
         Bullet.type[id] = weapon.id
         Bullet.owner[id] = owner
+        Bullet.bounces[id] = weapon.maxBounces ?? 0
 
         ids.push(id)
     }
@@ -98,6 +102,55 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
     return ids
 }
 
+// ============= Hazards (clouds, puddles, attached DoT) ============//
+
+export function spawnHazard(x, y, weaponId, owner, targetId = -1) {
+
+    const weapon = getWeapon(weaponId)
+    const id = addEntity(world)
+
+    addComponent(world, id, Position)
+    addComponent(world, id, HazardZone)
+    addComponent(world, id, HazardTag)
+    addComponent(world, id, Lifetime)
+
+    Position.x[id] = x
+    Position.y[id] = y
+
+    HazardZone.weaponType[id] = weapon.id
+    HazardZone.owner[id] = owner
+    HazardZone.target[id] = targetId
+    HazardZone.tickTimer[id] = 0   // tick immediately on first frame so it doesn't feel delayed
+
+    Lifetime.remaining[id] = weapon.hazardDuration ?? 3.0
+
+    return id
+}
+
+// ============= Drones ============//
+
+export function spawnDrone(ownerX, ownerY, weaponId, index, total) {
+
+    const weapon = getWeapon(weaponId)
+    const id = addEntity(world)
+
+    addComponent(world, id, Position)
+    addComponent(world, id, Drone)
+    addComponent(world, id, DroneTag)
+
+    Position.x[id] = ownerX
+    Position.y[id] = ownerY
+
+    Drone.orbitAngle[id] = (Math.PI * 2 * index) / total
+    Drone.orbitRadius[id] = weapon.orbitRadius
+    Drone.orbitSpeed[id] = weapon.orbitSpeed
+    Drone.shootTimer[id] = 0
+    Drone.weapon[id] = weapon.droneWeapon
+    Drone.fireRate[id] = weapon.droneFireRate ?? 0.6
+    Drone.range[id] = weapon.droneRange ?? 12
+
+    return id
+}
 
 // ============= Sparks ============//
 
@@ -215,10 +268,13 @@ export function spawnAsteroid(x, y) {
 
     addComponent(world, id, Velocity)
     addComponent(world, id, AsteroidTag)   // ONLY this
+    addComponent(world, id, StatusEffect)
+    
     setHealth(id, 20)
 
     Velocity.x[id] = (Math.random() - 0.5) * 2
     Velocity.y[id] = (Math.random() - 0.5) * 2
+    StatusEffect.frozen[id] = 0
 
     return id
 }
@@ -234,6 +290,7 @@ export function spawnBoss(weaponId) {
     addComponent(world, id, Health)
     addComponent(world, id, BossTag)
     addComponent(world, id, BossAI)
+    addComponent(world, id, StatusEffect)
 
     Position.x[id] = 0
     Position.y[id] = 0
@@ -243,6 +300,8 @@ export function spawnBoss(weaponId) {
 
     Health.current[id] = 300
     Health.max[id] = 300
+
+    StatusEffect.frozen[id] = 0
 
     BossAI.moveTimer[id] = 0     // pick a direction immediately
     BossAI.shootTimer[id] = 1    // small delay before first shot

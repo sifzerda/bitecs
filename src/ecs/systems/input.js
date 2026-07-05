@@ -60,6 +60,11 @@ export function initializeInput(onPause) {
         if (e.code === "Digit3") gameState.currentWeapon = 2
         if (e.code === "Digit4") gameState.currentWeapon = 3
         if (e.code === "Digit5") gameState.currentWeapon = 4
+        if (e.code === "Digit6") gameState.currentWeapon = 5
+        if (e.code === "Digit7") gameState.currentWeapon = 6
+        if (e.code === "Digit8") gameState.currentWeapon = 7
+        if (e.code === "Digit9") gameState.currentWeapon = 8
+        if (e.code === "Digit0") gameState.currentWeapon = 9
 
         if (e.code === "KeyQ") {
             gameState.currentWeapon = (gameState.currentWeapon - 1 + WEAPONS.length) % WEAPONS.length

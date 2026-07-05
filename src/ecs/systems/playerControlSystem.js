@@ -1,12 +1,13 @@
 // src/ecs/systems/playerControlSystem.js
 
-import { playerQuery } from "../constants/queries.js"
+import { playerQuery, asteroidQuery, bossQuery, droneQuery } from "../constants/queries.js"
 import { world } from "../constants/world.js"
 import { Position, Velocity, Rotation, BULLET_OWNER } from "../constants/components.js"
-import { spawnBullet, spawnExhaust } from "../spawn.js"
+import { spawnBullet, spawnExhaust, spawnDrone } from "../spawn.js"
 import { input } from "./input.js"
 import { gameState } from "../../state/gameState.js"
 import { getWeapon } from "../constants/weapons.js"
+import { explodeAt } from "./weaponEffects.js"
 
 const TURN_SPEED = 4.5
 const THRUST = 28
@@ -109,17 +110,32 @@ export default function playerControlSystem(shootState) {
 
     if (weapon.category === "beam") {
         // beam weapons are handled entirely by laserSystem — no discrete spawn/cooldown here
+    } else if (weapon.category === "pulse") {
+        shootState.timer -= dt
+        if (input.fire && shootState.timer <= 0) {
+            explodeAt(Position.x[pid], Position.y[pid], weapon, asteroidQuery(), bossQuery())
+            shootState.timer = weapon.fireRate
+        }
+
+    } else if (weapon.category === "mine") {
+        shootState.timer -= dt
+        if (input.fire && shootState.timer <= 0) {
+            spawnHazard(Position.x[pid], Position.y[pid], weapon.id, BULLET_OWNER.PLAYER, -1)
+            shootState.timer = weapon.fireRate
+        }
+
+    } else if (weapon.category === "drone") {
+        // deploy once — droneSystem handles orbiting/firing every frame after this
+        if (droneQuery().length === 0) {
+            for (let i = 0; i < weapon.droneCount; i++) {
+                spawnDrone(Position.x[pid], Position.y[pid], weapon.id, i, weapon.droneCount)
+            }
+        }
+
     } else {
         shootState.timer -= dt
-
         if (input.fire && shootState.timer <= 0) {
-            spawnBullet(
-                Position.x[pid],
-                Position.y[pid],
-                Rotation[pid],
-                weapon.id,
-                BULLET_OWNER.PLAYER
-            )
+            spawnBullet(Position.x[pid], Position.y[pid], Rotation[pid], weapon.id, BULLET_OWNER.PLAYER)
             shootState.timer = weapon.fireRate
         }
     }

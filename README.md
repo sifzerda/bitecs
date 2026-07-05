@@ -128,22 +128,24 @@ cryo cannon -
 
 some of these boss dropped weapons, some upgrades 
 
-Arc Gun – Lightning jumps between nearby asteroids.
-Particle Beam – Continuous beam that ramps up damage the longer it stays on target.
+ 
 
-Ricochet Gun – Bullets bounce off asteroids or screen edges.
-Cluster Cannon – Projectile splits into multiple fragments mid-flight.
-Proximity Mine Layer – Deploys floating mines.
-Grenade Launcher – Arcing explosive rounds.
-Prism Beam – Splits into several smaller beams.
+~~Grenade Launcher – Arcing explosive rounds.~~
+~~Ricochet Gun – Bullets bounce off asteroids or screen edges.~~
+~~Dark Matter Launcher – Leaves damaging clouds.~~
+~~Nano Swarm – Nanobots chew through asteroids over time.~~
+~~Acid Sprayer – Leaves corrosive puddles in space.~~
 
-Dark Matter Launcher – Leaves damaging clouds.
-Nano Swarm – Nanobots chew through asteroids over time.
-Cryo Cannon – Freezes asteroids, making them easier to destroy.
-Acid Sprayer – Leaves corrosive puddles in space.
-Orbital Drones – Satellites orbit the ship and fire automatically.
-Pulse Wave – Expanding ring of energy from the ship.
+~~Arc Gun – Lightning jumps between nearby asteroids.~~
+~~Particle Beam – Continuous beam that ramps up damage the longer it stays on target.~~
+~~Cluster Cannon – Projectile splits into multiple fragments mid-flight.~~
+~~Proximity Mine Layer – Deploys floating mines.~~
+~~Prism Beam – Splits into several smaller beams.~~
+~~Orbital Drones – Satellites orbit the ship and fire automatically.~~
+~~Pulse Wave – Expanding ring of energy from the ship.~~
+~~Cryo Cannon – Freezes asteroids, making them easier to destroy.~~
 
+add flamethrower
 
 
  - [x] if add bosses, make one kind and swap out guns, probably after gun system
@@ -156,3 +158,10 @@ Pulse Wave – Expanding ring of energy from the ship.
  boost exhaust is rendered
 
  - [ ] Adapt missile and lasersystem for boss use: missiles dont target player and need to not hurt boss, and laser needs to be held down not fired (boss never fires it)
+
+
+
+
+
+
+ - [ ] fix ricochetsystem bullets currently dont bounce away

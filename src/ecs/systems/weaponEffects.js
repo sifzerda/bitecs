@@ -1,0 +1,120 @@
+// src/ecs/systems/weaponEffects.js
+// Shared weapon-effect helpers used by combatSystem, bossAISystem, and
+// playerControlSystem. Pulled out of combat.js so combat.js is only ever
+// an entry point for the collision-resolution loop, never an import
+// target for other systems — avoids the two growing into a circular mess.
+
+import { Position, Health } from "../constants/components.js"
+import { spawnSparkBurst, spawnHazard, spawnBullet } from "../spawn.js"
+import { killAsteroid, killBoss } from "./entityDeath.js"
+import { getWeapon } from "../constants/weapons.js"
+import { pushArc } from "../../state/arcState.js"
+
+// -------------------------
+// Grenade launcher / any AOE explosive weapon
+// -------------------------
+
+export function explodeAt(x, y, weapon, asteroids, bosses) {
+
+    const radius = weapon.explosionRadius ?? 1.5
+    const radiusSq = radius * radius
+
+    for (let j = 0; j < asteroids.length; j++) {
+
+        const aid = asteroids[j]
+        const dx = x - Position.x[aid]
+        const dy = y - Position.y[aid]
+
+        if (dx * dx + dy * dy <= radiusSq) {
+
+            Health.current[aid] -= weapon.damage
+
+            if (Health.current[aid] <= 0) {
+                killAsteroid(aid, Position.x[aid], Position.y[aid])
+            }
+        }
+    }
+
+    for (let j = 0; j < bosses.length; j++) {
+
+        const bossId = bosses[j]
+        const dx = x - Position.x[bossId]
+        const dy = y - Position.y[bossId]
+        const bossRadius = radius + 1.0
+
+        if (dx * dx + dy * dy <= bossRadius * bossRadius) {
+
+            Health.current[bossId] -= weapon.damage
+
+            if (Health.current[bossId] <= 0) {
+                killBoss(bossId, Position.x[bossId], Position.y[bossId])
+            }
+        }
+    }
+
+    spawnSparkBurst(x, y, { count: 40, speed: 14, big: true })
+}
+
+// -------------------------
+// Cluster cannon
+// -------------------------
+
+export function splitBullet(x, y, weapon, owner) {
+    const fragWeapon = getWeapon(weapon.splitWeapon)
+    const count = weapon.splitsInto ?? 3
+    for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count
+        spawnBullet(x, y, angle, fragWeapon.id, owner)
+    }
+}
+
+// -------------------------
+// Arc gun — chains between nearby asteroids, excluding whatever it just hit
+// -------------------------
+
+export function chainLightning(startX, startY, weapon, asteroids, excludeId) {
+
+    let hits = 0
+    let cx = startX, cy = startY
+    const hitIds = new Set([excludeId])
+    const points = [{ x: startX, y: startY }]
+
+    while (hits < weapon.chainCount) {
+
+        let nearestId = -1
+        let nearestDistSq = weapon.chainRange * weapon.chainRange
+
+        for (let j = 0; j < asteroids.length; j++) {
+            const aid = asteroids[j]
+            if (hitIds.has(aid)) continue
+
+            const dx = cx - Position.x[aid]
+            const dy = cy - Position.y[aid]
+            const distSq = dx * dx + dy * dy
+
+            if (distSq <= nearestDistSq) {
+                nearestDistSq = distSq
+                nearestId = aid
+            }
+        }
+
+        if (nearestId === -1) break
+
+        Health.current[nearestId] -= weapon.damage
+        spawnSparkBurst(Position.x[nearestId], Position.y[nearestId], { count: 12, speed: 6 })
+
+        if (Health.current[nearestId] <= 0) {
+            killAsteroid(nearestId, Position.x[nearestId], Position.y[nearestId])
+        }
+
+        hitIds.add(nearestId)
+        cx = Position.x[nearestId]
+        cy = Position.y[nearestId]
+        points.push({ x: cx, y: cy })
+        hits++
+    }
+
+    if (points.length > 1) {
+        pushArc(points)
+    }
+}

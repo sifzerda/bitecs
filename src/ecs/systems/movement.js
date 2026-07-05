@@ -1,7 +1,8 @@
 //src/ecs/systems/movement.js
-import { movingQuery } from "../constants/queries";
-import { Position, Velocity } from "../constants/components";
-import { world } from "../constants/world";
+import { hasComponent } from "bitecs"
+import { world } from "../constants/world"
+import { movingQuery } from "../constants/queries"
+import { Position, Velocity, StatusEffect } from "../constants/components"
 
 export function movementSystem() {
 
@@ -11,7 +12,11 @@ export function movementSystem() {
     for (let i = 0; i < entities.length; i++) {
         const id = entities[i]
 
-        Position.x[id] += Velocity.x[id] * dt
-        Position.y[id] += Velocity.y[id] * dt
+        if (hasComponent(world, id, StatusEffect) && StatusEffect.frozen[id] > 0) {
+            StatusEffect.frozen[id] -= dt
+        } else {
+            Position.x[id] += Velocity.x[id] * dt
+            Position.y[id] += Velocity.y[id] * dt
+        }
     }
 }
