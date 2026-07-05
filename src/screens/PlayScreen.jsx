@@ -24,6 +24,7 @@ import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
 import { MissileRenderer } from '../renderers/MissileRenderer.jsx'
 import { LaserRenderer } from '../renderers/LaserRenderer.jsx'
 import { ArcRenderer } from '../renderers/ArcRenderer.jsx'
+import { FlameRenderer } from '../renderers/FlameRenderer.jsx'
 
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
@@ -82,6 +83,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <MissileRenderer />
                     <LaserRenderer />
                     <ArcRenderer />
+                    <FlameRenderer />
 
                     <SparkRenderer />
 

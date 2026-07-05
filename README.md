@@ -160,7 +160,7 @@ add flamethrower
  - [ ] Adapt missile and lasersystem for boss use: missiles dont target player and need to not hurt boss, and laser needs to be held down not fired (boss never fires it)
 
 
-
+- [ ] change boss renderer to make enemy ship/ufo
 
 
 
