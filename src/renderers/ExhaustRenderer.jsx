@@ -9,7 +9,6 @@ import { input } from '../ecs/systems/input.js'
 import { gameState } from '../state/gameState.js'
 
 const Z_AXIS = new THREE.Vector3(0, 0, 1)
-
 const NORMAL_MAX_PARTICLES = 60
 const BOOST_MAX_PARTICLES = 100
 
@@ -18,7 +17,6 @@ const BOOST_MAX_PARTICLES = 100
 function createPool(maxParticles) {
 
     return {
-
         x: new Float32Array(maxParticles),
         y: new Float32Array(maxParticles),
         vx: new Float32Array(maxParticles),
@@ -38,21 +36,15 @@ function createPool(maxParticles) {
 function emitParticles(pool, cfg, pid, count) {
 
     const rot = -Rotation[pid]
-
     const sin = Math.sin(rot)
     const cos = Math.cos(rot)
-
     const facing = Math.atan2(sin, cos)
-
     const px = Position.x[pid]
     const py = Position.y[pid]
-
     const shipVX = Velocity.x[pid]
     const shipVY = Velocity.y[pid]
-
     const emitX = px - sin * cfg.tailOffset
     const emitY = py - cos * cfg.tailOffset
-
     const speedRange = cfg.speedMax - cfg.speedMin
     const lifeRange = cfg.lifeMax - cfg.lifeMin
     const sizeRange = cfg.sizeMax - cfg.sizeMin
@@ -121,14 +113,7 @@ function advanceParticles(pool, cfg, delta) {
 
 function drawLayer(pool, mesh, layerCfg, cfg, scratch) {
 
-    const {
-        matrix,
-        position,
-        rotation,
-        scale,
-        scaleZero,
-        color
-    } = scratch
+    const { matrix, position, rotation, scale, scaleZero, color } = scratch
 
     const max = pool.x.length
 
@@ -311,15 +296,8 @@ export function ExhaustRenderer() {
 
     const playerId = useRef(-1)
 
-    const normalPool = useMemo(
-        () => createPool(NORMAL_MAX_PARTICLES),
-        []
-    )
-
-    const boostPool = useMemo(
-        () => createPool(BOOST_MAX_PARTICLES),
-        []
-    )
+    const normalPool = useMemo(() => createPool(NORMAL_MAX_PARTICLES), [])
+    const boostPool = useMemo(() => createPool(BOOST_MAX_PARTICLES), [])
 
     const normalRefs = {
         core: useRef(),
@@ -346,23 +324,8 @@ export function ExhaustRenderer() {
         const pid = playerId.current
         const boosting = gameState.boostActive > 0
 
-        updateExhaust(
-            normalPool,
-            NORMAL_DEFAULTS,
-            normalRefs,
-            delta,
-            pid,
-            input.thrust && !boosting
-        )
-
-        updateExhaust(
-            boostPool,
-            BOOST_DEFAULTS,
-            boostRefs,
-            delta,
-            pid,
-            boosting
-        )
+        updateExhaust(normalPool, NORMAL_DEFAULTS, normalRefs, delta, pid, input.thrust && !boosting)
+        updateExhaust(boostPool, BOOST_DEFAULTS, boostRefs, delta, pid, boosting)
     })
 
     return (
