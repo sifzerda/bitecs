@@ -61,7 +61,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <GameLoop keysRef={keysRef} paused={paused} />
 
-
                     <ambientLight intensity={1.1} />
                     <directionalLight position={[5, 8, 6]} intensity={2.0} />
                     <pointLight position={[0, 0, 6]} intensity={4} color="#ffffff" />
@@ -77,7 +76,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <LaserRenderer />
 
                     <SparkRenderer />
-
 
                     <BossRenderer />
                     <BossBulletRenderer />
