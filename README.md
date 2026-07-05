@@ -48,6 +48,7 @@ npm install
 - [bitECS](https://github.com/sifzerda/bitecs)
 - [Three.js](https://threejs.org/)
 - [useMemo](https://react.dev/reference/react/useMemo)
+- [Leva](https://github.com/pmndrs/leva): config panel to create ship parts
 
 ## Support
 

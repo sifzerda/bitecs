@@ -1,7 +1,5 @@
 // src/screens/PlayScreen.jsx
 
-// src/screens/PlayScreen.jsx
-
 import { useFrame } from '@react-three/fiber'
 import {
     EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
@@ -31,8 +29,6 @@ import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
 import { BossBulletRenderer } from '../renderers/BossBulletRenderer.jsx'
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
-import { BoostRenderer } from '../renderers/BoostRenderer.jsx'
-
 
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
@@ -74,7 +70,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <PlayerRenderer />
                     <ExhaustRenderer />
-                    <BoostRenderer />
                     <AsteroidRenderer />
                     <BulletRenderer />
 
