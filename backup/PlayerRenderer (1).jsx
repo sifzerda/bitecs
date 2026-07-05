@@ -1,4 +1,3 @@
-
 // src/renderers/PlayerRenderer.jsx
 
 import { useMemo, useRef } from 'react'
@@ -134,6 +133,7 @@ const SHIP_CONFIG = {
     tailFin: {
         enabled: true,
         color: '#7cfff4',
+        type: 'shark',
         length: 0.25,
         width: 0.35,
         sweep: 0.50,
@@ -142,19 +142,11 @@ const SHIP_CONFIG = {
         splayDeg: 0,
     },
 
-    exhaustPort: {
-        enabled: true,
-        color: '#0070ff',
-        width: 0.22,
-        height: 0.14,
-        offsetX: 0.01,
-        offsetY: 0.15,
-    },
-
 }
 
 
 // ============================================================
+// Shape builders — base hull (unchanged, generic & config-driven)
 // ============================================================
 
 function buildFuselageShape(cfg) {
@@ -284,9 +276,30 @@ function buildNoseSpikeShape(cfg) {
 }
 
 // ============================================================
+// Tail fin shape builders — locked to type: 'shark' in SHIP_CONFIG,
+// all four kept here in case `type` is unlocked again later.
 // ============================================================
 
-function buildTailFinShape(cfg) {
+function buildKiteTailShape(cfg) {
+    const shape = new THREE.Shape()
+    shape.moveTo(0, cfg.length / 2)
+    shape.lineTo(cfg.width / 2, -cfg.length / 2 + cfg.sweep)
+    shape.lineTo(0, -cfg.length / 2 - cfg.sweep)
+    shape.lineTo(-cfg.width / 2, -cfg.length / 2 + cfg.sweep)
+    shape.closePath()
+    return shape
+}
+
+function buildDeltaTailShape(cfg) {
+    const shape = new THREE.Shape()
+    shape.moveTo(0, cfg.length / 2)
+    shape.lineTo(cfg.width / 2, -cfg.length / 2)
+    shape.lineTo(-cfg.width / 2, -cfg.length / 2)
+    shape.closePath()
+    return shape
+}
+
+function buildSharkTailShape(cfg) {
     const halfW = cfg.width / 2
     const halfL = cfg.length / 2
     const shape = new THREE.Shape()
@@ -299,8 +312,37 @@ function buildTailFinShape(cfg) {
     return shape
 }
 
+function buildBoxTailShape(cfg) {
+    const halfW = cfg.width / 2
+    const halfL = cfg.length / 2
+    const shape = new THREE.Shape()
+    shape.moveTo(-halfW, halfL)
+    shape.lineTo(halfW, halfL)
+    shape.lineTo(halfW, -halfL)
+    shape.lineTo(-halfW, -halfL)
+    shape.closePath()
+    return shape
+}
+
+function buildTailFinShape(cfg) {
+    switch (cfg.type) {
+        case 'delta':
+            return buildDeltaTailShape(cfg)
+        case 'shark':
+            return buildSharkTailShape(cfg)
+        case 'box':
+            return buildBoxTailShape(cfg)
+        case 'kite':
+        default:
+            return buildKiteTailShape(cfg)
+    }
+}
 
 // ============================================================
+// Small render helpers — collapse the repeated
+// "two mirrored meshes with a meshPhysicalMaterial" pattern that
+// previously appeared ~7 times (wings, panels, wingtips, tail fins,
+// engine intakes, hull vents, decals, racing stripes) into one place.
 // ============================================================
 
 // Custom hook: builds a static ExtrudeGeometry once from a shape-builder + config.
@@ -318,7 +360,11 @@ function Panel({ geometry, position, color, metalness = 0.2, roughness = 0.6 }) 
 }
 
 // A pair of meshes mirrored across the ship's centerline (X axis).
-
+// Handles every mirroring style used on the hull:
+//   - rotateY:    same position, second copy spun 180° around Y (wings, wing panels)
+//   - flipX:      second copy's X position negated (wingtips, engine intakes, hull vents)
+//   - +flipZAngle: second copy's Z-rotation sign flipped too (decals, racing stripes)
+//   - +rotateY & flipZAngle together (tail fins)
 function MirroredPair({
     geometry,
     position,
@@ -404,11 +450,9 @@ export function PlayerRenderer() {
         return offsets
     }, [])
 
-    // Tail fin geometry — locked to SHIP_CONFIG.tailFin.
+    // Tail fin geometry — locked to SHIP_CONFIG.tailFin (type: 'shark').
     const tailFinGeometry = useExtrudeGeometry(buildTailFinShape, tailFin, extrude)
     const tailFinSplayRad = useMemo(() => (tailFin.splayDeg * Math.PI) / 180, [])
-    // exhaust port
-    const exhaustPortGeometry = useExtrudeGeometry(buildEngineIntakeShape, SHIP_CONFIG.exhaustPort, extrude)
 
     useFrame(() => {
 
@@ -465,21 +509,6 @@ export function PlayerRenderer() {
                     rotationZ={-tailFinSplayRad}
                     rotateY
                     flipZAngle
-                />
-            )}
-
-            {/* Exhaust port — centered trapezoid at the tail */}
-            {SHIP_CONFIG.exhaustPort.enabled && (
-                <Panel
-                    geometry={exhaustPortGeometry}
-                    position={[
-                        SHIP_CONFIG.exhaustPort.offsetX,
-                        SHIP_CONFIG.fuselage.tailY + SHIP_CONFIG.exhaustPort.offsetY,
-                        0.032,
-                    ]}
-                    color={SHIP_CONFIG.exhaustPort.color}
-                    metalness={0.4}
-                    roughness={0.4}
                 />
             )}
 

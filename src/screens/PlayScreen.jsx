@@ -65,14 +65,12 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <GameLoop keysRef={keysRef} paused={paused} />
 
-                    {/* Feeds colorful reflections (skyscraper-glass cockpit, chrome, etc.)
-                        into materials without rendering a visible skybox — background={false}
-                        keeps your actual scene background untouched. */}
-                    <Environment preset="city" background={false} />
 
                     <ambientLight intensity={1.1} />
                     <directionalLight position={[5, 8, 6]} intensity={2.0} />
                     <pointLight position={[0, 0, 6]} intensity={4} color="#ffffff" />
+
+                    <Environment preset="sunset" />
 
                     <PlayerRenderer />
                     <ExhaustRenderer />
