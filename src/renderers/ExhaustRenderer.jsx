@@ -10,15 +10,10 @@ import { input } from '../ecs/systems/input.js'
 import { gameState } from '../state/gameState.js'
 
 const Z_AXIS = new THREE.Vector3(0, 0, 1)
-
-// Pool sizes are fixed — instancedMesh can't be resized after mount without
-// a remount, so these are not exposed in the Leva panel.
 const NORMAL_MAX_PARTICLES = 60
 const BOOST_MAX_PARTICLES = 100
 
 // ============================================================
-// Shared particle-pool machinery — used for both the normal
-// thrust exhaust and the "special" boost exhaust look below.
 // ============================================================
 
 function createPool(maxParticles) {
@@ -30,8 +25,8 @@ function createPool(maxParticles) {
         life: new Float32Array(maxParticles),
         maxLife: new Float32Array(maxParticles),
         size: new Float32Array(maxParticles),
-        t: new Float32Array(maxParticles),      // cached life fraction (1 -> 0), refreshed each frame
-        speed: new Float32Array(maxParticles),  // cached current speed, used for streak stretching
+        t: new Float32Array(maxParticles),     
+        speed: new Float32Array(maxParticles), 
         cursor: 0,
     }
 }
@@ -43,20 +38,15 @@ function emitParticles(pool, cfg, pid, count) {
     for (let n = 0; n < count; n++) {
         const slot = pool.cursor
         pool.cursor = (pool.cursor + 1) % pool.x.length
-
         const angle = facingAngle + Math.PI + (Math.random() - 0.5) * cfg.coneAngle
         const speed = cfg.speedMin + Math.random() * (cfg.speedMax - cfg.speedMin)
-
         pool.x[slot] = Position.x[pid] - Math.sin(-Rotation[pid]) * cfg.tailOffset
         pool.y[slot] = Position.y[pid] - Math.cos(-Rotation[pid]) * cfg.tailOffset
-
         pool.vx[slot] = Math.cos(angle) * speed + Velocity.x[pid] * cfg.velocityInherit
         pool.vy[slot] = Math.sin(angle) * speed + Velocity.y[pid] * cfg.velocityInherit
-
         const life = cfg.lifeMin + Math.random() * (cfg.lifeMax - cfg.lifeMin)
         pool.life[slot] = life
         pool.maxLife[slot] = life
-
         pool.size[slot] = cfg.sizeMin + Math.random() * (cfg.sizeMax - cfg.sizeMin)
     }
 }
@@ -86,9 +76,6 @@ function advanceParticles(pool, cfg, delta) {
     }
 }
 
-// Writes one visual layer (core or glow) into `mesh` from the already-advanced `pool`.
-// Particles are stretched into streaks along their direction of travel — faster
-// particles streak longer — which is what sells the "hot exhaust" look.
 function drawLayer(pool, mesh, layerCfg, cfg, scratch) {
     const { matrix, position, rotation, scale, scaleZero, color } = scratch
     const max = pool.x.length
@@ -117,14 +104,10 @@ function drawLayer(pool, mesh, layerCfg, cfg, scratch) {
         mesh.setMatrixAt(i, matrix)
 
         if (layerCfg.hueShift !== undefined) {
-            // glow layer: cools/shifts hue as the particle dies, like a flame
-            color.setHSL(
-                layerCfg.hueStart + layerCfg.hueShift * (1 - t),
-                1,
-                layerCfg.lightnessStart + layerCfg.lightnessGain * eased
-            )
+
+            color.setHSL(layerCfg.hueStart + layerCfg.hueShift * (1 - t), 1, layerCfg.lightnessStart + layerCfg.lightnessGain * eased)
         } else {
-            // core layer: fixed hot color, just dims slightly toward death
+
             color.set(layerCfg.color).multiplyScalar(0.7 + 0.3 * eased)
         }
         mesh.setColorAt(i, color)
@@ -136,15 +119,10 @@ function drawLayer(pool, mesh, layerCfg, cfg, scratch) {
 }
 
 // ============================================================
-// Leva panel — one folder per look, each with Core / Glow sub-folders.
-// Defaults match the previously hand-tuned values.
 // ============================================================
 
 function useExhaustControls(panelLabel, defaults) {
-    // NOTE: Leva flattens every control to a single object regardless of which
-    // folder it's declared in, so "core.sizeScale" and "glow.sizeScale" would
-    // collide as the same key. Each control gets a unique `core*`/`glow*` key,
-    // with a `label` so the panel still shows the short, friendly name.
+
     const controls = useControls(panelLabel, {
         emitPerFrame: { value: defaults.emitPerFrame, min: 0, max: 10, step: 1 },
         lifeMin: { value: defaults.lifeMin, min: 0.02, max: 1, step: 0.01 },
@@ -179,9 +157,6 @@ function useExhaustControls(panelLabel, defaults) {
         }),
     })
 
-    // Reassemble into the nested { core, glow } shape the rest of the
-    // component expects, so emitParticles/advanceParticles/drawLayer don't
-    // need to know anything about Leva's flat key naming.
     return {
         ...controls,
         core: {
@@ -248,9 +223,6 @@ const _scratch = {
     color: new THREE.Color(),
 }
 
-// A pool's two instancedMesh layers (core, glow). Material color is left
-// white on both — actual color comes entirely from per-instance setColorAt
-// in drawLayer, so nothing gets double-tinted.
 function ExhaustLayer({ cfg, maxParticles, meshRefs }) {
     return (
         <>
@@ -303,8 +275,6 @@ export function ExhaustRenderer() {
         const players = playerQuery()
         const boosting = gameState.boostActive > 0
 
-        // Normal exhaust only fires while thrusting and NOT boosting —
-        // the boost pool takes over as the "special" look during a boost window.
         if (input.thrust && !boosting && players.length > 0) {
             emitParticles(normalPool, normalCfg, players[0], normalCfg.emitPerFrame)
         }
