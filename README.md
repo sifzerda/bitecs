@@ -46,7 +46,7 @@ npm install
 - [TailwindCSS](https://tailwindcss.com/)
 - [ESLint](https://eslint.org/)
 - [bitECS](https://github.com/sifzerda/bitecs)
-- [Three.js](https://threejs.org/)
+- [Three.js](https://threejs.org/) + [Fiber](https://github.com/pmndrs/fiber) + [Drei](https://github.com/pmndrs/drei) + [Postprocessing](https://github.com/pmndrs/postprocessing) 
 - [useMemo](https://react.dev/reference/react/useMemo)
 - [Leva](https://github.com/pmndrs/leva): config panel to create ship parts
 
@@ -152,13 +152,7 @@ Pulse Wave – Expanding ring of energy from the ship.
 
  - [ ] add in shockwave effect for explosive weapons
 
- 
-
-
-
  - [ ] make boost exhaust a part of normal exhaust rendering i.e. if keyB pressed, 
  boost exhaust is rendered
-
-
 
  - [ ] Adapt missile and lasersystem for boss use: missiles dont target player and need to not hurt boss, and laser needs to be held down not fired (boss never fires it)
