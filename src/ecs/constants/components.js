@@ -26,6 +26,7 @@ export const Lifetime = {
 export const BossAI = {
     moveTimer: new Float32Array(MAX),
     shootTimer: new Float32Array(MAX),
+    weapon: new Uint8Array(MAX),
 };
 
 export const Spark = {
@@ -34,16 +35,21 @@ export const Spark = {
 };
 
 export const Bullet = {
-    type: new Uint8Array(MAX),   // index into WEAPONS
-};
+    type: new Uint8Array(MAX),      // weapon id
+    owner: new Uint8Array(MAX),     // 0 = player, 1 = enemy
+}
+
+export const BULLET_OWNER = {
+    PLAYER: 0,
+    ENEMY: 1
+}
 
 export const PlayerTag = {};
 export const BulletTag = {};
- export const SparkTag = {};
+export const SparkTag = {};
 
 export const ExhaustTag = {};
 export const AsteroidTag = {};
 export const BossTag = {};
-export const BossBulletTag = {};
 
- 
+

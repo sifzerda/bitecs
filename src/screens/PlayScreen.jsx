@@ -25,7 +25,7 @@ import { MissileRenderer } from '../renderers/MissileRenderer.jsx'
 import { LaserRenderer } from '../renderers/LaserRenderer.jsx'
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
-import { BossBulletRenderer } from '../renderers/BossBulletRenderer.jsx'
+ 
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 
 export function GameLoop({ keysRef, paused }) {
@@ -76,7 +76,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <SparkRenderer />
 
                     <BossRenderer />
-                    <BossBulletRenderer />
+ 
 
                     <EffectComposer multisampling={0}>
 

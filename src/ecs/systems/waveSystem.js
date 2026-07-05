@@ -18,14 +18,20 @@ export function waveSystem() {
     // BOSS CHECK
     // (only fires once per 3-wave cycle, after asteroids are cleared)
     // -------------------------
-    if (gameState.wave > 0 && gameState.wave % 3 === 0 && !gameState.bossDone) {
+if (gameState.wave > 0 &&
+    gameState.wave % 3 === 0 &&
+    !gameState.bossDone) {
 
-        spawnBoss()
-        gameState.bossAlive = true
-        gameState.bossDone = true
+    const bossNumber = gameState.wave / 3
+    const weaponId = Math.min(bossNumber, 4)
 
-        return
-    }
+    spawnBoss(weaponId)
+
+    gameState.bossAlive = true
+    gameState.bossDone = true
+
+    return
+}
 
     // -------------------------
     // NEXT ASTEROID WAVE

@@ -86,7 +86,7 @@ Priority:
 
 Post: 
 - [x] exhaust rendering
-- [ ] gun types/ bullet types
+- [x] gun types/ bullet types
 - [ ] floating health packs, powerups, weapon upgrades
 - [ ] collision, damage, death
 - [ ] Enhance and Optimize Renderers
@@ -94,11 +94,11 @@ Post:
 - [ ] Add game screens
 - [ ] Score
 - [ ] settings, mouse control support/toggling
-- [ ] modular ship parts for upgrade and modular gun parts for upgrade
+- [x] modular ship parts for upgrade and modular gun parts for upgrade
 
 
 
-- [ ] general game progression: n asteroid waves, then boss with new gun.
+- [x] general game progression: n asteroid waves, then boss with new gun.
 Defeating boss drops/awards gun. Gun can be applied. N1 asteroid wave and next boss with new gun etc.
 
 
@@ -146,7 +146,7 @@ Pulse Wave – Expanding ring of energy from the ship.
 
 
 
- - [ ] if add bosses, make one kind and swap out guns, probably after gun system
+ - [x] if add bosses, make one kind and swap out guns, probably after gun system
  - [ ] make one kind of boss behaviour and logic, and switch renderer (ship appearance) and gun type
  - [ ] also potentially later boss has satelites that orbit it and help, or shield etc
 
@@ -158,3 +158,7 @@ Pulse Wave – Expanding ring of energy from the ship.
 
  - [ ] make boost exhaust a part of normal exhaust rendering i.e. if keyB pressed, 
  boost exhaust is rendered
+
+
+
+ - [ ] Adapt missile and lasersystem for boss use: missiles dont target player and need to not hurt boss, and laser needs to be held down not fired (boss never fires it)

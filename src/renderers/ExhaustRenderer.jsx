@@ -2,7 +2,7 @@
 
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { useControls, folder } from 'leva'
+
 import * as THREE from 'three'
 import { playerQuery } from '../ecs/constants/queries.js'
 import { Position, Rotation, Velocity } from '../ecs/constants/components.js'
@@ -25,8 +25,8 @@ function createPool(maxParticles) {
         life: new Float32Array(maxParticles),
         maxLife: new Float32Array(maxParticles),
         size: new Float32Array(maxParticles),
-        t: new Float32Array(maxParticles),     
-        speed: new Float32Array(maxParticles), 
+        t: new Float32Array(maxParticles),
+        speed: new Float32Array(maxParticles),
         cursor: 0,
     }
 }
@@ -118,62 +118,7 @@ function drawLayer(pool, mesh, layerCfg, cfg, scratch) {
 // ============================================================
 // ============================================================
 
-function useExhaustControls(panelLabel, defaults) {
 
-    const controls = useControls(panelLabel, {
-        emitPerFrame: { value: defaults.emitPerFrame, min: 0, max: 10, step: 1 },
-        lifeMin: { value: defaults.lifeMin, min: 0.02, max: 1, step: 0.01 },
-        lifeMax: { value: defaults.lifeMax, min: 0.02, max: 1.5, step: 0.01 },
-        speedMin: { value: defaults.speedMin, min: 0, max: 10, step: 0.1 },
-        speedMax: { value: defaults.speedMax, min: 0, max: 12, step: 0.1 },
-        coneAngle: { value: defaults.coneAngle, min: 0, max: 2, step: 0.01 },
-        drag: { value: defaults.drag, min: 0.5, max: 1, step: 0.001 },
-        velocityInherit: { value: defaults.velocityInherit, min: 0, max: 1, step: 0.01 },
-        sizeMin: { value: defaults.sizeMin, min: 0.01, max: 1, step: 0.01 },
-        sizeMax: { value: defaults.sizeMax, min: 0.01, max: 1, step: 0.01 },
-        tailOffset: { value: defaults.tailOffset, min: 0, max: 1, step: 0.01 },
-        stretchFactor: { value: defaults.stretchFactor, min: 0, max: 0.3, step: 0.005 },
-        stretchMax: { value: defaults.stretchMax, min: 1, max: 8, step: 0.1 },
-
-        core: folder({
-            coreColor: { value: defaults.core.color, label: 'color' },
-            coreSizeScale: { value: defaults.core.sizeScale, min: 0, max: 2, step: 0.01, label: 'sizeScale' },
-            coreSphereRadius: { value: defaults.core.sphereRadius, min: 0.05, max: 1, step: 0.01, label: 'sphereRadius' },
-            coreOpacity: { value: defaults.core.opacity, min: 0, max: 1, step: 0.01, label: 'opacity' },
-            coreFlicker: { value: defaults.core.flicker, label: 'flicker' },
-        }),
-
-        glow: folder({
-            glowHueStart: { value: defaults.glow.hueStart, min: 0, max: 1, step: 0.001, label: 'hueStart' },
-            glowHueShift: { value: defaults.glow.hueShift, min: -1, max: 1, step: 0.001, label: 'hueShift' },
-            glowLightnessStart: { value: defaults.glow.lightnessStart, min: 0, max: 1, step: 0.01, label: 'lightnessStart' },
-            glowLightnessGain: { value: defaults.glow.lightnessGain, min: 0, max: 1, step: 0.01, label: 'lightnessGain' },
-            glowSizeScale: { value: defaults.glow.sizeScale, min: 0, max: 2, step: 0.01, label: 'sizeScale' },
-            glowSphereRadius: { value: defaults.glow.sphereRadius, min: 0.05, max: 1.5, step: 0.01, label: 'sphereRadius' },
-            glowOpacity: { value: defaults.glow.opacity, min: 0, max: 1, step: 0.01, label: 'opacity' },
-        }),
-    })
-
-    return {
-        ...controls,
-        core: {
-            color: controls.coreColor,
-            sizeScale: controls.coreSizeScale,
-            sphereRadius: controls.coreSphereRadius,
-            opacity: controls.coreOpacity,
-            flicker: controls.coreFlicker,
-        },
-        glow: {
-            hueStart: controls.glowHueStart,
-            hueShift: controls.glowHueShift,
-            lightnessStart: controls.glowLightnessStart,
-            lightnessGain: controls.glowLightnessGain,
-            sizeScale: controls.glowSizeScale,
-            sphereRadius: controls.glowSphereRadius,
-            opacity: controls.glowOpacity,
-        },
-    }
-}
 
 const NORMAL_DEFAULTS = {
     emitPerFrame: 3,
@@ -256,8 +201,8 @@ function ExhaustLayer({ cfg, maxParticles, meshRefs }) {
 
 export function ExhaustRenderer() {
 
-    const normalCfg = useExhaustControls('Exhaust · Normal', NORMAL_DEFAULTS)
-    const boostCfg = useExhaustControls('Exhaust · Boost', BOOST_DEFAULTS)
+    const normalCfg = NORMAL_DEFAULTS
+    const boostCfg = BOOST_DEFAULTS
 
     const normalCoreRef = useRef()
     const normalGlowRef = useRef()

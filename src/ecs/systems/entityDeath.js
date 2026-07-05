@@ -4,6 +4,7 @@ import { removeEntity } from "bitecs"
 import { world } from "../constants/world.js"
 import { gameState } from "../../state/gameState.js"
 import { spawnSparkBurst } from "../spawn.js"
+import { BossAI } from "../constants/components.js"
 
 export function killAsteroid(id, x, y) {
 
@@ -18,7 +19,7 @@ export function killAsteroid(id, x, y) {
 export function killBoss(id, x, y) {
 
     removeEntity(world, id)
-
+    gameState.currentWeapon = BossAI.weapon[id]
     gameState.score += 1000
     gameState.bossAlive = false
     gameState.asteroidsRemaining = 0
