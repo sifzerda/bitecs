@@ -2,11 +2,19 @@
 
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
+import { useControls, folder } from 'leva'
 import * as THREE from 'three'
 import { playerQuery } from '../ecs/constants/queries.js'
 import { Position, Rotation, Velocity } from '../ecs/constants/components.js'
 import { input } from '../ecs/systems/input.js'
 import { gameState } from '../state/gameState.js'
+
+const Z_AXIS = new THREE.Vector3(0, 0, 1)
+
+// Pool sizes are fixed — instancedMesh can't be resized after mount without
+// a remount, so these are not exposed in the Leva panel.
+const NORMAL_MAX_PARTICLES = 60
+const BOOST_MAX_PARTICLES = 100
 
 // ============================================================
 // Shared particle-pool machinery — used for both the normal
@@ -22,6 +30,8 @@ function createPool(maxParticles) {
         life: new Float32Array(maxParticles),
         maxLife: new Float32Array(maxParticles),
         size: new Float32Array(maxParticles),
+        t: new Float32Array(maxParticles),      // cached life fraction (1 -> 0), refreshed each frame
+        speed: new Float32Array(maxParticles),  // cached current speed, used for streak stretching
         cursor: 0,
     }
 }
@@ -51,16 +61,15 @@ function emitParticles(pool, cfg, pid, count) {
     }
 }
 
-// Advances physics for every particle in `pool` and writes the result into `mesh`.
-function updateAndDrawPool(pool, mesh, cfg, delta, scratch) {
-    const { matrix, position, rotation, scale, scaleZero, color } = scratch
+// Advances physics for every particle in `pool` (position, drag, life decay)
+// and caches per-particle values (t, speed) reused by both visual layers.
+function advanceParticles(pool, cfg, delta) {
     const max = pool.x.length
 
     for (let i = 0; i < max; i++) {
 
         if (pool.life[i] <= 0) {
-            matrix.compose(position.set(0, 0, 0), rotation, scaleZero)
-            mesh.setMatrixAt(i, matrix)
+            pool.t[i] = 0
             continue
         }
 
@@ -72,20 +81,52 @@ function updateAndDrawPool(pool, mesh, cfg, delta, scratch) {
         pool.x[i] += pool.vx[i] * delta
         pool.y[i] += pool.vy[i] * delta
 
-        const t = Math.max(0, pool.life[i] / pool.maxLife[i])
+        pool.t[i] = Math.max(0, pool.life[i] / pool.maxLife[i])
+        pool.speed[i] = Math.hypot(pool.vx[i], pool.vy[i])
+    }
+}
+
+// Writes one visual layer (core or glow) into `mesh` from the already-advanced `pool`.
+// Particles are stretched into streaks along their direction of travel — faster
+// particles streak longer — which is what sells the "hot exhaust" look.
+function drawLayer(pool, mesh, layerCfg, cfg, scratch) {
+    const { matrix, position, rotation, scale, scaleZero, color } = scratch
+    const max = pool.x.length
+
+    for (let i = 0; i < max; i++) {
+
+        const t = pool.t[i]
+
+        if (pool.life[i] <= 0 || t <= 0) {
+            matrix.compose(position.set(0, 0, 0), rotation, scaleZero)
+            mesh.setMatrixAt(i, matrix)
+            continue
+        }
+
         const eased = t * t
-        const s = pool.size[i] * eased
+        const flicker = layerCfg.flicker ? (0.85 + Math.random() * 0.15) : 1
+        const baseSize = pool.size[i] * eased * layerCfg.sizeScale * flicker
+
+        const stretch = 1 + Math.min(pool.speed[i] * cfg.stretchFactor, cfg.stretchMax)
+        const angle = Math.atan2(pool.vy[i], pool.vx[i])
 
         position.set(pool.x[i], pool.y[i], 0)
-        scale.set(s, s, s)
+        rotation.setFromAxisAngle(Z_AXIS, angle)
+        scale.set(baseSize * stretch, baseSize / Math.sqrt(stretch), baseSize)
         matrix.compose(position, rotation, scale)
         mesh.setMatrixAt(i, matrix)
 
-        color.setHSL(
-            cfg.hueStart + cfg.hueShift * (1 - t),
-            1,
-            cfg.lightnessStart + cfg.lightnessGain * eased
-        )
+        if (layerCfg.hueShift !== undefined) {
+            // glow layer: cools/shifts hue as the particle dies, like a flame
+            color.setHSL(
+                layerCfg.hueStart + layerCfg.hueShift * (1 - t),
+                1,
+                layerCfg.lightnessStart + layerCfg.lightnessGain * eased
+            )
+        } else {
+            // core layer: fixed hot color, just dims slightly toward death
+            color.set(layerCfg.color).multiplyScalar(0.7 + 0.3 * eased)
+        }
         mesh.setColorAt(i, color)
     }
 
@@ -95,50 +136,107 @@ function updateAndDrawPool(pool, mesh, cfg, delta, scratch) {
 }
 
 // ============================================================
-// The two exhaust "looks" — normal thrust vs. boost.
-// Same shape, different tuning + color, exactly as before.
+// Leva panel — one folder per look, each with Core / Glow sub-folders.
+// Defaults match the previously hand-tuned values.
 // ============================================================
 
-const NORMAL_CFG = {
-    maxParticles: 60,
-    emitPerFrame: 2,
-    lifeMin: 0.15,
-    lifeMax: 0.3,
-    speedMin: 1.5,
-    speedMax: 3.0,
-    coneAngle: 0.35,
-    drag: 0.92,
-    velocityInherit: 0.05,
-    sizeMin: 0.08,
-    sizeMax: 0.18,
-    tailOffset: 0.35,
-    hueStart: 0.11,
-    hueShift: -0.08,
-    lightnessStart: 0.4,
-    lightnessGain: 0.4,
-    color: '#ffaa33',
-    sphereRadius: 0.4,
+function useExhaustControls(panelLabel, defaults) {
+    // NOTE: Leva flattens every control to a single object regardless of which
+    // folder it's declared in, so "core.sizeScale" and "glow.sizeScale" would
+    // collide as the same key. Each control gets a unique `core*`/`glow*` key,
+    // with a `label` so the panel still shows the short, friendly name.
+    const controls = useControls(panelLabel, {
+        emitPerFrame: { value: defaults.emitPerFrame, min: 0, max: 10, step: 1 },
+        lifeMin: { value: defaults.lifeMin, min: 0.02, max: 1, step: 0.01 },
+        lifeMax: { value: defaults.lifeMax, min: 0.02, max: 1.5, step: 0.01 },
+        speedMin: { value: defaults.speedMin, min: 0, max: 10, step: 0.1 },
+        speedMax: { value: defaults.speedMax, min: 0, max: 12, step: 0.1 },
+        coneAngle: { value: defaults.coneAngle, min: 0, max: 2, step: 0.01 },
+        drag: { value: defaults.drag, min: 0.5, max: 1, step: 0.001 },
+        velocityInherit: { value: defaults.velocityInherit, min: 0, max: 1, step: 0.01 },
+        sizeMin: { value: defaults.sizeMin, min: 0.01, max: 1, step: 0.01 },
+        sizeMax: { value: defaults.sizeMax, min: 0.01, max: 1, step: 0.01 },
+        tailOffset: { value: defaults.tailOffset, min: 0, max: 1, step: 0.01 },
+        stretchFactor: { value: defaults.stretchFactor, min: 0, max: 0.3, step: 0.005 },
+        stretchMax: { value: defaults.stretchMax, min: 1, max: 8, step: 0.1 },
+
+        core: folder({
+            coreColor: { value: defaults.core.color, label: 'color' },
+            coreSizeScale: { value: defaults.core.sizeScale, min: 0, max: 2, step: 0.01, label: 'sizeScale' },
+            coreSphereRadius: { value: defaults.core.sphereRadius, min: 0.05, max: 1, step: 0.01, label: 'sphereRadius' },
+            coreOpacity: { value: defaults.core.opacity, min: 0, max: 1, step: 0.01, label: 'opacity' },
+            coreFlicker: { value: defaults.core.flicker, label: 'flicker' },
+        }),
+
+        glow: folder({
+            glowHueStart: { value: defaults.glow.hueStart, min: 0, max: 1, step: 0.001, label: 'hueStart' },
+            glowHueShift: { value: defaults.glow.hueShift, min: -1, max: 1, step: 0.001, label: 'hueShift' },
+            glowLightnessStart: { value: defaults.glow.lightnessStart, min: 0, max: 1, step: 0.01, label: 'lightnessStart' },
+            glowLightnessGain: { value: defaults.glow.lightnessGain, min: 0, max: 1, step: 0.01, label: 'lightnessGain' },
+            glowSizeScale: { value: defaults.glow.sizeScale, min: 0, max: 2, step: 0.01, label: 'sizeScale' },
+            glowSphereRadius: { value: defaults.glow.sphereRadius, min: 0.05, max: 1.5, step: 0.01, label: 'sphereRadius' },
+            glowOpacity: { value: defaults.glow.opacity, min: 0, max: 1, step: 0.01, label: 'opacity' },
+        }),
+    })
+
+    // Reassemble into the nested { core, glow } shape the rest of the
+    // component expects, so emitParticles/advanceParticles/drawLayer don't
+    // need to know anything about Leva's flat key naming.
+    return {
+        ...controls,
+        core: {
+            color: controls.coreColor,
+            sizeScale: controls.coreSizeScale,
+            sphereRadius: controls.coreSphereRadius,
+            opacity: controls.coreOpacity,
+            flicker: controls.coreFlicker,
+        },
+        glow: {
+            hueStart: controls.glowHueStart,
+            hueShift: controls.glowHueShift,
+            lightnessStart: controls.glowLightnessStart,
+            lightnessGain: controls.glowLightnessGain,
+            sizeScale: controls.glowSizeScale,
+            sphereRadius: controls.glowSphereRadius,
+            opacity: controls.glowOpacity,
+        },
+    }
 }
 
-const BOOST_CFG = {
-    maxParticles: 100,
+const NORMAL_DEFAULTS = {
+    emitPerFrame: 3,
+    lifeMin: 0.25,
+    lifeMax: 0.50,
+    speedMin: 1.5,
+    speedMax: 3.0,
+    coneAngle: 0.50,
+    drag: 0.50,
+    velocityInherit: 0.05,
+    sizeMin: 0.22,
+    sizeMax: 0.32,
+    tailOffset: 0.40,
+    stretchFactor: 0.09,
+    stretchMax: 4.5,
+    core: { color: '#fff6d8', sizeScale: 0.45, flicker: true, sphereRadius: 0.32, opacity: 0.95 },
+    glow: { hueStart: 0.11, hueShift: -0.09, lightnessStart: 0.45, lightnessGain: 0.35, sizeScale: 1.0, sphereRadius: 0.42, opacity: 0.6 },
+}
+
+const BOOST_DEFAULTS = {
     emitPerFrame: 3,
     lifeMin: 0.25,
     lifeMax: 0.5,
-    speedMin: 2.0,
-    speedMax: 4.5,
+    speedMin: 1.5,
+    speedMax: 3.0,
     coneAngle: 0.5,
-    drag: 0.90,
+    drag: 0.50,
     velocityInherit: 0.05,
     sizeMin: 0.12,
-    sizeMax: 0.28,
+    sizeMax: 0.32,
     tailOffset: 0.4,
-    hueStart: 0.55,
-    hueShift: -0.05,
-    lightnessStart: 0.35,
-    lightnessGain: 0.5,
-    color: '#88eeff',
-    sphereRadius: 0.5,
+    stretchFactor: 0.09,
+    stretchMax: 4.5,
+    core: { color: '#eafcff', sizeScale: 0.5, flicker: true, sphereRadius: 0.36, opacity: 0.95 },
+    glow: { hueStart: 0.58, hueShift: -0.10, lightnessStart: 0.42, lightnessGain: 0.45, sizeScale: 1.15, sphereRadius: 0.55, opacity: 0.55 },
 }
 
 const _scratch = {
@@ -150,13 +248,55 @@ const _scratch = {
     color: new THREE.Color(),
 }
 
+// A pool's two instancedMesh layers (core, glow). Material color is left
+// white on both — actual color comes entirely from per-instance setColorAt
+// in drawLayer, so nothing gets double-tinted.
+function ExhaustLayer({ cfg, maxParticles, meshRefs }) {
+    return (
+        <>
+            <instancedMesh
+                ref={meshRefs.core}
+                args={[null, null, maxParticles]}
+                frustumCulled={false}>
+                <sphereGeometry args={[cfg.core.sphereRadius, 6, 6]} />
+                <meshBasicMaterial
+                    color="white"
+                    transparent
+                    opacity={cfg.core.opacity}
+                    blending={THREE.AdditiveBlending}
+                    depthWrite={false}
+                />
+            </instancedMesh>
+
+            <instancedMesh
+                ref={meshRefs.glow}
+                args={[null, null, maxParticles]}
+                frustumCulled={false}>
+                <sphereGeometry args={[cfg.glow.sphereRadius, 6, 6]} />
+                <meshBasicMaterial
+                    color="white"
+                    transparent
+                    opacity={cfg.glow.opacity}
+                    blending={THREE.AdditiveBlending}
+                    depthWrite={false}
+                />
+            </instancedMesh>
+        </>
+    )
+}
+
 export function ExhaustRenderer() {
 
-    const normalMeshRef = useRef()
-    const boostMeshRef = useRef()
+    const normalCfg = useExhaustControls('Exhaust · Normal', NORMAL_DEFAULTS)
+    const boostCfg = useExhaustControls('Exhaust · Boost', BOOST_DEFAULTS)
 
-    const normalPool = useMemo(() => createPool(NORMAL_CFG.maxParticles), [])
-    const boostPool = useMemo(() => createPool(BOOST_CFG.maxParticles), [])
+    const normalCoreRef = useRef()
+    const normalGlowRef = useRef()
+    const boostCoreRef = useRef()
+    const boostGlowRef = useRef()
+
+    const normalPool = useMemo(() => createPool(NORMAL_MAX_PARTICLES), [])
+    const boostPool = useMemo(() => createPool(BOOST_MAX_PARTICLES), [])
 
     useFrame((_, delta) => {
 
@@ -166,51 +306,35 @@ export function ExhaustRenderer() {
         // Normal exhaust only fires while thrusting and NOT boosting —
         // the boost pool takes over as the "special" look during a boost window.
         if (input.thrust && !boosting && players.length > 0) {
-            emitParticles(normalPool, NORMAL_CFG, players[0], NORMAL_CFG.emitPerFrame)
+            emitParticles(normalPool, normalCfg, players[0], normalCfg.emitPerFrame)
         }
 
         if (boosting && players.length > 0) {
-            emitParticles(boostPool, BOOST_CFG, players[0], BOOST_CFG.emitPerFrame)
+            emitParticles(boostPool, boostCfg, players[0], boostCfg.emitPerFrame)
         }
 
-        if (normalMeshRef.current) {
-            updateAndDrawPool(normalPool, normalMeshRef.current, NORMAL_CFG, delta, _scratch)
-        }
-        if (boostMeshRef.current) {
-            updateAndDrawPool(boostPool, boostMeshRef.current, BOOST_CFG, delta, _scratch)
-        }
+        advanceParticles(normalPool, normalCfg, delta)
+        advanceParticles(boostPool, boostCfg, delta)
+
+        if (normalCoreRef.current) drawLayer(normalPool, normalCoreRef.current, normalCfg.core, normalCfg, _scratch)
+        if (normalGlowRef.current) drawLayer(normalPool, normalGlowRef.current, normalCfg.glow, normalCfg, _scratch)
+        if (boostCoreRef.current) drawLayer(boostPool, boostCoreRef.current, boostCfg.core, boostCfg, _scratch)
+        if (boostGlowRef.current) drawLayer(boostPool, boostGlowRef.current, boostCfg.glow, boostCfg, _scratch)
 
     })
 
     return (
         <>
-            <instancedMesh
-                ref={normalMeshRef}
-                args={[null, null, NORMAL_CFG.maxParticles]}
-                frustumCulled={false}>
-                <sphereGeometry args={[NORMAL_CFG.sphereRadius, 6, 6]} />
-                <meshBasicMaterial
-                    color={NORMAL_CFG.color}
-                    transparent
-                    opacity={0.85}
-                    blending={THREE.AdditiveBlending}
-                    depthWrite={false}
-                />
-            </instancedMesh>
-
-            <instancedMesh
-                ref={boostMeshRef}
-                args={[null, null, BOOST_CFG.maxParticles]}
-                frustumCulled={false}>
-                <sphereGeometry args={[BOOST_CFG.sphereRadius, 6, 6]} />
-                <meshBasicMaterial
-                    color={BOOST_CFG.color}
-                    transparent
-                    opacity={0.85}
-                    blending={THREE.AdditiveBlending}
-                    depthWrite={false}
-                />
-            </instancedMesh>
+            <ExhaustLayer
+                cfg={normalCfg}
+                maxParticles={NORMAL_MAX_PARTICLES}
+                meshRefs={{ core: normalCoreRef, glow: normalGlowRef }}
+            />
+            <ExhaustLayer
+                cfg={boostCfg}
+                maxParticles={BOOST_MAX_PARTICLES}
+                meshRefs={{ core: boostCoreRef, glow: boostGlowRef }}
+            />
         </>
     )
 }

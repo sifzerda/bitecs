@@ -21,10 +21,8 @@ import { gameLoop } from '../state/gameLoop.js'
 import { PlayerRenderer } from '../renderers/PlayerRenderer.jsx'
 import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
 import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
-
 import { MissileRenderer } from '../renderers/MissileRenderer.jsx'
 import { LaserRenderer } from '../renderers/LaserRenderer.jsx'
-
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
 import { BossBulletRenderer } from '../renderers/BossBulletRenderer.jsx'
