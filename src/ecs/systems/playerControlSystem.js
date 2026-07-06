@@ -3,7 +3,7 @@
 import { playerQuery, asteroidQuery, bossQuery, droneQuery } from "../constants/queries.js"
 import { world } from "../constants/world.js"
 import { Position, Velocity, Rotation, BULLET_OWNER } from "../constants/components.js"
-import { spawnBullet, spawnExhaust, spawnDrone } from "../spawn.js"
+import { spawnBullet, spawnExhaust, spawnDrone, spawnHazard } from "../spawn.js"
 import { input } from "./input.js"
 import { gameState } from "../../state/gameState.js"
 import { getWeapon } from "../constants/weapons.js"
