@@ -62,7 +62,7 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
 
     // beams have no ECS bullet entity — laserSystem handles them entirely.
     // Guarding here (not just at call sites) means ANY future caller is safe by default.
-    if (weapon.category === "beam") return []
+    if (weapon.category === "beam" || weapon.category === "flame" || weapon.category === "pulse") return []
 
     const count = weapon.projectileCount
     const spread = weapon.spreadAngle

@@ -46,10 +46,11 @@ export const BULLET_OWNER = {
 }
 
 export const HazardZone = {
-    weaponType: new Uint8Array(MAX),   // which weapon config to read radius/damage/tick from
+    weaponType: new Uint8Array(MAX),
     owner: new Uint8Array(MAX),
-    target: new Int32Array(MAX),       // -1 = static (cloud/puddle), otherwise the entity id it follows
+    target: new Int32Array(MAX),
     tickTimer: new Float32Array(MAX),
+    detonated: new Uint8Array(MAX),   // add this — 0/1 flag for one-shot hazards like mines
 };
 
 export const StatusEffect = {
