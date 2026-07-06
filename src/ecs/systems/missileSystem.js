@@ -1,8 +1,8 @@
 // src/ecs/systems/missileSystem.js
 
 import { world } from "../constants/world.js"
-import { bulletQuery, asteroidQuery, bossQuery } from "../constants/queries.js"
-import { Position, Velocity, Bullet } from "../constants/components.js"
+import { bulletQuery, asteroidQuery, bossQuery, playerQuery } from "../constants/queries.js"
+import { Position, Velocity, Bullet, BULLET_OWNER } from "../constants/components.js"
 import { getWeapon } from "../constants/weapons.js"
 
 export function missileSystem() {
@@ -11,6 +11,7 @@ export function missileSystem() {
     const bullets = bulletQuery()
     const asteroids = asteroidQuery()
     const bosses = bossQuery()
+    const players = playerQuery()
     const weapon = getWeapon(3)
 
     for (let i = 0; i < bullets.length; i++) {
@@ -23,28 +24,36 @@ export function missileSystem() {
         // -------------------------
 
         let targetId = -1
-        let bestDistSq = Infinity
 
-        for (let j = 0; j < asteroids.length; j++) {
-            const aid = asteroids[j]
-            const dx = Position.x[aid] - Position.x[id]
-            const dy = Position.y[aid] - Position.y[id]
-            const distSq = dx * dx + dy * dy
-            if (distSq < bestDistSq) {
-                bestDistSq = distSq
-                targetId = aid
-            }
-        }
+        if (Bullet.owner[id] === BULLET_OWNER.PLAYER) {
 
-        for (let j = 0; j < bosses.length; j++) {
-            const bid = bosses[j]
-            const dx = Position.x[bid] - Position.x[id]
-            const dy = Position.y[bid] - Position.y[id]
-            const distSq = dx * dx + dy * dy
-            if (distSq < bestDistSq) {
-                bestDistSq = distSq
-                targetId = bid
+            let bestDistSq = Infinity
+
+            for (let j = 0; j < asteroids.length; j++) {
+                const aid = asteroids[j]
+                const dx = Position.x[aid] - Position.x[id]
+                const dy = Position.y[aid] - Position.y[id]
+                const distSq = dx * dx + dy * dy
+                if (distSq < bestDistSq) {
+                    bestDistSq = distSq
+                    targetId = aid
+                }
             }
+
+            for (let j = 0; j < bosses.length; j++) {
+                const bid = bosses[j]
+                const dx = Position.x[bid] - Position.x[id]
+                const dy = Position.y[bid] - Position.y[id]
+                const distSq = dx * dx + dy * dy
+                if (distSq < bestDistSq) {
+                    bestDistSq = distSq
+                    targetId = bid
+                }
+            }
+
+        } else if (players.length > 0) {
+            // enemy-owned missiles only ever home on the player
+            targetId = players[0]
         }
 
         if (targetId === -1) continue   // nothing to home in on, keeps flying straight
