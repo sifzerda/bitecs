@@ -10,7 +10,6 @@ import {
     BulletTag,
     Spark,
     SparkTag,
-    ExhaustTag,
     AsteroidTag,
     BossTag,
     Lifetime,
@@ -28,7 +27,7 @@ export const sparkQuery = () => query(world, [Position, Velocity, Spark, SparkTa
 export const asteroidQuery = () => query(world, [Position, Health, AsteroidTag])
 export const bossQuery = () => query(world, [Position, Health, BossTag])
 export const movingQuery = () => query(world, [Position, Velocity])
-export const exhaustQuery = () => query(world, [Position, ExhaustTag, Lifetime])
+ 
 export const bossAIQuery = () => query(world, [Position, Velocity, BossAI, BossTag])
 export const hazardQuery = () => query(world, [Position, HazardZone, HazardTag, Lifetime])
 export const droneQuery = () => query(world, [Position, Drone, DroneTag])

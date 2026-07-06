@@ -165,3 +165,12 @@ add flamethrower
 
 
  - [ ] fix ricochetsystem bullets currently dont bounce away
+
+
+
+
+
+
+
+ - [ ] see if other renderers can be modelled off exhaust renderers gpu shaders
+- [ ] especially flamerenderer, acid spray, laser, arc, hazard,, spark

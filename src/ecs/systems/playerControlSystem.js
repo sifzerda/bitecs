@@ -3,7 +3,7 @@
 import { playerQuery, asteroidQuery, bossQuery, droneQuery } from "../constants/queries.js"
 import { world } from "../constants/world.js"
 import { Position, Velocity, Rotation, BULLET_OWNER } from "../constants/components.js"
-import { spawnBullet, spawnExhaust, spawnDrone, spawnHazard } from "../spawn.js"
+import { spawnBullet, spawnDrone, spawnHazard } from "../spawn.js"
 import { input } from "./input.js"
 import { gameState } from "../../state/gameState.js"
 import { getWeapon } from "../constants/weapons.js"
@@ -43,10 +43,9 @@ export default function playerControlSystem(shootState) {
     // Thrust
     //----------------------------------
 
-    if (input.thrust) {
+ if (input.thrust) {
         Velocity.x[pid] += Math.sin(-Rotation[pid]) * THRUST * dt
         Velocity.y[pid] += Math.cos(-Rotation[pid]) * THRUST * dt
-        spawnExhaust(Position.x[pid], Position.y[pid], Rotation[pid])
     }
 
     //----------------------------------
