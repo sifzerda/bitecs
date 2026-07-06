@@ -67,18 +67,14 @@ export function hazardSystem() {
                 removeEntity(world, hid)
             }
 
-            if (weapon.name === "proximityminelayer") {
-                const radius = weapon.hazardRadius
-                let triggered = false
-                for (let j = 0; j < asteroids.length && !triggered; j++) {
-                    const dx = Position.x[hid] - Position.x[asteroids[j]]
-                    const dy = Position.y[hid] - Position.y[asteroids[j]]
-                    if (dx * dx + dy * dy <= radius * radius) triggered = true
-                }
-                if (!triggered) continue   // sit idle until something wanders into range
-            }
+
 
         } else {
+
+            if (weapon.name === "proximityminelayer") {
+                if (HazardZone.detonated[hid]) continue
+                HazardZone.detonated[hid] = 1
+            }
 
             // static cloud/puddle: damage everything currently overlapping it
             const radius = weapon.hazardRadius ?? 2

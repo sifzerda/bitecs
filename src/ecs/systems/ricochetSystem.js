@@ -7,8 +7,8 @@ import { getWeapon } from "../constants/weapons.js"
 
 // TODO: replace with your actual play-area bounds (match whatever
 // system currently wraps/clamps the player and asteroids)
-const BOUNDS_X = 40
-const BOUNDS_Y = 25
+const BOUND_X = 16.0
+const BOUND_Y = 6.6
 
 export function ricochetSystem() {
 

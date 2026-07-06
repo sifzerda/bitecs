@@ -294,7 +294,7 @@ export const WEAPONS = [
     },
 
     {
-        id: 18,
+        id: 17,
         name: "flamethrower",
         category: "flame",
         range: 6,                 // short range — flamethrowers are a close-quarters weapon
