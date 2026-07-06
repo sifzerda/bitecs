@@ -27,6 +27,8 @@ export const BossAI = {
     moveTimer: new Float32Array(MAX),
     shootTimer: new Float32Array(MAX),
     weapon: new Uint8Array(MAX),
+    beamCycleTimer: new Float32Array(MAX),   // add this — counts down within current phase
+    beamActive: new Uint8Array(MAX),         // add this — 1 = beam currently firing, 0 = cooling down
 };
 
 export const Spark = {

@@ -29,6 +29,7 @@ import { HazardRenderer } from '../renderers/HazardRenderer.jsx'
 
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
+import { BossLaserRenderer } from '../renderers/BossLaserRenderer.jsx'
 
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 // debug
@@ -90,6 +91,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <SparkRenderer />
 
                     <BossRenderer />
+                    <BossLaserRenderer />
 
 
                     <EffectComposer multisampling={0}>

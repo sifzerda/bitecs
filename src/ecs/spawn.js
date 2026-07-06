@@ -269,7 +269,7 @@ export function spawnAsteroid(x, y) {
     addComponent(world, id, Velocity)
     addComponent(world, id, AsteroidTag)   // ONLY this
     addComponent(world, id, StatusEffect)
-    
+
     setHealth(id, 20)
 
     Velocity.x[id] = (Math.random() - 0.5) * 2
@@ -306,6 +306,8 @@ export function spawnBoss(weaponId) {
     BossAI.moveTimer[id] = 0     // pick a direction immediately
     BossAI.shootTimer[id] = 1    // small delay before first shot
     BossAI.weapon[id] = weaponId
+    BossAI.beamCycleTimer[id] = 3.0   // starts in the "on" phase
+    BossAI.beamActive[id] = 1
 
     gameState.bossAlive = true
 
