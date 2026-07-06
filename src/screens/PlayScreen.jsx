@@ -25,6 +25,7 @@ import { MissileRenderer } from '../renderers/MissileRenderer.jsx'
 import { LaserRenderer } from '../renderers/LaserRenderer.jsx'
 import { ArcRenderer } from '../renderers/ArcRenderer.jsx'
 import { FlameRenderer } from '../renderers/FlameRenderer.jsx'
+import { HazardRenderer } from '../renderers/HazardRenderer.jsx'
 
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
@@ -57,7 +58,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
             <GodPanel />
 
-            
+
 
             <div className="relative flex-1 px-4">
 
@@ -84,6 +85,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <LaserRenderer />
                     <ArcRenderer />
                     <FlameRenderer />
+                    <HazardRenderer />
 
                     <SparkRenderer />
 
