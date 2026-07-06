@@ -73,7 +73,7 @@ export const PlayerTag = {};
 export const BulletTag = {};
 export const SparkTag = {};
 
-export const ExhaustTag = {};
+ 
 export const AsteroidTag = {};
 export const BossTag = {};
 export const HazardTag = {};

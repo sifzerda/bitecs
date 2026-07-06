@@ -1,379 +1,257 @@
 // src/renderers/ExhaustRenderer.jsx
 
 import { useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { Position, Velocity } from '../ecs/constants/components.js'
 import { playerQuery } from '../ecs/constants/queries.js'
-import { Position, Rotation, Velocity } from '../ecs/constants/components.js'
 import { input } from '../ecs/systems/input.js'
-import { gameState } from '../state/gameState.js'
 
-const Z_AXIS = new THREE.Vector3(0, 0, 1)
-const NORMAL_MAX_PARTICLES = 60
-const BOOST_MAX_PARTICLES = 100
+const PARTICLE_SIZE = 128 // 128x128 = 16,384 particles
 
-// ============================================================
+// ---------------------------------------------------------------------------
+// GPGPU shaders
+// ---------------------------------------------------------------------------
 
-function createPool(maxParticles) {
+const simVertexShader = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = vec4(position.xy, 0.0, 1.0);
+  }
+`
 
-    return {
-        x: new Float32Array(maxParticles),
-        y: new Float32Array(maxParticles),
-        vx: new Float32Array(maxParticles),
-        vy: new Float32Array(maxParticles),
-        life: new Float32Array(maxParticles),
-        maxLife: new Float32Array(maxParticles),
-        size: new Float32Array(maxParticles),
-        t: new Float32Array(maxParticles),
-        speed: new Float32Array(maxParticles),
-        flicker: new Float32Array(maxParticles),
-        cursor: 0,
-    }
-}
+const simFragmentShader = /* glsl */ `
+  precision highp float;
 
-// ============================================================
+  varying vec2 vUv;
 
-function emitParticles(pool, cfg, pid, count, angularVel) {
+  uniform sampler2D uPosTex;
+  uniform vec2 uShipPos;
+  uniform vec2 uShipVel;
+  uniform float uDelta;
+  uniform float uTime;
+  uniform float uEmitting;
 
-    const rot = -Rotation[pid]
-    const sin = Math.sin(rot)
-    const cos = Math.cos(rot)
-    const facing = Math.atan2(sin, cos)
-    const px = Position.x[pid]
-    const py = Position.y[pid]
-    const shipVX = Velocity.x[pid]
-    const shipVY = Velocity.y[pid]
-    const emitX = px - sin * cfg.tailOffset
-    const emitY = py - cos * cfg.tailOffset
-    const speedRange = cfg.speedMax - cfg.speedMin
-    const lifeRange = cfg.lifeMax - cfg.lifeMin
-    const sizeRange = cfg.sizeMax - cfg.sizeMin
+  vec2 curl(vec2 p) {
+    float n1 = sin(p.y * 0.05 + uTime * 1.5);
+    float n2 = cos(p.x * 0.05 - uTime * 1.5);
+    return vec2(n1, n2);
+  }
 
-    // --------------------------------------------------------
-    // Rotational (tangential) velocity of the emission point.
-    // A point offset from a spinning body's center moves with
-    // v = ω × r in addition to the body's linear velocity.
-    // r = (emitX - px, emitY - py) = (-sin*tailOffset, -cos*tailOffset)
-    // v_tangent = angularVel(rot) * (-r.y, r.x)
-    //           = angularVel(rot) * (cos*tailOffset, -sin*tailOffset)
-    // This is what makes exhaust curl into a spiral during tight turns.
-    // --------------------------------------------------------
-    const spinInherit = cfg.spinInherit ?? 1.0
-    const tangentialVX = cos * cfg.tailOffset * angularVel * spinInherit
-    const tangentialVY = -sin * cfg.tailOffset * angularVel * spinInherit
+  void main() {
+    vec4 data = texture2D(uPosTex, vUv);
 
-    for (let n = 0; n < count; n++) {
+    vec2 pos = data.xy;
+    float life = data.z; // > 0: actively flying. <= 0: dormant, counting up toward 0.
+    float seed = data.w;
 
-        const slot = pool.cursor
+    if (life > 0.0) {
+      // active particle — age it and let it drift
+      life -= uDelta;
 
-        pool.cursor++
-        if (pool.cursor === pool.x.length)
-            pool.cursor = 0
+      vec2 exhaustVel = -uShipVel * 0.85 + curl(pos) * 1.5;
+      pos += exhaustVel * uDelta;
 
-        const angle = facing + Math.PI + (Math.random() - 0.5) * cfg.coneAngle
-        const speed = cfg.speedMin + Math.random() * speedRange
+      if (life <= 0.0) {
+        // just expired — go dormant with a per-particle stagger before it's eligible again
+        life = -(0.05 + seed * 0.35);
+      }
+    } else {
+      // dormant — count up toward zero
+      life += uDelta;
 
-        pool.x[slot] = emitX
-        pool.y[slot] = emitY
-        pool.vx[slot] = Math.cos(angle) * speed + shipVX * cfg.velocityInherit + tangentialVX
-        pool.vy[slot] = Math.sin(angle) * speed + shipVY * cfg.velocityInherit + tangentialVY
-
-        const life = cfg.lifeMin + Math.random() * lifeRange
-
-        pool.life[slot] = life
-        pool.maxLife[slot] = life
-        pool.size[slot] = cfg.sizeMin + Math.random() * sizeRange
-        pool.flicker[slot] = 0.85 + Math.random() * 0.15
-    }
-}
-
-// ============================================================
-
-function advanceParticles(pool, cfg, delta) {
-
-    const max = pool.x.length
-    const drag = cfg.drag
-
-    for (let i = 0; i < max; i++) {
-
-        let life = pool.life[i]
-
-        if (life <= 0) {
-
-            pool.t[i] = 0
-            pool.speed[i] = 0
-            continue
-        }
-
-        life -= delta
-        pool.life[i] = life
-
-        const dragFactor = Math.pow(drag, delta)
-        let vx = pool.vx[i] * dragFactor
-        let vy = pool.vy[i] * dragFactor
-
-        pool.vx[i] = vx
-        pool.vy[i] = vy
-
-        pool.x[i] += vx * delta
-        pool.y[i] += vy * delta
-
-        pool.t[i] = life > 0 ? life / pool.maxLife[i] : 0
-        pool.speed[i] = Math.sqrt(vx * vx + vy * vy)
-    }
-}
-
-// ============================================================
-
-function drawLayer(pool, mesh, layerCfg, cfg, scratch) {
-
-    const { matrix, position, rotation, scale, scaleZero, color } = scratch
-
-    const max = pool.x.length
-
-    const useHSL = layerCfg.hueShift !== undefined
-    const useFlicker = layerCfg.flicker
-
-    for (let i = 0; i < max; i++) {
-
-        const t = pool.t[i]
-
-        if (t <= 0) {
-
-            matrix.compose(position.set(0, 0, 0), rotation, scaleZero)
-
-            mesh.setMatrixAt(i, matrix)
-            continue
-        }
-
-        const eased = t * t
-        const baseSize = pool.size[i] * eased * layerCfg.sizeScale * (useFlicker ? pool.flicker[i] : 1)
-        const stretch = 1 + Math.min(pool.speed[i] * cfg.stretchFactor, cfg.stretchMax)
-        const invStretch = 1 / Math.sqrt(stretch)
-        position.set(pool.x[i], pool.y[i], 0)
-        rotation.setFromAxisAngle(Z_AXIS, Math.atan2(pool.vy[i], pool.vx[i]))
-
-        scale.set(baseSize * stretch, baseSize * invStretch, baseSize)
-        matrix.compose(position, rotation, scale)
-        mesh.setMatrixAt(i, matrix)
-
-        if (useHSL) {
-
-            color.setHSL(layerCfg.hueStart + layerCfg.hueShift * (1 - t), 1, layerCfg.lightnessStart + layerCfg.lightnessGain * eased)
-
+      if (life >= 0.0) {
+        if (uEmitting > 0.5) {
+          // ready AND thrust held — ignite
+          vec2 jitter = vec2(sin(seed * 78.233), cos(seed * 45.164)) * 0.05;
+          pos = uShipPos - normalize(uShipVel + 1e-4) * 0.2 + jitter;
+          life = 0.5 + seed * 0.5;
         } else {
-
-            color
-                .set(layerCfg.color)
-                .multiplyScalar(0.7 + eased * 0.3)
+          // ready but thrust not held — re-roll a short wait so it doesn't
+          // sit exactly at the trigger boundary every frame
+          life = -(0.05 + seed * 0.90);
         }
-
-        mesh.setColorAt(i, color)
+      }
     }
 
-    mesh.instanceMatrix.needsUpdate = true
+    gl_FragColor = vec4(pos, life, seed);
+  }
+`
 
-    if (mesh.instanceColor)
-        mesh.instanceColor.needsUpdate = true
+const renderVertexShader = /* glsl */ `
+  attribute vec2 particleUv;
+  varying float vLife;
+
+  uniform sampler2D uPosTex;
+  uniform float uSize;
+
+  void main() {
+    vec4 data = texture2D(uPosTex, particleUv);
+
+    vLife = data.z;
+
+    vec3 pos = vec3(data.xy, 0.0);
+    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+
+    gl_PointSize = uSize * mix(0.3, 1.0, clamp(vLife, 0.0, 1.0)) * (40.0 / -mvPosition.z);
+    gl_Position = projectionMatrix * mvPosition;
+  }
+`
+
+const renderFragmentShader = /* glsl */ `
+  precision highp float;
+  varying float vLife;
+
+  void main() {
+    if (vLife <= 0.0) discard;
+
+    float d = length(gl_PointCoord - vec2(0.5));
+    if (d > 0.5) discard;
+
+    float alpha = smoothstep(0.5, 0.0, d) * clamp(vLife, 0.0, 1.0) * 0.15;
+    vec3 color = mix(vec3(1.0, 0.3, 0.05), vec3(1.0, 0.85, 0.4), vLife);
+
+    gl_FragColor = vec4(color, alpha);
+  }
+`
+
+// ---------------------------------------------------------------------------
+// helpers
+// ---------------------------------------------------------------------------
+
+function createInitialPosTexture(size) {
+  const data = new Float32Array(size * size * 4)
+
+  for (let i = 0; i < size * size; i++) {
+    data[i * 4 + 0] = 0
+    data[i * 4 + 1] = 0
+    data[i * 4 + 2] = -Math.random() * 0.5   // dormant, staggered countdown
+    data[i * 4 + 3] = Math.random()          // seed
+  }
+
+  const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat, THREE.FloatType)
+  tex.needsUpdate = true
+  tex.minFilter = THREE.NearestFilter
+  tex.magFilter = THREE.NearestFilter
+  return tex
 }
 
-const NORMAL_DEFAULTS = {
-    emitPerFrame: 3,
-    lifeMin: 0.25,
-    lifeMax: 0.50,
-    speedMin: 6.0,
-    speedMax: 9.0,
-    coneAngle: 0.50,
-    drag: 0.50,
-    velocityInherit: 0.05,
-    spinInherit: 1.0,
-    sizeMin: 0.22,
-    sizeMax: 0.32,
-    tailOffset: 0.40,
-    stretchFactor: 0.09,
-    stretchMax: 4.5,
-    core: {
-        color: '#fff6d8',
-        sizeScale: 0.45,
-        flicker: true,
-        sphereRadius: 0.32,
-        opacity: 0.95,
+function createRenderTarget(size) {
+  return new THREE.WebGLRenderTarget(size, size, {
+    type: THREE.FloatType,
+    format: THREE.RGBAFormat,
+    minFilter: THREE.NearestFilter,
+    magFilter: THREE.NearestFilter,
+    depthBuffer: false,
+    stencilBuffer: false,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// component
+// ---------------------------------------------------------------------------
+
+export function ExhaustRenderer({ size = 4 }) {
+  const { gl } = useThree()
+
+  const simScene = useMemo(() => new THREE.Scene(), [])
+  const simCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), [])
+
+  const initialPosTexture = useMemo(() => createInitialPosTexture(PARTICLE_SIZE), [])
+  const rtA = useMemo(() => createRenderTarget(PARTICLE_SIZE), [])
+  const rtB = useMemo(() => createRenderTarget(PARTICLE_SIZE), [])
+
+  const readTexture = useRef(initialPosTexture)
+  const writeTarget = useRef(rtA)
+  const otherTarget = useRef(rtB)
+
+  const playerId = useRef(-1)
+
+  const simMaterial = useMemo(() => new THREE.ShaderMaterial({
+    uniforms: {
+      uPosTex: { value: null },
+      uShipPos: { value: new THREE.Vector2() },
+      uShipVel: { value: new THREE.Vector2() },
+      uDelta: { value: 0 },
+      uTime: { value: 0 },
+      uEmitting: { value: 0 },
     },
-    glow: {
-        hueStart: 0.11,
-        hueShift: -0.09,
-        lightnessStart: 0.45,
-        lightnessGain: 0.35,
-        sizeScale: 1.0,
-        sphereRadius: 0.42,
-        opacity: 0.6,
+    vertexShader: simVertexShader,
+    fragmentShader: simFragmentShader,
+  }), [])
+
+  useMemo(() => {
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), simMaterial)
+    simScene.add(quad)
+  }, [simScene, simMaterial])
+
+  const renderMaterial = useMemo(() => new THREE.ShaderMaterial({
+    uniforms: {
+      uPosTex: { value: null },
+      uSize: { value: size },
     },
-}
+    vertexShader: renderVertexShader,
+    fragmentShader: renderFragmentShader,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }), [size])
 
-const BOOST_DEFAULTS = {
-    emitPerFrame: 3,
-    lifeMin: 0.25,
-    lifeMax: 0.50,
-    speedMin: 6.0,
-    speedMax: 9.0,
-    coneAngle: 0.50,
-    drag: 0.50,
-    velocityInherit: 0.05,
-    spinInherit: 1.0,
-    sizeMin: 0.12,
-    sizeMax: 0.32,
-    tailOffset: 0.40,
-    stretchFactor: 0.09,
-    stretchMax: 4.5,
-    core: {
-        color: '#eafcff',
-        sizeScale: 0.50,
-        flicker: true,
-        sphereRadius: 0.36,
-        opacity: 0.95,
-    },
-    glow: {
-        hueStart: 0.58,
-        hueShift: -0.10,
-        lightnessStart: 0.42,
-        lightnessGain: 0.45,
-        sizeScale: 1.15,
-        sphereRadius: 0.55,
-        opacity: 0.55,
-    },
-}
+  const pointsGeometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry()
+    const uv = new Float32Array(PARTICLE_SIZE * PARTICLE_SIZE * 2)
+    const positions = new Float32Array(PARTICLE_SIZE * PARTICLE_SIZE * 3)
 
-const _scratch = {
-    matrix: new THREE.Matrix4(),
-    position: new THREE.Vector3(),
-    rotation: new THREE.Quaternion(),
-    scale: new THREE.Vector3(),
-    scaleZero: new THREE.Vector3(0, 0, 0),
-    color: new THREE.Color(),
-}
-
-function ExhaustLayer({ cfg, maxParticles, meshRefs }) {
-
-    return (
-        <>
-            <instancedMesh
-                ref={meshRefs.core}
-                args={[null, null, maxParticles]}
-                frustumCulled={false}>
-
-                <sphereGeometry args={[cfg.core.sphereRadius, 6, 6]} />
-
-                <meshBasicMaterial
-                    color="white"
-                    transparent
-                    opacity={cfg.core.opacity}
-                    blending={THREE.AdditiveBlending}
-                    depthWrite={false}
-                />
-            </instancedMesh>
-
-            <instancedMesh
-                ref={meshRefs.glow}
-                args={[null, null, maxParticles]}
-                frustumCulled={false}>
-
-                <sphereGeometry args={[cfg.glow.sphereRadius, 6, 6]} />
-
-                <meshBasicMaterial
-                    color="white"
-                    transparent
-                    opacity={cfg.glow.opacity}
-                    blending={THREE.AdditiveBlending}
-                    depthWrite={false}
-                />
-            </instancedMesh>
-        </>
-    )
-}
-
-function updateExhaust(pool, cfg, refs, delta, pid, emitting, angularVel) {
-
-    if (emitting) {
-        emitParticles(pool, cfg, pid, cfg.emitPerFrame, angularVel)
+    let ptr = 0
+    let posPtr = 0
+    for (let y = 0; y < PARTICLE_SIZE; y++) {
+      for (let x = 0; x < PARTICLE_SIZE; x++) {
+        uv[ptr++] = (x + 0.5) / PARTICLE_SIZE
+        uv[ptr++] = (y + 0.5) / PARTICLE_SIZE
+        positions[posPtr++] = 0
+        positions[posPtr++] = 0
+        positions[posPtr++] = 0
+      }
     }
 
-    advanceParticles(pool, cfg, delta)
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geo.setAttribute('particleUv', new THREE.BufferAttribute(uv, 2))
 
-    if (refs.core.current) {
-        drawLayer(pool, refs.core.current, cfg.core, cfg, _scratch)
+    return geo
+  }, [])
+
+  useFrame((state, delta) => {
+    if (playerId.current === -1) {
+      const players = playerQuery()
+      if (!players.length) return
+      playerId.current = players[0]
     }
 
-    if (refs.glow.current) {
-        drawLayer(pool, refs.glow.current, cfg.glow, cfg, _scratch)
-    }
-}
+    const pid = playerId.current
 
-export function ExhaustRenderer() {
+    simMaterial.uniforms.uPosTex.value = readTexture.current
+    simMaterial.uniforms.uDelta.value = Math.min(delta, 0.1)
+    simMaterial.uniforms.uTime.value = state.clock.elapsedTime
+    simMaterial.uniforms.uShipPos.value.set(Position.x[pid], Position.y[pid])
+    simMaterial.uniforms.uShipVel.value.set(Velocity.x[pid], Velocity.y[pid])
+    simMaterial.uniforms.uEmitting.value = input.thrust ? 1 : 0
 
-    const playerId = useRef(-1)
-    const prevRotation = useRef(null)
+    const prevTarget = gl.getRenderTarget()
 
-    const normalPool = useMemo(() => createPool(NORMAL_MAX_PARTICLES), [])
-    const boostPool = useMemo(() => createPool(BOOST_MAX_PARTICLES), [])
+    gl.setRenderTarget(writeTarget.current)
+    gl.render(simScene, simCamera)
+    gl.setRenderTarget(prevTarget)
 
-    const normalRefs = {
-        core: useRef(),
-        glow: useRef(),
-    }
+    readTexture.current = writeTarget.current.texture
+    renderMaterial.uniforms.uPosTex.value = readTexture.current
 
-    const boostRefs = {
-        core: useRef(),
-        glow: useRef(),
-    }
+    const tmp = writeTarget.current
+    writeTarget.current = otherTarget.current
+    otherTarget.current = tmp
+  })
 
-    useFrame((_, delta) => {
-
-        if (playerId.current === -1) {
-
-            const players = playerQuery()
-
-            if (players.length === 0)
-                return
-
-            playerId.current = players[0]
-        }
-
-        const pid = playerId.current
-        const boosting = gameState.boostActive > 0
-
-        // --------------------------------------------------------
-        // Angular velocity of the ship's facing ("rot" convention,
-        // rot = -Rotation[pid]) used to give emitted particles a
-        // tangential kick when the ship is turning tightly.
-        // --------------------------------------------------------
-        const rotation = Rotation[pid]
-
-        if (prevRotation.current === null)
-            prevRotation.current = rotation
-
-        const angularVel = delta > 0
-            ? -(rotation - prevRotation.current) / delta
-            : 0
-
-        prevRotation.current = rotation
-
-        updateExhaust(normalPool, NORMAL_DEFAULTS, normalRefs, delta, pid, input.thrust && !boosting, angularVel)
-        updateExhaust(boostPool, BOOST_DEFAULTS, boostRefs, delta, pid, boosting, angularVel)
-    })
-
-    return (
-        <>
-            <ExhaustLayer
-                cfg={NORMAL_DEFAULTS}
-                maxParticles={NORMAL_MAX_PARTICLES}
-                meshRefs={normalRefs}
-            />
-
-            <ExhaustLayer
-                cfg={BOOST_DEFAULTS}
-                maxParticles={BOOST_MAX_PARTICLES}
-                meshRefs={boostRefs}
-            />
-        </>
-    )
+  return (
+    <points geometry={pointsGeometry} material={renderMaterial} frustumCulled={false} />
+  )
 }
