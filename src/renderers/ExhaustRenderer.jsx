@@ -33,7 +33,7 @@ function createPool(maxParticles) {
 
 // ============================================================
 
-function emitParticles(pool, cfg, pid, count) {
+function emitParticles(pool, cfg, pid, count, angularVel) {
 
     const rot = -Rotation[pid]
     const sin = Math.sin(rot)
@@ -49,6 +49,19 @@ function emitParticles(pool, cfg, pid, count) {
     const lifeRange = cfg.lifeMax - cfg.lifeMin
     const sizeRange = cfg.sizeMax - cfg.sizeMin
 
+    // --------------------------------------------------------
+    // Rotational (tangential) velocity of the emission point.
+    // A point offset from a spinning body's center moves with
+    // v = ω × r in addition to the body's linear velocity.
+    // r = (emitX - px, emitY - py) = (-sin*tailOffset, -cos*tailOffset)
+    // v_tangent = angularVel(rot) * (-r.y, r.x)
+    //           = angularVel(rot) * (cos*tailOffset, -sin*tailOffset)
+    // This is what makes exhaust curl into a spiral during tight turns.
+    // --------------------------------------------------------
+    const spinInherit = cfg.spinInherit ?? 1.0
+    const tangentialVX = cos * cfg.tailOffset * angularVel * spinInherit
+    const tangentialVY = -sin * cfg.tailOffset * angularVel * spinInherit
+
     for (let n = 0; n < count; n++) {
 
         const slot = pool.cursor
@@ -62,8 +75,8 @@ function emitParticles(pool, cfg, pid, count) {
 
         pool.x[slot] = emitX
         pool.y[slot] = emitY
-        pool.vx[slot] = Math.cos(angle) * speed + shipVX * cfg.velocityInherit
-        pool.vy[slot] = Math.sin(angle) * speed + shipVY * cfg.velocityInherit
+        pool.vx[slot] = Math.cos(angle) * speed + shipVX * cfg.velocityInherit + tangentialVX
+        pool.vy[slot] = Math.sin(angle) * speed + shipVY * cfg.velocityInherit + tangentialVY
 
         const life = cfg.lifeMin + Math.random() * lifeRange
 
@@ -95,8 +108,9 @@ function advanceParticles(pool, cfg, delta) {
         life -= delta
         pool.life[i] = life
 
-        let vx = pool.vx[i] * drag
-        let vy = pool.vy[i] * drag
+        const dragFactor = Math.pow(drag, delta)
+        let vx = pool.vx[i] * dragFactor
+        let vy = pool.vy[i] * dragFactor
 
         pool.vx[i] = vx
         pool.vy[i] = vy
@@ -167,11 +181,12 @@ const NORMAL_DEFAULTS = {
     emitPerFrame: 3,
     lifeMin: 0.25,
     lifeMax: 0.50,
-    speedMin: 1.5,
-    speedMax: 3.0,
+    speedMin: 6.0,
+    speedMax: 9.0,
     coneAngle: 0.50,
     drag: 0.50,
     velocityInherit: 0.05,
+    spinInherit: 1.0,
     sizeMin: 0.22,
     sizeMax: 0.32,
     tailOffset: 0.40,
@@ -199,11 +214,12 @@ const BOOST_DEFAULTS = {
     emitPerFrame: 3,
     lifeMin: 0.25,
     lifeMax: 0.50,
-    speedMin: 1.5,
-    speedMax: 3.0,
+    speedMin: 6.0,
+    speedMax: 9.0,
     coneAngle: 0.50,
     drag: 0.50,
     velocityInherit: 0.05,
+    spinInherit: 1.0,
     sizeMin: 0.12,
     sizeMax: 0.32,
     tailOffset: 0.40,
@@ -275,10 +291,10 @@ function ExhaustLayer({ cfg, maxParticles, meshRefs }) {
     )
 }
 
-function updateExhaust(pool, cfg, refs, delta, pid, emitting) {
+function updateExhaust(pool, cfg, refs, delta, pid, emitting, angularVel) {
 
     if (emitting) {
-        emitParticles(pool, cfg, pid, cfg.emitPerFrame)
+        emitParticles(pool, cfg, pid, cfg.emitPerFrame, angularVel)
     }
 
     advanceParticles(pool, cfg, delta)
@@ -295,6 +311,7 @@ function updateExhaust(pool, cfg, refs, delta, pid, emitting) {
 export function ExhaustRenderer() {
 
     const playerId = useRef(-1)
+    const prevRotation = useRef(null)
 
     const normalPool = useMemo(() => createPool(NORMAL_MAX_PARTICLES), [])
     const boostPool = useMemo(() => createPool(BOOST_MAX_PARTICLES), [])
@@ -324,8 +341,24 @@ export function ExhaustRenderer() {
         const pid = playerId.current
         const boosting = gameState.boostActive > 0
 
-        updateExhaust(normalPool, NORMAL_DEFAULTS, normalRefs, delta, pid, input.thrust && !boosting)
-        updateExhaust(boostPool, BOOST_DEFAULTS, boostRefs, delta, pid, boosting)
+        // --------------------------------------------------------
+        // Angular velocity of the ship's facing ("rot" convention,
+        // rot = -Rotation[pid]) used to give emitted particles a
+        // tangential kick when the ship is turning tightly.
+        // --------------------------------------------------------
+        const rotation = Rotation[pid]
+
+        if (prevRotation.current === null)
+            prevRotation.current = rotation
+
+        const angularVel = delta > 0
+            ? -(rotation - prevRotation.current) / delta
+            : 0
+
+        prevRotation.current = rotation
+
+        updateExhaust(normalPool, NORMAL_DEFAULTS, normalRefs, delta, pid, input.thrust && !boosting, angularVel)
+        updateExhaust(boostPool, BOOST_DEFAULTS, boostRefs, delta, pid, boosting, angularVel)
     })
 
     return (
