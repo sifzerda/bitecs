@@ -28,6 +28,8 @@ import { getWeapon } from "../constants/weapons.js"
 import { explodeAt, splitBullet, chainLightning } from "./weaponEffects.js"
 
 const PLAYER_HIT_RADIUS = 0.6
+const ASTEROID_RADIUS = 0.7
+const BOSS_RADIUS = 2.0
 
 export function combatSystem() {
 
@@ -83,7 +85,8 @@ export function combatSystem() {
                 const dx = Position.x[bid] - Position.x[aid]
                 const dy = Position.y[bid] - Position.y[aid]
 
-                if (dx * dx + dy * dy <= weapon.hitRadius * weapon.hitRadius) {
+                const asteroidHitDist = weapon.hitRadius + ASTEROID_RADIUS
+                if (dx * dx + dy * dy <= asteroidHitDist * asteroidHitDist) {
 
                     if (weapon.explosive) {
 
@@ -141,7 +144,7 @@ export function combatSystem() {
                             Bullet.bounces[bid] -= 1
 
                             hit = true
-                            continue
+                            break
                         }
                     }
 
@@ -154,9 +157,6 @@ export function combatSystem() {
             if (hit) continue
 
             // -------------------------
-            // Bosses — now mirrors the asteroid branch above so every
-            // weapon type does something meaningful against a boss,
-            // instead of only explosive weapons being handled specially.
             // -------------------------
 
             for (let j = 0; j < bosses.length; j++) {
@@ -165,7 +165,7 @@ export function combatSystem() {
 
                 const dx = Position.x[bid] - Position.x[bossId]
                 const dy = Position.y[bid] - Position.y[bossId]
-                const bossRadius = weapon.hitRadius * 3
+                const bossRadius = weapon.hitRadius + BOSS_RADIUS
 
                 if (dx * dx + dy * dy <= bossRadius * bossRadius) {
 
