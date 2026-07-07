@@ -3,7 +3,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { Position, Velocity } from '../ecs/constants/components.js'
+import { Position, Velocity, Rotation } from '../ecs/constants/components.js'
 import { playerQuery } from '../ecs/constants/queries.js'
 import { input } from '../ecs/systems/input.js'
 
@@ -29,6 +29,7 @@ const simFragmentShader = /* glsl */ `
   uniform sampler2D uPosTex;
   uniform vec2 uShipPos;
   uniform vec2 uShipVel;
+  uniform float uShipRot;
   uniform float uDelta;
   uniform float uTime;
   uniform float uEmitting;
@@ -65,7 +66,23 @@ const simFragmentShader = /* glsl */ `
         if (uEmitting > 0.5) {
           // ready AND thrust held — ignite
           vec2 jitter = vec2(sin(seed * 78.233), cos(seed * 45.164)) * 0.05;
-          pos = uShipPos - normalize(uShipVel + 1e-4) * 0.2 + jitter;
+float exhaustOffset = -0.70; // distance behind ship
+float engineSpread = 0.30;  // left/right engine separation
+
+vec2 backward = vec2(
+  -sin(uShipRot),
+  cos(uShipRot)
+);
+
+// direction across the ship (wing-to-wing)
+vec2 right = vec2(
+  cos(uShipRot),
+  sin(uShipRot)
+);
+
+float engineOffset = sin(seed * 20.0) * engineSpread;
+
+pos = uShipPos + backward * exhaustOffset + right * engineOffset + jitter;
           life = 0.5 + seed * 0.5;
         } else {
           // ready but thrust not held — re-roll a short wait so it doesn't
@@ -173,6 +190,7 @@ export function ExhaustRenderer({ size = 4 }) {
       uPosTex: { value: null },
       uShipPos: { value: new THREE.Vector2() },
       uShipVel: { value: new THREE.Vector2() },
+      uShipRot: { value: 0 },
       uDelta: { value: 0 },
       uTime: { value: 0 },
       uEmitting: { value: 0 },
@@ -235,6 +253,7 @@ export function ExhaustRenderer({ size = 4 }) {
     simMaterial.uniforms.uTime.value = state.clock.elapsedTime
     simMaterial.uniforms.uShipPos.value.set(Position.x[pid], Position.y[pid])
     simMaterial.uniforms.uShipVel.value.set(Velocity.x[pid], Velocity.y[pid])
+    simMaterial.uniforms.uShipRot.value = Rotation[pid]
     simMaterial.uniforms.uEmitting.value = input.thrust ? 1 : 0
 
     const prevTarget = gl.getRenderTarget()
