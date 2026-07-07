@@ -15,6 +15,7 @@ import { flameSystem } from "../ecs/systems/flameSystem"
 import { bossAISystem } from "../ecs/systems/bossAISystem"
 import { bossLaserSystem } from "../ecs/systems/bossLaserSystem.js"
 
+//import { clearSpatialGrid, insertIntoSpatialGrid } from '../ecs/constants/spatialGrid.js'
 
 
 export function gameLoop(shootState) {
@@ -28,6 +29,14 @@ export function gameLoop(shootState) {
     movementSystem()
     boundsSystem()
     waveSystem()
+
+
+      // Rebuild spatial grid using final positions
+  //clearSpatialGrid();
+
+  //for (const asteroid of asteroids) {
+  //  insertIntoSpatialGrid(asteroid);
+  //}
 
     ricochetSystem()
     hazardSystem()

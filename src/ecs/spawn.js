@@ -13,7 +13,6 @@ import {
     BulletTag,
     Spark,
     SparkTag,
- 
     AsteroidTag,
     BossTag,
     BossAI,
@@ -24,6 +23,15 @@ import {
 } from "./constants/components";
 import { gameState } from "../state/gameState";
 import { getWeapon } from "./constants/weapons";
+
+//import { acquireAsteroid } from './pools/asteroidPool';
+//import { acquireBullet } from './pools/bulletPool';
+//import { acquireExhaust } from './pools/exhaustPool';
+//import { acquireSpark } from './pools/sparkPool';
+//import { acquireMissile } from './pools/missilePool';
+//import { acquireBeam } from './pools/beamPool';
+ 
+
 
 // ============= helpers ============//
 
@@ -57,6 +65,8 @@ export function spawnPlayer(x, y) {
 // ============= Bullets ============//
 
 export function spawnBullet(x, y, rot, weaponId = 0, owner) {
+
+  //const bullet = acquireBullet();
 
     const weapon = getWeapon(weaponId)
 
@@ -156,6 +166,8 @@ export function spawnDrone(ownerX, ownerY, weaponId, index, total) {
 
 function spawnSpark(x, y, speed, size, life) {
 
+  //const spark = acquireSpark();
+
     const id = addEntity(world)
 
     addComponent(world, id, Position)
@@ -239,6 +251,8 @@ export function spawnSparkBurst(x, y, options = {}) {
 // ============= Asteroids ============//
 
 export function spawnAsteroid(x, y) {
+
+  //const asteroid = acquireAsteroid();
 
     const id = addEntity(world)
 
