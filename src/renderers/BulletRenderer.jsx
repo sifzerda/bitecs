@@ -1,236 +1,300 @@
 //src/renderers/BulletRenderer.jsx
 
 import { useMemo, useRef } from 'react'
-import { createRef } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { bulletQuery } from '../ecs/constants/queries.js'
 import * as THREE from 'three'
+import { bulletQuery } from '../ecs/constants/queries.js'
 import { Position, Velocity, Bullet } from '../ecs/constants/components.js'
 import { WEAPONS } from '../ecs/constants/weapons.js'
 
-const MAX_BULLETS = 128
+const MAX_BULLETS = 512
 
-const _matrix = new THREE.Matrix4()
-const _position = new THREE.Vector3()
-const _rotation = new THREE.Quaternion()
-const _scale = new THREE.Vector3(1, 1, 1)
-const _scaleZero = new THREE.Vector3(0, 0, 0)
-const _euler = new THREE.Euler()
-const _zeroPos = new THREE.Vector3(0, 0, 0)
-const _identityRot = new THREE.Quaternion()
-
-const CORE_LENGTH = 0.55
-const CORE_WIDTH = 0.09
-const GLOW_LENGTH = 0.8
-const GLOW_WIDTH = 0.22
-const HALO_LENGTH = 1.1
-const HALO_WIDTH = 0.4
-
-// -------------------------
-// Trail particles (shared across all weapon types for now)
-// -------------------------
-
-const MAX_TRAIL = 320
-const TRAIL_PER_BULLET_PER_FRAME = 1
-const TRAIL_LIFE = 0.22
-const TRAIL_SIZE_MIN = 0.16
-const TRAIL_SIZE_MAX = 0.30
-
-const _trailMatrix = new THREE.Matrix4()
-const _trailPosition = new THREE.Vector3()
-const _trailScale = new THREE.Vector3()
-const _trailColor = new THREE.Color()
-const _trailRotation = new THREE.Quaternion()
+const BULLET_LENGTH = 0.9
+const BULLET_WIDTH = 0.18
+const tempColor = new THREE.Color()
 
 export function BulletRenderer() {
 
-    const trailRef = useRef()
+    const meshRef = useRef()
+    const geometry = useMemo(() => {
 
-    // one {core, glow, halo} ref set per weapon type — adding a weapon to WEAPONS
-    // automatically gets its own render layer here, no other code changes needed
-    const meshRefs = useRef(WEAPONS.map(() => ({
-        core: createRef(),
-        glow: createRef(),
-        halo: createRef(),
-    })))
+        const geo = new THREE.InstancedBufferGeometry()
 
-    const coreGeometry = useMemo(() => new THREE.CapsuleGeometry(CORE_WIDTH, CORE_LENGTH, 2, 6), [])
-    const glowGeometry = useMemo(() => new THREE.CapsuleGeometry(GLOW_WIDTH, GLOW_LENGTH, 2, 6), [])
-    const haloGeometry = useMemo(() => new THREE.CapsuleGeometry(HALO_WIDTH, HALO_LENGTH, 2, 6), [])
-    const trailGeometry = useMemo(() => new THREE.SphereGeometry(0.5, 5, 5), [])
+        // base quad
+        const plane = new THREE.PlaneGeometry(1, 1)
+        geo.setIndex(plane.index)
 
-    const trailPool = useMemo(() => ({
-        x: new Float32Array(MAX_TRAIL),
-        y: new Float32Array(MAX_TRAIL),
-        life: new Float32Array(MAX_TRAIL),
-        maxLife: new Float32Array(MAX_TRAIL),
-        size: new Float32Array(MAX_TRAIL),
-        cursor: 0
-    }), [])
+        geo.setAttribute(
+            'position',
+            plane.getAttribute('position')
+        )
 
-    useFrame((_, delta) => {
+        geo.setAttribute(
+            'uv',
+            plane.getAttribute('uv')
+        )
 
-        const trail = trailRef.current
-        if (!trail) return
+
+
+
+        geo.setAttribute(
+            "instancePosition",
+            new THREE.InstancedBufferAttribute(
+                new Float32Array(MAX_BULLETS * 2),
+                2
+            )
+        )
+
+
+        geo.setAttribute(
+            "instanceAngle",
+            new THREE.InstancedBufferAttribute(
+                new Float32Array(MAX_BULLETS),
+                1
+            )
+        )
+
+
+        geo.setAttribute(
+            "instanceColor",
+            new THREE.InstancedBufferAttribute(
+                new Float32Array(MAX_BULLETS * 3),
+                3
+            )
+        )
+
+
+        geo.setAttribute(
+            "instanceVisible",
+            new THREE.InstancedBufferAttribute(
+                new Float32Array(MAX_BULLETS),
+                1
+            )
+        )
+
+        geo.instanceCount = MAX_BULLETS
+        return geo
+
+    }, [])
+
+    const material = useMemo(() => {
+
+        return new THREE.ShaderMaterial({
+
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+            side: THREE.FrontSide,
+            toneMapped: false,
+            depthTest: false,
+            uniforms: { uTime: { value: 0 } },
+
+            vertexShader: /* glsl */
+                `
+attribute vec2 instancePosition;
+attribute float instanceAngle;
+attribute vec3 instanceColor;
+ 
+
+varying vec2 vUv;
+varying vec3 vColor;
+
+void main(){
+
+ 
+
+    vUv = uv;
+    vColor = instanceColor;
+
+    vec3 local = position;
+
+    local.x *= ${BULLET_LENGTH.toFixed(2)};
+    local.y *= ${BULLET_WIDTH.toFixed(2)};
+
+    float c = cos(instanceAngle);
+    float s = sin(instanceAngle);
+
+    vec2 rotated = vec2(
+        local.x * c - local.y * s,
+        local.x * s + local.y * c
+    );
+
+    vec3 worldPos = vec3(
+        instancePosition + rotated,
+        0.0
+    );
+
+    gl_Position =
+        projectionMatrix *
+        modelViewMatrix *
+        vec4(worldPos,1.0);
+
+}
+`,
+
+            fragmentShader: /* glsl */
+                `
+precision highp float;
+
+varying vec2 vUv;
+varying vec3 vColor;
+
+void main(){
+
+    vec2 uv = vUv;
+
+    float x = uv.x;
+    float y = uv.y * 2.0 - 1.0;
+
+    float width =
+        1.0 -
+        smoothstep(
+            0.18,
+            0.35,
+            abs(y)
+        );
+
+    float head =
+        smoothstep(
+            0.0,
+            0.15,
+            x
+        );
+
+    float tail =
+        1.0 -
+        smoothstep(
+            0.75,
+            1.0,
+            x
+        );
+
+    float body = width * head * tail;
+
+    float glow =
+        exp(-abs(y)*5.5);
+
+    float halo =
+        exp(-abs(y)*2.2);
+
+    float alpha =
+        body +
+        glow*0.45 +
+        halo*0.15;
+
+    alpha = clamp(alpha,0.0,1.0);
+
+    vec3 color =
+          vColor * body
+        + vColor * glow * 0.65
+        + vec3(1.0) * halo * 0.15;
+
+    gl_FragColor = vec4(color,alpha);
+
+}
+`
+        });
+
+    }, []);
+
+    const arrays = useMemo(() => ({
+
+        instancePosition: geometry.attributes.instancePosition.array,
+        instanceAngle: geometry.attributes.instanceAngle.array,
+        instanceColor: geometry.attributes.instanceColor.array,
+        instanceVisible: geometry.attributes.instanceVisible.array,
+
+    }), [geometry]);
+
+    useFrame((state) => {
+
+        material.uniforms.uTime.value =
+            state.clock.elapsedTime
 
         const bullets = bulletQuery()
-        const counters = new Array(WEAPONS.length).fill(0)
+
+        const {
+            instancePosition,
+            instanceAngle,
+            instanceColor,
+            instanceVisible
+        } = arrays
+
+
+        let count = 0
+
 
         for (let i = 0; i < bullets.length; i++) {
 
+            if (count >= MAX_BULLETS)
+                break
+
+
             const eid = bullets[i]
-            const type = Bullet.type[eid]
-            const refs = meshRefs.current[type]
 
-            if (!refs || !refs.core.current || !refs.glow.current || !refs.halo.current) continue
+            const weapon =
+                WEAPONS[Bullet.type[eid]]
 
-            const idx = counters[type]
-            if (idx >= MAX_BULLETS) continue   // safety cap if a burst overflows
-
-            _position.set(Position.x[eid], Position.y[eid], 0)
-
-            const angle = Math.atan2(Velocity.y[eid], Velocity.x[eid]) - Math.PI / 2
-            _euler.set(0, 0, angle)
-            _rotation.setFromEuler(_euler)
-
-            _matrix.compose(_position, _rotation, _scale)
-            refs.core.current.setMatrixAt(idx, _matrix)
-            refs.glow.current.setMatrixAt(idx, _matrix)
-            refs.halo.current.setMatrixAt(idx, _matrix)
-
-            counters[type]++
-
-            // -------------------------
-            // Drop trail particles behind this bullet
-            // -------------------------
-
-            for (let n = 0; n < TRAIL_PER_BULLET_PER_FRAME; n++) {
-
-                const slot = trailPool.cursor
-                trailPool.cursor = (trailPool.cursor + 1) % MAX_TRAIL
-
-                trailPool.x[slot] = Position.x[eid]
-                trailPool.y[slot] = Position.y[eid]
-                trailPool.life[slot] = TRAIL_LIFE
-                trailPool.maxLife[slot] = TRAIL_LIFE
-                trailPool.size[slot] = TRAIL_SIZE_MIN + Math.random() * (TRAIL_SIZE_MAX - TRAIL_SIZE_MIN)
-            }
-        }
-
-        // zero out unused instances per weapon type, then flag updates
-        for (let t = 0; t < WEAPONS.length; t++) {
-
-            const refs = meshRefs.current[t]
-            if (!refs || !refs.core.current || !refs.glow.current || !refs.halo.current) continue
-
-            for (let i = counters[t]; i < MAX_BULLETS; i++) {
-                _matrix.compose(_zeroPos, _identityRot, _scaleZero)
-                refs.core.current.setMatrixAt(i, _matrix)
-                refs.glow.current.setMatrixAt(i, _matrix)
-                refs.halo.current.setMatrixAt(i, _matrix)
-            }
-
-            refs.core.current.instanceMatrix.needsUpdate = true
-            refs.core.current.count = MAX_BULLETS
-
-            refs.glow.current.instanceMatrix.needsUpdate = true
-            refs.glow.current.count = MAX_BULLETS
-
-            refs.halo.current.instanceMatrix.needsUpdate = true
-            refs.halo.current.count = MAX_BULLETS
-        }
-
-        // -------------------------
-        // Update + draw trail particles
-        // -------------------------
-
-        for (let i = 0; i < MAX_TRAIL; i++) {
-
-            if (trailPool.life[i] <= 0) {
-                _trailMatrix.compose(_trailPosition.set(0, 0, 0), _trailRotation, _scaleZero)
-                trail.setMatrixAt(i, _trailMatrix)
+            if (!weapon)
                 continue
-            }
 
-            trailPool.life[i] -= delta
 
-            const t = Math.max(0, trailPool.life[i] / trailPool.maxLife[i])
-            const eased = t * t
-            const s = trailPool.size[i] * eased
+            const p = count * 2
 
-            _trailPosition.set(trailPool.x[i], trailPool.y[i], -0.01)
-            _trailScale.set(s, s, s)
-            _trailMatrix.compose(_trailPosition, _trailRotation, _trailScale)
-            trail.setMatrixAt(i, _trailMatrix)
+            instancePosition[p] =
+                Position.x[eid]
 
-            _trailColor.setHSL(0.42, 1, 0.5 + 0.3 * eased)
-            trail.setColorAt(i, _trailColor)
+            instancePosition[p + 1] =
+                Position.y[eid]
+
+
+            instanceAngle[count] =
+                Math.atan2(
+                    Velocity.y[eid],
+                    Velocity.x[eid]
+                )
+
+
+            tempColor.set(1,1,1)
+
+            const c = count * 3
+
+            instanceColor[c] =
+                tempColor.r
+
+            instanceColor[c + 1] =
+                tempColor.g
+
+            instanceColor[c + 2] =
+                tempColor.b
+
+
+            instanceVisible[count] = 1
+
+
+            count++
         }
 
-        trail.instanceMatrix.needsUpdate = true
-        if (trail.instanceColor) trail.instanceColor.needsUpdate = true
-        trail.count = MAX_TRAIL
+
+        for (let i = count; i < MAX_BULLETS; i++) {
+            instanceVisible[i] = 0
+        }
+
+        geometry.instanceCount = count
+
+        geometry.attributes.instancePosition.needsUpdate = true
+        geometry.attributes.instanceAngle.needsUpdate = true
+        geometry.attributes.instanceColor.needsUpdate = true
+        geometry.attributes.instanceVisible.needsUpdate = true
 
     })
 
     return (
-        <>
-            {/* Trail — shared across weapon types */}
-            <instancedMesh ref={trailRef} args={[null, null, MAX_TRAIL]} frustumCulled={false}>
-                <primitive object={trailGeometry} attach="geometry" />
-                <meshBasicMaterial
-                    transparent
-                    opacity={0.5}
-                    blending={THREE.AdditiveBlending}
-                    depthWrite={false}
-                    vertexColors={false}
-                />
-            </instancedMesh>
-
-            {/* One core/glow/halo trio per weapon type */}
-            {WEAPONS
-                .filter(weapon => weapon.category === "bullet")
-                .map((weapon) => {
-                    const i = weapon.id   // index must match Bullet.type values used elsewhere
-                    return (
-                        <group key={weapon.id}>
-
-                            <instancedMesh ref={meshRefs.current[i].halo} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
-                                <primitive object={haloGeometry} attach="geometry" />
-                                <meshBasicMaterial
-                                    color={weapon.haloColor}
-                                    transparent
-                                    opacity={0.15}
-                                    blending={THREE.AdditiveBlending}
-                                    depthWrite={false}
-                                />
-                            </instancedMesh>
-
-                            <instancedMesh ref={meshRefs.current[i].glow} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
-                                <primitive object={glowGeometry} attach="geometry" />
-                                <meshBasicMaterial
-                                    color={weapon.glowColor}
-                                    transparent
-                                    opacity={0.4}
-                                    blending={THREE.AdditiveBlending}
-                                    depthWrite={false}
-                                />
-                            </instancedMesh>
-
-                            <instancedMesh ref={meshRefs.current[i].core} args={[null, null, MAX_BULLETS]} frustumCulled={false}>
-                                <primitive object={coreGeometry} attach="geometry" />
-                                <meshBasicMaterial
-                                    color={weapon.color}
-                                    transparent
-                                    opacity={0.95}
-                                    blending={THREE.AdditiveBlending}
-                                    depthWrite={false}
-                                />
-                            </instancedMesh>
-
-                        </group>
-                    )
-                })}
-        </>
-    )
+        <mesh
+            ref={meshRef}
+            geometry={geometry}
+            material={material}
+            frustumCulled={false}
+        />
+    );
 }

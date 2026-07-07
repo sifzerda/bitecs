@@ -1,4 +1,4 @@
-// src/ecs/pools/particledPool.js
+//src/ecs/pools/exhaustPool.js
 
 const pool = [];
 
