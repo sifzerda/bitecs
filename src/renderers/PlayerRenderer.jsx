@@ -1,11 +1,11 @@
-
 // src/renderers/PlayerRenderer.jsx
 
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { playerQuery } from '../ecs/constants/queries.js'
-import { Position, Rotation } from '../ecs/constants/components.js'
+import { Position, Rotation, Health } from '../ecs/constants/components.js'
+import { input } from '../ecs/systems/input.js'
 
 // ============================================================
 
@@ -350,12 +350,155 @@ function MirroredPair({
 }
 
 // ============================================================
+// Shader-based VFX layers — engine glow, damage flicker.
+// These read from a shared `vfxRef` mutated once per frame by the parent,
+// so no component here re-runs the playerQuery/Health lookup itself.
+// ============================================================
+
+function EngineGlow({ vfxRef, position }) {
+
+    const material = useMemo(() => new THREE.ShaderMaterial({
+
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        toneMapped: false,
+        uniforms: {
+            uTime: { value: 0 },
+            uThrust: { value: 0 },
+        },
+
+        vertexShader: /* glsl */`
+varying vec2 vUv;
+void main(){
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`,
+
+        fragmentShader: /* glsl */`
+precision highp float;
+varying vec2 vUv;
+uniform float uTime;
+uniform float uThrust;
+
+void main(){
+
+    vec2 c = vUv - 0.5;
+    float d = length(c) * 2.0;
+
+    float core = 1.0 - smoothstep(0.0, 0.3, d);
+    float glow = exp(-d * 3.0);
+    float halo = exp(-d * 1.3);
+
+    float flicker = 0.85 + 0.15 * sin(uTime * 30.0);
+    float power = mix(0.35, 1.4, uThrust);
+
+    vec3 idleColor = vec3(0.3, 0.6, 1.0);
+    vec3 boostColor = vec3(0.75, 0.92, 1.0);
+    vec3 color = mix(idleColor, boostColor, uThrust);
+
+    vec3 result =
+          color * core * 1.6 * power
+        + color * glow * 0.9  * power
+        + color * halo * 0.4  * power;
+
+    float alpha = clamp(core + glow * 0.7 + halo * 0.4, 0.0, 1.0) * power * flicker;
+
+    gl_FragColor = vec4(result, alpha);
+}
+`
+    }), [])
+
+    useFrame((state) => {
+        const target = vfxRef.current.thrust
+        material.uniforms.uThrust.value = THREE.MathUtils.lerp(material.uniforms.uThrust.value, target, 0.15)
+        material.uniforms.uTime.value = state.clock.elapsedTime
+    })
+
+    return (
+        <mesh position={position} material={material}>
+            <planeGeometry args={[0.5, 0.5]} />
+        </mesh>
+    )
+}
+
+function DamageFlicker({ geometry, vfxRef }) {
+
+    const material = useMemo(() => new THREE.ShaderMaterial({
+
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        toneMapped: false,
+        uniforms: {
+            uTime: { value: 0 },
+            uDamage: { value: 0 },
+        },
+
+        vertexShader: /* glsl */`
+varying vec2 vUv;
+void main(){
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`,
+
+        fragmentShader: /* glsl */`
+precision highp float;
+varying vec2 vUv;
+uniform float uTime;
+uniform float uDamage;
+
+float hash(vec2 p){
+    return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453);
+}
+
+void main(){
+
+    if (uDamage <= 0.001) discard;
+
+    float flicker = step(0.85, hash(floor(vUv * 20.0) + floor(uTime * 14.0)));
+    float pulse = 0.5 + 0.5 * sin(uTime * (4.0 + uDamage * 14.0));
+
+    vec3 color = mix(vec3(1.0, 0.35, 0.1), vec3(1.0, 0.08, 0.03), uDamage);
+    float alpha = uDamage * uDamage * (0.3 + 0.5 * pulse) * (0.4 + flicker * 0.8);
+
+    gl_FragColor = vec4(color, alpha);
+}
+`
+    }), [])
+
+    useFrame((state) => {
+        const damage = THREE.MathUtils.clamp(1 - vfxRef.current.hpPct, 0, 1)
+        material.uniforms.uDamage.value = damage
+        material.uniforms.uTime.value = state.clock.elapsedTime
+    })
+
+    // slightly scaled-up duplicate of the fuselage silhouette, sitting just
+    // behind it — only the outward margin peeks out, giving a rim-glow look
+    return (
+        <mesh
+            geometry={geometry}
+            material={material}
+            position={[0, 0, 0.029]}
+            scale={[1.06, 1.06, 1]}
+        />
+    )
+}
+
+// ============================================================
 // Component
 // ============================================================
 
 export function PlayerRenderer() {
 
     const groupRef = useRef()
+    const vfxRef = useRef({ hpPct: 1, thrust: 0 })
 
     const tailFin = SHIP_CONFIG.tailFin
     const engineIntake = SHIP_CONFIG.engineIntake
@@ -410,7 +553,73 @@ export function PlayerRenderer() {
     // exhaust port
     const exhaustPortGeometry = useExtrudeGeometry(buildEngineIntakeShape, SHIP_CONFIG.exhaustPort, extrude)
 
-    useFrame(() => {
+    // Cockpit glass — meshPhysicalMaterial patched via onBeforeCompile to add a
+    // view-angle-dependent (fresnel) chromatic sheen cycling through green/teal/blue,
+    // layered on top of the existing transmission/iridescence PBR look untouched.
+    const cockpitGlassMaterial = useMemo(() => {
+
+        const mat = new THREE.MeshPhysicalMaterial({
+            color: cockpitGlass.color,
+            metalness: cockpitGlass.metalness,
+            roughness: cockpitGlass.roughness,
+            transmission: cockpitGlass.transmission,
+            thickness: cockpitGlass.thickness,
+            ior: cockpitGlass.ior,
+            clearcoat: cockpitGlass.clearcoat,
+            clearcoatRoughness: cockpitGlass.clearcoatRoughness,
+            envMapIntensity: cockpitGlass.envMapIntensity,
+            iridescence: cockpitGlass.iridescence,
+            iridescenceIOR: cockpitGlass.iridescenceIOR,
+            iridescenceThicknessRange: [
+                cockpitGlass.iridescenceThicknessMin,
+                cockpitGlass.iridescenceThicknessMax,
+            ],
+            attenuationColor: cockpitGlass.attenuationColor,
+            attenuationDistance: cockpitGlass.attenuationDistance,
+            side: THREE.DoubleSide,
+        })
+
+        mat.onBeforeCompile = (shader) => {
+
+            shader.uniforms.uTime = { value: 0 }
+
+            shader.fragmentShader = shader.fragmentShader
+                .replace(
+                    '#include <common>',
+                    `
+                    #include <common>
+                    uniform float uTime;
+                    `
+                )
+                .replace(
+                    '#include <emissivemap_fragment>',
+                    `
+                    #include <emissivemap_fragment>
+
+                    // fresnel: strongest at glancing angles, matches how real thin-film
+                    // iridescence reads brightest along the canopy's curved edges
+                    float glassFresnel = pow(1.0 - max(dot(normalize(normal), normalize(vViewPosition)), 0.0), 3.0);
+
+                    // slow hue drift between teal, green and blue so the sheen feels alive
+                    // rather than a static tint painted on the glass
+                    float hueShift = 0.5 + 0.5 * sin(uTime * 0.6 + glassFresnel * 3.0);
+
+                    vec3 teal = vec3(0.10, 0.85, 0.65);
+                    vec3 blue = vec3(0.15, 0.55, 1.00);
+                    vec3 sheenColor = mix(teal, blue, hueShift);
+
+                    totalEmissiveRadiance += sheenColor * glassFresnel * 1.1;
+                    `
+                )
+
+            mat.userData.shader = shader
+        }
+
+        return mat
+
+    }, [])
+
+    useFrame((state) => {
 
         const group = groupRef.current
         if (!group) return
@@ -419,12 +628,20 @@ export function PlayerRenderer() {
 
         if (players.length === 0) {
             group.visible = false
+            vfxRef.current.thrust = 0
             return
         }
         group.visible = true
         const pid = players[0]
         group.position.set(Position.x[pid], Position.y[pid], 0)
         group.rotation.set(0, 0, Rotation[pid])
+
+        vfxRef.current.hpPct = Health.max[pid] > 0 ? Health.current[pid] / Health.max[pid] : 1
+        vfxRef.current.thrust = input.thrust ? 1 : 0
+
+        if (cockpitGlassMaterial.userData.shader) {
+            cockpitGlassMaterial.userData.shader.uniforms.uTime.value = state.clock.elapsedTime
+        }
 
     })
 
@@ -468,6 +685,9 @@ export function PlayerRenderer() {
                 />
             )}
 
+            {/* Damage flicker — scaled-up fuselage silhouette, invisible at full health */}
+            <DamageFlicker geometry={fuselageGeometry} vfxRef={vfxRef} />
+
             {/* Exhaust port — centered trapezoid at the tail */}
             {SHIP_CONFIG.exhaustPort.enabled && (
                 <Panel
@@ -482,6 +702,16 @@ export function PlayerRenderer() {
                     roughness={0.4}
                 />
             )}
+
+            {/* Engine glow — sits just behind the exhaust port, flares with thrust */}
+            <EngineGlow
+                vfxRef={vfxRef}
+                position={[
+                    SHIP_CONFIG.exhaustPort.offsetX,
+                    SHIP_CONFIG.fuselage.tailY + SHIP_CONFIG.exhaustPort.offsetY - 0.05,
+                    0.02,
+                ]}
+            />
 
             {/* Engine intakes — both flanks */}
             {engineIntake.enabled && (
@@ -549,30 +779,14 @@ export function PlayerRenderer() {
             {/* Cockpit base */}
             <Panel geometry={cockpitGeometry} position={[0, 0, 0.05]} color={SHIP_CONFIG.cockpit.color} metalness={0.3} roughness={0.3} />
 
-            {/* Cockpit glass — fully locked in, tuned for the scene's Environment */}
+            {/* Cockpit glass — physical transmission/iridescence base, plus a shader-injected
+                fresnel chromatic sheen (green/teal/blue) layered on top via onBeforeCompile */}
             {cockpitGlass.enabled && (
-                <mesh geometry={cockpitGlassGeometry} position={[0, 0, 0.05 + cockpitGlass.zOffset]}>
-                    <meshPhysicalMaterial
-                        color={cockpitGlass.color}
-                        metalness={cockpitGlass.metalness}
-                        roughness={cockpitGlass.roughness}
-                        transmission={cockpitGlass.transmission}
-                        thickness={cockpitGlass.thickness}
-                        ior={cockpitGlass.ior}
-                        clearcoat={cockpitGlass.clearcoat}
-                        clearcoatRoughness={cockpitGlass.clearcoatRoughness}
-                        envMapIntensity={cockpitGlass.envMapIntensity}
-                        iridescence={cockpitGlass.iridescence}
-                        iridescenceIOR={cockpitGlass.iridescenceIOR}
-                        iridescenceThicknessRange={[
-                            cockpitGlass.iridescenceThicknessMin,
-                            cockpitGlass.iridescenceThicknessMax
-                        ]}
-                        attenuationColor={cockpitGlass.attenuationColor}
-                        attenuationDistance={cockpitGlass.attenuationDistance}
-                        side={THREE.DoubleSide}
-                    />
-                </mesh>
+                <mesh
+                    geometry={cockpitGlassGeometry}
+                    position={[0, 0, 0.05 + cockpitGlass.zOffset]}
+                    material={cockpitGlassMaterial}
+                />
             )}
 
         </group>

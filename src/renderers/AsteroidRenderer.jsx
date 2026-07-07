@@ -101,13 +101,20 @@ export function AsteroidRenderer() {
             0.9 + Math.random() * 0.3
         )
 
-        // NEW: random orientation so the silhouette isn't aligned
+        // random orientation so the silhouette isn't aligned
         geo.rotateX(Math.random() * Math.PI * 2)
         geo.rotateY(Math.random() * Math.PI * 2)
         geo.rotateZ(Math.random() * Math.PI * 2)
 
         pos.needsUpdate = true
         geo.computeVertexNormals()
+
+        // per-instance health attribute — driven each frame from Health.current/max,
+        // read by the shader injection below to drive the damage glow
+        geo.setAttribute(
+            'instanceHealth',
+            new THREE.InstancedBufferAttribute(new Float32Array(MAX_ASTEROIDS).fill(1), 1)
+        )
 
         return geo
 
@@ -160,6 +167,80 @@ export function AsteroidRenderer() {
     }, [])
 
     // ------------------------------------------------------
+    // Custom shader material: standard PBR lighting kept intact via
+    // onBeforeCompile, with rim lighting + health-driven damage glow injected
+    // ------------------------------------------------------
+
+    const asteroidMaterial = useMemo(() => {
+
+        const mat = new THREE.MeshStandardMaterial({
+            vertexColors: true,
+            flatShading: true,
+            roughness: 0.85,
+            metalness: 0.15,
+            emissive: "#7a6a5a",
+            emissiveIntensity: 0.40,
+            side: THREE.DoubleSide,
+        })
+
+        mat.onBeforeCompile = (shader) => {
+
+            shader.uniforms.uTime = { value: 0 }
+
+            shader.vertexShader = shader.vertexShader
+                .replace(
+                    '#include <common>',
+                    `
+                    #include <common>
+                    attribute float instanceHealth;
+                    varying float vHealth;
+                    `
+                )
+                .replace(
+                    '#include <begin_vertex>',
+                    `
+                    #include <begin_vertex>
+                    vHealth = instanceHealth;
+                    `
+                )
+
+            shader.fragmentShader = shader.fragmentShader
+                .replace(
+                    '#include <common>',
+                    `
+                    #include <common>
+                    uniform float uTime;
+                    varying float vHealth;
+                    `
+                )
+                .replace(
+                    '#include <emissivemap_fragment>',
+                    `
+                    #include <emissivemap_fragment>
+
+                    // rim light — brighter glow toward the silhouette edge,
+                    // uses the 'normal' + 'vViewPosition' already computed by this point
+                    float rimDot = max(dot(normalize(normal), normalize(vViewPosition)), 0.0);
+                    float rim = pow(1.0 - rimDot, 2.5);
+
+                    // damage glow — intensifies and pulses faster as health drops
+                    float damage = 1.0 - clamp(vHealth, 0.0, 1.0);
+                    float pulse = 0.6 + 0.4 * sin(uTime * (3.0 + damage * 10.0));
+                    vec3 damageColor = mix(vec3(1.0, 0.5, 0.15), vec3(1.0, 0.12, 0.05), damage);
+
+                    totalEmissiveRadiance += rim * vec3(0.55, 0.5, 0.45) * 0.6;
+                    totalEmissiveRadiance += damageColor * damage * damage * pulse * 1.8;
+                    `
+                )
+
+            mat.userData.shader = shader
+        }
+
+        return mat
+
+    }, [])
+
+    // ------------------------------------------------------
     // Assign instance colours once
     // ------------------------------------------------------
 
@@ -181,9 +262,15 @@ export function AsteroidRenderer() {
             coloursAssigned.current = true
         }
 
+        if (asteroidMaterial.userData.shader) {
+            asteroidMaterial.userData.shader.uniforms.uTime.value = state.clock.elapsedTime
+        }
+
         const asteroids = asteroidQuery(world)
 
         // Asteroid meshes
+
+        const healthAttr = asteroidGeometry.attributes.instanceHealth
 
         for (let i = 0; i < asteroids.length; i++) {
 
@@ -203,7 +290,11 @@ export function AsteroidRenderer() {
 
             _mat.compose(_pos, _rot, _scale)
             mesh.setMatrixAt(i, _mat)
+
+            healthAttr.array[i] = Math.max(0, Health.current[eid] / Health.max[eid])
         }
+
+        healthAttr.needsUpdate = true
 
         _scale.set(0, 0, 0)
         _pos.set(0, 0, 0)
@@ -268,15 +359,9 @@ export function AsteroidRenderer() {
                     object={asteroidGeometry}
                     attach="geometry" />
 
-                <meshStandardMaterial
-                    vertexColors
-                    flatShading
-                    roughness={0.85}
-                    metalness={0.15}
-                    emissive="#7a6a5a"
-                    emissiveIntensity={0.40}
-                    side={THREE.DoubleSide}
-                />
+                <primitive
+                    object={asteroidMaterial}
+                    attach="material" />
 
             </instancedMesh>
 
