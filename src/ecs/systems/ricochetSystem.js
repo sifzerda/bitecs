@@ -25,12 +25,12 @@ export function ricochetSystem() {
 
         let bounced = false
 
-        if (Position.x[bid] > BOUNDS_X || Position.x[bid] < -BOUNDS_X) {
+        if (Position.x[bid] > BOUND_X || Position.x[bid] < -BOUND_X) {
             Velocity.x[bid] *= -1
             bounced = true
         }
 
-        if (Position.y[bid] > BOUNDS_Y || Position.y[bid] < -BOUNDS_Y) {
+        if (Position.y[bid] > BOUND_Y || Position.y[bid] < -BOUND_Y) {
             Velocity.y[bid] *= -1
             bounced = true
         }

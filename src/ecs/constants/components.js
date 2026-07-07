@@ -40,6 +40,10 @@ export const Bullet = {
     type: new Uint8Array(MAX),
     owner: new Uint8Array(MAX),
     bounces: new Uint8Array(MAX),   // remaining bounces before the bullet dies normally
+    // render data cached at spawn time
+    colorR: new Float32Array(MAX),
+    colorG: new Float32Array(MAX),
+    colorB: new Float32Array(MAX),
 }
 
 export const BULLET_OWNER = {

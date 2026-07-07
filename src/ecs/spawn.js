@@ -1,6 +1,7 @@
 // src/ecs/spawn.js
 
 import { addEntity, addComponent } from "bitecs";
+import * as THREE from "three"
 import { world } from "./constants/world"
 import {
     Position,
@@ -30,7 +31,7 @@ import { getWeapon } from "./constants/weapons";
 //import { acquireSpark } from './pools/sparkPool';
 //import { acquireMissile } from './pools/missilePool';
 //import { acquireBeam } from './pools/beamPool';
- 
+
 
 
 // ============= helpers ============//
@@ -66,7 +67,7 @@ export function spawnPlayer(x, y) {
 
 export function spawnBullet(x, y, rot, weaponId = 0, owner) {
 
-  //const bullet = acquireBullet();
+    //const bullet = acquireBullet();
 
     const weapon = getWeapon(weaponId)
 
@@ -105,6 +106,19 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
         Bullet.type[id] = weapon.id
         Bullet.owner[id] = owner
         Bullet.bounces[id] = weapon.maxBounces ?? 0
+
+        // cache render color
+        const color = new THREE.Color(weapon.glowColor ?? weapon.color)
+
+        color.offsetHSL(
+            0,
+            0.15,  // saturation boost
+            0.00   // slight brightness boost
+        )
+
+        Bullet.colorR[id] = color.r
+        Bullet.colorG[id] = color.g
+        Bullet.colorB[id] = color.b
 
         ids.push(id)
     }
@@ -166,7 +180,7 @@ export function spawnDrone(ownerX, ownerY, weaponId, index, total) {
 
 function spawnSpark(x, y, speed, size, life) {
 
-  //const spark = acquireSpark();
+    //const spark = acquireSpark();
 
     const id = addEntity(world)
 
@@ -252,7 +266,7 @@ export function spawnSparkBurst(x, y, options = {}) {
 
 export function spawnAsteroid(x, y) {
 
-  //const asteroid = acquireAsteroid();
+    //const asteroid = acquireAsteroid();
 
     const id = addEntity(world)
 
