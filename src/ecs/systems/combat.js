@@ -26,10 +26,12 @@ import { gameState } from "../../state/gameState.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { getWeapon } from "../constants/weapons.js"
 import { explodeAt, splitBullet, chainLightning } from "./weaponEffects.js"
+import { releaseBulletEntity, activeBullets } from "../pools/bulletPool"
 
 const PLAYER_HIT_RADIUS = 0.6
 const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
+const bullets = activeBullets
 
 export function combatSystem() {
 
@@ -63,7 +65,7 @@ export function combatSystem() {
                 splitBullet(Position.x[bid], Position.y[bid], weapon, Bullet.owner[bid])
             }
 
-            removeEntity(world, bid)
+            releaseBulletEntity(bid)
             continue
         }
 
@@ -148,7 +150,7 @@ export function combatSystem() {
                         }
                     }
 
-                    removeEntity(world, bid)
+                    releaseBulletEntity(bid)
                     hit = true
                     break
                 }
@@ -252,7 +254,7 @@ export function combatSystem() {
             if (dx * dx + dy * dy <= PLAYER_HIT_RADIUS * PLAYER_HIT_RADIUS) {
 
                 Health.current[pid] -= weapon.damage
-                removeEntity(world, bid)
+                releaseBulletEntity(bid)
 
                 if (Health.current[pid] <= 0) {
                     gameState.lives--

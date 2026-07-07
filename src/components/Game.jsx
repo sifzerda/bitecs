@@ -6,6 +6,7 @@ import { PlayScreen } from "../screens/PlayScreen.jsx"
 import { spawnPlayer } from "../ecs/spawn.js"
 import { initializeInput } from "../ecs/systems/input.js"
 import { gameState } from "../state/gameState.js"
+import { initializeBulletPool } from '../ecs/pools/bulletPool.js'
 
 export function Game() {
     const [paused, setPaused] = useState(false)
@@ -13,6 +14,7 @@ export function Game() {
     useEffect(() => {
         spawnPlayer(0, 0)
         initializeInput(togglePause)
+        initializeBulletPool()
     }, [])
 
     function togglePause() {

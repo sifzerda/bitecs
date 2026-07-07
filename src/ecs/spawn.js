@@ -24,13 +24,9 @@ import {
 } from "./constants/components";
 import { gameState } from "../state/gameState";
 import { getWeapon } from "./constants/weapons";
+import { acquireBulletEntity } from "./pools/bulletPool"
 
-//import { acquireAsteroid } from './pools/asteroidPool';
-//import { acquireBullet } from './pools/bulletPool';
-//import { acquireExhaust } from './pools/exhaustPool';
-//import { acquireSpark } from './pools/sparkPool';
-//import { acquireMissile } from './pools/missilePool';
-//import { acquireBeam } from './pools/beamPool';
+
 
 
 
@@ -88,13 +84,12 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
 
         const shotRot = rot + offset
 
-        const id = addEntity(world)
+        const id = acquireBulletEntity()
 
-        addComponent(world, id, Position)
-        addComponent(world, id, Velocity)
-        addComponent(world, id, Lifetime)
-        addComponent(world, id, BulletTag)
-        addComponent(world, id, Bullet)
+        // Pool exhausted.
+        // (Should never happen with a pool of ~2000 unless something has gone wrong.)
+        if (id === -1)
+            continue
 
         Position.x[id] = x
         Position.y[id] = y

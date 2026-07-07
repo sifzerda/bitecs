@@ -3,14 +3,13 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { bulletQuery } from '../ecs/constants/queries.js'
 import { Position, Velocity, Bullet } from '../ecs/constants/components.js'
 import { WEAPONS } from '../ecs/constants/weapons.js'
+import { activeBullets } from '../ecs/pools/bulletPool.js'
 
 const MAX_BULLETS = 512
 const BULLET_LENGTH = 0.9
 const BULLET_WIDTH = 0.18
-const tempColor = new THREE.Color()
 
 export function BulletRenderer() {
 
@@ -26,7 +25,6 @@ export function BulletRenderer() {
         geo.setAttribute("instancePosition", new THREE.InstancedBufferAttribute(new Float32Array(MAX_BULLETS * 2), 2))
         geo.setAttribute("instanceAngle", new THREE.InstancedBufferAttribute(new Float32Array(MAX_BULLETS), 1))
         geo.setAttribute("instanceColor", new THREE.InstancedBufferAttribute(new Float32Array(MAX_BULLETS * 3), 3))
-        geo.setAttribute("instanceVisible", new THREE.InstancedBufferAttribute(new Float32Array(MAX_BULLETS), 1))
 
         geo.instanceCount = MAX_BULLETS
         return geo
@@ -120,7 +118,6 @@ void main(){
         instancePosition: geometry.attributes.instancePosition.array,
         instanceAngle: geometry.attributes.instanceAngle.array,
         instanceColor: geometry.attributes.instanceColor.array,
-        instanceVisible: geometry.attributes.instanceVisible.array,
 
     }), [geometry]);
 
@@ -128,23 +125,20 @@ void main(){
 
         material.uniforms.uTime.value = state.clock.elapsedTime
 
-        const bullets = bulletQuery()
-
         const {
             instancePosition,
             instanceAngle,
             instanceColor,
-            instanceVisible
         } = arrays
 
         let count = 0
 
-        for (let i = 0; i < bullets.length; i++) {
+        for (let i = 0; i < activeBullets.length; i++) {
 
             if (count >= MAX_BULLETS)
                 break
 
-            const eid = bullets[i]
+            const eid = activeBullets[i]
             const weapon = WEAPONS[Bullet.type[eid]]
 
             if (!weapon)
@@ -154,21 +148,19 @@ void main(){
 
             instancePosition[p] = Position.x[eid]
             instancePosition[p + 1] = Position.y[eid]
-            instanceAngle[count] = Math.atan2(Velocity.y[eid], Velocity.x[eid])
+
+            instanceAngle[count] = Math.atan2(
+                Velocity.y[eid],
+                Velocity.x[eid]
+            )
 
             const c = count * 3
 
             instanceColor[c] = Bullet.colorR[eid]
             instanceColor[c + 1] = Bullet.colorG[eid]
             instanceColor[c + 2] = Bullet.colorB[eid]
-            instanceVisible[count] = 1
 
             count++
-        }
-
-
-        for (let i = count; i < MAX_BULLETS; i++) {
-            instanceVisible[i] = 0
         }
 
         geometry.instanceCount = count
@@ -176,7 +168,6 @@ void main(){
         geometry.attributes.instancePosition.needsUpdate = true
         geometry.attributes.instanceAngle.needsUpdate = true
         geometry.attributes.instanceColor.needsUpdate = true
-        geometry.attributes.instanceVisible.needsUpdate = true
 
     })
 
