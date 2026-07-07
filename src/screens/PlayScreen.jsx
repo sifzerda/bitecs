@@ -31,9 +31,13 @@ import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
 import { BossLaserRenderer } from '../renderers/BossLaserRenderer.jsx'
 
+import { GunRenderer } from '../renderers/GunRenderer.jsx'
+import { GunMount } from '../renderers/GunMount.jsx'
+
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 // debug
-import { GodPanel } from '../debug/GodPanel.jsx'
+//import { GodPanel } from '../debug/GodPanel.jsx'
+import { GunPanel } from '../debug/GunPanel.jsx'
 
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
@@ -57,7 +61,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
             <HUD paused={paused} onPause={onPause} />
 
 
-            <GodPanel />
+            {/*         <GodPanel />    */}
 
 
 
@@ -77,7 +81,12 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <Environment preset="sunset" />
 
+                    <GunPanel />
+
+
+
                     <PlayerRenderer />
+                                        <GunMount />
                     <ExhaustRenderer />
                     <AsteroidRenderer />
                     <BulletRenderer />
@@ -92,6 +101,8 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <BossRenderer />
                     <BossLaserRenderer />
+
+                    <GunRenderer />
 
 
                     <EffectComposer multisampling={0}>
