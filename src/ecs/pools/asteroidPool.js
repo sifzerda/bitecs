@@ -1,39 +1,24 @@
 // src/ecs/pools/asteroidPool.js
 
-const pool = [];
+import { createPool } from './createPool'
+import { Position, Velocity, Health, AsteroidTag, StatusEffect, Asteroid } from '../constants/components'
 
-export function acquireAsteroid() {
+const pool = createPool({
+    size: 64,   // tune to your max concurrent asteroid count
+    components: [Position, Velocity, Health, AsteroidTag, StatusEffect, Asteroid],
+    activeField: [Asteroid, 'active'],
+    resetFields(id) {
+        Position.x[id] = 0
+        Position.y[id] = 0
+        Velocity.x[id] = 0
+        Velocity.y[id] = 0
+        Health.current[id] = 0
+        Health.max[id] = 0
+        StatusEffect.frozen[id] = 0
+    }
+})
 
-    return pool.pop() || {
-
-        asteroid: true,
-        x: 0,
-        y: 0,
-        vx: 0,
-        vy: 0,
-        radius: 1,
-        size: 3,
-        rotation: 0,
-        rotationSpeed: 0,
-        wrap: true,
-
-    };
-
-}
-
-export function releaseAsteroid(asteroid) {
-
-    asteroid.asteroid = false;
-
-    asteroid.x = 0;
-    asteroid.y = 0;
-    asteroid.vx = 0;
-    asteroid.vy = 0;
-    asteroid.radius = 1;
-    asteroid.size = 3;
-    asteroid.rotation = 0;
-    asteroid.rotationSpeed = 0;
-
-    pool.push(asteroid);
-
-}
+export const activeAsteroids = pool.active
+export const initializeAsteroidPool = pool.initialize
+export const acquireAsteroidEntity = pool.acquire
+export const releaseAsteroidEntity = pool.release

@@ -5,14 +5,13 @@ import { world } from "../constants/world.js"
 import { gameState } from "../../state/gameState.js"
 import { spawnSparkBurst } from "../spawn.js"
 import { BossAI } from "../constants/components.js"
+import { releaseAsteroidEntity } from "../pools/asteroidPool"
 
 export function killAsteroid(id, x, y) {
 
-    removeEntity(world, id)
-
+    releaseAsteroidEntity(id) 
     gameState.asteroidsRemaining--
     gameState.score += 100
-
     spawnSparkBurst(x, y, { count: 45, speed: 13, big: true })
 }
 

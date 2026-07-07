@@ -4,7 +4,8 @@ import { removeEntity } from "bitecs"
 import { world } from "../constants/world.js"
 import { gameState } from "../../state/gameState.js"
 import { spawnAsteroid, spawnBoss } from "../spawn.js"
-import { asteroidQuery, bossQuery } from "../constants/queries.js"
+import {  bossQuery } from "../constants/queries.js"
+import {activeAsteroids, releaseAsteroidEntity } from "../pools/asteroidPool"
 
 const SPAWN_RADIUS = 16
 
@@ -55,14 +56,11 @@ if (gameState.wave > 0 &&
 
 
 // -------------------------
-// DEBUG: force-clear the current wave so waveSystem
-// spawns the next one on its next tick
 // -------------------------
 export function skipWave() {
 
-    const asteroids = asteroidQuery()
-    for (let i = 0; i < asteroids.length; i++) {
-        removeEntity(world, asteroids[i])
+    for (let i = activeAsteroids.length - 1; i >= 0; i--) {
+        releaseAsteroidEntity(activeAsteroids[i])
     }
 
     const bosses = bossQuery()

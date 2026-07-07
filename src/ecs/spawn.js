@@ -24,11 +24,9 @@ import {
 } from "./constants/components";
 import { gameState } from "../state/gameState";
 import { getWeapon } from "./constants/weapons";
+import { acquireSparkEntity } from "./pools/sparkPool"
 import { acquireBulletEntity } from "./pools/bulletPool"
-
-
-
-
+import { acquireAsteroidEntity } from './pools/asteroidPool'
 
 // ============= helpers ============//
 
@@ -69,7 +67,7 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
 
     // beams have no ECS bullet entity — laserSystem handles them entirely.
     // Guarding here (not just at call sites) means ANY future caller is safe by default.
-    if (weapon.category === "beam" || weapon.category === "flame" || weapon.category === "pulse") return []
+    if (weapon.category === "beam" || weapon.category === "thrower") return []
 
     const count = weapon.projectileCount
     const spread = weapon.spreadAngle
@@ -146,44 +144,11 @@ export function spawnHazard(x, y, weaponId, owner, targetId = -1) {
     return id
 }
 
-// ============= Drones ============//
-
-export function spawnDrone(ownerX, ownerY, weaponId, index, total) {
-
-    const weapon = getWeapon(weaponId)
-    const id = addEntity(world)
-
-    addComponent(world, id, Position)
-    addComponent(world, id, Drone)
-    addComponent(world, id, DroneTag)
-
-    Position.x[id] = ownerX
-    Position.y[id] = ownerY
-
-    Drone.orbitAngle[id] = (Math.PI * 2 * index) / total
-    Drone.orbitRadius[id] = weapon.orbitRadius
-    Drone.orbitSpeed[id] = weapon.orbitSpeed
-    Drone.shootTimer[id] = 0
-    Drone.weapon[id] = weapon.droneWeapon
-    Drone.fireRate[id] = weapon.droneFireRate ?? 0.6
-    Drone.range[id] = weapon.droneRange ?? 12
-
-    return id
-}
-
 // ============= Sparks ============//
 
 function spawnSpark(x, y, speed, size, life) {
-
-    //const spark = acquireSpark();
-
-    const id = addEntity(world)
-
-    addComponent(world, id, Position)
-    addComponent(world, id, Velocity)
-    addComponent(world, id, Lifetime)
-    addComponent(world, id, Spark)
-    addComponent(world, id, SparkTag)
+    const id = acquireSparkEntity()
+    if (id === -1) return -1
 
     Position.x[id] = x
     Position.y[id] = y
@@ -202,52 +167,39 @@ function spawnSpark(x, y, speed, size, life) {
 }
 
 export function spawnSparkBurst(x, y, options = {}) {
-
     const count = options.count ?? 28
     const speed = options.speed ?? 10
     const big = options.big ?? false
 
-    // one oversized, ultra-short-lived flash spark for the initial "punch"
     {
-        const id = addEntity(world)
-        addComponent(world, id, Position)
-        addComponent(world, id, Velocity)
-        addComponent(world, id, Lifetime)
-        addComponent(world, id, Spark)
-        addComponent(world, id, SparkTag)
-
-        Position.x[id] = x
-        Position.y[id] = y
-        Velocity.x[id] = 0
-        Velocity.y[id] = 0
-
-        const life = 0.1
-        Lifetime.remaining[id] = life
-        Spark.maxLife[id] = life
-        Spark.size[id] = (big ? 1.8 : 1.0)   // much bigger than regular embers
+        const id = acquireSparkEntity()
+        if (id !== -1) {
+            Position.x[id] = x
+            Position.y[id] = y
+            Velocity.x[id] = 0
+            Velocity.y[id] = 0
+            const life = 0.1
+            Lifetime.remaining[id] = life
+            Spark.maxLife[id] = life
+            Spark.size[id] = big ? 1.8 : 1.0
+        }
     }
 
     for (let i = 0; i < count; i++) {
-
-        const id = addEntity(world)
-
-        addComponent(world, id, Position)
-        addComponent(world, id, Velocity)
-        addComponent(world, id, Lifetime)
-        addComponent(world, id, Spark)
-        addComponent(world, id, SparkTag)
+        const id = acquireSparkEntity()
+        if (id === -1) break   // pool exhausted — drop remaining embers
 
         Position.x[id] = x
         Position.y[id] = y
 
         const angle = Math.random() * Math.PI * 2
-        const s = speed * (0.3 + Math.random() * 1.1)   // wider speed variance -> more chaotic spread
+        const s = speed * (0.3 + Math.random() * 1.1)
 
         Velocity.x[id] = Math.cos(angle) * s
         Velocity.y[id] = Math.sin(angle) * s
 
-        const life = 0.3 + Math.random() * 0.45          // was 0.25-0.55 -> lives a bit longer, more visible travel
-        const size = (0.1 + Math.random() * 0.22) * (big ? 2.0 : 1.3)   // bigger base + bigger "big" multiplier
+        const life = 0.3 + Math.random() * 0.45
+        const size = (0.1 + Math.random() * 0.22) * (big ? 2.0 : 1.3)
 
         Lifetime.remaining[id] = life
         Spark.maxLife[id] = life
@@ -255,26 +207,21 @@ export function spawnSparkBurst(x, y, options = {}) {
     }
 }
 
-
-
 // ============= Asteroids ============//
 
 export function spawnAsteroid(x, y) {
+    const id = acquireAsteroidEntity()
+    if (id === -1) return -1
 
-    //const asteroid = acquireAsteroid();
-
-    const id = addEntity(world)
-
-    setPosition(id, x, y)
-
-    addComponent(world, id, Velocity)
-    addComponent(world, id, AsteroidTag)   // ONLY this
-    addComponent(world, id, StatusEffect)
-
-    setHealth(id, 20)
+    Position.x[id] = x
+    Position.y[id] = y
 
     Velocity.x[id] = (Math.random() - 0.5) * 2
     Velocity.y[id] = (Math.random() - 0.5) * 2
+
+    Health.current[id] = 20
+    Health.max[id] = 20
+
     StatusEffect.frozen[id] = 0
 
     return id

@@ -54,7 +54,7 @@ export const WEAPONS = [
         id: 3,
         name: "missilegun",
         damage: 30,
-        category: "bomb",
+        category: "launcher",
         maxBullets: 128,
         hitRadius: 1.0,
         fireRate: 0.8,
@@ -84,26 +84,8 @@ export const WEAPONS = [
 
     {
         id: 5,
-        name: "ricochetgun",
-        category: "bullet",
-        damage: 8,
-        maxBullets: 128,
-        hitRadius: 0.5,
-        fireRate: 0.25,
-        speed: 16,
-        lifetime: 2.5,          // longer lifetime so bounces are actually visible
-        projectileCount: 1,
-        spreadAngle: 0,
-        maxBounces: 3,          // how many times it can bounce before dying like a normal bullet
-        color: "#d0ffe0",
-        glowColor: "#33ff88",
-        haloColor: "#22cc66",
-    },
-
-    {
-        id: 6,
-        name: "grenadelauncher",
-        category: "bullet",
+        name: "grenadegun",
+        category: "launcher",
         explosive: true,          // triggers AOE explosion instead of single-target damage
         explosionRadius: 2.5,
         damage: 25,               // full damage to everything caught in the explosion radius
@@ -120,9 +102,9 @@ export const WEAPONS = [
     },
 
     {
-        id: 7,
-        name: "darkmatterlauncher",
-        category: "bullet",
+        id: 6,
+        name: "darkmattergun",
+        category: "launcher",
         leavesHazard: true,       // on hit or expiry, drops a static damage cloud instead of direct damage
         damage: 0,                // no direct hit damage — the cloud does the work
         hazardRadius: 3.0,
@@ -141,9 +123,9 @@ export const WEAPONS = [
         haloColor: "#4d0099",
     },
     {
-        id: 8,
+        id: 7,
         name: "acidsprayer",
-        category: "bullet",
+        category: "thrower",
         leavesHazard: true,
         damage: 3,                 // small direct tick on impact, puddle does the rest
         hazardRadius: 1.5,
@@ -161,41 +143,9 @@ export const WEAPONS = [
         glowColor: "#99ff00",
         haloColor: "#669900",
     },
-    {
-        id: 9,
-        name: "nanoswarm",
-        category: "bullet",
-        attachHazard: true,        // on hit, attaches DoT to the specific asteroid instead of area damage
-        damage: 0,                 // no direct hit damage — swarm chews over time
-        hazardDamage: 5,
-        hazardTickInterval: 0.4,
-        hazardDuration: 5.0,
-        maxBullets: 32,
-        hitRadius: 0.5,
-        fireRate: 0.6,
-        speed: 16,
-        lifetime: 1.5,
-        projectileCount: 1,
-        spreadAngle: 0,
-        color: "#baffc9",
-        glowColor: "#33cc66",
-        haloColor: "#1f7a3f",
-    },
 
     {
-        id: 10,
-        name: "pulsewave",
-        category: "pulse",          // new category — no bullet entity, triggered instantly
-        damage: 18,
-        explosionRadius: 4.5,
-        fireRate: 1.2,
-        color: "#aeefff",
-        glowColor: "#33ccff",
-        haloColor: "#0088cc",
-    },
-
-    {
-        id: 11,
+        id: 8,
         name: "clustercannon",
         category: "bullet",
         splitsInto: 4,              // fragments spawned on split
@@ -214,7 +164,7 @@ export const WEAPONS = [
     },
 
     {
-        id: 12,
+        id: 9,
         name: "proximityminelayer",
         category: "mine",           // new category — dropped instantly at ship position, not fired forward
         hazardRadius: 2.0,
@@ -228,7 +178,7 @@ export const WEAPONS = [
     },
 
     {
-        id: 13,
+        id: 10,
         name: "cryocannon",
         category: "bullet",
         freezeDuration: 2.5,
@@ -246,7 +196,7 @@ export const WEAPONS = [
     },
 
     {
-        id: 14,
+        id: 11,
         name: "arcgun",
         category: "bullet",
         damage: 10,
@@ -265,7 +215,7 @@ export const WEAPONS = [
     },
 
     {
-        id: 15,
+        id: 12,
         name: "particlebeam",
         category: "beam",
         range: 25,
@@ -279,7 +229,7 @@ export const WEAPONS = [
     },
 
     {
-        id: 16,
+        id: 13,
         name: "prismbeam",
         category: "beam",
         range: 20,
@@ -294,9 +244,9 @@ export const WEAPONS = [
     },
 
     {
-        id: 17,
+        id: 14,
         name: "flamethrower",
-        category: "flame",
+        category: "thrower",
         range: 6,                 // short range — flamethrowers are a close-quarters weapon
         coneAngle: 0.6,            // radians, full cone width
         damagePerSecond: 35,       // at point-blank; falls off with distance (see flameSystem)

@@ -128,24 +128,6 @@ cryo cannon -
 
 some of these boss dropped weapons, some upgrades 
 
- 
-
-~~Grenade Launcher – Arcing explosive rounds.~~
-~~Ricochet Gun – Bullets bounce off asteroids or screen edges.~~
-~~Dark Matter Launcher – Leaves damaging clouds.~~
-~~Nano Swarm – Nanobots chew through asteroids over time.~~
-~~Acid Sprayer – Leaves corrosive puddles in space.~~
-
-~~Arc Gun – Lightning jumps between nearby asteroids.~~
-~~Particle Beam – Continuous beam that ramps up damage the longer it stays on target.~~
-~~Cluster Cannon – Projectile splits into multiple fragments mid-flight.~~
-~~Proximity Mine Layer – Deploys floating mines.~~
-~~Prism Beam – Splits into several smaller beams.~~
-~~Orbital Drones – Satellites orbit the ship and fire automatically.~~
-~~Pulse Wave – Expanding ring of energy from the ship.~~
-~~Cryo Cannon – Freezes asteroids, making them easier to destroy.~~
-~~add flamethrower~~
-
  - [x] if add bosses, make one kind and swap out guns, probably after gun system
  - [ ] make one kind of boss behaviour and logic, and switch renderer (ship appearance) and gun type
  - [ ] also potentially later boss has satelites that orbit it and help, or shield etc
@@ -159,7 +141,10 @@ some of these boss dropped weapons, some upgrades
 
 - [ ] change boss renderer to make enemy ship/ufo
 
- - [ ] fix ricochetsystem bullets currently dont bounce away
-
  - [ ] see if other renderers can be modelled off exhaust renderers gpu shaders
 - [ ] especially flamerenderer, acid spray, laser, arc, hazard,, spark
+
+
+
+- [ ] add a leva menu to configure guns which can be applied to the ship and bosses
+

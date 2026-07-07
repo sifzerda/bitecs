@@ -1,7 +1,7 @@
 // src/ecs/systems/laserSystem.js
 
 import { world } from "../constants/world.js"
-import { playerQuery, asteroidQuery, bossQuery } from "../constants/queries.js"
+import { playerQuery, bossQuery } from "../constants/queries.js"
 import { Position, Rotation, Health } from "../constants/components.js"
 import { input } from "./input.js"
 import { gameState } from "../../state/gameState.js"
@@ -9,6 +9,7 @@ import { getWeapon } from "../constants/weapons.js"
 import { laserState } from "../../state/laserState.js"
 import { spawnSparkBurst } from "../spawn.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
+import { activeAsteroids } from "../pools/asteroidPool"
 
 const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
@@ -108,7 +109,7 @@ export function laserSystem() {
     const baseDirX = Math.sin(-Rotation[pid])
     const baseDirY = Math.cos(-Rotation[pid])
 
-    const asteroids = asteroidQuery()
+    const asteroids = activeAsteroids
     const bosses = bossQuery()
 
     const beamCount = weapon.beamCount ?? 1

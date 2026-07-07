@@ -1,7 +1,7 @@
 // src/ecs/systems/bossAISystem.js
 
 import { world } from "../constants/world.js"
-import { bossAIQuery, playerQuery, asteroidQuery, bossQuery } from "../constants/queries.js"
+import { bossAIQuery, playerQuery, bossQuery } from "../constants/queries.js"
 import { Position, Velocity, BossAI, BULLET_OWNER } from "../constants/components.js"
 import { spawnBullet, spawnHazard } from "../spawn.js"
 import { getWeapon } from "../constants/weapons.js"
@@ -59,23 +59,13 @@ export function bossAISystem() {
                     // a boss beam attack would need its own dedicated system, not this one
                     break
 
-                case "pulse":
-                    // instant AOE burst centered on the boss itself
-                    explodeAt(Position.x[id], Position.y[id], weapon, asteroidQuery(), bossQuery())
-                    break
-
                 case "mine":
                     // drops a static hazard at the boss's current position
                     spawnHazard(Position.x[id], Position.y[id], weapon.id, BULLET_OWNER.ENEMY, -1)
                     break
 
-                case "drone":
-                    // orbital drones orbit a specific owner and don't make sense fired
-                    // "at" a target — skipping until/unless bosses get their own escort system
-                    break
-
                 default:
-                    // normal bullets, missiles, ricochet, cluster, arc, hazard-leaving,
+                    // normal bullets, missiles, cluster, arc, hazard-leaving,
                     // frozen, etc. — anything that flows through spawnBullet already
                     spawnBullet(Position.x[id], Position.y[id], rot, weapon.id, BULLET_OWNER.ENEMY)
                     break

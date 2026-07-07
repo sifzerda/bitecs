@@ -2,17 +2,18 @@
 
 import { removeEntity, hasComponent } from "bitecs"
 import { world } from "../constants/world.js"
-import { hazardQuery, asteroidQuery, bossQuery } from "../constants/queries.js"
+import { hazardQuery, bossQuery } from "../constants/queries.js"
 import { Position, Health, HazardZone, Lifetime } from "../constants/components.js"
 import { getWeapon } from "../constants/weapons.js"
 import { spawnSparkBurst } from "../spawn.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
+import { activeAsteroids } from "../pools/asteroidPool"
 
 export function hazardSystem() {
 
     const dt = world.time.delta
     const hazards = hazardQuery()
-    const asteroids = asteroidQuery()
+    const asteroids = activeAsteroids
     const bosses = bossQuery()
 
     for (let i = 0; i < hazards.length; i++) {

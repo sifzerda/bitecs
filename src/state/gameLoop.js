@@ -7,13 +7,11 @@ import { combatSystem } from "../ecs/systems/combat"
 import { sparkSystem } from "../ecs/systems/sparkSystem"
 import { waveSystem } from "../ecs/systems/waveSystem"
 import { laserSystem } from "../ecs/systems/laserSystem"
-import { missileSystem } from "../ecs/systems/missileSystem"
-import { ricochetSystem } from "../ecs/systems/ricochetSystem"
 import { hazardSystem } from "../ecs/systems/hazardSystem"
 import { flameSystem } from "../ecs/systems/flameSystem"
-
 import { bossAISystem } from "../ecs/systems/bossAISystem"
 import { bossLaserSystem } from "../ecs/systems/bossLaserSystem.js"
+import { missileSystem } from "../ecs/systems/missileSystem"
 
 //import { clearSpatialGrid, insertIntoSpatialGrid } from '../ecs/constants/spatialGrid.js'
 
@@ -38,7 +36,6 @@ export function gameLoop(shootState) {
   //  insertIntoSpatialGrid(asteroid);
   //}
 
-    ricochetSystem()
     hazardSystem()
     combatSystem()
     laserSystem()

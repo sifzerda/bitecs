@@ -1,15 +1,17 @@
 // src/ecs/systems/missileSystem.js
 
 import { world } from "../constants/world.js"
-import { bulletQuery, asteroidQuery, bossQuery, playerQuery } from "../constants/queries.js"
+import { bossQuery, playerQuery } from "../constants/queries.js"
 import { Position, Velocity, Bullet, BULLET_OWNER } from "../constants/components.js"
 import { getWeapon } from "../constants/weapons.js"
+import { activeBullets } from "../pools/bulletPool"
+import { activeAsteroids } from "../pools/asteroidPool"
 
 export function missileSystem() {
 
     const dt = world.time.delta
-    const bullets = bulletQuery()
-    const asteroids = asteroidQuery()
+    const bullets = activeBullets
+    const asteroids = activeAsteroids
     const bosses = bossQuery()
     const players = playerQuery()
     const weapon = getWeapon(3)

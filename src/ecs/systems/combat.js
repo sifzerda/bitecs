@@ -4,11 +4,8 @@ import { removeEntity } from "bitecs"
 import { world } from "../constants/world.js"
 
 import {
-    bulletQuery,
-    asteroidQuery,
     bossQuery,
     playerQuery,
-    droneQuery
 } from "../constants/queries.js"
 
 import {
@@ -27,6 +24,7 @@ import { killAsteroid, killBoss } from "./entityDeath.js"
 import { getWeapon } from "../constants/weapons.js"
 import { explodeAt, splitBullet, chainLightning } from "./weaponEffects.js"
 import { releaseBulletEntity, activeBullets } from "../pools/bulletPool"
+import { activeAsteroids } from "../pools/asteroidPool"
 
 const PLAYER_HIT_RADIUS = 0.6
 const ASTEROID_RADIUS = 0.7
@@ -36,9 +34,8 @@ const bullets = activeBullets
 export function combatSystem() {
 
     const dt = world.time.delta
-
-    const bullets = bulletQuery()
-    const asteroids = asteroidQuery()
+    const bullets = activeBullets
+    const asteroids = activeAsteroids
     const bosses = bossQuery()
     const players = playerQuery()
 
@@ -218,20 +215,6 @@ export function combatSystem() {
                             killBoss(bossId, Position.x[bossId], Position.y[bossId])
                         }
 
-                        // ricochet bullets bounce off bosses too, same as asteroids
-                        if (Bullet.bounces[bid] > 0) {
-
-                            const dist = Math.sqrt(dx * dx + dy * dy) || 1
-                            const nx = dx / dist
-                            const ny = dy / dist
-                            const dot = Velocity.x[bid] * nx + Velocity.y[bid] * ny
-
-                            Velocity.x[bid] -= 2 * dot * nx
-                            Velocity.y[bid] -= 2 * dot * ny
-                            Bullet.bounces[bid] -= 1
-
-                            break // stop checking other bosses this frame, but don't remove the bullet
-                        }
                     }
 
                     removeEntity(world, bid)
@@ -260,10 +243,6 @@ export function combatSystem() {
                     gameState.lives--
                     Health.current[pid] = Health.max[pid]
 
-                    const drones = droneQuery()
-                    for (let i = 0; i < drones.length; i++) {
-                        removeEntity(world, drones[i])
-                    }
                 }
             }
         }

@@ -3,7 +3,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { bulletQuery } from '../ecs/constants/queries.js'
+import { activeBullets } from '../ecs/pools/bulletPool.js'
 import { Position, Velocity, Bullet } from '../ecs/constants/components.js'
 import { getWeapon } from '../ecs/constants/weapons.js'
 
@@ -59,7 +59,7 @@ export function MissileRenderer() {
         if (!body || !flame || !smoke) return
 
         const weapon = getWeapon(3)
-        const bullets = bulletQuery()
+        const bullets = activeBullets
 
         let idx = 0
 

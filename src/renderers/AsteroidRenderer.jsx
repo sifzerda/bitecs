@@ -3,7 +3,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { asteroidQuery } from '../ecs/constants/queries.js'
+import { activeAsteroids } from '../ecs/pools/asteroidPool.js'
 import { world } from '../ecs/constants/world.js'
 import { Position, Health } from '../ecs/constants/components.js'
 
@@ -266,13 +266,14 @@ export function AsteroidRenderer() {
             asteroidMaterial.userData.shader.uniforms.uTime.value = state.clock.elapsedTime
         }
 
-        const asteroids = asteroidQuery(world)
-
+        const asteroids = activeAsteroids
+        const count = Math.min(asteroids.length, MAX_ASTEROIDS)
+        
         // Asteroid meshes
 
         const healthAttr = asteroidGeometry.attributes.instanceHealth
 
-        for (let i = 0; i < asteroids.length; i++) {
+        for (let i = 0; i < count; i++) {
 
             const eid = asteroids[i]
             const data = asteroidData[i]
@@ -301,11 +302,11 @@ export function AsteroidRenderer() {
 
 
         mesh.instanceMatrix.needsUpdate = true
-        mesh.count = asteroids.length
+        mesh.count = count
 
         // Health Bar Background
 
-        for (let i = 0; i < asteroids.length; i++) {
+        for (let i = 0; i < count; i++) {
 
             const eid = asteroids[i]
 
@@ -319,11 +320,11 @@ export function AsteroidRenderer() {
         _barScale.set(0, 0, 0)
 
         bgBar.instanceMatrix.needsUpdate = true
-        bgBar.count = asteroids.length
+        bgBar.count = count
 
         // Health Bar Fill
 
-        for (let i = 0; i < asteroids.length; i++) {
+        for (let i = 0; i < count; i++) {
 
             const eid = asteroids[i]
 
@@ -341,7 +342,7 @@ export function AsteroidRenderer() {
         _barScale.set(0, 0, 0)
 
         fgBar.instanceMatrix.needsUpdate = true
-        fgBar.count = asteroids.length
+        fgBar.count = count
 
     })
 
