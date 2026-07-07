@@ -13,7 +13,8 @@ const PARTICLE_SIZE = 128 // 128x128 = 16,384 particles
 // GPGPU shaders
 // ---------------------------------------------------------------------------
 
-const simVertexShader = /* glsl */ `
+const simVertexShader = /* glsl */ 
+`
   varying vec2 vUv;
   void main() {
     vUv = uv;
@@ -21,7 +22,8 @@ const simVertexShader = /* glsl */ `
   }
 `
 
-const simFragmentShader = /* glsl */ `
+const simFragmentShader = /* glsl */ 
+`
   precision highp float;
 
   varying vec2 vUv;
@@ -85,7 +87,8 @@ pos = uShipPos + backward * exhaustOffset + right * engineOffset + jitter;
   }
 `
 
-const renderVertexShader = /* glsl */ `
+const renderVertexShader = /* glsl */ 
+`
   attribute vec2 particleUv;
   varying float vLife;
 
@@ -105,7 +108,8 @@ const renderVertexShader = /* glsl */ `
   }
 `
 
-const renderFragmentShader = /* glsl */ `
+const renderFragmentShader = /* glsl */ 
+`
   precision highp float;
   varying float vLife;
 
