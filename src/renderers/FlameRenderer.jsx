@@ -75,7 +75,7 @@ const simFragmentShader = /* glsl */ `
           pos = uOrigin + jitter;
           life = 0.35 + seed * 0.35; // ~0.35–0.70s outward lifetime
         } else {
-          life = -(0.02 + seed * 0.15);
+          life = -(0.02 + seed * 0.99);
         }
       }
     }
