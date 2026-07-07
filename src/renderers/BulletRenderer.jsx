@@ -18,7 +18,6 @@ export function BulletRenderer() {
     const geometry = useMemo(() => {
 
         const geo = new THREE.InstancedBufferGeometry()
-
         // base quad
         const plane = new THREE.PlaneGeometry(1, 1)
         geo.setIndex(plane.index)
