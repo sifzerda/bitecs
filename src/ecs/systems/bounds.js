@@ -1,8 +1,9 @@
 // src/ecs/systems/bounds.js
 
-import { playerQuery, asteroidQuery, bossQuery } from "../constants/queries.js";
+import { playerQuery, bossQuery } from "../constants/queries.js";
 import { Position, Velocity } from "../constants/components.js";
 import { world } from "../constants/world.js";
+import { activeAsteroids } from "../pools/asteroidPool.js";
 
 const BOUND_X = 16.0
 const BOUND_Y = 6.6
@@ -37,7 +38,7 @@ export function boundsSystem() {
     // Asteroid Wrap
     //-------------------------
 
-    const asteroids = asteroidQuery()
+    const asteroids = activeAsteroids
 
     for (let i = 0; i < asteroids.length; i++) {
 

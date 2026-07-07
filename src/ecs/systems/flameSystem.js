@@ -1,7 +1,7 @@
 // src/ecs/systems/flameSystem.js
 
 import { world } from "../constants/world.js"
-import { playerQuery, asteroidQuery, bossQuery } from "../constants/queries.js"
+import { playerQuery, bossQuery } from "../constants/queries.js"
 import { Position, Rotation, Health } from "../constants/components.js"
 import { input } from "./input.js"
 import { gameState } from "../../state/gameState.js"
@@ -9,6 +9,7 @@ import { getWeapon } from "../constants/weapons.js"
 import { flameState } from "../../state/flameState.js"
 import { spawnSparkBurst } from "../spawn.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
+import { activeAsteroids } from "../pools/asteroidPool"
 
 export function flameSystem() {
 
@@ -76,7 +77,7 @@ export function flameSystem() {
         }
     }
 
-    checkList(asteroidQuery(), false)
+    checkList(activeAsteroids, false)
     checkList(bossQuery(), true)
 
     flameState.hitIds = hitIds
