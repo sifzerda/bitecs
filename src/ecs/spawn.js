@@ -59,15 +59,18 @@ export function spawnPlayer(x, y) {
 
 // ============= Bullets ============//
 
+const MUZZLE_OFFSET = 0.9
+
 export function spawnBullet(x, y, rot, weaponId = 0, owner) {
 
     //const bullet = acquireBullet();
 
     const weapon = getWeapon(weaponId)
-
-    // beams have no ECS bullet entity — laserSystem handles them entirely.
-    // Guarding here (not just at call sites) means ANY future caller is safe by default.
     if (weapon.category === "beam" || weapon.category === "thrower") return []
+
+    // push spawn point forward from ship center to the nose, along facing direction
+    const originX = x + Math.sin(-rot) * MUZZLE_OFFSET
+    const originY = y + Math.cos(-rot) * MUZZLE_OFFSET
 
     const count = weapon.projectileCount
     const spread = weapon.spreadAngle
@@ -81,7 +84,6 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
             : 0
 
         const shotRot = rot + offset
-
         const id = acquireBulletEntity()
 
         // Pool exhausted.
@@ -89,8 +91,8 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
         if (id === -1)
             continue
 
-        Position.x[id] = x
-        Position.y[id] = y
+        Position.x[id] = originX
+        Position.y[id] = originY
 
         Velocity.x[id] = Math.sin(-shotRot) * weapon.speed
         Velocity.y[id] = Math.cos(-shotRot) * weapon.speed
@@ -100,12 +102,11 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
         Bullet.owner[id] = owner
         Bullet.bounces[id] = weapon.maxBounces ?? 0
 
-        // cache render color
         const color = new THREE.Color(weapon.glowColor ?? weapon.color)
 
         color.offsetHSL(
             0,
-            0.15,  // saturation boost
+            0.30,  // saturation boost
             0.00   // slight brightness boost
         )
 
