@@ -48,45 +48,34 @@ const simFragmentShader = /* glsl */ `
     float seed = data.w;
 
     if (life > 0.0) {
-      // active particle — age it and let it drift
+    
       life -= uDelta;
 
       vec2 exhaustVel = -uShipVel * 0.85 + curl(pos) * 1.5;
       pos += exhaustVel * uDelta;
 
       if (life <= 0.0) {
-        // just expired — go dormant with a per-particle stagger before it's eligible again
+      
         life = -(0.05 + seed * 0.35);
       }
     } else {
-      // dormant — count up toward zero
+
       life += uDelta;
 
       if (life >= 0.0) {
         if (uEmitting > 0.5) {
-          // ready AND thrust held — ignite
+
           vec2 jitter = vec2(sin(seed * 78.233), cos(seed * 45.164)) * 0.05;
-float exhaustOffset = -0.70; // distance behind ship
-float engineSpread = 0.30;  // left/right engine separation
+float exhaustOffset = -0.70; 
+float engineSpread = 0.30; 
 
-vec2 backward = vec2(
-  -sin(uShipRot),
-  cos(uShipRot)
-);
-
-// direction across the ship (wing-to-wing)
-vec2 right = vec2(
-  cos(uShipRot),
-  sin(uShipRot)
-);
-
+vec2 backward = vec2(-sin(uShipRot), cos(uShipRot));
+vec2 right = vec2(cos(uShipRot), sin(uShipRot));
 float engineOffset = sin(seed * 20.0) * engineSpread;
 
 pos = uShipPos + backward * exhaustOffset + right * engineOffset + jitter;
           life = 0.5 + seed * 0.5;
         } else {
-          // ready but thrust not held — re-roll a short wait so it doesn't
-          // sit exactly at the trigger boundary every frame
           life = -(0.05 + seed * 0.90);
         }
       }
@@ -271,6 +260,9 @@ export function ExhaustRenderer({ size = 4 }) {
   })
 
   return (
-    <points geometry={pointsGeometry} material={renderMaterial} frustumCulled={false} />
+    <points geometry={pointsGeometry} 
+    material={renderMaterial} 
+    frustumCulled={false}
+     />
   )
 }
