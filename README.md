@@ -144,9 +144,7 @@ some of these boss dropped weapons, some upgrades
 ~~Orbital Drones – Satellites orbit the ship and fire automatically.~~
 ~~Pulse Wave – Expanding ring of energy from the ship.~~
 ~~Cryo Cannon – Freezes asteroids, making them easier to destroy.~~
-
-add flamethrower
-
+~~add flamethrower~~
 
  - [x] if add bosses, make one kind and swap out guns, probably after gun system
  - [ ] make one kind of boss behaviour and logic, and switch renderer (ship appearance) and gun type
@@ -159,18 +157,9 @@ add flamethrower
 
  - [ ] Adapt missile and lasersystem for boss use: missiles dont target player and need to not hurt boss, and laser needs to be held down not fired (boss never fires it)
 
-
 - [ ] change boss renderer to make enemy ship/ufo
 
-
-
  - [ ] fix ricochetsystem bullets currently dont bounce away
-
-
-
-
-
-
 
  - [ ] see if other renderers can be modelled off exhaust renderers gpu shaders
 - [ ] especially flamerenderer, acid spray, laser, arc, hazard,, spark

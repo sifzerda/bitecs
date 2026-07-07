@@ -44,6 +44,8 @@ export const Bullet = {
     colorR: new Float32Array(MAX),
     colorG: new Float32Array(MAX),
     colorB: new Float32Array(MAX),
+
+    active: new Uint8Array(MAX)
 }
 
 export const BULLET_OWNER = {
@@ -77,7 +79,7 @@ export const PlayerTag = {};
 export const BulletTag = {};
 export const SparkTag = {};
 
- 
+
 export const AsteroidTag = {};
 export const BossTag = {};
 export const HazardTag = {};
