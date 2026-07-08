@@ -9,7 +9,6 @@ import { getGunTypeByWeaponId } from '../ecs/constants/gunConfigs.js'
 import { GunRenderer } from './GunRenderer.jsx'
 
 const GUN_DIRECTION = Math.PI / 2
-
 export function GunMount() {
 
     const groupRef = useRef()

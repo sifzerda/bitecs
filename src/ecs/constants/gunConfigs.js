@@ -1,12 +1,9 @@
 // src/ecs/constants/gunConfigs.js
-
 function deepMerge(base, overrides) {
     const out = { ...base }
     for (const key in overrides) {
         if (
-            overrides[key] &&
-            typeof overrides[key] === 'object' &&
-            !Array.isArray(overrides[key])
+            overrides[key] && typeof overrides[key] === 'object' && !Array.isArray(overrides[key])
         ) {
             out[key] = deepMerge(base[key] ?? {}, overrides[key])
         } else {
@@ -17,9 +14,6 @@ function deepMerge(base, overrides) {
 }
 
 // ============================================================
-// Baseline — twin-mounted rifle, no handheld parts (no grip/magazine/
-// triggerGuard). `mountBracket` replaces grip as the hull-attachment
-// stub. Gun points +X locally, mounted with muzzle facing ship's nose.
 // ============================================================
 
 export const DEFAULT_GUN_CONFIG = {
@@ -28,21 +22,21 @@ export const DEFAULT_GUN_CONFIG = {
 
     frame: {
         color: '#cfe8ff',
-        length: 0.85,     // rifles read longer than the old pistol frame
+        length: 0.60,     // rifles read longer than the old pistol frame
         height: 0.13,
         taper: 0.4,
     },
 
     slide: {
-        enabled: true, color: '#8fa8c0',
-        length: 0.5, height: 0.06, offsetX: 0.05, offsetY: 0.045,
+        enabled: true, color: '#3a4650',
+        length: 0.5, height: 0.06, offsetX: 0.05, offsetY: 0.020,
         metalness: 0.7, roughness: 0.25,
     },
 
     barrel: {
         enabled: true,
-        color: '#3a4650', length: 0.34, width: 0.035,
-        offsetX: 0.78, offsetY: 0.0, metalness: 0.8, roughness: 0.3,
+        color: '#cfe8ff', length: 0.24, width: 0.035,
+        offsetX: 0.70, offsetY: 0.0, metalness: 0.8, roughness: 0.3,
     },
 
     muzzle: {
@@ -53,25 +47,25 @@ export const DEFAULT_GUN_CONFIG = {
     // Hull-attachment stub — sits at the rear of the frame, fixed to the
     // hardpoint. Purely structural, no moving/handheld implication.
     mountBracket: {
-        enabled: true, color: '#4a4a52',
+        enabled: true, color: '#3a4650',
         length: 0.14, width: 0.15,
         offsetX: -0.42,
         metalness: 0.5, roughness: 0.6,
     },
 
     sight: {
-        enabled: true, color: '#00ff88',
+        enabled: false, color: '#00ff88',
         width: 0.03, height: 0.035, offsetX: 0.30,
     },
 
     accentStripe: {
-        enabled: true, color: '#00ff10',
-        width: 0.03, length: 0.6, offsetY: 0.0,
+        enabled: true, color: '#00ff88',
+        width: 0.09, length: 0.6, offsetY: 0.0,
     },
 
     coreGlow: {
-        enabled: true, color: '#00ffcc',
-        size: 0.10, offsetX: 0.88, intensity: 1.2,
+        enabled: true, color: '#00ff88',
+        size: 0.3, offsetX: 0.88, intensity: 1.0,
     },
 
     // hull-mount placement — where the pair sits on the ship, mirrored on ±X
