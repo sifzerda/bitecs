@@ -37,8 +37,8 @@ import { GunMount } from '../renderers/GunMount.jsx'
 
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 // debug
-//import { GodPanel } from '../debug/GodPanel.jsx'
-import { GunPanel } from '../debug/GunPanel.jsx'
+import { GodPanel } from '../debug/GodPanel.jsx'
+//import { GunPanel } from '../debug/GunPanel.jsx'
 
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
@@ -62,7 +62,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
             <HUD paused={paused} onPause={onPause} />
 
 
-            {/*         <GodPanel />    */}
+                     <GodPanel />    
 
 
 
@@ -82,9 +82,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <Environment preset="sunset" />
 
-                    <GunPanel />
-
-
+      {/*              <GunPanel />       */}
 
                     <PlayerRenderer />
                     <DeflectRenderer />

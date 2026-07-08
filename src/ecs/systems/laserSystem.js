@@ -10,6 +10,7 @@ import { laserState } from "../../state/laserState.js"
 import { spawnSparkBurst } from "../spawn.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { activeAsteroids } from "../pools/asteroidPool"
+import { pushArc } from "../../state/arcState.js"
 
 const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
@@ -45,6 +46,8 @@ function findNearestHit(list, radius, originX, originY, dirX, dirY, maxT) {
 // Resolves a single beam along one direction, applies damage, returns hit info
 // for the renderer. dps is passed in explicitly so the ramp calculation
 // (which only applies to the single-beam case) stays out of this shared helper.
+// Also reports hitType and whether the target survived the frame's damage —
+// both needed by the arc gun's chain-lightning logic.
 function resolveBeam(originX, originY, dirX, dirY, weapon, dps, asteroids, bosses) {
 
     const asteroidHit = findNearestHit(asteroids, ASTEROID_RADIUS, originX, originY, dirX, dirY, weapon.range)
@@ -67,17 +70,20 @@ function resolveBeam(originX, originY, dirX, dirY, weapon, dps, asteroids, bosse
     const hitX = originX + dirX * hitT
     const hitY = originY + dirY * hitT
 
+    let alive = true
+
     if (hitId !== -1) {
 
         Health.current[hitId] -= dps * world.time.delta
 
         if (Health.current[hitId] <= 0) {
+            alive = false
             if (hitType === "asteroid") killAsteroid(hitId, hitX, hitY)
             else killBoss(hitId, hitX, hitY)
         }
     }
 
-    return { hitId, hitT, hitX, hitY }
+    return { hitId, hitType, hitT, hitX, hitY, alive }
 }
 
 export function laserSystem() {
@@ -120,6 +126,10 @@ export function laserSystem() {
     let primaryHitId = -1
     let primaryHitX = laserState.originX
     let primaryHitY = laserState.originY
+
+    // secondary chain hit positions collected this frame — used below to
+    // throttle spark bursts to the same cadence as the primary beam's ticks
+    const chainHitPoints = []
 
     for (let i = 0; i < beamCount; i++) {
 
@@ -169,6 +179,59 @@ export function laserSystem() {
             primaryHitX = result.hitX
             primaryHitY = result.hitY
         }
+
+        // -------------------------
+        // Arc gun — chain lightning to nearby asteroids while the primary
+        // target is alive. Runs every frame the beam is locked on, so the
+        // secondary bolts read as a continuous crackling connection.
+        // Nothing needs to explicitly "remove" the secondary arcs when the
+        // primary dies — this block just stops calling pushArc for it, and
+        // the existing short-lived arc fade (via arcState) makes them
+        // disappear almost immediately on their own.
+        // -------------------------
+
+        if (weapon.chainCount && result.hitType === "asteroid" && result.alive) {
+
+            const chainRangeSq = weapon.chainRange * weapon.chainRange
+            const candidates = []
+
+            for (let k = 0; k < asteroids.length; k++) {
+                const aid = asteroids[k]
+                if (aid === result.hitId) continue
+
+                const dx = Position.x[aid] - result.hitX
+                const dy = Position.y[aid] - result.hitY
+                const distSq = dx * dx + dy * dy
+
+                if (distSq <= chainRangeSq) {
+                    candidates.push({ id: aid, distSq })
+                }
+            }
+
+            candidates.sort((a, b) => a.distSq - b.distSq)
+
+            const chainDps = weapon.chainDamagePerSecond ?? weapon.damagePerSecond * 0.4
+            const chainLimit = Math.min(weapon.chainCount, candidates.length)
+
+            for (let k = 0; k < chainLimit; k++) {
+
+                const secId = candidates[k].id
+                const secX = Position.x[secId]
+                const secY = Position.y[secId]
+
+                Health.current[secId] -= chainDps * dt
+
+                // short-lived flickering link — refreshed every frame while
+                // the chain is active, giving a live "arcing electricity" look
+                pushArc([{ x: result.hitX, y: result.hitY }, { x: secX, y: secY }], 0.12)
+
+                if (Health.current[secId] <= 0) {
+                    killAsteroid(secId, secX, secY)
+                } else {
+                    chainHitPoints.push({ x: secX, y: secY })
+                }
+            }
+        }
     }
 
     // keep legacy single-hit fields alive for anything still reading laserState.hit/hitX/hitY
@@ -182,6 +245,9 @@ export function laserSystem() {
     if (laserState.sparkTimer <= 0) {
         for (const h of laserState.hits) {
             if (h.hit) spawnSparkBurst(h.hitX, h.hitY, { count: 6, speed: 4 })
+        }
+        for (const p of chainHitPoints) {
+            spawnSparkBurst(p.x, p.y, { count: 4, speed: 3 })
         }
         laserState.sparkTimer = weapon.tickSparkInterval
     }
