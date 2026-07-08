@@ -9,7 +9,7 @@ import {
     Rotation,
     Health,
     Lifetime,
-    PlayerTag,After I 
+    PlayerTag,
     Bullet,
     BulletTag,
     Spark,
