@@ -1,9 +1,5 @@
 // src/ecs/systems/weaponEffects.js
-// Shared weapon-effect helpers used by combatSystem, bossAISystem, and
-// playerControlSystem. Pulled out of combat.js so combat.js is only ever
-// an entry point for the collision-resolution loop, never an import
-// target for other systems — avoids the two growing into a circular mess.
-
+ 
 import { Position, Health } from "../constants/components.js"
 import { spawnSparkBurst, spawnHazard, spawnBullet } from "../spawn.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"

@@ -95,20 +95,10 @@ Post:
 - [ ] Score
 - [ ] settings, mouse control support/toggling
 - [x] modular ship parts for upgrade and modular gun parts for upgrade
-
-
-
 - [x] general game progression: n asteroid waves, then boss with new gun.
 Defeating boss drops/awards gun. Gun can be applied. N1 asteroid wave and next boss with new gun etc.
 
-
-
-
-
-
-
 //////
-
 
 Shot gun - space cowboy
 Machine gun - Military ship

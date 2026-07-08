@@ -54,7 +54,7 @@ export const WEAPONS = [
         id: 3,
         name: "missilegun",
         damage: 30,
-        category: "launcher",
+        category: "bullet",
         maxBullets: 128,
         hitRadius: 1.0,
         fireRate: 0.8,
@@ -85,7 +85,7 @@ export const WEAPONS = [
     {
         id: 5,
         name: "grenadegun",
-        category: "launcher",
+        category: "bullet",
         explosive: true,          // triggers AOE explosion instead of single-target damage
         explosionRadius: 2.5,
         damage: 25,               // full damage to everything caught in the explosion radius
@@ -198,20 +198,17 @@ export const WEAPONS = [
     {
         id: 11,
         name: "arcgun",
-        category: "bullet",
-        damage: 10,
-        chainCount: 3,        // additional asteroids it jumps to after the first hit
-        chainRange: 6,
-        maxBullets: 64,
-        hitRadius: 0.5,
-        fireRate: 0.4,
-        speed: 20,
-        lifetime: 1.0,
-        projectileCount: 1,
-        spreadAngle: 0,
-        color: "#e0d9ff",
-        glowColor: "#9966ff",
-        haloColor: "#6600ff",
+        category: "beam",
+        range: 14,
+        damagePerSecond: 35,          // primary target DPS
+        chainDamagePerSecond: 14,     // secondary targets take noticeably less
+        chainCount: 3,                 // max asteroids struck by secondary arcs
+        chainRange: 5,                  // radius around the primary target to find secondaries
+        beamWidth: 0.09,
+        tickSparkInterval: 0.06,
+        color: "#d9ffff",
+        glowColor: "#00eaff",
+        haloColor: "#0099cc",
     },
 
     {
