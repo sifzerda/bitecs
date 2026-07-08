@@ -20,7 +20,6 @@ import {
 
     HazardZone,
     HazardTag,
-
 } from "./components";
 
 export const playerQuery = () => query(world, [Position, PlayerTag])

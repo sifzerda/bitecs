@@ -131,10 +131,9 @@ some of these boss dropped weapons, some upgrades
  - [x] if add bosses, make one kind and swap out guns, probably after gun system
  - [ ] make one kind of boss behaviour and logic, and switch renderer (ship appearance) and gun type
  - [ ] also potentially later boss has satelites that orbit it and help, or shield etc
-
  - [ ] add in shockwave effect for explosive weapons
 
- - [ ] make boost exhaust a part of normal exhaust rendering i.e. if keyB pressed, 
+ - [x] make boost exhaust a part of normal exhaust rendering i.e. if keyB pressed, 
  boost exhaust is rendered
 
  - [ ] Adapt missile and lasersystem for boss use: missiles dont target player and need to not hurt boss, and laser needs to be held down not fired (boss never fires it)
@@ -144,7 +143,5 @@ some of these boss dropped weapons, some upgrades
  - [ ] see if other renderers can be modelled off exhaust renderers gpu shaders
 - [ ] especially flamerenderer, acid spray, laser, arc, hazard,, spark
 
-
-
 - [ ] add a leva menu to configure guns which can be applied to the ship and bosses
-
+ 

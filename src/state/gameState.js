@@ -16,5 +16,10 @@ export const gameState = {
     bossDone: false,        // tracks whether this wave-cycle's boss already spawned
 
     boostCooldown: 0,   // seconds remaining until boost can fire again
-    boostActive: 0
+    boostActive: 0,
+
+    deflectBufferTime: 0,
+    deflectFlashTimer: 0,
+    deflectFlashX: 0,
+    deflectFlashY: 0,
 }
