@@ -62,11 +62,11 @@ const simFragmentShader = /* glsl */
       float lifespan = 0.5 + seed * 0.5;
       float age = 1.0 - clamp(life / lifespan, 0.0, 1.0);
 
-      vec2 expand = right * engineSide * age * mix(0.9, 1.6, uBoost);
+     vec2 expand = right * engineSide * age * mix(0.9, 2.4, uBoost);
       float velFade = 1.0 - smoothstep(0.0, 0.35, age);
 
       // extra backward punch while boosting, so the jet visibly stretches out
-      vec2 boostKick = -backward * uBoost * 4.0 * velFade;
+      vec2 boostKick = -backward * uBoost * 6.0 * velFade;
 
       vec2 exhaustVel = -uShipVel * 0.85 * velFade + curl(pos) * 1.5 + expand + boostKick;
 
@@ -125,7 +125,7 @@ const renderVertexShader = /* glsl */
     vec3 pos = vec3(data.xy, 0.0);
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
 
-    float sizeBoost = mix(1.0, 1.4, uBoost);
+    float sizeBoost = mix(1.0, 2.0, uBoost);
     gl_PointSize = uSize * sizeBoost * mix(0.3, 1.0, clamp(vLife, 0.0, 1.0)) * (40.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
