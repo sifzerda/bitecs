@@ -2,7 +2,7 @@
 
 import { world } from "../constants/world.js"
 import { bossAIQuery, playerQuery, bossQuery } from "../constants/queries.js"
-import { Position, Velocity, BossAI, BULLET_OWNER } from "../constants/components.js"
+import { Position, Velocity, Rotation, BossAI, BULLET_OWNER } from "../constants/components.js"
 import { spawnBullet, spawnHazard } from "../spawn.js"
 import { getWeapon } from "../constants/weapons.js"
 import { explodeAt } from "./weaponEffects.js"
@@ -38,6 +38,13 @@ export function bossAISystem() {
             BossAI.moveTimer[id] = MOVE_INTERVAL
         }
 
+        // face the direction of travel — same convention as the player
+        // (Velocity.x = sin(-rot), Velocity.y = cos(-rot)) so both ships'
+        // rotation math stays consistent across the codebase
+        if (Velocity.x[id] !== 0 || Velocity.y[id] !== 0) {
+            Rotation[id] = -Math.atan2(Velocity.x[id], Velocity.y[id])
+        }
+
         //----------------------------------
         // Shooting: aim at player, fire on a timer
         //----------------------------------
@@ -55,18 +62,13 @@ export function bossAISystem() {
             switch (weapon.category) {
 
                 case "beam":
-                    // beams need continuous per-frame tracking, not a one-shot spawn —
-                    // a boss beam attack would need its own dedicated system, not this one
                     break
 
                 case "mine":
-                    // drops a static hazard at the boss's current position
                     spawnHazard(Position.x[id], Position.y[id], weapon.id, BULLET_OWNER.ENEMY, -1)
                     break
 
                 default:
-                    // normal bullets, missiles, cluster, arc, hazard-leaving,
-                    // frozen, etc. — anything that flows through spawnBullet already
                     spawnBullet(Position.x[id], Position.y[id], rot, weapon.id, BULLET_OWNER.ENEMY)
                     break
             }
