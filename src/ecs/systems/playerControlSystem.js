@@ -3,7 +3,7 @@
 import { playerQuery, bossQuery } from "../constants/queries.js"
 import { world } from "../constants/world.js"
 import { Position, Velocity, Rotation, BULLET_OWNER } from "../constants/components.js"
-import { spawnBullet, spawnHazard } from "../spawn.js"
+import { spawnBullet, spawnPlayerBullet, spawnHazard } from "../spawn.js"
 import { input } from "./input.js"
 import { gameState } from "../../state/gameState.js"
 import { getWeapon } from "../constants/weapons.js"
@@ -123,7 +123,7 @@ export default function playerControlSystem(shootState) {
     } else {
         shootState.timer -= dt
         if (input.fire && shootState.timer <= 0) {
-            spawnBullet(Position.x[pid], Position.y[pid], Rotation[pid], weapon.id, BULLET_OWNER.PLAYER)
+            spawnPlayerBullet(Position.x[pid], Position.y[pid], Rotation[pid], weapon.id, BULLET_OWNER.PLAYER)
             shootState.timer = weapon.fireRate
         }
     }

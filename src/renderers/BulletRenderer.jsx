@@ -10,7 +10,6 @@ import { activeBullets } from '../ecs/pools/bulletPool.js'
 const MAX_BULLETS = 512
 const BULLET_LENGTH = 0.9
 const BULLET_WIDTH = 0.18
-
 export function BulletRenderer() {
 
     const meshRef = useRef()
