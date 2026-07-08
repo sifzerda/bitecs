@@ -20,7 +20,6 @@ import {
     HazardZone,
     HazardTag,
     StatusEffect
-
 } from "./constants/components";
 import { gameState } from "../state/gameState";
 import { getWeapon } from "./constants/weapons";
@@ -29,13 +28,11 @@ import { acquireBulletEntity } from "./pools/bulletPool"
 import { acquireAsteroidEntity } from './pools/asteroidPool'
 
 // ============= helpers ============//
-
 function setPosition(id, x, y) {
     addComponent(world, id, Position)
     Position.x[id] = x
     Position.y[id] = y
 }
-
 function setHealth(id, hp) {
     addComponent(world, id, Health)
     Health.current[id] = hp
@@ -43,7 +40,6 @@ function setHealth(id, hp) {
 }
 
 // ============= Player Ship ============//
-
 export function spawnPlayer(x, y) {
 
     const id = addEntity(world)
@@ -59,18 +55,26 @@ export function spawnPlayer(x, y) {
 
 // ============= Bullets ============//
 
-const MUZZLE_OFFSET = 0.9
-
-export function spawnBullet(x, y, rot, weaponId = 0, owner) {
+const MUZZLE_OFFSET = 0.9 
+const GUN_GAP = 0.35 // distance between twin guns
+export function spawnBullet(x, y, rot, weaponId = 0, owner, gapOffset = 0) {
 
     //const bullet = acquireBullet();
 
     const weapon = getWeapon(weaponId)
     if (weapon.category === "beam" || weapon.category === "thrower") return []
 
-    // push spawn point forward from ship center to the nose, along facing direction
-    const originX = x + Math.sin(-rot) * MUZZLE_OFFSET
-    const originY = y + Math.cos(-rot) * MUZZLE_OFFSET
+    // forward direction (ship facing)
+    const fwdX = Math.sin(-rot)
+    const fwdY = Math.cos(-rot)
+
+    // perpendicular direction (for left/right gun offset)
+    const perpX = Math.cos(-rot)
+    const perpY = -Math.sin(-rot)
+
+    // push spawn point forward from ship center to the nose, then out to the gun
+    const originX = x + fwdX * MUZZLE_OFFSET + perpX * gapOffset
+    const originY = y + fwdY * MUZZLE_OFFSET + perpY * gapOffset
 
     const count = weapon.projectileCount
     const spread = weapon.spreadAngle
@@ -86,8 +90,6 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
         const shotRot = rot + offset
         const id = acquireBulletEntity()
 
-        // Pool exhausted.
-        // (Should never happen with a pool of ~2000 unless something has gone wrong.)
         if (id === -1)
             continue
 
@@ -103,12 +105,7 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
         Bullet.bounces[id] = weapon.maxBounces ?? 0
 
         const color = new THREE.Color(weapon.glowColor ?? weapon.color)
-
-        color.offsetHSL(
-            0,
-            0.30,  // saturation boost
-            0.00   // slight brightness boost
-        )
+        color.offsetHSL(0, 0.30, 0.00)
 
         Bullet.colorR[id] = color.r
         Bullet.colorG[id] = color.g
@@ -118,6 +115,14 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner) {
     }
 
     return ids
+}
+
+// convenience wrapper: fires both guns for weapons that should be twin-mounted
+export function spawnPlayerBullet(x, y, rot, weaponId = 0, owner) {
+    return [
+        ...spawnBullet(x, y, rot, weaponId, owner, GUN_GAP),
+        ...spawnBullet(x, y, rot, weaponId, owner, -GUN_GAP),
+    ]
 }
 
 // ============= Hazards (clouds, puddles, attached DoT) ============//
