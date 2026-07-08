@@ -241,6 +241,7 @@ export function spawnBoss(weaponId) {
 
     addComponent(world, id, Position)
     addComponent(world, id, Velocity)
+    addComponent(world, id, Rotation)
     addComponent(world, id, Health)
     addComponent(world, id, BossTag)
     addComponent(world, id, BossAI)
@@ -251,20 +252,20 @@ export function spawnBoss(weaponId) {
 
     Velocity.x[id] = 0
     Velocity.y[id] = 0
+    Rotation[id] = 0
 
     Health.current[id] = 300
     Health.max[id] = 300
 
     StatusEffect.frozen[id] = 0
 
-    BossAI.moveTimer[id] = 0     // pick a direction immediately
-    BossAI.shootTimer[id] = 1    // small delay before first shot
+    BossAI.moveTimer[id] = 0
+    BossAI.shootTimer[id] = 1
     BossAI.weapon[id] = weaponId
-    BossAI.beamCycleTimer[id] = 3.0   // starts in the "on" phase
+    BossAI.beamCycleTimer[id] = 3.0
     BossAI.beamActive[id] = 1
 
     gameState.bossAlive = true
 
     return id
 }
-

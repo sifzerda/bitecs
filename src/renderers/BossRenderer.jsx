@@ -6,7 +6,7 @@ import { useControls, folder } from "leva"
 import * as THREE from "three"
 import { bossQuery } from "../ecs/constants/queries.js"
 import { world } from "../ecs/constants/world.js"
-import { Position, Health } from "../ecs/constants/components.js"
+import { Position, Health, Rotation } from "../ecs/constants/components.js"
 
 const MAX_BOSSES = 4
 const BAR_WIDTH = 3.0
@@ -667,7 +667,7 @@ export function BossRenderer() {
 
         // ============================================ 
 
-        for (let i = 0; i < MAX_BOSSES; i++) {
+       for (let i = 0; i < MAX_BOSSES; i++) {
             const group = groupRefs[i].current
             if (!group) continue
 
@@ -675,6 +675,7 @@ export function BossRenderer() {
                 const eid = bosses[i]
                 group.visible = true
                 group.position.set(Position.x[eid], Position.y[eid], 0)
+                group.rotation.set(0, 0, Rotation[eid])
             } else {
                 group.visible = false
             }
