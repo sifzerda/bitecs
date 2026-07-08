@@ -30,7 +30,7 @@ export const WEAPONS = [
         projectileCount: 3,
         spreadAngle: 0.20,
         color: "#fff2b0",
-        glowColor: "#ffaa33",
+        glowColor: '#ffe605',
         haloColor: "#ff8800",
     },
     {

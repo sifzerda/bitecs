@@ -1,8 +1,7 @@
 // src/screens/PlayScreen.jsx
 
 import { useFrame } from '@react-three/fiber'
-import {
-    EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
+import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
     // ShockWave,
     // Glitch
 } from '@react-three/postprocessing';
@@ -70,65 +69,65 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     gl={{ antialias: false, powerPreference: "high-performance" }}
                     dpr={[1, 2]}>
 
-                    <GameLoop 
+                <GameLoop 
                     keysRef={keysRef} 
                     paused={paused} />
 
-                    <ambientLight 
+                <ambientLight 
                     intensity={1.1} />
-                    <directionalLight 
+                <directionalLight 
                     position={[5, 8, 6]} 
                     intensity={2.0} />
-                    <pointLight 
+                <pointLight 
                     position={[0, 0, 6]} 
                     intensity={4} 
                     color="#ffffff" />
 
-                    <Environment preset="sunset" />
+                <Environment preset="sunset" />
 
       {/*              <GunPanel />       */}
 
-                    <PlayerRenderer />
-                    <DeflectRenderer />
+                <PlayerRenderer />
+                <DeflectRenderer />
                                         <GunMount />
-                    <ExhaustRenderer />
-                    <AsteroidRenderer />
-                    <BulletRenderer />
+                <ExhaustRenderer />
+                <AsteroidRenderer />
+                <BulletRenderer />
 
-                    <MissileRenderer />
-                    <LaserRenderer />
-                    <FlameRenderer />
-                    <HazardRenderer />
+                <MissileRenderer />
+                <LaserRenderer />
+                <FlameRenderer />
+                <HazardRenderer />
 
-                    <SparkRenderer />
+                <SparkRenderer />
 
-                    <BossRenderer />
-                    <BossLaserRenderer />
+                <BossRenderer />
+                <BossLaserRenderer />
 
-                    <GunRenderer />
+                <GunRenderer />
 
 
-                    <EffectComposer multisampling={0}>
+                <EffectComposer multisampling={0}>
 
-                        <Bloom
+                    <Bloom
                             intensity={1.2}
                             luminanceThreshold={0.4}
                             luminanceSmoothing={0.7}
                             mipmapBlur
                         />
 
-                        {/* Slight RGB split near screen edges */}
-                        <ChromaticAberration 
+                       
+               {/*      <ChromaticAberration 
                         blendFunction={BlendFunction.NORMAL} 
-                        offset={[0.0015, 0.001]} />
+                        offset={[0.0015, 0.001]} />      */}
 
                         {/* Darken screen edges */}
-                        <Vignette 
+                    <Vignette 
                         eskil={false} 
                         offset={0.25} 
                         darkness={0.45} />
 
-                        <Noise 
+                    <Noise 
                         opacity={0.02} />
                         {/* postprocessing */}
                     </EffectComposer>

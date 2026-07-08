@@ -135,3 +135,6 @@ some of these boss dropped weapons, some upgrades
 
 - [ ] add a leva menu to configure guns which can be applied to the ship and bosses
  
+
+
+ 
