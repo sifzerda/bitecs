@@ -13,8 +13,8 @@ const PARTICLE_SIZE = 128 // 128x128 = 16,384 particles
 // GPGPU shaders
 // ---------------------------------------------------------------------------
 
-const simVertexShader = /* glsl */ 
-`
+const simVertexShader = /* glsl */
+  `
   varying vec2 vUv;
   void main() {
     vUv = uv;
@@ -22,10 +22,9 @@ const simVertexShader = /* glsl */
   }
 `
 
-const simFragmentShader = /* glsl */ 
-`
+const simFragmentShader = /* glsl */
+  `
   precision highp float;
-
   varying vec2 vUv;
 
   uniform sampler2D uPosTex;
@@ -49,7 +48,6 @@ const simFragmentShader = /* glsl */
     float life = data.z;
     float seed = data.w;
 
-    // which nozzle this particle belongs to — fixed for its whole lifetime
     float engineSide = seed < 0.5 ? -1.0 : 1.0;
 
     vec2 backward = vec2(-sin(uShipRot), cos(uShipRot));
@@ -60,13 +58,9 @@ const simFragmentShader = /* glsl */
       life -= uDelta;
 
       float lifespan = 0.5 + seed * 0.5;
-      float age = 1.0 - clamp(life / lifespan, 0.0, 1.0); // 0 = just spawned, 1 = about to die
+      float age = 1.0 - clamp(life / lifespan, 0.0, 1.0); 
 
-      // gentle outward flare that grows the longer the particle has been alive
       vec2 expand = right * engineSide * age * 0.9;
-
-      // ship-velocity kick fades out fast so particles don't keep getting
-      // dragged along with the ship for their whole lifetime
       float velFade = 1.0 - smoothstep(0.0, 0.35, age);
       vec2 exhaustVel = -uShipVel * 0.85 * velFade + curl(pos) * 1.5 + expand;
 
@@ -83,9 +77,7 @@ const simFragmentShader = /* glsl */
         if (uEmitting > 0.5) {
 
           float exhaustOffset = -0.70;
-          float engineGap = 0.15;        // matches GUN_GAP from spawn.js
-
-          // tiny in-nozzle scatter, decorrelated from the seed used for engineSide
+          float engineGap = 0.15;       
           float subSeed = fract(seed * 91.345);
           float nozzleJitter = (subSeed - 0.5) * 0.06;
 
@@ -103,8 +95,8 @@ const simFragmentShader = /* glsl */
   }
 `
 
-const renderVertexShader = /* glsl */ 
-`
+const renderVertexShader = /* glsl */
+  `
   attribute vec2 particleUv;
   varying float vLife;
   varying float vAge;
@@ -128,8 +120,8 @@ const renderVertexShader = /* glsl */
   }
 `
 
-const renderFragmentShader = /* glsl */ 
-`
+const renderFragmentShader = /* glsl */
+  `
   precision highp float;
   varying float vLife;
   varying float vAge;
@@ -162,8 +154,8 @@ function createInitialPosTexture(size) {
   for (let i = 0; i < size * size; i++) {
     data[i * 4 + 0] = 0
     data[i * 4 + 1] = 0
-    data[i * 4 + 2] = -Math.random() * 0.5   // dormant, staggered countdown
-    data[i * 4 + 3] = Math.random()          // seed
+    data[i * 4 + 2] = -Math.random() * 0.5
+    data[i * 4 + 3] = Math.random()
   }
 
   const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat, THREE.FloatType)
@@ -290,9 +282,9 @@ export function ExhaustRenderer({ size = 4 }) {
   })
 
   return (
-    <points geometry={pointsGeometry} 
-    material={renderMaterial} 
-    frustumCulled={false}
-     />
+    <points geometry={pointsGeometry}
+      material={renderMaterial}
+      frustumCulled={false}
+    />
   )
 }
