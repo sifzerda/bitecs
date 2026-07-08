@@ -8,17 +8,11 @@ import { laserState } from '../state/laserState.js'
 import { gameState } from '../state/gameState.js'
 import { getWeapon } from '../ecs/constants/weapons.js'
 
-const MAX_BEAMS = 3   // matches the highest beamCount across all beam weapons (prism beam)
-
+const MAX_BEAMS = 3
 export function LaserRenderer() {
 
-    const beamRefs = useRef(
-        Array.from({ length: MAX_BEAMS }, () => createRef())
-    )
-
-    const jagState = useRef(
-        Array.from({ length: MAX_BEAMS }, () => ({ timer: 0, seed: Math.random() }))
-    )
+    const beamRefs = useRef(Array.from({ length: MAX_BEAMS }, () => createRef()))
+    const jagState = useRef(Array.from({ length: MAX_BEAMS }, () => ({ timer: 0, seed: Math.random() })))
 
     const geometry = useMemo(() => {
         const geo = new THREE.PlaneGeometry(1, 1)
@@ -28,7 +22,6 @@ export function LaserRenderer() {
 
     const materials = useMemo(() => (
         Array.from({ length: MAX_BEAMS }, () => new THREE.ShaderMaterial({
-
             transparent: true,
             depthWrite: false,
             depthTest: false,
@@ -44,7 +37,7 @@ export function LaserRenderer() {
                 uLength: { value: 1 },
                 uJagged: { value: 0 },
                 uSeed: { value: 0 },
-                uThicknessRatio: { value: 0.1 }, // beamWidth / containerWidth — keeps line thickness constant in world space regardless of how wide the sway container is
+                uThicknessRatio: { value: 0.1 },
             },
 
             vertexShader: /* glsl */`
@@ -73,10 +66,8 @@ float hash1(vec2 p){
 }
 
 float boltPath(float y, float seed){
-
 float startFade = smoothstep(0.0, 0.06, y);
 
- // coarse layer — overall bolt shape
     float coarseCount = 7.0;
     float coarsePos = y * coarseCount;
     float coarseIndex = floor(coarsePos);
@@ -85,7 +76,6 @@ float startFade = smoothstep(0.0, 0.06, y);
     float cb = (hash1(vec2(coarseIndex + 1.0, seed * 47.0)) - 0.5) * 0.30;
     float coarse = mix(ca, cb, coarseFrac);
 
-    // fine layer — dense jagged detail riding on top of the coarse shape
     float fineCount = 40.0;
     float finePos = y * fineCount;
     float fineIndex = floor(finePos);
@@ -112,7 +102,6 @@ void main(){
         float coreThresh = uThicknessRatio * 0.4;
         float glowK = 0.70 / max(uThicknessRatio, 0.001);
         float haloK = glowK * 0.5;
-
         float mainPath = boltPath(y, uSeed);
         float wMain = abs(x - mainPath);
 
@@ -124,11 +113,9 @@ void main(){
 
             float fi = float(f);
             float fSeed = uSeed * (11.0 + fi * 6.3) + fi * 3.7;
-
             float forkStart = 0.10 + hash1(vec2(fSeed, 1.0)) * 0.55;
-            float forkLen   = 0.18 + hash1(vec2(fSeed, 11.0)) * 0.30;
-            float forkDir   = (hash1(vec2(fSeed, 22.0)) - 0.5) * 2.0;
-
+            float forkLen = 0.18 + hash1(vec2(fSeed, 11.0)) * 0.30;
+            float forkDir = (hash1(vec2(fSeed, 22.0)) - 0.5) * 2.0;
             float t = clamp((y - forkStart) / max(forkLen, 0.001), 0.0, 1.0);
             float forkPath = mainPath + forkDir * t * 0.5;
 
@@ -209,9 +196,6 @@ void main(){
 
             let width
             if (isJagged) {
-                // container scales with beam length so the zigzag sway is a
-                // proportion of the bolt's total length, matching real lightning —
-                // floored so point-blank shots still have room to sway
                 width = Math.max(length * 0.30, weapon.beamWidth * 10)
                 material.uniforms.uThicknessRatio.value = weapon.beamWidth / width
             } else {

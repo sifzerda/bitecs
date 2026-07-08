@@ -10,8 +10,6 @@ export const gameState = {
     wave: 0,              // starts at 0, first asteroid wave becomes 1
     asteroidsRemaining: 0,
     
-
-
     bossAlive: false,
     bossDone: false,        // tracks whether this wave-cycle's boss already spawned
 
