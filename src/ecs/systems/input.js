@@ -9,7 +9,9 @@ export const input = {
     thrust: false,
     brake: false,
     fire: false,
-    boost: false
+    boost: false,
+    deflect: false,
+    deflectOn: false,
 }
 
 const bindings = {
@@ -23,7 +25,8 @@ const bindings = {
     KeyS: "brake",
     Space: "fire",
     Spacebar: "fire",
-    KeyB: "boost"
+    KeyB: "boost",
+    KeyX: "deflect",
 }
 
 let initialized = false
@@ -46,8 +49,13 @@ export function initializeInput(onPause) {
         const key = e.code || e.key
         const action = bindings[key]
 
-        if (action) {
+         if (action) {
             input[action] = true
+
+            // edge-triggered tap flag — ignores OS key-repeat while held
+            if (action === "deflect" && !e.repeat) {
+                input.deflectOn = true
+            }
         }
 
         if (e.code === "KeyP") {

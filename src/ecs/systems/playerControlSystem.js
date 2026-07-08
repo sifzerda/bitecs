@@ -21,6 +21,7 @@ const BOOST_MAX_SPEED = 40
 export const BOOST_DURATION = 0.35
 export const BOOST_COOLDOWN = 2.0
 
+const DEFLECT_BUFFER = 0.6
 
 export default function playerControlSystem(shootState) {
 
@@ -43,7 +44,7 @@ export default function playerControlSystem(shootState) {
     // Thrust
     //----------------------------------
 
- if (input.thrust) {
+    if (input.thrust) {
         Velocity.x[pid] += Math.sin(-Rotation[pid]) * THRUST * dt
         Velocity.y[pid] += Math.cos(-Rotation[pid]) * THRUST * dt
     }
@@ -76,6 +77,18 @@ export default function playerControlSystem(shootState) {
         Velocity.x[pid] += Math.sin(-Rotation[pid]) * BOOST_THRUST * dt
         Velocity.y[pid] += Math.cos(-Rotation[pid]) * BOOST_THRUST * dt
     }
+
+    //----------------------------------
+    // Deflect
+    //----------------------------------
+
+gameState.deflectBufferTime = Math.max(0, gameState.deflectBufferTime - dt)
+gameState.deflectFlashTimer = Math.max(0, gameState.deflectFlashTimer - dt)
+
+if (input.deflectOn) {
+    gameState.deflectBufferTime = DEFLECT_BUFFER
+    input.deflectOn = false
+}
 
     //----------------------------------
     // Clamp speed
