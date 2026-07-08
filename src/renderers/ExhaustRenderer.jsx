@@ -142,10 +142,11 @@ const renderFragmentShader = /* glsl */
 
     float alpha = smoothstep(0.5, 0.0, d) * clamp(vLife, 0.0, 1.0) * 0.15;
 
-    vec3 fireColor  = vec3(1.0, 0.25, 0.05);  // hot fiery yellow at birth
-    vec3 smokeColor = vec3(0.1, 0.6, 0.9);  // cyan "smoke" as it ages
-
-    vec3 color = mix(fireColor, smokeColor, smoothstep(0.0, 1.0, vAge));
+    vec3 hotCore   = vec3(1.0, 0.15, 0.08); 
+    vec3 fireColor = vec3(1.0, 0.2, 0.05);   
+    vec3 smokeColor = vec3(0.02, 0.75, 1.0);
+    vec3 color = mix(hotCore, fireColor, smoothstep(0.0, 0.15, vAge));
+    color = mix(color, smokeColor, smoothstep(0.15, 1.0, vAge));
 
     gl_FragColor = vec4(color, alpha);
   }
