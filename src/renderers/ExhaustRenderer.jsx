@@ -7,7 +7,7 @@ import { Position, Velocity, Rotation } from '../ecs/constants/components.js'
 import { playerQuery } from '../ecs/constants/queries.js'
 import { input } from '../ecs/systems/input.js'
 
-const PARTICLE_SIZE = 128 // 128x128 = 16,384 particles
+const PARTICLE_SIZE = 128  
 
 // ---------------------------------------------------------------------------
 // GPGPU shaders
