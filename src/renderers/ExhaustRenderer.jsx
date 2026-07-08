@@ -46,18 +46,33 @@ const simFragmentShader = /* glsl */
     vec4 data = texture2D(uPosTex, vUv);
 
     vec2 pos = data.xy;
-    float life = data.z; // > 0: actively flying. <= 0: dormant, counting up toward 0.
+    float life = data.z;
     float seed = data.w;
 
+    // which nozzle this particle belongs to — fixed for its whole lifetime
+    float engineSide = seed < 0.5 ? -1.0 : 1.0;
+
+    vec2 backward = vec2(-sin(uShipRot), cos(uShipRot));
+    vec2 right = vec2(cos(uShipRot), sin(uShipRot));
+
     if (life > 0.0) {
-    
+
       life -= uDelta;
 
-      vec2 exhaustVel = -uShipVel * 0.85 + curl(pos) * 1.5;
+      float lifespan = 0.5 + seed * 0.5;
+      float age = 1.0 - clamp(life / lifespan, 0.0, 1.0); // 0 = just spawned, 1 = about to die
+
+      // gentle outward flare that grows the longer the particle has been alive
+      vec2 expand = right * engineSide * age * 0.9;
+
+      // ship-velocity kick fades out fast so particles don't keep getting
+      // dragged along with the ship for their whole lifetime
+      float velFade = 1.0 - smoothstep(0.0, 0.35, age);
+      vec2 exhaustVel = -uShipVel * 0.85 * velFade + curl(pos) * 1.5 + expand;
+
       pos += exhaustVel * uDelta;
 
       if (life <= 0.0) {
-      
         life = -(0.05 + seed * 0.35);
       }
     } else {
@@ -67,15 +82,16 @@ const simFragmentShader = /* glsl */
       if (life >= 0.0) {
         if (uEmitting > 0.5) {
 
-          vec2 jitter = vec2(sin(seed * 78.233), cos(seed * 45.164)) * 0.05;
-float exhaustOffset = -0.70; 
-float engineSpread = 0.30; 
+          float exhaustOffset = -0.70;
+          float engineGap = 0.15;        // matches GUN_GAP from spawn.js
 
-vec2 backward = vec2(-sin(uShipRot), cos(uShipRot));
-vec2 right = vec2(cos(uShipRot), sin(uShipRot));
-float engineOffset = sin(seed * 20.0) * engineSpread;
+          // tiny in-nozzle scatter, decorrelated from the seed used for engineSide
+          float subSeed = fract(seed * 91.345);
+          float nozzleJitter = (subSeed - 0.5) * 0.06;
 
-pos = uShipPos + backward * exhaustOffset + right * engineOffset + jitter;
+          float engineOffset = engineSide * engineGap + nozzleJitter;
+
+          pos = uShipPos + backward * exhaustOffset + right * engineOffset;
           life = 0.5 + seed * 0.5;
         } else {
           life = -(0.05 + seed * 0.90);
