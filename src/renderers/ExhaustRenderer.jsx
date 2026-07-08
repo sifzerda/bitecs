@@ -6,8 +6,9 @@ import * as THREE from 'three'
 import { Position, Velocity, Rotation } from '../ecs/constants/components.js'
 import { playerQuery } from '../ecs/constants/queries.js'
 import { input } from '../ecs/systems/input.js'
+import { gameState } from '../state/gameState.js'
 
-const PARTICLE_SIZE = 128  
+const PARTICLE_SIZE = 128
 
 // ---------------------------------------------------------------------------
 // GPGPU shaders
@@ -34,6 +35,7 @@ const simFragmentShader = /* glsl */
   uniform float uDelta;
   uniform float uTime;
   uniform float uEmitting;
+  uniform float uBoost;
 
   vec2 curl(vec2 p) {
     float n1 = sin(p.y * 0.05 + uTime * 1.5);
@@ -58,11 +60,15 @@ const simFragmentShader = /* glsl */
       life -= uDelta;
 
       float lifespan = 0.5 + seed * 0.5;
-      float age = 1.0 - clamp(life / lifespan, 0.0, 1.0); 
+      float age = 1.0 - clamp(life / lifespan, 0.0, 1.0);
 
-      vec2 expand = right * engineSide * age * 0.9;
+      vec2 expand = right * engineSide * age * mix(0.9, 1.6, uBoost);
       float velFade = 1.0 - smoothstep(0.0, 0.35, age);
-      vec2 exhaustVel = -uShipVel * 0.85 * velFade + curl(pos) * 1.5 + expand;
+
+      // extra backward punch while boosting, so the jet visibly stretches out
+      vec2 boostKick = -backward * uBoost * 4.0 * velFade;
+
+      vec2 exhaustVel = -uShipVel * 0.85 * velFade + curl(pos) * 1.5 + expand + boostKick;
 
       pos += exhaustVel * uDelta;
 
@@ -77,14 +83,17 @@ const simFragmentShader = /* glsl */
         if (uEmitting > 0.5) {
 
           float exhaustOffset = -0.70;
-          float engineGap = 0.15;       
+          float engineGap = 0.15;
           float subSeed = fract(seed * 91.345);
           float nozzleJitter = (subSeed - 0.5) * 0.06;
 
           float engineOffset = engineSide * engineGap + nozzleJitter;
 
           pos = uShipPos + backward * exhaustOffset + right * engineOffset;
-          life = 0.5 + seed * 0.5;
+
+          // slightly shorter-lived particles during boost — snappier, faster stream
+          float lifeMix = mix(1.0, 0.75, uBoost);
+          life = (0.5 + seed * 0.5) * lifeMix;
         } else {
           life = -(0.05 + seed * 0.90);
         }
@@ -103,6 +112,7 @@ const renderVertexShader = /* glsl */
 
   uniform sampler2D uPosTex;
   uniform float uSize;
+  uniform float uBoost;
 
   void main() {
     vec4 data = texture2D(uPosTex, particleUv);
@@ -115,7 +125,8 @@ const renderVertexShader = /* glsl */
     vec3 pos = vec3(data.xy, 0.0);
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
 
-    gl_PointSize = uSize * mix(0.3, 1.0, clamp(vLife, 0.0, 1.0)) * (40.0 / -mvPosition.z);
+    float sizeBoost = mix(1.0, 1.4, uBoost);
+    gl_PointSize = uSize * sizeBoost * mix(0.3, 1.0, clamp(vLife, 0.0, 1.0)) * (40.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
 `
@@ -125,6 +136,7 @@ const renderFragmentShader = /* glsl */
   precision highp float;
   varying float vLife;
   varying float vAge;
+  uniform float uBoost;
 
   void main() {
     if (vLife <= 0.0) discard;
@@ -134,11 +146,16 @@ const renderFragmentShader = /* glsl */
 
     float alpha = smoothstep(0.5, 0.0, d) * clamp(vLife, 0.0, 1.0) * 0.15;
 
-    vec3 hotCore   = vec3(1.0, 0.15, 0.08); 
-    vec3 fireColor = vec3(1.0, 0.2, 0.05);   
+    vec3 hotCore   = vec3(1.0, 0.15, 0.08);
+    vec3 fireColor = vec3(1.0, 0.2, 0.05);
     vec3 smokeColor = vec3(0.02, 0.75, 1.0);
     vec3 color = mix(hotCore, fireColor, smoothstep(0.0, 0.15, vAge));
     color = mix(color, smokeColor, smoothstep(0.15, 1.0, vAge));
+
+    // boost override — whole stream shifts toward an intense saturated blue
+    vec3 boostColor = vec3(0.05, 0.25, 1.0);
+    color = mix(color, boostColor, uBoost);
+    alpha *= mix(1.0, 1.6, uBoost);
 
     gl_FragColor = vec4(color, alpha);
   }
@@ -195,6 +212,7 @@ export function ExhaustRenderer({ size = 4 }) {
   const otherTarget = useRef(rtB)
 
   const playerId = useRef(-1)
+  const boostSmooth = useRef(0)
 
   const simMaterial = useMemo(() => new THREE.ShaderMaterial({
     uniforms: {
@@ -205,6 +223,7 @@ export function ExhaustRenderer({ size = 4 }) {
       uDelta: { value: 0 },
       uTime: { value: 0 },
       uEmitting: { value: 0 },
+      uBoost: { value: 0 },
     },
     vertexShader: simVertexShader,
     fragmentShader: simFragmentShader,
@@ -219,6 +238,7 @@ export function ExhaustRenderer({ size = 4 }) {
     uniforms: {
       uPosTex: { value: null },
       uSize: { value: size },
+      uBoost: { value: 0 },
     },
     vertexShader: renderVertexShader,
     fragmentShader: renderFragmentShader,
@@ -259,6 +279,9 @@ export function ExhaustRenderer({ size = 4 }) {
 
     const pid = playerId.current
 
+    const boostTarget = gameState.boostActive > 0 ? 1 : 0
+    boostSmooth.current = THREE.MathUtils.lerp(boostSmooth.current, boostTarget, 0.2)
+
     simMaterial.uniforms.uPosTex.value = readTexture.current
     simMaterial.uniforms.uDelta.value = Math.min(delta, 0.1)
     simMaterial.uniforms.uTime.value = state.clock.elapsedTime
@@ -266,6 +289,7 @@ export function ExhaustRenderer({ size = 4 }) {
     simMaterial.uniforms.uShipVel.value.set(Velocity.x[pid], Velocity.y[pid])
     simMaterial.uniforms.uShipRot.value = Rotation[pid]
     simMaterial.uniforms.uEmitting.value = input.thrust ? 1 : 0
+    simMaterial.uniforms.uBoost.value = boostSmooth.current
 
     const prevTarget = gl.getRenderTarget()
 
@@ -275,6 +299,7 @@ export function ExhaustRenderer({ size = 4 }) {
 
     readTexture.current = writeTarget.current.texture
     renderMaterial.uniforms.uPosTex.value = readTexture.current
+    renderMaterial.uniforms.uBoost.value = boostSmooth.current
 
     const tmp = writeTarget.current
     writeTarget.current = otherTarget.current
