@@ -64,12 +64,8 @@ const simFragmentShader = /* glsl */
 
      vec2 expand = right * engineSide * age * mix(0.9, 2.4, uBoost);
       float velFade = 1.0 - smoothstep(0.0, 0.35, age);
-
-      // extra backward punch while boosting, so the jet visibly stretches out
       vec2 boostKick = -backward * uBoost * 6.0 * velFade;
-
       vec2 exhaustVel = -uShipVel * 0.85 * velFade + curl(pos) * 1.5 + expand + boostKick;
-
       pos += exhaustVel * uDelta;
 
       if (life <= 0.0) {
@@ -86,13 +82,10 @@ const simFragmentShader = /* glsl */
           float engineGap = 0.15;
           float subSeed = fract(seed * 91.345);
           float nozzleJitter = (subSeed - 0.5) * 0.06;
-
           float engineOffset = engineSide * engineGap + nozzleJitter;
-
           pos = uShipPos + backward * exhaustOffset + right * engineOffset;
-
-          // slightly shorter-lived particles during boost — snappier, faster stream
           float lifeMix = mix(1.0, 0.75, uBoost);
+
           life = (0.5 + seed * 0.5) * lifeMix;
         } else {
           life = -(0.05 + seed * 0.90);
@@ -152,7 +145,6 @@ const renderFragmentShader = /* glsl */
     vec3 color = mix(hotCore, fireColor, smoothstep(0.0, 0.15, vAge));
     color = mix(color, smokeColor, smoothstep(0.15, 1.0, vAge));
 
-    // boost override — whole stream shifts toward an intense saturated blue
     vec3 boostColor = vec3(0.05, 0.25, 1.0);
     color = mix(color, boostColor, uBoost);
     alpha *= mix(1.0, 1.6, uBoost);
