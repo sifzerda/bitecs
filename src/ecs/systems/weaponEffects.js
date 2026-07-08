@@ -4,7 +4,6 @@ import { Position, Health } from "../constants/components.js"
 import { spawnSparkBurst, spawnHazard, spawnBullet } from "../spawn.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { getWeapon } from "../constants/weapons.js"
-import { pushArc } from "../../state/arcState.js"
 
 // -------------------------
 // Grenade launcher / any AOE explosive weapon

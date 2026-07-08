@@ -23,7 +23,6 @@ import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
 import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
 import { MissileRenderer } from '../renderers/MissileRenderer.jsx'
 import { LaserRenderer } from '../renderers/LaserRenderer.jsx'
-import { ArcRenderer } from '../renderers/ArcRenderer.jsx'
 import { FlameRenderer } from '../renderers/FlameRenderer.jsx'
 import { HazardRenderer } from '../renderers/HazardRenderer.jsx'
 import { DeflectRenderer } from '../renderers/DeflectRenderer.jsx'
@@ -93,7 +92,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <MissileRenderer />
                     <LaserRenderer />
-                    <ArcRenderer />
                     <FlameRenderer />
                     <HazardRenderer />
 

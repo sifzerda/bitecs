@@ -28,7 +28,6 @@ export function gameLoop(shootState) {
     boundsSystem()
     waveSystem()
 
-
       // Rebuild spatial grid using final positions
   //clearSpatialGrid();
 

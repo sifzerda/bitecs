@@ -10,7 +10,6 @@ import { laserState } from "../../state/laserState.js"
 import { spawnSparkBurst } from "../spawn.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { activeAsteroids } from "../pools/asteroidPool"
-import { pushArc } from "../../state/arcState.js"
 
 const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
@@ -180,14 +179,6 @@ export function laserSystem() {
             primaryHitY = result.hitY
         }
 
-        // -------------------------
-        // Arc gun — chain lightning to nearby asteroids while the primary
-        // target is alive. Runs every frame the beam is locked on, so the
-        // secondary bolts read as a continuous crackling connection.
-        // Nothing needs to explicitly "remove" the secondary arcs when the
-        // primary dies — this block just stops calling pushArc for it, and
-        // the existing short-lived arc fade (via arcState) makes them
-        // disappear almost immediately on their own.
         // -------------------------
 
         if (weapon.chainCount && result.hitType === "asteroid" && result.alive) {
