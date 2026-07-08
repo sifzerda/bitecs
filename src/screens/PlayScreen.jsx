@@ -60,10 +60,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
             <HUD paused={paused} onPause={onPause} />
 
-
                      <GodPanel />    
-
-
 
             <div className="relative flex-1 px-4">
 
@@ -73,11 +70,19 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     gl={{ antialias: false, powerPreference: "high-performance" }}
                     dpr={[1, 2]}>
 
-                    <GameLoop keysRef={keysRef} paused={paused} />
+                    <GameLoop 
+                    keysRef={keysRef} 
+                    paused={paused} />
 
-                    <ambientLight intensity={1.1} />
-                    <directionalLight position={[5, 8, 6]} intensity={2.0} />
-                    <pointLight position={[0, 0, 6]} intensity={4} color="#ffffff" />
+                    <ambientLight 
+                    intensity={1.1} />
+                    <directionalLight 
+                    position={[5, 8, 6]} 
+                    intensity={2.0} />
+                    <pointLight 
+                    position={[0, 0, 6]} 
+                    intensity={4} 
+                    color="#ffffff" />
 
                     <Environment preset="sunset" />
 
@@ -113,12 +118,18 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                         />
 
                         {/* Slight RGB split near screen edges */}
-                        <ChromaticAberration blendFunction={BlendFunction.NORMAL} offset={[0.0015, 0.001]} />
+                        <ChromaticAberration 
+                        blendFunction={BlendFunction.NORMAL} 
+                        offset={[0.0015, 0.001]} />
 
                         {/* Darken screen edges */}
-                        <Vignette eskil={false} offset={0.25} darkness={0.45} />
+                        <Vignette 
+                        eskil={false} 
+                        offset={0.25} 
+                        darkness={0.45} />
 
-                        <Noise opacity={0.02} />
+                        <Noise 
+                        opacity={0.02} />
                         {/* postprocessing */}
                     </EffectComposer>
 
