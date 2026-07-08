@@ -199,16 +199,17 @@ export const WEAPONS = [
         id: 11,
         name: "arcgun",
         category: "beam",
+        jagged: true,
         range: 14,
-        damagePerSecond: 35,          // primary target DPS
-        chainDamagePerSecond: 14,     // secondary targets take noticeably less
-        chainCount: 3,                 // max asteroids struck by secondary arcs
-        chainRange: 5,                  // radius around the primary target to find secondaries
+        damagePerSecond: 35,
+        chainDamagePerSecond: 14,
+        chainCount: 3,
+        chainRange: 5,
         beamWidth: 0.09,
         tickSparkInterval: 0.06,
-        color: "#d9ffff",
-        glowColor: "#00eaff",
-        haloColor: "#0099cc",
+        color: "#fffbe8",    
+        glowColor: "#1F51FF",   
+        haloColor: "#0818A8",   
     },
 
     {
