@@ -234,7 +234,6 @@ export function spawnAsteroid(x, y) {
 }
 
 // ============= Boss ============//
-
 export function spawnBoss(weaponId) {
 
     const id = addEntity(world)
