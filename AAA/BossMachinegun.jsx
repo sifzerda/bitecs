@@ -1,6 +1,6 @@
 // src/renderers/BossRenderer.jsx
 
-//RAMBO: Space Copter
+//RAMBO the Space Copter
 
 import { useMemo, useRef, createRef, useEffect } from "react"
 import { useFrame, useLoader } from "@react-three/fiber"

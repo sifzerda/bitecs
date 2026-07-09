@@ -535,7 +535,7 @@ function BossShip({ groupRef, geo, cfg, hullMaterials }) {
             {noseSpike.enabled && (
                 <Panel
                     geometry={geo.noseSpike}
-                    position={[0.0, fuselage.tipY + noseSpike.offsetY, noseSpike.zOffset]}
+                    position={[0.0, fuselage.tipY + noseSpike.offsetY, 0.010]}
                     color={noseSpike.color}
                     metalness={0.6}
                     roughness={0.35}
@@ -546,7 +546,7 @@ function BossShip({ groupRef, geo, cfg, hullMaterials }) {
             {decal.enabled && (
                 <MirroredPair
                     geometry={geo.decal}
-                    position={[decal.offsetX, decal.offsetY, decal.zOffset]}
+                    position={[decal.offsetX, decal.offsetY, 0.041]}
                     color={decal.color}
                     metalness={0.1}
                     roughness={0.4}
@@ -670,28 +670,28 @@ export function BossRenderer() {
 
     const fuselage = useControls('Boss / Fuselage', {
         color: '#cfe8ff',
-        tipY: { value: 1.17, min: 0.2, max: 2, step: 0.01 },
-        shoulderY: { value: 0.47, min: -1, max: 2, step: 0.01 },
-        shoulderWidth: { value: 0.19, min: 0, max: 1, step: 0.01 },
-        waistY: { value: -0.76, min: -1.5, max: 1.5, step: 0.01 },
-        waistWidth: { value: 0.15, min: 0, max: 1, step: 0.01 },
-        tailY: { value: -0.40, min: -2, max: 0, step: 0.01 },
-        tailWidth: { value: 0.06, min: 0, max: 1, step: 0.01 },
-        notchY: { value: -0.30, min: -2, max: 0, step: 0.01 },
+        tipY: { value: 0.78, min: 0.2, max: 2, step: 0.01 },
+        shoulderY: { value: 0.50, min: -1, max: 2, step: 0.01 },
+        shoulderWidth: { value: 0.18, min: 0, max: 1, step: 0.01 },
+        waistY: { value: -0.26, min: -1.5, max: 1.5, step: 0.01 },
+        waistWidth: { value: 0.14, min: 0, max: 1, step: 0.01 },
+        tailY: { value: -0.55, min: -2, max: 0, step: 0.01 },
+        tailWidth: { value: 0.30, min: 0, max: 1, step: 0.01 },
+        notchY: { value: -0.37, min: -2, max: 0, step: 0.01 },
     }, { collapsed: true })
 
     const cockpit = useControls('Boss / Cockpit', {
-        color: '#ff3355',
-        topY: { value: 0.58, min: 0, max: 2, step: 0.01 },
-        topWidth: { value: 0.11, min: 0, max: 0.5, step: 0.01 },
-        midY: { value: 0.11, min: -1, max: 1, step: 0.01 },
-        midWidth: { value: 0.14, min: 0, max: 0.5, step: 0.01 },
-        bottomY: { value: 0.02, min: -1, max: 1, step: 0.01 },
-        bottomWidth: { value: 0.00, min: 0, max: 0.5, step: 0.01 },
+        color: '#0070ff',
+        topY: { value: 0.62, min: 0, max: 2, step: 0.01 },
+        topWidth: { value: 0.06, min: 0, max: 0.5, step: 0.01 },
+        midY: { value: 0.14, min: -1, max: 1, step: 0.01 },
+        midWidth: { value: 0.15, min: 0, max: 0.5, step: 0.01 },
+        bottomY: { value: 0.04, min: -1, max: 1, step: 0.01 },
+        bottomWidth: { value: 0.09, min: 0, max: 0.5, step: 0.01 },
     }, { collapsed: true })
 
     const wing = useControls('Boss / Wing', {
-        color: '#818a8d',
+        color: '#cfe8ff',
         rootX: { value: 0.20, min: 0, max: 1, step: 0.01 },
         rootY: { value: 0.40, min: -1, max: 1, step: 0.01 },
         tipX: { value: 0.79, min: 0, max: 2, step: 0.01 },
@@ -703,12 +703,12 @@ export function BossRenderer() {
     }, { collapsed: true })
 
     const wingPanel = useControls('Boss / Wing Panel', {
-        color: '#cfe8ff',
+        color: '#ff3355',
         inset: { value: 0.08, min: 0, max: 0.4, step: 0.01 },
     }, { collapsed: true })
 
     const wingtip = useControls('Boss / Wingtip', {
-        color: '#ff3355',
+        color: '#ffe605',
         width: { value: 0.04, min: 0, max: 0.3, step: 0.005 },
         height: { value: 0.43, min: 0, max: 1.5, step: 0.01 },
         offsetX: { value: 0.77, min: 0, max: 2, step: 0.01 },
@@ -727,22 +727,21 @@ export function BossRenderer() {
         tiltDeg: { value: 8, min: -90, max: 90, step: 1 },
     }, { collapsed: true })
 
-const decal = useControls('Boss / Decal', {
-    enabled: false,
-    color: '#818a8d',
-    width: { value: 0.11, min: 0, max: 0.3, step: 0.005 },
-    length: { value: 0.44, min: 0, max: 2, step: 0.01 },
-    offsetX: { value: 0.40, min: 0, max: 1, step: 0.01 },
-    offsetY: { value: -0.51, min: -1, max: 1, step: 0.01 },
-    zOffset: { value: -0.10, min: -0.1, max: 0.2, step: 0.001 },
-    tiltDeg: { value: -7, min: -90, max: 90, step: 1 },
-}, { collapsed: true })
+    const decal = useControls('Boss / Decal', {
+        enabled: false,
+        color: '#ffe605',
+        width: { value: 0.06, min: 0, max: 0.3, step: 0.005 },
+        length: { value: 0.65, min: 0, max: 2, step: 0.01 },
+        offsetX: { value: 0.30, min: 0, max: 1, step: 0.01 },
+        offsetY: { value: 0.00, min: -1, max: 1, step: 0.01 },
+        tiltDeg: { value: -11, min: -90, max: 90, step: 1 },
+    }, { collapsed: true })
 
     const cockpitGlass = useControls('Boss / Cockpit Glass', {
         enabled: true,
         inset: { value: 0.08, min: 0, max: 0.3, step: 0.01 },
         zOffset: { value: 0.05, min: -0.2, max: 0.3, step: 0.01 },
-        color: "#00ffc6",
+        color: "#00444e",
         metalness: { value: 0, min: 0, max: 1, step: 0.01 },
         roughness: { value: 0.01, min: 0, max: 1, step: 0.005 },
         transmission: { value: 1, min: 0, max: 1, step: 0.01 },
@@ -760,60 +759,59 @@ const decal = useControls('Boss / Decal', {
     }, { collapsed: true })
 
     const engineIntake = useControls('Boss / Engine Intake', {
-        enabled: true,
-        color: '#818a8d',
-        width: { value: 0.07, min: 0, max: 0.5, step: 0.01 },
-        height: { value: 0.52, min: 0, max: 1, step: 0.01 },
-        offsetX: { value: 0.58, min: 0, max: 1.5, step: 0.01 },
-        offsetY: { value: 0.03, min: -1.5, max: 1.5, step: 0.01 },
+        enabled: false,
+        color: '#3a6bd5',
+        width: { value: 0.09, min: 0, max: 0.5, step: 0.01 },
+        height: { value: 0.30, min: 0, max: 1, step: 0.01 },
+        offsetX: { value: 0.40, min: 0, max: 1.5, step: 0.01 },
+        offsetY: { value: -0.28, min: -1.5, max: 1.5, step: 0.01 },
     }, { collapsed: true })
 
     const hullVent = useControls('Boss / Hull Vent', {
-        enabled: true,
-        color: '#000000',
+        enabled: false,
+        color: '#3a6bd5',
         count: { value: 8, min: 1, max: 16, step: 1 },
-        width: { value: 0.26, min: 0, max: 0.5, step: 0.01 },
+        width: { value: 0.09, min: 0, max: 0.5, step: 0.01 },
         height: { value: 0.03, min: 0, max: 0.3, step: 0.005 },
-        spacing: { value: 0.07, min: 0.01, max: 0.3, step: 0.005 },
-        offsetX: { value: 0.19, min: 0, max: 1, step: 0.01 },
-        offsetY: { value: -0.04, min: -1, max: 1, step: 0.01 },
+        spacing: { value: 0.05, min: 0.01, max: 0.3, step: 0.005 },
+        offsetX: { value: 0.21, min: 0, max: 1, step: 0.01 },
+        offsetY: { value: -0.08, min: -1, max: 1, step: 0.01 },
     }, { collapsed: true })
 
     const racingStripe = useControls('Boss / Racing Stripe', {
         enabled: true,
-        color: '#ff3355',
-        width: { value: 0.05, min: 0, max: 0.3, step: 0.005 },
-        length: { value: 0.67, min: 0, max: 2, step: 0.01 },
-        offsetX: { value: 0.32, min: 0, max: 1, step: 0.01 },
-        offsetY: { value: 0.03, min: -1, max: 1, step: 0.01 },
-        tiltDeg: { value: 0, min: -90, max: 90, step: 1 },
+        color: '#3a6bd5',
+        width: { value: 0.04, min: 0, max: 0.3, step: 0.005 },
+        length: { value: 0.94, min: 0, max: 2, step: 0.01 },
+        offsetX: { value: 0.30, min: 0, max: 1, step: 0.01 },
+        offsetY: { value: -0.14, min: -1, max: 1, step: 0.01 },
+        tiltDeg: { value: -10, min: -90, max: 90, step: 1 },
     }, { collapsed: true })
 
     const noseSpike = useControls('Boss / Nose Spike', {
         enabled: true,
-        color: '#ff3355',
-        length: { value: 0.44, min: 0, max: 1, step: 0.01 },
-        width: { value: 0.21, min: 0, max: 0.5, step: 0.01 },
-        offsetY: { value: -0.32, min: -0.5, max: 0.2, step: 0.01 },
-        zOffset: { value: 0.10, min: -0.1, max: 0.3, step: 0.005 },
+        color: '#3a6bd5',
+        length: { value: 0.26, min: 0, max: 1, step: 0.01 },
+        width: { value: 0.07, min: 0, max: 0.5, step: 0.01 },
+        offsetY: { value: -0.10, min: -0.5, max: 0.2, step: 0.01 },
     }, { collapsed: true })
 
     const tailFin = useControls('Boss / Tail Fin', {
         enabled: true,
-        color: '#ff3355',
-        length: { value: 0.17, min: 0, max: 1, step: 0.01 },
-        width: { value: 0.59, min: 0, max: 1, step: 0.01 },
-        sweep: { value: 0.00, min: 0, max: 1, step: 0.01 },
-        offsetX: { value: 0.12, min: 0, max: 1, step: 0.01 },
-        offsetY: { value: -0.47, min: -1.5, max: 1.5, step: 0.01 },
+        color: '#3a6bd5',
+        length: { value: 0.25, min: 0, max: 1, step: 0.01 },
+        width: { value: 0.35, min: 0, max: 1, step: 0.01 },
+        sweep: { value: 0.50, min: 0, max: 1, step: 0.01 },
+        offsetX: { value: 0.14, min: 0, max: 1, step: 0.01 },
+        offsetY: { value: -0.33, min: -1.5, max: 1.5, step: 0.01 },
         splayDeg: { value: 0, min: -45, max: 45, step: 1 },
     }, { collapsed: true })
 
     const exhaustPort = useControls('Boss / Exhaust Port', {
         enabled: true,
-        color: '#818a8d',
-        width: { value: 0.24, min: 0, max: 1, step: 0.01 },
-        height: { value: 0.18, min: 0, max: 2.5, step: 0.01 },
+        color: '#3a6bd5',
+        width: { value: 0.22, min: 0, max: 1, step: 0.01 },
+        height: { value: 0.14, min: 0, max: 2.5, step: 0.01 },
         offsetX: { value: 0.01, min: -0.5, max: 0.5, step: 0.01 },
         offsetY: { value: 0.15, min: -0.5, max: 0.5, step: 0.01 },
     }, { collapsed: true })
@@ -847,10 +845,10 @@ const decal = useControls('Boss / Decal', {
 
     const tailBoom = useControls('Boss / Tail Boom', {
         enabled: false,
-        color: '#cfe8ff',
-        length: { value: 0.44, min: 0, max: 2, step: 0.01 },
-        baseWidth: { value: 0.17, min: 0, max: 0.6, step: 0.01 },
-        tipWidth: { value: 0.02, min: 0, max: 0.4, step: 0.01 },
+        color: '#00ad57',
+        length: { value: 1.38, min: 0, max: 2, step: 0.01 },
+        baseWidth: { value: 0.23, min: 0, max: 0.6, step: 0.01 },
+        tipWidth: { value: 0.09, min: 0, max: 0.4, step: 0.01 },
     }, { collapsed: true })
 
     const boomFin = useControls('Boss / Boom Fins', {
