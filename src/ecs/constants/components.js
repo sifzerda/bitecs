@@ -32,7 +32,8 @@ export const BossAI = {
     shootTimer: new Float32Array(MAX),
     weapon: new Uint8Array(MAX),
     beamCycleTimer: new Float32Array(MAX),   
-    beamActive: new Uint8Array(MAX),         
+    beamActive: new Uint8Array(MAX),
+    targetRotation: new Float32Array(MAX),
 };
 
 export const Spark = {
