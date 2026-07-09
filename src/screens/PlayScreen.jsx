@@ -33,7 +33,7 @@ import { BossLaserRenderer } from '../renderers/BossLaserRenderer.jsx'
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
 import { GunMount } from '../renderers/GunMount.jsx'
 
-import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
+import { ExhaustMount } from '../renderers/ExhaustMount.jsx'
 // debug
 import { GodPanel } from '../debug/GodPanel.jsx'
 //import { GunPanel } from '../debug/GunPanel.jsx'
@@ -90,7 +90,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                 <PlayerRenderer />
                 <DeflectRenderer />
                                         <GunMount />
-                <ExhaustRenderer />
+                <ExhaustMount />
                 <AsteroidRenderer />
                 <BulletRenderer />
 

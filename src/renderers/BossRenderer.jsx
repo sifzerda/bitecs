@@ -435,7 +435,7 @@ export function BossRenderer() {
     }, { collapsed: true })
 
     const horn = useControls('Boss / Horn', {
-        enabled: true,
+        enabled: false,
         color: '#ffe605',
         baseWidth: { value: 0.09, min: 0, max: 0.4, step: 0.005 },
         length: { value: 0.82, min: 0, max: 1, step: 0.01 },

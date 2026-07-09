@@ -3,15 +3,12 @@
 import { useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { Position, Velocity, Rotation } from '../ecs/constants/components.js'
-import { playerQuery } from '../ecs/constants/queries.js'
-import { input } from '../ecs/systems/input.js'
-import { gameState } from '../state/gameState.js'
 
 const PARTICLE_SIZE = 128
 
 // ---------------------------------------------------------------------------
-// GPGPU shaders
+// GPGPU shaders (unchanged, now takes nozzle offset/gap as uniforms
+// instead of hardcoded constants so different ship sizes can reuse this)
 // ---------------------------------------------------------------------------
 
 const simVertexShader = /* glsl */
@@ -36,6 +33,8 @@ const simFragmentShader = /* glsl */
   uniform float uTime;
   uniform float uEmitting;
   uniform float uBoost;
+  uniform float uNozzleOffset;
+  uniform float uEngineGap;
 
   vec2 curl(vec2 p) {
     float n1 = sin(p.y * 0.05 + uTime * 1.5);
@@ -78,12 +77,10 @@ const simFragmentShader = /* glsl */
       if (life >= 0.0) {
         if (uEmitting > 0.5) {
 
-          float exhaustOffset = -0.70;
-          float engineGap = 0.15;
           float subSeed = fract(seed * 91.345);
           float nozzleJitter = (subSeed - 0.5) * 0.06;
-          float engineOffset = engineSide * engineGap + nozzleJitter;
-          pos = uShipPos + backward * exhaustOffset + right * engineOffset;
+          float engineOffset = engineSide * uEngineGap + nozzleJitter;
+          pos = uShipPos + backward * uNozzleOffset + right * engineOffset;
           float lifeMix = mix(1.0, 0.75, uBoost);
 
           life = (0.5 + seed * 0.5) * lifeMix;
@@ -130,6 +127,9 @@ const renderFragmentShader = /* glsl */
   varying float vLife;
   varying float vAge;
   uniform float uBoost;
+  uniform vec3 uHotCore;
+  uniform vec3 uFireColor;
+  uniform vec3 uSmokeColor;
 
   void main() {
     if (vLife <= 0.0) discard;
@@ -139,11 +139,8 @@ const renderFragmentShader = /* glsl */
 
     float alpha = smoothstep(0.5, 0.0, d) * clamp(vLife, 0.0, 1.0) * 0.15;
 
-    vec3 hotCore   = vec3(1.0, 0.15, 0.08);
-    vec3 fireColor = vec3(1.0, 0.2, 0.05);
-    vec3 smokeColor = vec3(0.02, 0.75, 1.0);
-    vec3 color = mix(hotCore, fireColor, smoothstep(0.0, 0.15, vAge));
-    color = mix(color, smokeColor, smoothstep(0.15, 1.0, vAge));
+    vec3 color = mix(uHotCore, uFireColor, smoothstep(0.0, 0.15, vAge));
+    color = mix(color, uSmokeColor, smoothstep(0.15, 1.0, vAge));
 
     vec3 boostColor = vec3(0.05, 0.25, 1.0);
     color = mix(color, boostColor, uBoost);
@@ -188,8 +185,24 @@ function createRenderTarget(size) {
 // ---------------------------------------------------------------------------
 // component
 // ---------------------------------------------------------------------------
+//
+// getShip: () => { x, y, vx, vy, rot, emitting, boost } | null
+//   Called every frame. Return null when the source entity doesn't exist
+//   (e.g. boss slot empty) — the sim keeps ticking so any live particles
+//   fade out naturally instead of freezing or popping.
+//
+// nozzleOffset / engineGap: tune per ship silhouette (player vs boss hull size)
+// colors: optional override for the fire->smoke gradient (e.g. boss could run hotter/redder)
 
-export function ExhaustRenderer({ size = 4 }) {
+export function ExhaustRenderer({
+  size = 4,
+  getShip,
+  nozzleOffset = -0.70,
+  engineGap = 0.15,
+  hotCore = '#ff2614',
+  fireColor = '#ff3308',
+  smokeColor = '#04bfff',
+}) {
   const { gl } = useThree()
 
   const simScene = useMemo(() => new THREE.Scene(), [])
@@ -203,7 +216,6 @@ export function ExhaustRenderer({ size = 4 }) {
   const writeTarget = useRef(rtA)
   const otherTarget = useRef(rtB)
 
-  const playerId = useRef(-1)
   const boostSmooth = useRef(0)
 
   const simMaterial = useMemo(() => new THREE.ShaderMaterial({
@@ -216,10 +228,12 @@ export function ExhaustRenderer({ size = 4 }) {
       uTime: { value: 0 },
       uEmitting: { value: 0 },
       uBoost: { value: 0 },
+      uNozzleOffset: { value: nozzleOffset },
+      uEngineGap: { value: engineGap },
     },
     vertexShader: simVertexShader,
     fragmentShader: simFragmentShader,
-  }), [])
+  }), [nozzleOffset, engineGap])
 
   useMemo(() => {
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), simMaterial)
@@ -231,13 +245,16 @@ export function ExhaustRenderer({ size = 4 }) {
       uPosTex: { value: null },
       uSize: { value: size },
       uBoost: { value: 0 },
+      uHotCore: { value: new THREE.Color(hotCore) },
+      uFireColor: { value: new THREE.Color(fireColor) },
+      uSmokeColor: { value: new THREE.Color(smokeColor) },
     },
     vertexShader: renderVertexShader,
     fragmentShader: renderFragmentShader,
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-  }), [size])
+  }), [size, hotCore, fireColor, smokeColor])
 
   const pointsGeometry = useMemo(() => {
     const geo = new THREE.BufferGeometry()
@@ -263,25 +280,26 @@ export function ExhaustRenderer({ size = 4 }) {
   }, [])
 
   useFrame((state, delta) => {
-    if (playerId.current === -1) {
-      const players = playerQuery()
-      if (!players.length) return
-      playerId.current = players[0]
-    }
+    const ship = getShip()
 
-    const pid = playerId.current
-
-    const boostTarget = gameState.boostActive > 0 ? 1 : 0
+    const boostTarget = ship?.boost ? 1 : 0
     boostSmooth.current = THREE.MathUtils.lerp(boostSmooth.current, boostTarget, 0.2)
 
     simMaterial.uniforms.uPosTex.value = readTexture.current
     simMaterial.uniforms.uDelta.value = Math.min(delta, 0.1)
     simMaterial.uniforms.uTime.value = state.clock.elapsedTime
-    simMaterial.uniforms.uShipPos.value.set(Position.x[pid], Position.y[pid])
-    simMaterial.uniforms.uShipVel.value.set(Velocity.x[pid], Velocity.y[pid])
-    simMaterial.uniforms.uShipRot.value = Rotation[pid]
-    simMaterial.uniforms.uEmitting.value = input.thrust ? 1 : 0
     simMaterial.uniforms.uBoost.value = boostSmooth.current
+
+    if (ship) {
+      simMaterial.uniforms.uShipPos.value.set(ship.x, ship.y)
+      simMaterial.uniforms.uShipVel.value.set(ship.vx, ship.vy)
+      simMaterial.uniforms.uShipRot.value = ship.rot
+      simMaterial.uniforms.uEmitting.value = ship.emitting ? 1 : 0
+    } else {
+      // no source this frame (e.g. boss slot empty) — stop emitting,
+      // let any already-living particles finish their fade
+      simMaterial.uniforms.uEmitting.value = 0
+    }
 
     const prevTarget = gl.getRenderTarget()
 
