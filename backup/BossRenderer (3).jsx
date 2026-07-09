@@ -740,7 +740,7 @@ export function BossRenderer() {
     const cockpitGlass = useControls('Boss / Cockpit Glass', {
         enabled: true,
         inset: { value: 0.08, min: 0, max: 0.3, step: 0.01 },
-        zOffset: { value: 0.11, min: -0.2, max: 0.3, step: 0.01 },
+        zOffset: { value: 0.30, min: -0.2, max: 0.3, step: 0.01 },
         color: "#00444e",
         metalness: { value: 0, min: 0, max: 1, step: 0.01 },
         roughness: { value: 0.01, min: 0, max: 1, step: 0.005 },
@@ -791,18 +791,18 @@ export function BossRenderer() {
     const noseSpike = useControls('Boss / Nose Spike', {
         enabled: true,
         color: '#3a6bd5',
-        length: { value: 0.17, min: 0, max: 1, step: 0.01 },
+        length: { value: 0.12, min: 0, max: 1, step: 0.01 },
         width: { value: 0.42, min: 0, max: 0.5, step: 0.01 },
-        offsetY: { value: -0.10, min: -0.5, max: 0.2, step: 0.01 },
+        offsetY: { value: -0.06, min: -0.5, max: 0.2, step: 0.01 },
     }, { collapsed: true })
 
     const tailFin = useControls('Boss / Tail Fin', {
         enabled: true,
-        color: '#3a6bd5',
-        length: { value: 1.00, min: 0, max: 1, step: 0.01 },
-        width: { value: 0.22, min: 0, max: 1, step: 0.01 },
-        sweep: { value: 0.00, min: 0, max: 1, step: 0.01 },
-        offsetX: { value: 0.23, min: 0, max: 1, step: 0.01 },
+        color: '#ffe605',
+        length: { value: 0.25, min: 0, max: 1, step: 0.01 },
+        width: { value: 0.35, min: 0, max: 1, step: 0.01 },
+        sweep: { value: 0.50, min: 0, max: 1, step: 0.01 },
+        offsetX: { value: 0.14, min: 0, max: 1, step: 0.01 },
         offsetY: { value: -0.33, min: -1.5, max: 1.5, step: 0.01 },
         splayDeg: { value: 0, min: -45, max: 45, step: 1 },
     }, { collapsed: true })
@@ -810,56 +810,56 @@ export function BossRenderer() {
     const exhaustPort = useControls('Boss / Exhaust Port', {
         enabled: true,
         color: '#3a6bd5',
-        width: { value: 0.07, min: 0, max: 1, step: 0.01 },
-        height: { value: 1.95, min: 0, max: 2.5, step: 0.01 },
-        offsetX: { value: -0.01, min: -0.5, max: 0.5, step: 0.01 },
-        offsetY: { value: 0.50, min: -0.5, max: 0.5, step: 0.01 },
+        width: { value: 0.22, min: 0, max: 1, step: 0.01 },
+        height: { value: 0.14, min: 0, max: 0.5, step: 0.01 },
+        offsetX: { value: 0.01, min: -0.5, max: 0.5, step: 0.01 },
+        offsetY: { value: 0.15, min: -0.5, max: 0.5, step: 0.01 },
     }, { collapsed: true })
 
     const propeller = useControls('Boss / Propeller', {
         enabled: true,
-        bladeColor: '#5f5f5f',
-        hubColor: '#000000',
+        bladeColor: '#222222',
+        hubColor: '#555555',
         bladeCount: { value: 3, min: 2, max: 6, step: 1 },
         bladeLength: { value: 0.15, min: 0.02, max: 0.5, step: 0.01 },
         bladeWidth: { value: 0.05, min: 0.01, max: 0.2, step: 0.005 },
         hubRadius: { value: 0.03, min: 0.005, max: 0.15, step: 0.005 },
-        offsetX: { value: 0.24, min: 0, max: 1.5, step: 0.01 },
-        offsetY: { value: -1.96, min: -2, max: 1, step: 0.01 },
-        zOffset: { value: 0.30, min: -0.2, max: 0.3, step: 0.005 },
+        offsetX: { value: 0.45, min: 0, max: 1.5, step: 0.01 },
+        offsetY: { value: 0.10, min: -1, max: 1, step: 0.01 },
+        zOffset: { value: 0.06, min: -0.2, max: 0.3, step: 0.005 },
         spinSpeed: { value: 6, min: -20, max: 20, step: 0.5 },
     }, { collapsed: true })
 
     const centerPropeller = useControls('Boss / Center Propeller', {
         enabled: true,
-        bladeColor: '#3b3b3b',
-        hubColor: '#000000',
+        bladeColor: '#222222',
+        hubColor: '#555555',
         bladeCount: { value: 4, min: 2, max: 8, step: 1 },
-        bladeLength: { value: 1.00, min: 0.02, max: 1, step: 0.01 },
+        bladeLength: { value: 0.34, min: 0.02, max: 1, step: 0.01 },
         bladeWidth: { value: 0.11, min: 0.01, max: 0.4, step: 0.005 },
         hubRadius: { value: 0.06, min: 0.005, max: 0.3, step: 0.005 },
-        offsetY: { value: -0.34, min: -1, max: 1, step: 0.01 },
-        zOffset: { value: 0.30, min: -0.2, max: 0.3, step: 0.005 },
+        offsetY: { value: 0.05, min: -1, max: 1, step: 0.01 },
+        zOffset: { value: 0.10, min: -0.2, max: 0.3, step: 0.005 },
         spinSpeed: { value: 4, min: -20, max: 20, step: 0.5 },
     }, { collapsed: true })
 
     const tailBoom = useControls('Boss / Tail Boom', {
         enabled: true,
         color: '#00ad57',
-        length: { value: 1.38, min: 0, max: 2, step: 0.01 },
-        baseWidth: { value: 0.23, min: 0, max: 0.6, step: 0.01 },
-        tipWidth: { value: 0.09, min: 0, max: 0.4, step: 0.01 },
+        length: { value: 0.55, min: 0, max: 2, step: 0.01 },
+        baseWidth: { value: 0.16, min: 0, max: 0.6, step: 0.01 },
+        tipWidth: { value: 0.05, min: 0, max: 0.4, step: 0.01 },
     }, { collapsed: true })
 
     const boomFin = useControls('Boss / Boom Fins', {
         enabled: true,
-        color: '#3a6bd5',
-        length: { value: 0.21, min: 0, max: 1, step: 0.01 },
-        width: { value: 0.69, min: 0, max: 1, step: 0.01 },
-        sweep: { value: 0.18, min: 0, max: 1, step: 0.01 },
-        offsetX: { value: 0.08, min: 0, max: 1, step: 0.01 },
-        offsetY: { value: 0.04, min: -1, max: 1, step: 0.01 },
-        splayDeg: { value: 0, min: -45, max: 45, step: 1 },
+        color: '#ffe605',
+        length: { value: 0.22, min: 0, max: 1, step: 0.01 },
+        width: { value: 0.20, min: 0, max: 1, step: 0.01 },
+        sweep: { value: 0.30, min: 0, max: 1, step: 0.01 },
+        offsetX: { value: 0.10, min: 0, max: 1, step: 0.01 },
+        offsetY: { value: 0.00, min: -1, max: 1, step: 0.01 },
+        splayDeg: { value: 20, min: -45, max: 45, step: 1 },
     }, { collapsed: true })
 
     const hullTextureCfg = useControls('Boss / Hull Texture', {
