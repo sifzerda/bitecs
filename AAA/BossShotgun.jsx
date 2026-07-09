@@ -1,5 +1,7 @@
 // src/renderers/BossRenderer.jsx
 
+// Space Cowboy
+
 import { useMemo, useRef, createRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import { useControls, folder } from "leva"
