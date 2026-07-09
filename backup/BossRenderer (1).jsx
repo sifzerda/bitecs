@@ -8,10 +8,62 @@ import { bossQuery } from "../ecs/constants/queries.js"
 import { world } from "../ecs/constants/world.js"
 import { Position, Health, Rotation } from "../ecs/constants/components.js"
 
+import creamPixels from "../assets/cream-pixels.png"
+import argyle from "../assets/argyle.png"
+import bindingDark from "../assets/binding-dark.png"
+import blackFelt from "../assets/black-felt.png"
+import blackOrchid from "../assets/black-orchid.png"
+import blackPaper from "../assets/black-paper.png"
+import buried from "../assets/buried.png"
+import cartographer from "../assets/cartographer.png"
+import darkLeather from "../assets/dark-leather.png"
+import darkMosaic from "../assets/dark-mosaic.png"
+import escheresqueDark from "../assets/escheresque-dark.png"
+import freshSnow from "../assets/fresh-snow.png"
+import ironGrip from "../assets/iron-grip.png"
+import lightHoneycombDark from "../assets/light-honeycomb-dark.png"
 import lightWool from "../assets/light-wool.png"
+import littlePluses from "../assets/little-pluses.png"
+import navy from "../assets/navy.png"
+import purtyWood from "../assets/purty-wood.png"
+import ricePaper from "../assets/rice-paper.png"
+import scribbleLight from "../assets/scribble-light.png"
+import subtleGrey from "../assets/subtle-grey.png"
+import subtleGrunge from "../assets/subtle-grunge.png"
+import tex2res5 from "../assets/tex2res5.png"
+import texturedPaper from "../assets/textured-paper.png"
+import wall4Light from "../assets/wall-4-light.png"
+import woodPattern from "../assets/wood-pattern.png"
 
+// label -> imported URL, used to populate the Leva dropdown in
+// "Boss / Hull Texture". Keys are what you'll see/select in the panel.
 const HULL_TEXTURES = {
+    "Cream Pixels": creamPixels,
+    "Argyle": argyle,
+    "Binding Dark": bindingDark,
+    "Black Felt": blackFelt,
+    "Black Orchid": blackOrchid,
+    "Black Paper": blackPaper,
+    "Buried": buried,
+    "Cartographer": cartographer,
+    "Dark Leather": darkLeather,
+    "Dark Mosaic": darkMosaic,
+    "Escheresque Dark": escheresqueDark,
+    "Fresh Snow": freshSnow,
+    "Iron Grip": ironGrip,
+    "Light Honeycomb Dark": lightHoneycombDark,
     "Light Wool": lightWool,
+    "Little Pluses": littlePluses,
+    "Navy": navy,
+    "Purty Wood": purtyWood,
+    "Rice Paper": ricePaper,
+    "Scribble Light": scribbleLight,
+    "Subtle Grey": subtleGrey,
+    "Subtle Grunge": subtleGrunge,
+    "Tex2Res5": tex2res5,
+    "Textured Paper": texturedPaper,
+    "Wall 4 Light": wall4Light,
+    "Wood Pattern": woodPattern,
 }
 
 const MAX_BOSSES = 4
@@ -177,111 +229,23 @@ function buildTailFinShape(cfg) {
 }
 
 // ============================================================
-// Long tail boom — a tapering strip extending backward from the
-// fuselage tail, plus twin fins splayed outward at the far end.
-// ============================================================
-
-function buildTailBoomShape(cfg) {
-    const halfBase = cfg.baseWidth / 2
-    const halfTip = cfg.tipWidth / 2
-    const startY = cfg.startY
-    const endY = startY - cfg.length
-    const shape = new THREE.Shape()
-    shape.moveTo(-halfBase, startY)
-    shape.lineTo(halfBase, startY)
-    shape.lineTo(halfTip, endY)
-    shape.lineTo(-halfTip, endY)
-    shape.closePath()
-    return shape
-}
-
-function buildBoomFinShape(cfg) {
-    const halfW = cfg.width / 2
-    const halfL = cfg.length / 2
-    const shape = new THREE.Shape()
-    shape.moveTo(0, halfL)
-    shape.lineTo(halfW * 0.35, halfL * 0.35)
-    shape.lineTo(halfW, -halfL + cfg.sweep)
-    shape.lineTo(halfW * 0.25, -halfL - cfg.sweep * 0.4)
-    shape.lineTo(-halfW * 0.2, -halfL)
-    shape.closePath()
-    return shape
-}
-
-// ============================================================
-// Propeller — top-down silhouette: a circular hub plus N paddle-shaped
-// blades radiating outward. The whole assembly spins around its own
-// local Z axis (the "up" axis as seen from the top-down camera), so
-// from a top-down view it reads as a spinning propeller disc.
-// ============================================================
-
-function buildPropellerBladeShape(cfg) {
-    const r0 = cfg.hubRadius
-    const len = cfg.bladeLength
-    const halfW = cfg.bladeWidth / 2
-    const shape = new THREE.Shape()
-    shape.moveTo(-halfW * 0.4, r0)
-    shape.quadraticCurveTo(-halfW, r0 + len * 0.35, -halfW * 0.55, r0 + len * 0.85)
-    shape.quadraticCurveTo(-halfW * 0.2, r0 + len, 0, r0 + len)
-    shape.quadraticCurveTo(halfW * 0.2, r0 + len, halfW * 0.55, r0 + len * 0.85)
-    shape.quadraticCurveTo(halfW, r0 + len * 0.35, halfW * 0.4, r0)
-    shape.closePath()
-    return shape
-}
-
-function buildPropellerHubShape(cfg) {
-    const shape = new THREE.Shape()
-    shape.absarc(0, 0, cfg.hubRadius, 0, Math.PI * 2, false)
-    return shape
-}
-
-function Propeller({ hubGeometry, bladeGeometry, cfg, position }) {
-    const spinRef = useRef()
-
-    useFrame((_, delta) => {
-        if (spinRef.current) {
-            spinRef.current.rotation.z += cfg.spinSpeed * delta
-        }
-    })
-
-    const bladeAngles = useMemo(
-        () => Array.from({ length: cfg.bladeCount }, (_, i) => (Math.PI * 2 * i) / cfg.bladeCount),
-        [cfg.bladeCount]
-    )
-
-    return (
-        <group position={position}>
-            <group ref={spinRef}>
-                <mesh geometry={hubGeometry}>
-                    <meshPhysicalMaterial color={cfg.hubColor} metalness={0.6} roughness={0.3} side={THREE.DoubleSide} />
-                </mesh>
-                {bladeAngles.map((angle, i) => (
-                    <mesh key={i} geometry={bladeGeometry} rotation={[0, 0, angle]}>
-                        <meshPhysicalMaterial color={cfg.bladeColor} metalness={0.35} roughness={0.45} side={THREE.DoubleSide} />
-                    </mesh>
-                ))}
-            </group>
-        </group>
-    )
-}
-
-// ============================================================
 // Hull texture material — meshPhysicalMaterial extended via onBeforeCompile
 // to blend a tiling overlay texture over the base color, with a live-tunable
 // opacity uniform (0 = texture invisible, 1 = fully blended).
 // ============================================================
 
-function createHullMaterial(initialTexture) {
+function createHullMaterial() {
     const material = new THREE.MeshPhysicalMaterial({
         side: THREE.DoubleSide,
-        map: initialTexture,
     })
 
- material.userData.hullUniforms = {
+    material.userData.hullUniforms = {
+        uHullMap: { value: null },
         uHullOpacity: { value: 0 },
+        uHullRepeat: { value: new THREE.Vector2(4, 4) },
     }
 
-   material.onBeforeCompile = (shader) => {
+    material.onBeforeCompile = (shader) => {
         Object.assign(shader.uniforms, material.userData.hullUniforms)
 
         shader.fragmentShader = shader.fragmentShader
@@ -289,37 +253,35 @@ function createHullMaterial(initialTexture) {
                 '#include <common>',
                 `
                 #include <common>
+                uniform sampler2D uHullMap;
                 uniform float uHullOpacity;
+                uniform vec2 uHullRepeat;
                 `
             )
             .replace(
                 '#include <map_fragment>',
                 `
-                vec3 hullBaseColor = diffuseColor.rgb;
                 #include <map_fragment>
-                diffuseColor.rgb = mix(hullBaseColor, diffuseColor.rgb, uHullOpacity);
+                #ifdef USE_UHULLMAP
+                #endif
+                vec4 hullTexel = texture2D(uHullMap, vUv * uHullRepeat);
+                diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * hullTexel.rgb, uHullOpacity);
                 `
             )
 
         material.userData.shader = shader
     }
 
+    // force a program rebuild whenever opacity toggles between 0 and >0,
+    // since the branch above is always compiled in — cheap enough to leave
+    // permanently active rather than swapping shaders at runtime
     material.customProgramCacheKey = () => 'hull-textured'
 
     return material
 }
 
-function useHullMaterial(
-    baseColor,
-    metalness,
-    roughness,
-    texture,
-    opacity,
-    repeatX,
-    repeatY,
-    enabled
-) {
-    const material = useMemo(() => createHullMaterial(texture), [])
+function useHullMaterial(baseColor, metalness, roughness, texture, opacity, repeatX, repeatY, enabled) {
+    const material = useMemo(() => createHullMaterial(), [])
 
     useEffect(() => {
         material.color = new THREE.Color(baseColor)
@@ -329,27 +291,19 @@ function useHullMaterial(
     }, [material, baseColor, metalness, roughness])
 
     useEffect(() => {
+        const u = material.userData.hullUniforms
+        u.uHullMap.value = texture
+        u.uHullOpacity.value = enabled ? opacity : 0
+        u.uHullRepeat.value.set(repeatX, repeatY)
 
-        if (material.map !== texture) {
-            material.map = texture
-            material.needsUpdate = true
-        }
-
-        if (texture) {
-            texture.wrapS = THREE.RepeatWrapping
-            texture.wrapT = THREE.RepeatWrapping
-            texture.repeat.set(repeatX, repeatY)
-            texture.needsUpdate = true
-        }
-
-        const opacityValue = enabled ? opacity : 0
-
-        material.userData.hullUniforms.uHullOpacity.value = opacityValue
-
+        // onBeforeCompile only runs once per material — if the shader has
+        // already compiled, push updates directly into its live uniforms too
         if (material.userData.shader) {
-            material.userData.shader.uniforms.uHullOpacity.value = opacityValue
+            const su = material.userData.shader.uniforms
+            su.uHullMap.value = texture
+            su.uHullOpacity.value = enabled ? opacity : 0
+            su.uHullRepeat.value.set(repeatX, repeatY)
         }
-
     }, [material, texture, opacity, repeatX, repeatY, enabled])
 
     return material
@@ -411,17 +365,16 @@ function MirroredPair({
 
 function BossShip({ groupRef, geo, cfg, hullMaterials }) {
     const { fuselage, cockpit, wing, wingPanel, wingtip, decal, cockpitGlass,
-        engineIntake, hullVent, racingStripe, noseSpike, tailFin, exhaustPort, horn,
-        propeller, tailBoom, boomFin, centerPropeller } = cfg
+        engineIntake, hullVent, racingStripe, noseSpike, tailFin, exhaustPort, horn } = cfg
 
     return (
         <group ref={groupRef} visible={false}>
 
             {/* Wings — both sides */}
-            <MirroredPair geometry={geo.wing} position={[0, 0, 0]} color={wing.color} flipX={false} rotateY />
+            <MirroredPair geometry={geo.wing} position={[0, 0, 0]} color={wing.color} flipX={false} rotateY material={hullMaterials.wing} />
 
             {/* Wing panels — both sides */}
-            <MirroredPair geometry={geo.wingPanel} position={[0, 0, 0.01]} color={wingPanel.color} material={hullMaterials.wingPanel} flipX={false} rotateY />
+            <MirroredPair geometry={geo.wingPanel} position={[0, 0, 0.01]} color={wingPanel.color} flipX={false} rotateY />
 
             {/* Wingtip pods — both sides */}
             <MirroredPair geometry={geo.wingtip} position={[wingtip.offsetX, wingtip.offsetY, 0.02]} color={wingtip.color} />
@@ -471,29 +424,6 @@ function BossShip({ groupRef, geo, cfg, hullMaterials }) {
                 />
             )}
 
-            {/* Long tail boom, extending back from the fuselage */}
-            {tailBoom.enabled && (
-                <Panel
-                    geometry={geo.tailBoom}
-                    position={[0, 0, 0.02]}
-                    color={tailBoom.color}
-                    metalness={0.3}
-                    roughness={0.55}
-                />
-            )}
-
-            {/* Twin boom fins, splayed outward at the tail boom's far end */}
-            {tailBoom.enabled && boomFin.enabled && (
-                <MirroredPair
-                    geometry={geo.boomFin}
-                    position={[boomFin.offsetX, geo.boomFinY + boomFin.offsetY, 0.026]}
-                    color={boomFin.color}
-                    rotationZ={-geo.boomFinSplayRad}
-                    rotateY
-                    flipZAngle
-                />
-            )}
-
             {/* Exhaust port */}
             {exhaustPort.enabled && (
                 <Panel
@@ -535,7 +465,7 @@ function BossShip({ groupRef, geo, cfg, hullMaterials }) {
             {noseSpike.enabled && (
                 <Panel
                     geometry={geo.noseSpike}
-                    position={[0.0, fuselage.tipY + noseSpike.offsetY, 0.010]}
+                    position={[0, fuselage.tipY, 0.032]}
                     color={noseSpike.color}
                     metalness={0.6}
                     roughness={0.35}
@@ -594,68 +524,8 @@ function BossShip({ groupRef, geo, cfg, hullMaterials }) {
                 </mesh>
             )}
 
-            {/* Twin propellers — top-down, spinning, one on each side of the hull */}
-            {propeller.enabled && (
-                <>
-                    <Propeller
-                        hubGeometry={geo.propellerHub}
-                        bladeGeometry={geo.propellerBlade}
-                        cfg={propeller}
-                        position={[propeller.offsetX, propeller.offsetY, propeller.zOffset]}
-                    />
-                    <Propeller
-                        hubGeometry={geo.propellerHub}
-                        bladeGeometry={geo.propellerBlade}
-                        cfg={{ ...propeller, spinSpeed: -propeller.spinSpeed }}
-                        position={[-propeller.offsetX, propeller.offsetY, propeller.zOffset]}
-                    />
-                </>
-            )}
-
-            {/* Single large center propeller, mounted mid-hull */}
-            {centerPropeller.enabled && (
-                <Propeller
-                    hubGeometry={geo.centerPropellerHub}
-                    bladeGeometry={geo.centerPropellerBlade}
-                    cfg={centerPropeller}
-                    position={[0, centerPropeller.offsetY, centerPropeller.zOffset]}
-                />
-            )}
-
         </group>
     )
-}
-
-function applyPlanarUVs(geometry) {
-
-    geometry.computeBoundingBox()
-
-    const box = geometry.boundingBox
-
-    const minX = box.min.x
-    const minY = box.min.y
-
-    const sizeX = Math.max(box.max.x - box.min.x, 0.0001)
-    const sizeY = Math.max(box.max.y - box.min.y, 0.0001)
-
-    const pos = geometry.attributes.position
-    const uv = new Float32Array(pos.count * 2)
-
-    for (let i = 0; i < pos.count; i++) {
-
-        const x = pos.getX(i)
-        const y = pos.getY(i)
-
-        uv[i * 2 + 0] = (x - minX) / sizeX
-        uv[i * 2 + 1] = (y - minY) / sizeY
-    }
-
-    geometry.setAttribute(
-        'uv',
-        new THREE.BufferAttribute(uv, 2)
-    )
-
-    geometry.attributes.uv.needsUpdate = true
 }
 
 // ============================================================
@@ -669,35 +539,35 @@ export function BossRenderer() {
     }, { collapsed: true })
 
     const fuselage = useControls('Boss / Fuselage', {
-        color: '#7be2af',
-        tipY: { value: 0.78, min: 0.2, max: 2, step: 0.01 },
-        shoulderY: { value: 0.53, min: -1, max: 2, step: 0.01 },
-        shoulderWidth: { value: 0.21, min: 0, max: 1, step: 0.01 },
+        color: '#ff3355',
+        tipY: { value: 0.66, min: 0.2, max: 2, step: 0.01 },
+        shoulderY: { value: 0.39, min: -1, max: 2, step: 0.01 },
+        shoulderWidth: { value: 0.19, min: 0, max: 1, step: 0.01 },
         waistY: { value: -0.40, min: -1.5, max: 1.5, step: 0.01 },
         waistWidth: { value: 0.26, min: 0, max: 1, step: 0.01 },
-        tailY: { value: -0.59, min: -2, max: 0, step: 0.01 },
-        tailWidth: { value: 0.77, min: 0, max: 1, step: 0.01 },
-        notchY: { value: 0.00, min: -2, max: 0, step: 0.01 },
+        tailY: { value: -0.75, min: -2, max: 0, step: 0.01 },
+        tailWidth: { value: 0.50, min: 0, max: 1, step: 0.01 },
+        notchY: { value: -0.28, min: -2, max: 0, step: 0.01 },
     }, { collapsed: true })
 
     const cockpit = useControls('Boss / Cockpit', {
-        color: '#00ad57',
-        topY: { value: 0.73, min: 0, max: 2, step: 0.01 },
-        topWidth: { value: 0.19, min: 0, max: 0.5, step: 0.01 },
+        color: '#3a6bd5',
+        topY: { value: 0.62, min: 0, max: 2, step: 0.01 },
+        topWidth: { value: 0.06, min: 0, max: 0.5, step: 0.01 },
         midY: { value: 0.14, min: -1, max: 1, step: 0.01 },
-        midWidth: { value: 0.24, min: 0, max: 0.5, step: 0.01 },
-        bottomY: { value: 0.20, min: -1, max: 1, step: 0.01 },
-        bottomWidth: { value: 0.00, min: 0, max: 0.5, step: 0.01 },
+        midWidth: { value: 0.15, min: 0, max: 0.5, step: 0.01 },
+        bottomY: { value: 0.04, min: -1, max: 1, step: 0.01 },
+        bottomWidth: { value: 0.09, min: 0, max: 0.5, step: 0.01 },
     }, { collapsed: true })
 
     const wing = useControls('Boss / Wing', {
-        color: '#00ad57',
-        rootX: { value: 0.22, min: 0, max: 1, step: 0.01 },
-        rootY: { value: 0.00, min: -1, max: 1, step: 0.01 },
-        tipX: { value: 0.68, min: 0, max: 2, step: 0.01 },
+        color: '#8d001c',
+        rootX: { value: 0.20, min: 0, max: 1, step: 0.01 },
+        rootY: { value: 0.40, min: -1, max: 1, step: 0.01 },
+        tipX: { value: 0.79, min: 0, max: 2, step: 0.01 },
         tipY: { value: -0.25, min: -1.5, max: 1.5, step: 0.01 },
-        trailX: { value: 0.69, min: 0, max: 2, step: 0.01 },
-        trailY: { value: -0.25, min: -1.5, max: 1.5, step: 0.01 },
+        trailX: { value: 0.76, min: 0, max: 2, step: 0.01 },
+        trailY: { value: -0.45, min: -1.5, max: 1.5, step: 0.01 },
         innerX: { value: 0.14, min: 0, max: 1, step: 0.01 },
         innerY: { value: -0.24, min: -1.5, max: 1.5, step: 0.01 },
     }, { collapsed: true })
@@ -709,14 +579,14 @@ export function BossRenderer() {
 
     const wingtip = useControls('Boss / Wingtip', {
         color: '#ffe605',
-        width: { value: 0.04, min: 0, max: 0.3, step: 0.005 },
-        height: { value: 0.43, min: 0, max: 1.5, step: 0.01 },
-        offsetX: { value: 0.77, min: 0, max: 2, step: 0.01 },
-        offsetY: { value: -0.35, min: -1.5, max: 1.5, step: 0.01 },
+        width: { value: 0.07, min: 0, max: 0.3, step: 0.005 },
+        height: { value: 0.34, min: 0, max: 1.5, step: 0.01 },
+        offsetX: { value: 0.71, min: 0, max: 2, step: 0.01 },
+        offsetY: { value: -0.31, min: -1.5, max: 1.5, step: 0.01 },
     }, { collapsed: true })
 
     const horn = useControls('Boss / Horn', {
-        enabled: false,
+        enabled: true,
         color: '#ffe605',
         baseWidth: { value: 0.09, min: 0, max: 0.4, step: 0.005 },
         length: { value: 0.82, min: 0, max: 1, step: 0.01 },
@@ -728,20 +598,20 @@ export function BossRenderer() {
     }, { collapsed: true })
 
     const decal = useControls('Boss / Decal', {
-        enabled: false,
+        enabled: true,
         color: '#ffe605',
-        width: { value: 0.06, min: 0, max: 0.3, step: 0.005 },
-        length: { value: 0.65, min: 0, max: 2, step: 0.01 },
-        offsetX: { value: 0.30, min: 0, max: 1, step: 0.01 },
+        width: { value: 0.07, min: 0, max: 0.3, step: 0.005 },
+        length: { value: 0.76, min: 0, max: 2, step: 0.01 },
+        offsetX: { value: 0.35, min: 0, max: 1, step: 0.01 },
         offsetY: { value: 0.00, min: -1, max: 1, step: 0.01 },
-        tiltDeg: { value: -11, min: -90, max: 90, step: 1 },
+        tiltDeg: { value: -18, min: -90, max: 90, step: 1 },
     }, { collapsed: true })
 
     const cockpitGlass = useControls('Boss / Cockpit Glass', {
         enabled: true,
         inset: { value: 0.08, min: 0, max: 0.3, step: 0.01 },
-        zOffset: { value: 0.11, min: -0.2, max: 0.3, step: 0.01 },
-        color: "#00444e",
+        zOffset: { value: 0.05, min: -0.2, max: 0.3, step: 0.01 },
+        color: "#90eeff",
         metalness: { value: 0, min: 0, max: 1, step: 0.01 },
         roughness: { value: 0.01, min: 0, max: 1, step: 0.005 },
         transmission: { value: 1, min: 0, max: 1, step: 0.01 },
@@ -751,123 +621,76 @@ export function BossRenderer() {
         clearcoatRoughness: { value: 0, min: 0, max: 1, step: 0.01 },
         envMapIntensity: { value: 8, min: 0, max: 15, step: 0.5 },
         iridescence: { value: 10, min: 0, max: 20, step: 0.5 },
-        iridescenceIOR: { value: 1.62, min: 1, max: 2.5, step: 0.01 },
-        iridescenceThicknessMin: { value: 400, min: 0, max: 1000, step: 10 },
-        iridescenceThicknessMax: { value: 750, min: 0, max: 2000, step: 10 },
-        attenuationColor: "#ffffff",
+        iridescenceIOR: { value: 1.35, min: 1, max: 2.5, step: 0.01 },
+        iridescenceThicknessMin: { value: 180, min: 0, max: 1000, step: 10 },
+        iridescenceThicknessMax: { value: 900, min: 0, max: 2000, step: 10 },
+        attenuationColor: "#50a4ce",
         attenuationDistance: { value: 2.2, min: 0.1, max: 10, step: 0.1 },
     }, { collapsed: true })
 
     const engineIntake = useControls('Boss / Engine Intake', {
-        enabled: false,
+        enabled: true,
         color: '#3a6bd5',
-        width: { value: 0.09, min: 0, max: 0.5, step: 0.01 },
-        height: { value: 0.30, min: 0, max: 1, step: 0.01 },
-        offsetX: { value: 0.40, min: 0, max: 1.5, step: 0.01 },
+        width: { value: 0.10, min: 0, max: 0.5, step: 0.01 },
+        height: { value: 0.46, min: 0, max: 1, step: 0.01 },
+        offsetX: { value: 0.35, min: 0, max: 1.5, step: 0.01 },
         offsetY: { value: -0.28, min: -1.5, max: 1.5, step: 0.01 },
     }, { collapsed: true })
 
     const hullVent = useControls('Boss / Hull Vent', {
-        enabled: false,
+        enabled: true,
         color: '#3a6bd5',
         count: { value: 8, min: 1, max: 16, step: 1 },
-        width: { value: 0.09, min: 0, max: 0.5, step: 0.01 },
-        height: { value: 0.03, min: 0, max: 0.3, step: 0.005 },
-        spacing: { value: 0.05, min: 0.01, max: 0.3, step: 0.005 },
-        offsetX: { value: 0.21, min: 0, max: 1, step: 0.01 },
-        offsetY: { value: -0.08, min: -1, max: 1, step: 0.01 },
+        width: { value: 0.13, min: 0, max: 0.5, step: 0.01 },
+        height: { value: 0.05, min: 0, max: 0.3, step: 0.005 },
+        spacing: { value: 0.07, min: 0.01, max: 0.3, step: 0.005 },
+        offsetX: { value: 0.26, min: 0, max: 1, step: 0.01 },
+        offsetY: { value: 0.00, min: -1, max: 1, step: 0.01 },
     }, { collapsed: true })
 
     const racingStripe = useControls('Boss / Racing Stripe', {
         enabled: true,
-        color: '#3a6bd5',
-        width: { value: 0.13, min: 0, max: 0.3, step: 0.005 },
-        length: { value: 0.23, min: 0, max: 2, step: 0.01 },
-        offsetX: { value: 0.37, min: 0, max: 1, step: 0.01 },
-        offsetY: { value: -0.65, min: -1, max: 1, step: 0.01 },
-        tiltDeg: { value: -10, min: -90, max: 90, step: 1 },
+        color: '#ffe605',
+        width: { value: 0.07, min: 0, max: 0.3, step: 0.005 },
+        length: { value: 1.03, min: 0, max: 2, step: 0.01 },
+        offsetX: { value: 0.45, min: 0, max: 1, step: 0.01 },
+        offsetY: { value: -0.16, min: -1, max: 1, step: 0.01 },
+        tiltDeg: { value: -2, min: -90, max: 90, step: 1 },
     }, { collapsed: true })
 
     const noseSpike = useControls('Boss / Nose Spike', {
         enabled: true,
-        color: '#3a6bd5',
-        length: { value: 0.17, min: 0, max: 1, step: 0.01 },
-        width: { value: 0.42, min: 0, max: 0.5, step: 0.01 },
-        offsetY: { value: -0.10, min: -0.5, max: 0.2, step: 0.01 },
+        color: '#ffe605',
+        length: { value: 0.13, min: 0, max: 1, step: 0.01 },
+        width: { value: 0.07, min: 0, max: 0.5, step: 0.01 },
     }, { collapsed: true })
 
     const tailFin = useControls('Boss / Tail Fin', {
         enabled: true,
-        color: '#3a6bd5',
-        length: { value: 1.00, min: 0, max: 1, step: 0.01 },
-        width: { value: 0.22, min: 0, max: 1, step: 0.01 },
+        color: '#ffe605',
+        length: { value: 0.26, min: 0, max: 1, step: 0.01 },
+        width: { value: 0.15, min: 0, max: 1, step: 0.01 },
         sweep: { value: 0.00, min: 0, max: 1, step: 0.01 },
-        offsetX: { value: 0.23, min: 0, max: 1, step: 0.01 },
-        offsetY: { value: -0.33, min: -1.5, max: 1.5, step: 0.01 },
+        offsetX: { value: 0.67, min: 0, max: 1, step: 0.01 },
+        offsetY: { value: -0.03, min: -1.5, max: 1.5, step: 0.01 },
         splayDeg: { value: 0, min: -45, max: 45, step: 1 },
     }, { collapsed: true })
 
     const exhaustPort = useControls('Boss / Exhaust Port', {
         enabled: true,
         color: '#3a6bd5',
-        width: { value: 0.07, min: 0, max: 1, step: 0.01 },
-        height: { value: 1.95, min: 0, max: 2.5, step: 0.01 },
-        offsetX: { value: -0.01, min: -0.5, max: 0.5, step: 0.01 },
-        offsetY: { value: 0.50, min: -0.5, max: 0.5, step: 0.01 },
-    }, { collapsed: true })
-
-    const propeller = useControls('Boss / Propeller', {
-        enabled: true,
-        bladeColor: '#5f5f5f',
-        hubColor: '#000000',
-        bladeCount: { value: 3, min: 2, max: 6, step: 1 },
-        bladeLength: { value: 0.15, min: 0.02, max: 0.5, step: 0.01 },
-        bladeWidth: { value: 0.05, min: 0.01, max: 0.2, step: 0.005 },
-        hubRadius: { value: 0.03, min: 0.005, max: 0.15, step: 0.005 },
-        offsetX: { value: 0.24, min: 0, max: 1.5, step: 0.01 },
-        offsetY: { value: -1.96, min: -2, max: 1, step: 0.01 },
-        zOffset: { value: 0.30, min: -0.2, max: 0.3, step: 0.005 },
-        spinSpeed: { value: 6, min: -20, max: 20, step: 0.5 },
-    }, { collapsed: true })
-
-    const centerPropeller = useControls('Boss / Center Propeller', {
-        enabled: true,
-        bladeColor: '#3b3b3b',
-        hubColor: '#000000',
-        bladeCount: { value: 4, min: 2, max: 8, step: 1 },
-        bladeLength: { value: 1.00, min: 0.02, max: 1, step: 0.01 },
-        bladeWidth: { value: 0.11, min: 0.01, max: 0.4, step: 0.005 },
-        hubRadius: { value: 0.06, min: 0.005, max: 0.3, step: 0.005 },
-        offsetY: { value: -0.34, min: -1, max: 1, step: 0.01 },
-        zOffset: { value: 0.30, min: -0.2, max: 0.3, step: 0.005 },
-        spinSpeed: { value: 4, min: -20, max: 20, step: 0.5 },
-    }, { collapsed: true })
-
-    const tailBoom = useControls('Boss / Tail Boom', {
-        enabled: true,
-        color: '#00ad57',
-        length: { value: 1.38, min: 0, max: 2, step: 0.01 },
-        baseWidth: { value: 0.23, min: 0, max: 0.6, step: 0.01 },
-        tipWidth: { value: 0.09, min: 0, max: 0.4, step: 0.01 },
-    }, { collapsed: true })
-
-    const boomFin = useControls('Boss / Boom Fins', {
-        enabled: true,
-        color: '#3a6bd5',
-        length: { value: 0.21, min: 0, max: 1, step: 0.01 },
-        width: { value: 0.69, min: 0, max: 1, step: 0.01 },
-        sweep: { value: 0.18, min: 0, max: 1, step: 0.01 },
-        offsetX: { value: 0.08, min: 0, max: 1, step: 0.01 },
-        offsetY: { value: 0.04, min: -1, max: 1, step: 0.01 },
-        splayDeg: { value: 0, min: -45, max: 45, step: 1 },
+        width: { value: 0.14, min: 0, max: 1, step: 0.01 },
+        height: { value: 0.17, min: 0, max: 0.5, step: 0.01 },
+        offsetX: { value: 0.00, min: -0.5, max: 0.5, step: 0.01 },
+        offsetY: { value: 0.23, min: -0.5, max: 0.5, step: 0.01 },
     }, { collapsed: true })
 
     const hullTextureCfg = useControls('Boss / Hull Texture', {
-        enabled: true,
-        texture: { value: "Light Wool", options: Object.keys(HULL_TEXTURES) },
-        opacity: { value: 1.0, min: 0, max: 1, step: 0.01 },
-        repeatX: { value: 1.0, min: 0.25, max: 16, step: 0.25 },
-        repeatY: { value: 1.0, min: 0.25, max: 16, step: 0.25 },
+        enabled: false,
+        texture: { value: "Cream Pixels", options: Object.keys(HULL_TEXTURES) },
+        opacity: { value: 0.5, min: 0, max: 1, step: 0.01 },
+        repeatX: { value: 4, min: 0.25, max: 16, step: 0.25 },
+        repeatY: { value: 4, min: 0.25, max: 16, step: 0.25 },
     }, { collapsed: true })
 
     const healthBar = useControls('Boss / Health Bar', {
@@ -881,7 +704,7 @@ export function BossRenderer() {
     const cfg = {
         general, fuselage, cockpit, wing, wingPanel, wingtip, decal,
         cockpitGlass, engineIntake, hullVent, racingStripe, noseSpike,
-        tailFin, exhaustPort, horn, propeller, centerPropeller, tailBoom, boomFin,
+        tailFin, exhaustPort, horn,
     }
 
     // ========================================= 
@@ -890,37 +713,30 @@ export function BossRenderer() {
 
     const hullTexture = useLoader(THREE.TextureLoader, HULL_TEXTURES[hullTextureCfg.texture])
 
+    useEffect(() => {
+        hullTexture.wrapS = THREE.RepeatWrapping
+        hullTexture.wrapT = THREE.RepeatWrapping
+        hullTexture.needsUpdate = true
+    }, [hullTexture])
+
     const fuselageHullMaterial = useHullMaterial(
         fuselage.color, 0.2, 0.5,
         hullTexture, hullTextureCfg.opacity, hullTextureCfg.repeatX, hullTextureCfg.repeatY, hullTextureCfg.enabled
     )
+    const wingHullMaterial = useHullMaterial(
+        wing.color, 0.2, 0.6,
+        hullTexture, hullTextureCfg.opacity, hullTextureCfg.repeatX, hullTextureCfg.repeatY, hullTextureCfg.enabled
+    )
 
-    const wingPanelHullMaterial = useHullMaterial(
-    wingPanel.color,
-    0.2,
-    0.6,
-    hullTexture,
-    hullTextureCfg.opacity,
-    hullTextureCfg.repeatX,
-    hullTextureCfg.repeatY,
-    hullTextureCfg.enabled
-)
-
-   const hullMaterials = {
-    fuselage: fuselageHullMaterial,
-    wingPanel: wingPanelHullMaterial,
-}
+    const hullMaterials = { fuselage: fuselageHullMaterial, wing: wingHullMaterial }
 
     // ========================================= 
 
     const extrude = useMemo(() => ({ depth: general.extrudeDepth, bevelEnabled: false }), [general.extrudeDepth])
     const thinExtrude = useMemo(() => ({ depth: general.extrudeDepth * 0.5, bevelEnabled: false }), [general.extrudeDepth])
 
-    const fuselageGeometry = useMemo(() => {
-        const g = new THREE.ExtrudeGeometry(buildFuselageShape(fuselage), extrude)
-        applyPlanarUVs(g)
-        return g
-    }, [fuselage.tipY, fuselage.shoulderY, fuselage.shoulderWidth, fuselage.waistY, fuselage.waistWidth, fuselage.tailY, fuselage.tailWidth, fuselage.notchY, extrude])
+    const fuselageGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildFuselageShape(fuselage), extrude),
+        [fuselage.tipY, fuselage.shoulderY, fuselage.shoulderWidth, fuselage.waistY, fuselage.waistWidth, fuselage.tailY, fuselage.tailWidth, fuselage.notchY, extrude])
 
     const cockpitGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildCockpitShape(cockpit), extrude),
         [cockpit.topY, cockpit.topWidth, cockpit.midY, cockpit.midWidth, cockpit.bottomY, cockpit.bottomWidth, extrude])
@@ -997,39 +813,6 @@ export function BossRenderer() {
         [exhaustPort.width, exhaustPort.height, extrude]
     )
 
-    const propellerBladeGeometry = useMemo(
-        () => new THREE.ExtrudeGeometry(buildPropellerBladeShape(propeller), thinExtrude),
-        [propeller.bladeLength, propeller.bladeWidth, propeller.hubRadius, thinExtrude]
-    )
-
-    const propellerHubGeometry = useMemo(
-        () => new THREE.ExtrudeGeometry(buildPropellerHubShape(propeller), extrude),
-        [propeller.hubRadius, extrude]
-    )
-
-    const centerPropellerBladeGeometry = useMemo(
-        () => new THREE.ExtrudeGeometry(buildPropellerBladeShape(centerPropeller), thinExtrude),
-        [centerPropeller.bladeLength, centerPropeller.bladeWidth, centerPropeller.hubRadius, thinExtrude]
-    )
-
-    const centerPropellerHubGeometry = useMemo(
-        () => new THREE.ExtrudeGeometry(buildPropellerHubShape(centerPropeller), extrude),
-        [centerPropeller.hubRadius, extrude]
-    )
-
-    const tailBoomGeometry = useMemo(
-        () => new THREE.ExtrudeGeometry(buildTailBoomShape({ ...tailBoom, startY: fuselage.tailY }), extrude),
-        [tailBoom.length, tailBoom.baseWidth, tailBoom.tipWidth, fuselage.tailY, extrude]
-    )
-
-    const boomFinY = useMemo(() => fuselage.tailY - tailBoom.length, [fuselage.tailY, tailBoom.length])
-
-    const boomFinGeometry = useMemo(
-        () => new THREE.ExtrudeGeometry(buildBoomFinShape(boomFin), extrude),
-        [boomFin.length, boomFin.width, boomFin.sweep, extrude]
-    )
-    const boomFinSplayRad = useMemo(() => (boomFin.splayDeg * Math.PI) / 180, [boomFin.splayDeg])
-
     const geo = {
         fuselage: fuselageGeometry,
         cockpit: cockpitGeometry,
@@ -1051,14 +834,6 @@ export function BossRenderer() {
         tailFin: tailFinGeometry,
         tailFinSplayRad,
         exhaustPort: exhaustPortGeometry,
-        propellerBlade: propellerBladeGeometry,
-        propellerHub: propellerHubGeometry,
-        centerPropellerBlade: centerPropellerBladeGeometry,
-        centerPropellerHub: centerPropellerHubGeometry,
-        tailBoom: tailBoomGeometry,
-        boomFin: boomFinGeometry,
-        boomFinY,
-        boomFinSplayRad,
     }
 
     // =============================================== 

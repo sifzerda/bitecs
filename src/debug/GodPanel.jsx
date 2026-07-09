@@ -21,19 +21,20 @@ const weaponOptions = WEAPONS.reduce((acc, weapon) => {
 
 export function GodPanel() {
 
+    {/*
     const { weapon } = useControls('Weapon Test', {
         weapon: {
             options: weaponOptions,
             value: gameState.currentWeapon,
         },
-    })
+    })          
 
     // gameState isn't reactive React state — it's a plain object your ECS
     // systems read directly every frame — so pushing the Leva value into it
     // just needs a side effect, not a re-render.
     useEffect(() => {
         gameState.currentWeapon = weapon
-    }, [weapon])
+    }, [weapon])        */}
 
 
     const { bossWeapon } = useControls('Boss Test', {
