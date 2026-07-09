@@ -264,6 +264,7 @@ export function spawnBoss(weaponId) {
     BossAI.weapon[id] = weaponId
     BossAI.beamCycleTimer[id] = 3.0
     BossAI.beamActive[id] = 1
+    BossAI.targetRotation[id] = 0
 
     gameState.bossAlive = true
 

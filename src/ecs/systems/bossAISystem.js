@@ -7,9 +7,20 @@ import { spawnBullet, spawnHazard } from "../spawn.js"
 import { getWeapon } from "../constants/weapons.js"
 import { explodeAt } from "./weaponEffects.js"
 
-const MOVE_SPEED = 4
-const MOVE_INTERVAL = 2.0
+const TURN_SPEED = 2.0          // rad/sec — slower than the player's 4.5, reads as heavier/bulkier
+const THRUST = 16
+const MAX_SPEED = 9
+const DRAG = 0.99
+
+const MOVE_INTERVAL_MIN = 1.4    // pick a new target heading somewhere in this range
+const MOVE_INTERVAL_MAX = 2.6
 const SHOOT_INTERVAL = 1.4
+
+function normalizeAngle(a) {
+    while (a > Math.PI) a -= Math.PI * 2
+    while (a < -Math.PI) a += Math.PI * 2
+    return a
+}
 
 export function bossAISystem() {
 
@@ -26,24 +37,49 @@ export function bossAISystem() {
         const id = bosses[i]
 
         //----------------------------------
-        // Movement: wander — new random heading each interval
+        // Pick a new target heading periodically
         //----------------------------------
 
         BossAI.moveTimer[id] -= dt
 
         if (BossAI.moveTimer[id] <= 0) {
-            const angle = Math.random() * Math.PI * 2
-            Velocity.x[id] = Math.cos(angle) * MOVE_SPEED
-            Velocity.y[id] = Math.sin(angle) * MOVE_SPEED
-            BossAI.moveTimer[id] = MOVE_INTERVAL
+            BossAI.targetRotation[id] = Math.random() * Math.PI * 2 - Math.PI
+            BossAI.moveTimer[id] = MOVE_INTERVAL_MIN + Math.random() * (MOVE_INTERVAL_MAX - MOVE_INTERVAL_MIN)
         }
 
-        // face the direction of travel — same convention as the player
-        // (Velocity.x = sin(-rot), Velocity.y = cos(-rot)) so both ships'
-        // rotation math stays consistent across the codebase
-        if (Velocity.x[id] !== 0 || Velocity.y[id] !== 0) {
-            Rotation[id] = -Math.atan2(Velocity.x[id], Velocity.y[id])
+        //----------------------------------
+        // Turn toward target heading at a limited rate
+        //----------------------------------
+
+        const diff = normalizeAngle(BossAI.targetRotation[id] - Rotation[id])
+        const maxStep = TURN_SPEED * dt
+
+        if (Math.abs(diff) <= maxStep) {
+            Rotation[id] = BossAI.targetRotation[id]
+        } else {
+            Rotation[id] += Math.sign(diff) * maxStep
         }
+
+        //----------------------------------
+        // Thrust forward along current facing (same convention as player)
+        //----------------------------------
+
+        Velocity.x[id] += Math.sin(-Rotation[id]) * THRUST * dt
+        Velocity.y[id] += Math.cos(-Rotation[id]) * THRUST * dt
+
+        //----------------------------------
+        // Clamp speed + drag
+        //----------------------------------
+
+        const speed = Math.hypot(Velocity.x[id], Velocity.y[id])
+        if (speed > MAX_SPEED) {
+            const scale = MAX_SPEED / speed
+            Velocity.x[id] *= scale
+            Velocity.y[id] *= scale
+        }
+
+        Velocity.x[id] *= DRAG
+        Velocity.y[id] *= DRAG
 
         //----------------------------------
         // Shooting: aim at player, fire on a timer
