@@ -183,10 +183,14 @@ uniform vec3 uFireColor;
 uniform vec3 uSmokeColor;
 uniform float uNoiseStrength;
 uniform float uOpacity;
+uniform float uCoreWidth;
 
 void main() {
+  // solid opaque core out to uCoreWidth, then a thin feathered rim from
+  // uCoreWidth -> 1.0. Widening the tentacle widens the solid body
+  // instead of stretching one centerline gradient across more pixels.
   float edge = abs(vUv.y - 0.5) * 2.0;
-  float softEdge = smoothstep(1.0, 0.0, edge);
+  float softEdge = 1.0 - smoothstep(uCoreWidth, 1.0, edge);
 
   float turbA = sin(vUv.x * 16.0 + uTime * 2.0 + vSeed * 6.283) * 0.5 + 0.5;
   float turbB = sin(vUv.x * 33.0 - uTime * 3.4 + vSeed * 11.0) * 0.5 + 0.5;
@@ -236,8 +240,9 @@ export function TentacleRenderer() {
         hotCore: { value: '#ff2614', label: 'hot core' },
         fireColor: { value: '#ff3308', label: 'fire color' },
         smokeColor: { value: '#7a1fbf', label: 'smoke color' },
-        noiseStrength: { value: 0.6, min: 0, max: 1, step: 0.02 },
-        opacity: { value: 0.35, min: 0, max: 2, step: 0.05 },
+        noiseStrength: { value: 0, min: 0, max: 1, step: 0.02 },
+        opacity: { value: 0.18, min: 0, max: 2, step: 0.05 },
+        coreWidth: { value: 0.55, min: 0, max: 0.95, step: 0.02, label: 'solid core width' },
     }, { collapsed: false })
 
     const totalTentacles = cfg.bundleCount * cfg.tentaclesPerBundle
@@ -336,6 +341,7 @@ export function TentacleRenderer() {
             uSmokeColor: { value: new THREE.Color(plumeCfg.smokeColor) },
             uNoiseStrength: { value: plumeCfg.noiseStrength },
             uOpacity: { value: plumeCfg.opacity },
+            uCoreWidth: { value: plumeCfg.coreWidth },
         },
         transparent: true,
         depthWrite: false,
@@ -348,6 +354,7 @@ export function TentacleRenderer() {
     plumeMaterial.uniforms.uSmokeColor.value.set(plumeCfg.smokeColor)
     plumeMaterial.uniforms.uNoiseStrength.value = plumeCfg.noiseStrength
     plumeMaterial.uniforms.uOpacity.value = plumeCfg.opacity
+    plumeMaterial.uniforms.uCoreWidth.value = plumeCfg.coreWidth
 
     const meshRef = useRef()
 
