@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useControls, button } from 'leva'
 import { WEAPONS } from '../ecs/constants/weapons.js'
 import { gameState } from '../state/gameState.js'
-import { spawnBoss } from '../ecs/spawn.js'
+import { spawnBoss, spawnOctopus } from '../ecs/spawn.js'
 import { playerQuery } from '../ecs/constants/queries.js'
 import { world } from '../ecs/constants/world.js'
 import { removeEntity } from 'bitecs'
@@ -29,9 +29,8 @@ export function GodPanel() {
         },
     })          
 
-    // gameState isn't reactive React state — it's a plain object your ECS
-    // systems read directly every frame — so pushing the Leva value into it
-    // just needs a side effect, not a re-render.
+ 
+ 
     useEffect(() => {
         gameState.currentWeapon = weapon
     }, [weapon])        */}
@@ -45,18 +44,43 @@ export function GodPanel() {
         'Spawn Boss': button((get) => {
             spawnBoss(get('Boss Test.bossWeapon'))
         }),
+ 
     })
 
-const { tentaclesEnabled } = useControls('Eldritch Boss', {
-    tentaclesEnabled: {
-        label: 'Tentacles Active',
-        value: false,
-    },
-})
+        const { octopusEnabled } = useControls('Eldritch / Octopuses', {
+        octopusEnabled: {
+            label: 'Octopuses Active',
+            value: true,
+        },
+    })
 
-useEffect(() => {
-    gameState.tentaclesEnabled = tentaclesEnabled
-}, [tentaclesEnabled])
+       useEffect(() => {
+        gameState.octopusEnabled = octopusEnabled
+    }, [octopusEnabled])
 
-    return null   // this component only exists to drive the Leva panels + side effects
+    useControls('Octopus Test', {
+        octopusSpawnCount: { value: 3, min: 1, max: 6, step: 1, label: 'spawn count' },
+        'Spawn Octopuses': button((get) => {
+            const count = get('Octopus Test.octopusSpawnCount')
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2
+                const dist = Math.random() * 8
+                spawnOctopus(Math.cos(angle) * dist, Math.sin(angle) * dist)
+            }
+        }),
+    })
+
+    //const { tentaclesEnabled } = useControls('Eldritch Boss', {
+    //    tentaclesEnabled: {
+    //        label: 'Tentacles Active',
+    //        value: false,
+    //    },
+    // })
+
+    // useEffect(() => {
+    //     gameState.tentaclesEnabled = tentaclesEnabled
+    // }, [tentaclesEnabled])
+
+
+    return null
 }

@@ -19,7 +19,10 @@ import {
     BossAI,
     HazardZone,
     HazardTag,
-    StatusEffect
+    StatusEffect,
+
+     Octopus,
+    OctopusTag,
 } from "./constants/components";
 import { gameState } from "../state/gameState";
 import { getWeapon } from "./constants/weapons";
@@ -266,6 +269,25 @@ export function spawnBoss(weaponId) {
     BossAI.targetRotation[id] = 0
 
     gameState.bossAlive = true
+
+    return id
+}
+
+// ============= Octopus ============//
+export function spawnOctopus(x = 0, y = 0) {
+
+    const id = addEntity(world)
+
+    addComponent(world, id, Position)
+    addComponent(world, id, Velocity)
+    addComponent(world, id, Octopus)
+    addComponent(world, id, OctopusTag)
+
+    Position.x[id] = x
+    Position.y[id] = y
+
+    Velocity.x[id] = 0
+    Velocity.y[id] = 0
 
     return id
 }

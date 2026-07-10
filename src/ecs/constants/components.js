@@ -48,8 +48,9 @@ export const Tentacle = {
     hitCooldown: new Float32Array(MAX),  // seconds until this tentacle can hit the player again
 };
 
-export const TentacleTag = {};
-export const TentacleBossTag = {};
+export const Octopus = {
+    active: new Uint8Array(10000), // or whatever your MAX_ENTITIES is
+}
 
 export const Spark = {
     size: new Float32Array(MAX),
@@ -92,4 +93,8 @@ export const SparkTag = {};
 export const AsteroidTag = {};
 export const BossTag = {};
 export const HazardTag = {};
+
+export const TentacleTag = {};
+export const TentacleBossTag = {};
+export const OctopusTag = {};
 
