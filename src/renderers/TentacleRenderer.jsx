@@ -10,17 +10,7 @@ import { Position, Tentacle } from "../ecs/constants/components.js"
 const PHASE = { HIDDEN: 0, EMERGING: 1, ACTIVE: 2, RETRACTING: 3 }
 const MAX_TENTACLES = 16
 
-function buildSegmentShape(baseWidth, tipWidth, length) {
-    const hb = baseWidth / 2
-    const ht = tipWidth / 2
-    const shape = new THREE.Shape()
-    shape.moveTo(0, hb)
-    shape.lineTo(length, ht)
-    shape.lineTo(length, -ht)
-    shape.lineTo(0, -hb)
-    shape.closePath()
-    return shape
-}
+// ============================================================
 
 function createChain(segmentCount, originX, originY) {
     const points = []
@@ -37,19 +27,6 @@ function buildReachWeights(segmentCount) {
     }
     return weights
 }
-
-// ============================================================
-// Curl noise — direct port of the exhaust sim shader's curl(p):
-//   vec2 n1 = sin(p.y * freq + t * speed)
-//   vec2 n2 = cos(p.x * freq - t * speed)
-// Sampled per-point (using that point's own world position) rather
-// than once per tentacle, so neighboring segments get different
-// phases — that's what breaks the "rigid pendulum" look and makes
-// the chain fold through itself like something with no skeleton.
-// A second, higher-frequency octave is layered on top at lower
-// amplitude — same "detail pass" trick as multi-octave noise, cheap
-// here since it's just two more sin/cos calls per point.
-// ============================================================
 
 function curl(x, y, time, freq, speed) {
     const n1 = Math.sin(y * freq + time * speed)
@@ -75,13 +52,10 @@ function integrate(
         let fx = forceX
         let fy = forceY
 
-        // primary curl octave — broad, slow warping
         const [c1x, c1y] = curl(p.x, p.y, time, curlFreq, curlSpeed)
         fx += c1x * curlStrength
         fy += c1y * curlStrength
 
-        // detail octave — tighter, faster ripple layered on top,
-        // amplitude scaled down so it reads as texture, not a second wave
         const [c2x, c2y] = curl(p.x, p.y, time, curlDetailFreq, curlDetailSpeed)
         fx += c2x * curlDetailStrength
         fy += c2y * curlDetailStrength
@@ -136,16 +110,103 @@ function edgeAnchor(edge, along, viewportW, viewportH) {
     }
 }
 
+// ============================================================
+
+function buildSegmentPlaneGeometry(baseWidth, tipWidth, length) {
+    const hb = baseWidth / 2
+    const ht = tipWidth / 2
+
+    // 4 verts: base-top, base-bottom, tip-top, tip-bottom
+    const positions = new Float32Array([
+        0, hb, 0,
+        0, -hb, 0,
+        length, ht, 0,
+        length, -ht, 0,
+    ])
+    const uvs = new Float32Array([
+        0, 1,
+        0, 0,
+        1, 1,
+        1, 0,
+    ])
+    const indices = [0, 1, 2, 2, 1, 3]
+
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2))
+    geo.setIndex(indices)
+    return geo
+}
+// ============================================================
+
+const plumeVertexShader = /* glsl */ `
+
+attribute float aSegmentT;
+attribute float aSeed;
+
+varying vec2 vUv;
+varying float vSegmentT;
+varying float vSeed;
+
+void main() {
+  vUv = uv;
+  vSegmentT = aSegmentT;
+  vSeed = aSeed;
+
+vec4 worldPosition = instanceMatrix * vec4(position,1.0);
+ 
+  vec4 mvPosition = modelViewMatrix * worldPosition;
+  gl_Position = projectionMatrix * mvPosition;
+}
+`
+
+const plumeFragmentShader = /* glsl */ `
+precision highp float;
+
+varying vec2 vUv;
+varying float vSegmentT;
+varying float vSeed;
+
+uniform float uTime;
+uniform vec3 uColorCore;
+uniform vec3 uColorGlow;
+uniform vec3 uColorFade;
+uniform float uNoiseStrength;
+uniform float uOpacity;
+
+void main() {
+  // soft cross-section — fades from center to edge, no hard boundary
+  float edge = abs(vUv.y - 0.5) * 2.0;
+  float softEdge = smoothstep(1.0, 0.3, edge);
+
+  // turbulent density along the strip's length, two frequencies layered
+  // (same family as the position curl noise, applied to opacity instead)
+  float turbA = sin(vUv.x * 16.0 + uTime * 2.0 + vSeed * 6.283) * 0.5 + 0.5;
+  float turbB = sin(vUv.x * 33.0 - uTime * 3.4 + vSeed * 11.0) * 0.5 + 0.5;
+  float density = mix(1.0 - uNoiseStrength, 1.0, turbA) * mix(1.0 - uNoiseStrength, 1.0, turbB);
+
+  // fade out toward the very tip (wisps into nothing) and right at the
+  // wall (no hard pop-in at the anchor)
+  float tipFade = 1.0 - smoothstep(0.78, 1.0, vSegmentT);
+  float baseFade = smoothstep(0.0, 0.06, vSegmentT);
+
+  float alpha = softEdge * density * tipFade * baseFade * uOpacity;
+
+  vec3 color = mix(uColorCore, uColorGlow, smoothstep(0.0, 0.5, vSegmentT));
+  color = mix(color, uColorFade, smoothstep(0.5, 1.0, vSegmentT));
+
+  gl_FragColor = vec4(color, alpha);
+}
+`
+
 export function TentacleRenderer() {
 
     const cfg = useControls('Eldritch / Tentacles', {
-
-debugForceVisible: { value: false, label: '[DEBUG] Force Visible' },
-        segmentCount: { value: 10, min: 3, max: 20, step: 1 },
+        debugForceVisible: { value: true, label: '[DEBUG] Force Visible' },
+        segmentCount: { value: 12, min: 3, max: 24, step: 1 },
         segmentLength: { value: 3.5, min: 0.5, max: 12, step: 0.1 },
-        baseWidth: { value: 2.2, min: 0.1, max: 8, step: 0.1 },
-        tipWidth: { value: 0.15, min: 0.02, max: 3, step: 0.05 },
-        color: '#241a2e',
+        baseWidth: { value: 2.6, min: 0.1, max: 8, step: 0.1 },
+        tipWidth: { value: 0.4, min: 0.02, max: 3, step: 0.05 },
         damping: { value: 0.965, min: 0.8, max: 1, step: 0.005 },
         iterations: { value: 8, min: 1, max: 16, step: 1 },
         reachStrength: { value: 5, min: 0, max: 30, step: 0.5 },
@@ -160,11 +221,16 @@ debugForceVisible: { value: false, label: '[DEBUG] Force Visible' },
         detailSpeed: { value: 2.6, min: 0, max: 8, step: 0.05 },
     }, { collapsed: false })
 
-    const segmentGeometry = useMemo(
-        () => new THREE.ExtrudeGeometry(
-            buildSegmentShape(cfg.baseWidth, cfg.tipWidth, cfg.segmentLength),
-            { depth: 0.1, bevelEnabled: false }
-        ),
+    const plumeCfg = useControls('Eldritch / Tentacle Plume', {
+        colorCore: '#ff2ecb',   // hot glow near the wall/anchor
+        colorGlow: '#7a1fbf',   // mid-length
+        colorFade: '#04051a',   // near-black at the tip, wisps into void
+        noiseStrength: { value: 0.6, min: 0, max: 1, step: 0.02 },
+        opacity: { value: 0.85, min: 0, max: 2, step: 0.05 },
+    }, { collapsed: false })
+
+      const segmentGeometry = useMemo(
+        () => buildSegmentPlaneGeometry(cfg.baseWidth, cfg.tipWidth, cfg.segmentLength),
         [cfg.baseWidth, cfg.tipWidth, cfg.segmentLength]
     )
 
@@ -174,10 +240,49 @@ debugForceVisible: { value: false, label: '[DEBUG] Force Visible' },
 
     const reachWeights = useMemo(() => buildReachWeights(cfg.segmentCount), [cfg.segmentCount])
 
-    const meshRef = useRef()
     const totalSegments = MAX_TENTACLES * cfg.segmentCount
 
-    const _matrix = useMemo(() => new THREE.Matrix4(), [])
+     const { segmentTArray, seedArray } = useMemo(() => {
+        const segmentTArray = new Float32Array(totalSegments)
+        const seedArray = new Float32Array(totalSegments)
+        for (let i = 0; i < MAX_TENTACLES; i++) {
+            const tentacleSeed = Math.random()
+            for (let s = 0; s < cfg.segmentCount; s++) {
+                const idx = i * cfg.segmentCount + s
+                segmentTArray[idx] = s / (cfg.segmentCount - 1)
+                seedArray[idx] = tentacleSeed
+            }
+        }
+        return { segmentTArray, seedArray }
+    }, [cfg.segmentCount, totalSegments])
+
+     const plumeMaterial = useMemo(() => new THREE.ShaderMaterial({
+        vertexShader: plumeVertexShader,
+        fragmentShader: plumeFragmentShader,
+        uniforms: {
+            uTime: { value: 0 },
+            uColorCore: { value: new THREE.Color(plumeCfg.colorCore) },
+            uColorGlow: { value: new THREE.Color(plumeCfg.colorGlow) },
+            uColorFade: { value: new THREE.Color(plumeCfg.colorFade) },
+            uNoiseStrength: { value: plumeCfg.noiseStrength },
+            uOpacity: { value: plumeCfg.opacity },
+        },
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+    }), []) // uniforms updated live below, no need to rebuild material on control change
+
+    // keep uniforms in sync with Leva without recreating the material
+    plumeMaterial.uniforms.uColorCore.value.set(plumeCfg.colorCore)
+    plumeMaterial.uniforms.uColorGlow.value.set(plumeCfg.colorGlow)
+    plumeMaterial.uniforms.uColorFade.value.set(plumeCfg.colorFade)
+    plumeMaterial.uniforms.uNoiseStrength.value = plumeCfg.noiseStrength
+    plumeMaterial.uniforms.uOpacity.value = plumeCfg.opacity
+
+    const meshRef = useRef()
+
+const _matrix = useMemo(() => new THREE.Matrix4(), [])
     const _pos = useMemo(() => new THREE.Vector3(), [])
     const _quat = useMemo(() => new THREE.Quaternion(), [])
     const _scale = useMemo(() => new THREE.Vector3(1, 1, 1), [])
@@ -191,6 +296,8 @@ debugForceVisible: { value: false, label: '[DEBUG] Force Visible' },
         const t = frameState.clock.elapsedTime
         const viewportW = frameState.viewport.width
         const viewportH = frameState.viewport.height
+
+        plumeMaterial.uniforms.uTime.value = t
 
         const tentacles = tentacleQuery()
         const players = playerQuery()
@@ -258,8 +365,13 @@ debugForceVisible: { value: false, label: '[DEBUG] Force Visible' },
     })
 
     return (
-        <instancedMesh ref={meshRef} args={[segmentGeometry, null, totalSegments]} frustumCulled={false}>
-            <meshPhysicalMaterial color={cfg.color} metalness={0.1} roughness={0.85} side={THREE.DoubleSide} />
+        <instancedMesh
+            ref={meshRef}
+            args={[segmentGeometry, plumeMaterial, totalSegments]}
+            frustumCulled={false}
+        >
+            <instancedBufferAttribute attach="geometry-attributes-aSegmentT" args={[segmentTArray, 1]} />
+            <instancedBufferAttribute attach="geometry-attributes-aSeed" args={[seedArray, 1]} />
         </instancedMesh>
     )
 }
