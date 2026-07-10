@@ -47,5 +47,16 @@ export function GodPanel() {
         }),
     })
 
+const { tentaclesEnabled } = useControls('Eldritch Boss', {
+    tentaclesEnabled: {
+        label: 'Tentacles Active',
+        value: false,
+    },
+})
+
+useEffect(() => {
+    gameState.tentaclesEnabled = tentaclesEnabled
+}, [tentaclesEnabled])
+
     return null   // this component only exists to drive the Leva panels + side effects
 }
