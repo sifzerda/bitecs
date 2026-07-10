@@ -12,8 +12,8 @@ const PHASE = { HIDDEN: 0, EMERGING: 1, ACTIVE: 2, RETRACTING: 3 }
 // Each ECS tentacle entity anchors one *bundle* — a cluster of several
 // individually-simulated tentacles fanned out around that anchor point,
 // rather than one tentacle per entity.
-const BUNDLE_COUNT_DEFAULT = 2
-const TENTACLES_PER_BUNDLE_DEFAULT = 20
+const BUNDLE_COUNT_DEFAULT = 5
+const TENTACLES_PER_BUNDLE_DEFAULT = 10
 const MAX_BUNDLES = 8            // upper bound for buffer sizing
 const MAX_PER_BUNDLE = 20        // upper bound for buffer sizing
 const MAX_TENTACLES = MAX_BUNDLES * MAX_PER_BUNDLE
@@ -251,25 +251,25 @@ export function TentacleRenderer() {
         debugForceVisible: { value: true, label: '[DEBUG] Force Visible' },
         bundleCount: { value: BUNDLE_COUNT_DEFAULT, min: 1, max: MAX_BUNDLES, step: 1 },
         tentaclesPerBundle: { value: TENTACLES_PER_BUNDLE_DEFAULT, min: 1, max: MAX_PER_BUNDLE, step: 1 },
-        bundleSpread: { value: 0.30, min: 0, max: 0.3, step: 0.005, label: 'bundle fan spread' },
-        nodeCount: { value: 32, min: 3, max: 32, step: 1 },
-        spacing: { value: 0.9, min: 0.2, max: 12, step: 0.1, label: 'segment spacing' },
-        baseRadius: { value: 0.20, min: 0.1, max: 8, step: 0.05 },
-        tipRadius: { value: 0.02, min: 0.02, max: 3, step: 0.02 },
-        friction: { value: 0.00, min: 0, max: 0.98, step: 0.005 },
-        gravity: { value: 0.45, min: -3, max: 3, step: 0.05 },
-        wind: { value: -0.85, min: -3, max: 3, step: 0.05 },
-        wanderStrength: { value: 0.50, min: 0, max: 5, step: 0.05 },
-        wanderSpeed: { value: 1.10, min: 0, max: 5, step: 0.05 },
-        waveAmplitude: { value: 1.10, min: 0, max: 8, step: 0.05, label: 'S-curve amplitude' },
-        waveFrequency: { value: 0.75, min: 0, max: 3, step: 0.05, label: 'S-curve cycles' },
-        waveSpeed: { value: 2.55, min: 0, max: 6, step: 0.05, label: 'S-curve speed' },
-        detailAmplitude: { value: 0.6, min: 0, max: 4, step: 0.05, label: 'ripple amplitude' },
-        detailFrequency: { value: 1.35, min: 0, max: 6, step: 0.05, label: 'ripple cycles' },
-        detailSpeed: { value: 0, min: 0, max: 8, step: 0.05, label: 'ripple speed' },
-        curvatureSmoothing: { value: 0.2, min: 0, max: 1, step: 0.02, label: 'joint smoothing' },
-        smoothIterations: { value: 6, min: 0, max: 6, step: 1, label: 'smoothing passes' },
-        reachStrength: { value: 0, min: 0, max: 30, step: 0.5 },
+        bundleSpread: { value: 0.045, min: 0, max: 0.3, step: 0.005, label: 'bundle fan spread' },
+        nodeCount: { value: 9, min: 3, max: 32, step: 1 },
+        spacing: { value: 1.6, min: 0.2, max: 12, step: 0.1, label: 'segment spacing' },
+        baseRadius: { value: 1.1, min: 0.1, max: 8, step: 0.05 },
+        tipRadius: { value: 0.06, min: 0.02, max: 3, step: 0.02 },
+        friction: { value: 0.82, min: 0, max: 0.98, step: 0.005 },
+        gravity: { value: 0.3, min: -3, max: 3, step: 0.05 },
+        wind: { value: -0.15, min: -3, max: 3, step: 0.05 },
+        wanderStrength: { value: 0.5, min: 0, max: 5, step: 0.05 },
+        wanderSpeed: { value: 1.1, min: 0, max: 5, step: 0.05 },
+        waveAmplitude: { value: 1.4, min: 0, max: 8, step: 0.05, label: 'S-curve amplitude' },
+        waveFrequency: { value: 0.6, min: 0, max: 3, step: 0.05, label: 'S-curve cycles' },
+        waveSpeed: { value: 1.6, min: 0, max: 6, step: 0.05, label: 'S-curve speed' },
+        detailAmplitude: { value: 0.5, min: 0, max: 4, step: 0.05, label: 'ripple amplitude' },
+        detailFrequency: { value: 1.8, min: 0, max: 6, step: 0.05, label: 'ripple cycles' },
+        detailSpeed: { value: 3.2, min: 0, max: 8, step: 0.05, label: 'ripple speed' },
+        curvatureSmoothing: { value: 0.35, min: 0, max: 1, step: 0.02, label: 'joint smoothing' },
+        smoothIterations: { value: 2, min: 0, max: 6, step: 1, label: 'smoothing passes' },
+        reachStrength: { value: 5, min: 0, max: 30, step: 0.5 },
     }, { collapsed: false })
 
     const plumeCfg = useControls('Eldritch / Organic Tentacle Plume', {
