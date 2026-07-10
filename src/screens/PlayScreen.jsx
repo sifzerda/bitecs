@@ -33,6 +33,8 @@ import { BossLaserRenderer } from '../renderers/BossLaserRenderer.jsx'
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
 import { GunMount } from '../renderers/GunMount.jsx'
 
+import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
+
 import { ExhaustMount } from '../renderers/ExhaustMount.jsx'
 // debug
 import { GodPanel } from '../debug/GodPanel.jsx'
@@ -47,7 +49,7 @@ export function GameLoop({ keysRef, paused }) {
 
         world.time.delta = Math.min(delta, 0.05)
         world.time.elapsed += world.time.delta
-        gameLoop(shootState.current)
+        gameLoop(shootState.current, world.time.delta)
     })
 
     return null
@@ -105,6 +107,8 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                 <BossLaserRenderer />
 
                 <GunRenderer />
+
+                <TentacleRenderer />
 
 
                 <EffectComposer multisampling={0}>

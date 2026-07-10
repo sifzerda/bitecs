@@ -20,4 +20,6 @@ export const gameState = {
     deflectFlashTimer: 0,
     deflectFlashX: 0,
     deflectFlashY: 0,
+
+    tentaclesEnabled: false,
 }
