@@ -9,19 +9,12 @@ import { Position, Tentacle } from "../ecs/constants/components.js"
 
 const PHASE = { HIDDEN: 0, EMERGING: 1, ACTIVE: 2, RETRACTING: 3 }
 
-// Each ECS tentacle entity anchors one *bundle* — a cluster of several
-// individually-simulated tentacles fanned out around that anchor point,
-// rather than one tentacle per entity.
 const BUNDLE_COUNT_DEFAULT = 2
 const TENTACLES_PER_BUNDLE_DEFAULT = 20
-const MAX_BUNDLES = 8            // upper bound for buffer sizing
-const MAX_PER_BUNDLE = 20        // upper bound for buffer sizing
+const MAX_BUNDLES = 8         
+const MAX_PER_BUNDLE = 20     
 const MAX_TENTACLES = MAX_BUNDLES * MAX_PER_BUNDLE
 
-// ============================================================
-// physics — ported from the original Tentacle.prototype.update(),
-// plus an independent per-tentacle "wander" so tentacles in the same
-// bundle don't move in lockstep.
 // ============================================================
 
 function createNodes(nodeCount, x, y) {
@@ -32,7 +25,6 @@ function createNodes(nodeCount, x, y) {
     return nodes
 }
 
-// per-node radius, base -> tip (replaces the old this.radius * settings.thickness taper)
 function buildTaper(nodeCount, baseRadius, tipRadius) {
     const radii = new Float32Array(nodeCount)
     for (let i = 0; i < nodeCount; i++) {
@@ -42,7 +34,6 @@ function buildTaper(nodeCount, baseRadius, tipRadius) {
     return radii
 }
 
-// weight ramp for the player-reach pull, tip pulls hardest
 function buildReachWeights(nodeCount) {
     const weights = new Float32Array(nodeCount)
     for (let i = 1; i < nodeCount; i++) {
@@ -51,8 +42,6 @@ function buildReachWeights(nodeCount) {
     return weights
 }
 
-// Mutates `nodes` in place and fills `outer`/`inner` (length nodeCount - 1)
-// with the ribbon edge points for this frame.
 function updateTentacle(
     nodes, outer, inner,
     anchorX, anchorY,
@@ -68,16 +57,11 @@ function updateTentacle(
     nodes[0].x = anchorX
     nodes[0].y = anchorY
 
-    // per-tentacle independent sway, so tentacles sharing a bundle don't
-    // all bend the same way at the same moment
     const wanderX = Math.sin(time * wanderSpeed + seed * 6.283) * wanderStrength
     const wanderY = Math.cos(time * wanderSpeed * 0.8 + seed * 11.0) * wanderStrength
 
     const lastIndex = nodes.length - 1
 
-    // Pass 1: integrate forces + fixed-spacing chase constraint into raw
-    // node positions. On its own this tends to bend sharply at whichever
-    // joint absorbs the most force each frame — the "finger knuckle" look.
     let prev = nodes[0]
     for (let i = 1; i < nodes.length; i++) {
         const node = nodes[i]
@@ -99,13 +83,6 @@ function updateTentacle(
         node.vx += wind + wanderX
         node.vy += gravity + wanderY
 
-        // traveling lateral wave, perpendicular to the direction the
-        // tentacle emerges from the wall — amplitude ramps from 0 at the
-        // base to full at the tip, and the phase shifts along the chain
-        // so the bend visibly propagates outward instead of the whole
-        // limb leaning as one rigid piece. Two layered frequencies (a
-        // slow broad undulation + a faster small ripple) avoid it
-        // reading as a single uniform sine curve.
         const localT = lastIndex <= 0 ? 0 : i / lastIndex
         const wavePhase = time * waveSpeed - localT * waveFrequency * Math.PI * 2 + seed * 6.283
         const detailPhase = time * detailSpeed - localT * detailFrequency * Math.PI * 2 + seed * 11.0
@@ -127,10 +104,6 @@ function updateTentacle(
         prev = node
     }
 
-    // Pass 2: curvature smoothing. Relax each interior joint toward the
-    // midpoint of its immediate neighbors so a bend spreads continuously
-    // across several joints instead of kinking sharply at one or two.
-    // The base (fixed to the wall) and the tip are left alone.
     for (let iter = 0; iter < smoothIterations; iter++) {
         for (let i = 1; i < lastIndex; i++) {
             const prevNode = nodes[i - 1]
@@ -143,10 +116,6 @@ function updateTentacle(
         }
     }
 
-    // Pass 3: commit the smoothed positions as "old" for next frame's
-    // velocity calc (so the smoothing correction doesn't register as a
-    // phantom velocity spike), and rebuild the ribbon edges from the
-    // final, smoothed shape.
     prev = nodes[0]
     for (let i = 1; i < nodes.length; i++) {
         const node = nodes[i]
@@ -182,8 +151,6 @@ function edgeAnchor(edge, along, viewportW, viewportH) {
 }
 
 // ============================================================
-// shader — same plume look as before
-// ============================================================
 
 const plumeVertexShader = /* glsl */ `
 attribute float aSegmentT;
@@ -218,23 +185,16 @@ uniform float uNoiseStrength;
 uniform float uOpacity;
 
 void main() {
-  // fully soft radial falloff (no flat full-alpha plateau in the middle),
-  // same shape as the exhaust's point-sprite falloff
   float edge = abs(vUv.y - 0.5) * 2.0;
   float softEdge = smoothstep(1.0, 0.0, edge);
 
   float turbA = sin(vUv.x * 16.0 + uTime * 2.0 + vSeed * 6.283) * 0.5 + 0.5;
   float turbB = sin(vUv.x * 33.0 - uTime * 3.4 + vSeed * 11.0) * 0.5 + 0.5;
   float density = mix(1.0, 1.0, turbA) * mix(1.0 - uNoiseStrength, 1.0, turbB);
-
   float tipFade = 1.0 - smoothstep(0.85, 1.0, vSegmentT);
   float baseFade = smoothstep(0.0, 0.04, vSegmentT);
-
   float alpha = softEdge * density * tipFade * baseFade * uOpacity;
 
-  // hot core right at the wall, quickly giving way to the fire color,
-  // then a long fade out to smoke toward the tip — same age-based
-  // gradient shape as the exhaust's uHotCore -> uFireColor -> uSmokeColor
   vec3 color = mix(uHotCore, uFireColor, smoothstep(0.0, 0.15, vSegmentT));
   color = mix(color, uSmokeColor, smoothstep(0.15, 1.0, vSegmentT));
 
@@ -281,16 +241,12 @@ export function TentacleRenderer() {
     }, { collapsed: false })
 
     const totalTentacles = cfg.bundleCount * cfg.tentaclesPerBundle
-
-    // ribbon has nodeCount - 1 outer/inner point pairs -> nodeCount - 2
-    // quads (each quad = 2 triangles) once there are at least 2 points
     const pointsPerTentacle = Math.max(cfg.nodeCount - 1, 2)
     const quadsPerTentacle = pointsPerTentacle - 1
-    const vertsPerTentacle = pointsPerTentacle * 2 // outer + inner per point
+    const vertsPerTentacle = pointsPerTentacle * 2 
     const totalVerts = MAX_TENTACLES * vertsPerTentacle
     const totalTris = MAX_TENTACLES * quadsPerTentacle * 2
 
-    // persistent per-tentacle simulation state
     const stateRef = useRef(null)
     if (
         !stateRef.current ||
@@ -304,7 +260,7 @@ export function TentacleRenderer() {
                 outer: Array.from({ length: pointsPerTentacle }, () => ({ x: 0, y: 0 })),
                 inner: Array.from({ length: pointsPerTentacle }, () => ({ x: 0, y: 0 })),
                 seed: Math.random(),
-                alongJitter: (Math.random() - 0.5) * 2, // -1..1, scaled by bundleSpread per frame
+                alongJitter: (Math.random() - 0.5) * 2,
             })
         }
         stateRef.current = {
@@ -314,8 +270,6 @@ export function TentacleRenderer() {
         }
     }
 
-    // static topology (indices, uv, aSegmentT, aSeed) — rebuilt only when
-    // the node/point count changes; position is rewritten every frame
     const { geometry, positionAttr } = useMemo(() => {
         const positions = new Float32Array(totalVerts * 3)
         const uvs = new Float32Array(totalVerts * 2)
@@ -414,8 +368,6 @@ export function TentacleRenderer() {
         const hasPlayer = players.length > 0
         const playerEid = hasPlayer ? players[0] : null
 
-        // hide every slot beyond what's currently in use, in case
-        // bundleCount/tentaclesPerBundle shrank since last frame
         for (let i = totalTentacles; i < MAX_TENTACLES; i++) {
             const vBase = i * vertsPerTentacle
             for (let p = 0; p < pointsPerTentacle; p++) {
@@ -456,16 +408,12 @@ export function TentacleRenderer() {
                     continue
                 }
 
-                // fan this tentacle out slightly from the bundle's shared
-                // anchor point, along the boundary edge it emerges from
                 const along = bundleAlong + sim.alongJitter * cfg.bundleSpread
                 const anchor = edgeAnchor(edge, along, viewportW, viewportH)
 
                 const effSpacing = cfg.spacing * deployT
                 const radii = buildTaper(cfg.nodeCount, cfg.baseRadius * deployT, cfg.tipRadius * deployT)
 
-                // seed the chain toward the anchor on first activation so it
-                // doesn't spawn from (0,0) and whip across the screen
                 if (sim.nodes[0].x === 0 && sim.nodes[0].y === 0 && sim.nodes[1].x === 0 && sim.nodes[1].y === 0) {
                     for (const node of sim.nodes) {
                         node.x = node.ox = anchor.x
@@ -473,9 +421,6 @@ export function TentacleRenderer() {
                     }
                 }
 
-                // tangent along the boundary edge (perpendicular to the
-                // anchor's inward normal) — the axis the S-curve wave
-                // bends across
                 const tangentX = -anchor.ny
                 const tangentY = anchor.nx
 
@@ -492,9 +437,6 @@ export function TentacleRenderer() {
                     cfg.curvatureSmoothing, cfg.smoothIterations
                 )
 
-                // only the bundle's own entity gets its tip fed back into
-                // the ECS (used for hit detection etc.) — the fan-out
-                // siblings are purely visual
                 if (active && k === 0) {
                     const tip = sim.nodes[sim.nodes.length - 1]
                     Position.x[eid] = tip.x
