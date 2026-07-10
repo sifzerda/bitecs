@@ -13,6 +13,8 @@ const MAX_TENTACLES_PER_OCTOPUS = 24 // upper bound for buffer sizing
 const MAX_TENTACLES = MAX_OCTOPUSES * MAX_TENTACLES_PER_OCTOPUS
 
 // ============================================================
+// physics (identical to TentacleRenderer.jsx)
+// ============================================================
 
 function createNodes(nodeCount, x, y) {
     const nodes = []
@@ -219,6 +221,9 @@ export function OctopusRenderer() {
         detailSpeed: { value: 3.0, min: 0, max: 8, step: 0.05, label: 'ripple speed' },
         curvatureSmoothing: { value: 0.3, min: 0, max: 1, step: 0.02, label: 'joint smoothing' },
         smoothIterations: { value: 3, min: 0, max: 6, step: 1, label: 'smoothing passes' },
+        moveSpeed: { value: 1.2, min: 0, max: 10, step: 0.05, label: 'wander move speed' },
+        turnRate: { value: 1.5, min: 0, max: 8, step: 0.05, label: 'wander turn rate' },
+        wanderRadius: { value: 15, min: 1, max: 60, step: 1, label: 'wander radius' },
     }, { collapsed: false })
 
     const plumeCfg = useControls('Eldritch / Octopus Plume', {
@@ -238,7 +243,8 @@ export function OctopusRenderer() {
     const totalTris = MAX_TENTACLES * quadsPerTentacle * 2
 
     // persistent per-tentacle simulation state, plus one seed per octopus
-    // (used to desync head-pulse phase between octopuses)
+    // (used to desync head-pulse phase between octopuses), plus one
+    // wander heading per octopus slot for random-walk movement
     const stateRef = useRef(null)
     if (
         !stateRef.current ||
@@ -256,12 +262,17 @@ export function OctopusRenderer() {
             })
         }
         const octopusSeeds = new Float32Array(MAX_OCTOPUSES)
-        for (let o = 0; o < MAX_OCTOPUSES; o++) octopusSeeds[o] = Math.random()
+        const wanderAngles = new Float32Array(MAX_OCTOPUSES)
+        for (let o = 0; o < MAX_OCTOPUSES; o++) {
+            octopusSeeds[o] = Math.random()
+            wanderAngles[o] = Math.random() * Math.PI * 2
+        }
 
         stateRef.current = {
             nodeCount: cfg.nodeCount,
             tentacles,
             octopusSeeds,
+            wanderAngles,
             reachWeights: buildReachWeights(cfg.nodeCount),
         }
     }
@@ -351,21 +362,21 @@ export function OctopusRenderer() {
 
     const meshRef = useRef()
 
-useFrame((frameState) => {
-    if (!meshRef.current) return
+    useFrame((frameState, delta) => {
+        if (!meshRef.current) return
 
-    if (!gameState.octopusEnabled) {
-        // zero out all verts so nothing renders, without tearing down GPU buffers
-        const positions = positionAttr.array
-        positions.fill(0)
-        positionAttr.needsUpdate = true
-        return
-    }
+        if (!gameState.octopusEnabled) {
+            // zero out all verts so nothing renders, without tearing down GPU buffers
+            const positions = positionAttr.array
+            positions.fill(0)
+            positionAttr.needsUpdate = true
+            return
+        }
 
-    const t = frameState.clock.elapsedTime
+        const t = frameState.clock.elapsedTime
         plumeMaterial.uniforms.uTime.value = t
 
-        const { tentacles: sims, octopusSeeds, reachWeights } = stateRef.current
+        const { tentacles: sims, octopusSeeds, wanderAngles, reachWeights } = stateRef.current
         const positions = positionAttr.array
 
         const octopusEntities = octopusQuery()
@@ -399,10 +410,34 @@ useFrame((frameState) => {
                 continue
             }
 
+            // ---- random-walk wander movement ----
+            // smoothly steer a heading angle, drive velocity from it, and
+            // apply a soft pull back toward the origin once past wanderRadius
+            // so octopuses don't drift off into open space forever
+            let angle = wanderAngles[o] + (Math.random() - 0.5) * cfg.turnRate * delta
+            wanderAngles[o] = angle
+
+            let vx = Math.cos(angle) * cfg.moveSpeed
+            let vy = Math.sin(angle) * cfg.moveSpeed
+
+            const px = Position.x[eid]
+            const py = Position.y[eid]
+            const distFromCenter = Math.hypot(px, py)
+            if (distFromCenter > cfg.wanderRadius && distFromCenter > 0.0001) {
+                vx += (-px / distFromCenter) * cfg.moveSpeed
+                vy += (-py / distFromCenter) * cfg.moveSpeed
+            }
+
+            Velocity.x[eid] = vx
+            Velocity.y[eid] = vy
+            Position.x[eid] += vx * delta
+            Position.y[eid] += vy * delta
+            // ---- end wander movement ----
+
             const centerX = Position.x[eid]
             const centerY = Position.y[eid]
-            const vx = Velocity.x[eid]
-            const vy = Velocity.y[eid]
+            const vxCur = Velocity.x[eid]
+            const vyCur = Velocity.y[eid]
 
             const pulse = cfg.pulse
                 ? Math.pow(Math.sin(t * cfg.pulseSpeed + octopusSeeds[o] * 6.283), 18)
@@ -411,22 +446,22 @@ useFrame((frameState) => {
 
             // drag opposite velocity — tentacles trail behind the octopus
             // as it flies, instead of sagging toward a fixed world direction
-            const dragX = -vx * cfg.dragStrength
-            const dragY = -vy * cfg.dragStrength
+            const dragX = -vxCur * cfg.dragStrength
+            const dragY = -vyCur * cfg.dragStrength
 
             for (let k = 0; k < cfg.tentaclesPerOctopus; k++) {
                 const i = o * cfg.tentaclesPerOctopus + k
                 const sim = sims[i]
                 const vBase = i * vertsPerTentacle
 
-                const angle = (k / cfg.tentaclesPerOctopus) * Math.PI * 2
-                const anchorX = centerX + Math.cos(angle) * headR
-                const anchorY = centerY + Math.sin(angle) * headR
+                const angleTentacle = (k / cfg.tentaclesPerOctopus) * Math.PI * 2
+                const anchorX = centerX + Math.cos(angleTentacle) * headR
+                const anchorY = centerY + Math.sin(angleTentacle) * headR
 
                 // tangent to the head circle at this angle — the axis the
                 // S-curve wave bends across
-                const tangentX = -Math.sin(angle)
-                const tangentY = Math.cos(angle)
+                const tangentX = -Math.sin(angleTentacle)
+                const tangentY = Math.cos(angleTentacle)
 
                 const radii = buildTaper(cfg.nodeCount, cfg.baseRadius, cfg.tipRadius)
 
