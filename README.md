@@ -49,11 +49,12 @@ npm install
 - [Three.js](https://threejs.org/) + [Fiber](https://github.com/pmndrs/fiber) + [Drei](https://github.com/pmndrs/drei) + [Postprocessing](https://github.com/pmndrs/postprocessing) 
 - [useMemo](https://react.dev/reference/react/useMemo)
 - [Leva](https://github.com/pmndrs/leva): config panel to create ship parts
+- [Muscular Hydrostats](https://github.com/soulwire/Muscular-Hydrostats): for tentacles
+
 
 ## Support
 
 For support, users can contact me through my portfolio contact form: [here](https://next-portfolio-sifzerdas-projects.vercel.app/contact)
-
 
 ## Contributing
 
@@ -68,7 +69,9 @@ If you have a suggestion that would make this better, please fork the repo and c
 
 ## Authors and Acknowledgment
 
-The author acknowledges and credits those who have contributed to this project.
+The author acknowledges and credits those who have contributed to this project, including:
+
+- soulwire (Justin Windle) and ArloL (Arlo O'Keeffe) for Muscular Hydrostats
 
 ## License
 
