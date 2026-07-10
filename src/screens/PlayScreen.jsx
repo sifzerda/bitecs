@@ -33,7 +33,8 @@ import { BossLaserRenderer } from '../renderers/BossLaserRenderer.jsx'
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
 import { GunMount } from '../renderers/GunMount.jsx'
 
- import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
+//import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
+import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
 
 import { ExhaustMount } from '../renderers/ExhaustMount.jsx'
 // debug
@@ -108,8 +109,10 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                 <GunRenderer />
 
-   {/*                     */}
-<TentacleRenderer /> 
+   {/*         <TentacleRenderer />            */}
+
+                <OctopusRenderer />
+
 
                 <EffectComposer multisampling={0}>
 

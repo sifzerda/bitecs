@@ -1,27 +1,17 @@
-// src/renderers/TentacleRenderer.jsx
+// src/renderers/OctopusRenderer.jsx
 
 import { useMemo, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import { useControls } from "leva"
 import * as THREE from "three"
-import { playerQuery, tentacleQuery } from "../ecs/constants/queries.js"
-import { Position, Tentacle } from "../ecs/constants/components.js"
+import { octopusQuery } from "../ecs/constants/queries.js"
+import { Position, Velocity } from "../ecs/constants/components.js"
+import { gameState } from "../state/gameState.js"
 
-const PHASE = { HIDDEN: 0, EMERGING: 1, ACTIVE: 2, RETRACTING: 3 }
+const MAX_OCTOPUSES = 6              // upper bound for buffer sizing
+const MAX_TENTACLES_PER_OCTOPUS = 24 // upper bound for buffer sizing
+const MAX_TENTACLES = MAX_OCTOPUSES * MAX_TENTACLES_PER_OCTOPUS
 
-// Each ECS tentacle entity anchors one *bundle* — a cluster of several
-// individually-simulated tentacles fanned out around that anchor point,
-// rather than one tentacle per entity.
-const BUNDLE_COUNT_DEFAULT = 5
-const TENTACLES_PER_BUNDLE_DEFAULT = 10
-const MAX_BUNDLES = 8            // upper bound for buffer sizing
-const MAX_PER_BUNDLE = 20        // upper bound for buffer sizing
-const MAX_TENTACLES = MAX_BUNDLES * MAX_PER_BUNDLE
-
-// ============================================================
-// physics — ported from the original Tentacle.prototype.update(),
-// plus an independent per-tentacle "wander" so tentacles in the same
-// bundle don't move in lockstep.
 // ============================================================
 
 function createNodes(nodeCount, x, y) {
@@ -32,7 +22,6 @@ function createNodes(nodeCount, x, y) {
     return nodes
 }
 
-// per-node radius, base -> tip (replaces the old this.radius * settings.thickness taper)
 function buildTaper(nodeCount, baseRadius, tipRadius) {
     const radii = new Float32Array(nodeCount)
     for (let i = 0; i < nodeCount; i++) {
@@ -42,7 +31,6 @@ function buildTaper(nodeCount, baseRadius, tipRadius) {
     return radii
 }
 
-// weight ramp for the player-reach pull, tip pulls hardest
 function buildReachWeights(nodeCount) {
     const weights = new Float32Array(nodeCount)
     for (let i = 1; i < nodeCount; i++) {
@@ -51,8 +39,6 @@ function buildReachWeights(nodeCount) {
     return weights
 }
 
-// Mutates `nodes` in place and fills `outer`/`inner` (length nodeCount - 1)
-// with the ribbon edge points for this frame.
 function updateTentacle(
     nodes, outer, inner,
     anchorX, anchorY,
@@ -62,13 +48,12 @@ function updateTentacle(
     seed, time, wanderStrength, wanderSpeed,
     tangentX, tangentY,
     waveAmplitude, waveFrequency, waveSpeed,
-    detailAmplitude, detailFrequency, detailSpeed
+    detailAmplitude, detailFrequency, detailSpeed,
+    curvatureSmoothing, smoothIterations
 ) {
     nodes[0].x = anchorX
     nodes[0].y = anchorY
 
-    // per-tentacle independent sway, so tentacles sharing a bundle don't
-    // all bend the same way at the same moment
     const wanderX = Math.sin(time * wanderSpeed + seed * 6.283) * wanderStrength
     const wanderY = Math.cos(time * wanderSpeed * 0.8 + seed * 11.0) * wanderStrength
 
@@ -95,13 +80,6 @@ function updateTentacle(
         node.vx += wind + wanderX
         node.vy += gravity + wanderY
 
-        // traveling lateral wave, perpendicular to the direction the
-        // tentacle emerges from the wall — amplitude ramps from 0 at the
-        // base to full at the tip, and the phase shifts along the chain
-        // so the bend visibly propagates outward instead of the whole
-        // limb leaning as one rigid piece. Two layered frequencies (a
-        // slow broad undulation + a faster small ripple) avoid it
-        // reading as a single uniform sine curve.
         const localT = lastIndex <= 0 ? 0 : i / lastIndex
         const wavePhase = time * waveSpeed - localT * waveFrequency * Math.PI * 2 + seed * 6.283
         const detailPhase = time * detailSpeed - localT * detailFrequency * Math.PI * 2 + seed * 11.0
@@ -120,8 +98,30 @@ function updateTentacle(
             node.vy += (rdy / dist) * reachStrength * w
         }
 
+        prev = node
+    }
+
+    for (let iter = 0; iter < smoothIterations; iter++) {
+        for (let i = 1; i < lastIndex; i++) {
+            const prevNode = nodes[i - 1]
+            const curNode = nodes[i]
+            const nextNode = nodes[i + 1]
+            const targetX = (prevNode.x + nextNode.x) * 0.5
+            const targetY = (prevNode.y + nextNode.y) * 0.5
+            curNode.x += (targetX - curNode.x) * curvatureSmoothing
+            curNode.y += (targetY - curNode.y) * curvatureSmoothing
+        }
+    }
+
+    prev = nodes[0]
+    for (let i = 1; i < nodes.length; i++) {
+        const node = nodes[i]
         node.ox = node.x
         node.oy = node.y
+
+        const dx = prev.x - node.x
+        const dy = prev.y - node.y
+        const da = Math.atan2(dy, dx)
 
         const s = Math.sin(da + Math.PI / 2)
         const c = Math.cos(da + Math.PI / 2)
@@ -136,19 +136,8 @@ function updateTentacle(
     }
 }
 
-function edgeAnchor(edge, along, viewportW, viewportH) {
-    const halfW = viewportW / 2
-    const halfH = viewportH / 2
-    switch (edge) {
-        case 0: return { x: -halfW, y: along * viewportH, nx: 1, ny: 0 }
-        case 1: return { x: halfW, y: along * viewportH, nx: -1, ny: 0 }
-        case 2: return { x: along * viewportW, y: halfH, nx: 0, ny: -1 }
-        default: return { x: along * viewportW, y: -halfH, nx: 0, ny: 1 }
-    }
-}
-
 // ============================================================
-// shader — same plume look as before
+// shader (identical to TentacleRenderer.jsx, including the solid-core fix)
 // ============================================================
 
 const plumeVertexShader = /* glsl */ `
@@ -182,25 +171,19 @@ uniform vec3 uFireColor;
 uniform vec3 uSmokeColor;
 uniform float uNoiseStrength;
 uniform float uOpacity;
+uniform float uCoreWidth;
 
 void main() {
-  // fully soft radial falloff (no flat full-alpha plateau in the middle),
-  // same shape as the exhaust's point-sprite falloff
   float edge = abs(vUv.y - 0.5) * 2.0;
-  float softEdge = smoothstep(1.0, 0.0, edge);
+  float softEdge = 1.0 - smoothstep(uCoreWidth, 1.0, edge);
 
   float turbA = sin(vUv.x * 16.0 + uTime * 2.0 + vSeed * 6.283) * 0.5 + 0.5;
   float turbB = sin(vUv.x * 33.0 - uTime * 3.4 + vSeed * 11.0) * 0.5 + 0.5;
   float density = mix(1.0, 1.0, turbA) * mix(1.0 - uNoiseStrength, 1.0, turbB);
-
   float tipFade = 1.0 - smoothstep(0.85, 1.0, vSegmentT);
   float baseFade = smoothstep(0.0, 0.04, vSegmentT);
-
   float alpha = softEdge * density * tipFade * baseFade * uOpacity;
 
-  // hot core right at the wall, quickly giving way to the fire color,
-  // then a long fade out to smoke toward the tip — same age-based
-  // gradient shape as the exhaust's uHotCore -> uFireColor -> uSmokeColor
   vec3 color = mix(uHotCore, uFireColor, smoothstep(0.0, 0.15, vSegmentT));
   color = mix(color, uSmokeColor, smoothstep(0.15, 1.0, vSegmentT));
 
@@ -211,50 +194,51 @@ void main() {
 }
 `
 
-export function TentacleRenderer() {
+export function OctopusRenderer() {
 
-    const cfg = useControls('Eldritch / Organic Tentacles', {
-        debugForceVisible: { value: true, label: '[DEBUG] Force Visible' },
-        bundleCount: { value: BUNDLE_COUNT_DEFAULT, min: 1, max: MAX_BUNDLES, step: 1 },
-        tentaclesPerBundle: { value: TENTACLES_PER_BUNDLE_DEFAULT, min: 1, max: MAX_PER_BUNDLE, step: 1 },
-        bundleSpread: { value: 0.045, min: 0, max: 0.3, step: 0.005, label: 'bundle fan spread' },
-        nodeCount: { value: 9, min: 3, max: 32, step: 1 },
-        spacing: { value: 1.6, min: 0.2, max: 12, step: 0.1, label: 'segment spacing' },
-        baseRadius: { value: 1.1, min: 0.1, max: 8, step: 0.05 },
-        tipRadius: { value: 0.06, min: 0.02, max: 3, step: 0.02 },
-        friction: { value: 0.82, min: 0, max: 0.98, step: 0.005 },
-        gravity: { value: 0.3, min: -3, max: 3, step: 0.05 },
-        wind: { value: -0.15, min: -3, max: 3, step: 0.05 },
-        wanderStrength: { value: 0.5, min: 0, max: 5, step: 0.05 },
-        wanderSpeed: { value: 1.1, min: 0, max: 5, step: 0.05 },
-        waveAmplitude: { value: 1.4, min: 0, max: 8, step: 0.05, label: 'S-curve amplitude' },
-        waveFrequency: { value: 0.6, min: 0, max: 3, step: 0.05, label: 'S-curve cycles' },
-        waveSpeed: { value: 1.6, min: 0, max: 6, step: 0.05, label: 'S-curve speed' },
-        detailAmplitude: { value: 0.5, min: 0, max: 4, step: 0.05, label: 'ripple amplitude' },
-        detailFrequency: { value: 1.8, min: 0, max: 6, step: 0.05, label: 'ripple cycles' },
-        detailSpeed: { value: 3.2, min: 0, max: 8, step: 0.05, label: 'ripple speed' },
-        reachStrength: { value: 5, min: 0, max: 30, step: 0.5 },
+    const cfg = useControls('Eldritch / Octopuses', {
+        octopusCount: { value: 3, min: 1, max: MAX_OCTOPUSES, step: 1 },
+        tentaclesPerOctopus: { value: 12, min: 1, max: MAX_TENTACLES_PER_OCTOPUS, step: 1 },
+        headRadius: { value: 0.6, min: 0.05, max: 6, step: 0.05, label: 'head radius' },
+        pulse: { value: true, label: 'head pulse' },
+        pulseSpeed: { value: 0.6, min: 0, max: 4, step: 0.02, label: 'pulse speed' },
+        pulseAmount: { value: 0.35, min: 0, max: 1, step: 0.02, label: 'pulse amount' },
+        nodeCount: { value: 8, min: 3, max: 24, step: 1 },
+        spacing: { value: 0.22, min: 0.02, max: 4, step: 0.01, label: 'segment spacing' },
+        baseRadius: { value: 0.05, min: 0.005, max: 2, step: 0.005 },
+        tipRadius: { value: 0.008, min: 0.002, max: 1, step: 0.002 },
+        friction: { value: 0.75, min: 0, max: 0.98, step: 0.005 },
+        dragStrength: { value: 0.9, min: 0, max: 4, step: 0.02, label: 'trailing drag' },
+        wanderStrength: { value: 0.15, min: 0, max: 3, step: 0.02 },
+        wanderSpeed: { value: 1.3, min: 0, max: 5, step: 0.05 },
+        waveAmplitude: { value: 0.3, min: 0, max: 3, step: 0.02, label: 'S-curve amplitude' },
+        waveFrequency: { value: 0.9, min: 0, max: 3, step: 0.05, label: 'S-curve cycles' },
+        waveSpeed: { value: 2.2, min: 0, max: 6, step: 0.05, label: 'S-curve speed' },
+        detailAmplitude: { value: 0.12, min: 0, max: 2, step: 0.02, label: 'ripple amplitude' },
+        detailFrequency: { value: 1.6, min: 0, max: 6, step: 0.05, label: 'ripple cycles' },
+        detailSpeed: { value: 3.0, min: 0, max: 8, step: 0.05, label: 'ripple speed' },
+        curvatureSmoothing: { value: 0.3, min: 0, max: 1, step: 0.02, label: 'joint smoothing' },
+        smoothIterations: { value: 3, min: 0, max: 6, step: 1, label: 'smoothing passes' },
     }, { collapsed: false })
 
-    const plumeCfg = useControls('Eldritch / Organic Tentacle Plume', {
-        hotCore: { value: '#ff2614', label: 'hot core' },
-        fireColor: { value: '#ff3308', label: 'fire color' },
-        smokeColor: { value: '#7a1fbf', label: 'smoke color' },
-        noiseStrength: { value: 0.6, min: 0, max: 1, step: 0.02 },
-        opacity: { value: 0.35, min: 0, max: 2, step: 0.05 },
+    const plumeCfg = useControls('Eldritch / Octopus Plume', {
+        hotCore: { value: '#ff2ecb', label: 'hot core' },
+        fireColor: { value: '#7a1fbf', label: 'fire color' },
+        smokeColor: { value: '#04051a', label: 'smoke color' },
+        noiseStrength: { value: 0.5, min: 0, max: 1, step: 0.02 },
+        opacity: { value: 0.5, min: 0, max: 2, step: 0.05 },
+        coreWidth: { value: 0.55, min: 0, max: 0.95, step: 0.02, label: 'solid core width' },
     }, { collapsed: false })
 
-    const totalTentacles = cfg.bundleCount * cfg.tentaclesPerBundle
-
-    // ribbon has nodeCount - 1 outer/inner point pairs -> nodeCount - 2
-    // quads (each quad = 2 triangles) once there are at least 2 points
+    const totalTentacles = cfg.octopusCount * cfg.tentaclesPerOctopus
     const pointsPerTentacle = Math.max(cfg.nodeCount - 1, 2)
     const quadsPerTentacle = pointsPerTentacle - 1
-    const vertsPerTentacle = pointsPerTentacle * 2 // outer + inner per point
+    const vertsPerTentacle = pointsPerTentacle * 2
     const totalVerts = MAX_TENTACLES * vertsPerTentacle
     const totalTris = MAX_TENTACLES * quadsPerTentacle * 2
 
-    // persistent per-tentacle simulation state
+    // persistent per-tentacle simulation state, plus one seed per octopus
+    // (used to desync head-pulse phase between octopuses)
     const stateRef = useRef(null)
     if (
         !stateRef.current ||
@@ -268,18 +252,22 @@ export function TentacleRenderer() {
                 outer: Array.from({ length: pointsPerTentacle }, () => ({ x: 0, y: 0 })),
                 inner: Array.from({ length: pointsPerTentacle }, () => ({ x: 0, y: 0 })),
                 seed: Math.random(),
-                alongJitter: (Math.random() - 0.5) * 2, // -1..1, scaled by bundleSpread per frame
+                initialized: false,
             })
         }
+        const octopusSeeds = new Float32Array(MAX_OCTOPUSES)
+        for (let o = 0; o < MAX_OCTOPUSES; o++) octopusSeeds[o] = Math.random()
+
         stateRef.current = {
             nodeCount: cfg.nodeCount,
             tentacles,
+            octopusSeeds,
             reachWeights: buildReachWeights(cfg.nodeCount),
         }
     }
 
-    // static topology (indices, uv, aSegmentT, aSeed) — rebuilt only when
-    // the node/point count changes; position is rewritten every frame
+    // static topology — rebuilt only when node/point count changes;
+    // position is rewritten every frame
     const { geometry, positionAttr } = useMemo(() => {
         const positions = new Float32Array(totalVerts * 3)
         const uvs = new Float32Array(totalVerts * 2)
@@ -346,6 +334,7 @@ export function TentacleRenderer() {
             uSmokeColor: { value: new THREE.Color(plumeCfg.smokeColor) },
             uNoiseStrength: { value: plumeCfg.noiseStrength },
             uOpacity: { value: plumeCfg.opacity },
+            uCoreWidth: { value: plumeCfg.coreWidth },
         },
         transparent: true,
         depthWrite: false,
@@ -358,28 +347,30 @@ export function TentacleRenderer() {
     plumeMaterial.uniforms.uSmokeColor.value.set(plumeCfg.smokeColor)
     plumeMaterial.uniforms.uNoiseStrength.value = plumeCfg.noiseStrength
     plumeMaterial.uniforms.uOpacity.value = plumeCfg.opacity
+    plumeMaterial.uniforms.uCoreWidth.value = plumeCfg.coreWidth
 
     const meshRef = useRef()
 
-    useFrame((frameState, dt) => {
-        if (!meshRef.current) return
+useFrame((frameState) => {
+    if (!meshRef.current) return
 
-        const t = frameState.clock.elapsedTime
-        const viewportW = frameState.viewport.width
-        const viewportH = frameState.viewport.height
+    if (!gameState.octopusEnabled) {
+        // zero out all verts so nothing renders, without tearing down GPU buffers
+        const positions = positionAttr.array
+        positions.fill(0)
+        positionAttr.needsUpdate = true
+        return
+    }
 
+    const t = frameState.clock.elapsedTime
         plumeMaterial.uniforms.uTime.value = t
 
-        const { tentacles: sims, reachWeights } = stateRef.current
+        const { tentacles: sims, octopusSeeds, reachWeights } = stateRef.current
         const positions = positionAttr.array
 
-        const bundleEntities = tentacleQuery()
-        const players = playerQuery()
-        const hasPlayer = players.length > 0
-        const playerEid = hasPlayer ? players[0] : null
+        const octopusEntities = octopusQuery()
 
-        // hide every slot beyond what's currently in use, in case
-        // bundleCount/tentaclesPerBundle shrank since last frame
+        // hide every slot beyond what's currently in use
         for (let i = totalTentacles; i < MAX_TENTACLES; i++) {
             const vBase = i * vertsPerTentacle
             for (let p = 0; p < pointsPerTentacle; p++) {
@@ -390,92 +381,88 @@ export function TentacleRenderer() {
             }
         }
 
-        for (let b = 0; b < cfg.bundleCount; b++) {
-            const active = b < bundleEntities.length
-            const eid = active ? bundleEntities[b] : null
+        for (let o = 0; o < cfg.octopusCount; o++) {
+            const active = o < octopusEntities.length
+            const eid = active ? octopusEntities[o] : null
 
-            const deployT = cfg.debugForceVisible ? 1 : (active ? Tentacle.deployT[eid] : 0)
-            const visible = cfg.debugForceVisible || deployT > 0.001
-
-            const edge = active ? Tentacle.edge[eid] : (b % 4)
-            const bundleAlong = active ? Tentacle.along[eid] : ((b / cfg.bundleCount) - 0.5) * 0.8
-
-            const isActivePhase = active && Tentacle.phase[eid] === PHASE.ACTIVE
-            const reachActive = isActivePhase && hasPlayer
-            const reachX = reachActive ? Position.x[playerEid] : 0
-            const reachY = reachActive ? Position.y[playerEid] : 0
-
-            for (let k = 0; k < cfg.tentaclesPerBundle; k++) {
-                const i = b * cfg.tentaclesPerBundle + k
-                const sim = sims[i]
-                const vBase = i * vertsPerTentacle
-
-                if (!visible) {
+            if (!active) {
+                for (let k = 0; k < cfg.tentaclesPerOctopus; k++) {
+                    const i = o * cfg.tentaclesPerOctopus + k
+                    const vBase = i * vertsPerTentacle
                     for (let p = 0; p < pointsPerTentacle; p++) {
                         const outerIdx = vBase + p * 2
                         const innerIdx = outerIdx + 1
                         positions[outerIdx * 3] = positions[outerIdx * 3 + 1] = positions[outerIdx * 3 + 2] = 0
                         positions[innerIdx * 3] = positions[innerIdx * 3 + 1] = positions[innerIdx * 3 + 2] = 0
                     }
-                    continue
                 }
+                continue
+            }
 
-                // fan this tentacle out slightly from the bundle's shared
-                // anchor point, along the boundary edge it emerges from
-                const along = bundleAlong + sim.alongJitter * cfg.bundleSpread
-                const anchor = edgeAnchor(edge, along, viewportW, viewportH)
+            const centerX = Position.x[eid]
+            const centerY = Position.y[eid]
+            const vx = Velocity.x[eid]
+            const vy = Velocity.y[eid]
 
-                const effSpacing = cfg.spacing * deployT
-                const radii = buildTaper(cfg.nodeCount, cfg.baseRadius * deployT, cfg.tipRadius * deployT)
+            const pulse = cfg.pulse
+                ? Math.pow(Math.sin(t * cfg.pulseSpeed + octopusSeeds[o] * 6.283), 18)
+                : 0
+            const headR = cfg.headRadius * (1 - cfg.pulseAmount * 0.5 + cfg.pulseAmount * 0.5 * pulse)
 
-                // seed the chain toward the anchor on first activation so it
-                // doesn't spawn from (0,0) and whip across the screen
-                if (sim.nodes[0].x === 0 && sim.nodes[0].y === 0 && sim.nodes[1].x === 0 && sim.nodes[1].y === 0) {
+            // drag opposite velocity — tentacles trail behind the octopus
+            // as it flies, instead of sagging toward a fixed world direction
+            const dragX = -vx * cfg.dragStrength
+            const dragY = -vy * cfg.dragStrength
+
+            for (let k = 0; k < cfg.tentaclesPerOctopus; k++) {
+                const i = o * cfg.tentaclesPerOctopus + k
+                const sim = sims[i]
+                const vBase = i * vertsPerTentacle
+
+                const angle = (k / cfg.tentaclesPerOctopus) * Math.PI * 2
+                const anchorX = centerX + Math.cos(angle) * headR
+                const anchorY = centerY + Math.sin(angle) * headR
+
+                // tangent to the head circle at this angle — the axis the
+                // S-curve wave bends across
+                const tangentX = -Math.sin(angle)
+                const tangentY = Math.cos(angle)
+
+                const radii = buildTaper(cfg.nodeCount, cfg.baseRadius, cfg.tipRadius)
+
+                if (!sim.initialized) {
                     for (const node of sim.nodes) {
-                        node.x = node.ox = anchor.x
-                        node.y = node.oy = anchor.y
+                        node.x = node.ox = anchorX
+                        node.y = node.oy = anchorY
                     }
+                    sim.initialized = true
                 }
-
-                // tangent along the boundary edge (perpendicular to the
-                // anchor's inward normal) — the axis the S-curve wave
-                // bends across
-                const tangentX = -anchor.ny
-                const tangentY = anchor.nx
 
                 updateTentacle(
                     sim.nodes, sim.outer, sim.inner,
-                    anchor.x, anchor.y,
-                    effSpacing, cfg.friction, cfg.gravity, cfg.wind,
+                    anchorX, anchorY,
+                    cfg.spacing, cfg.friction, dragY, dragX,
                     radii,
-                    reachActive, reachX, reachY, cfg.reachStrength, reachWeights,
+                    false, 0, 0, 0, reachWeights,
                     sim.seed, t, cfg.wanderStrength, cfg.wanderSpeed,
                     tangentX, tangentY,
                     cfg.waveAmplitude, cfg.waveFrequency, cfg.waveSpeed,
-                    cfg.detailAmplitude, cfg.detailFrequency, cfg.detailSpeed
+                    cfg.detailAmplitude, cfg.detailFrequency, cfg.detailSpeed,
+                    cfg.curvatureSmoothing, cfg.smoothIterations
                 )
 
-                // only the bundle's own entity gets its tip fed back into
-                // the ECS (used for hit detection etc.) — the fan-out
-                // siblings are purely visual
-                if (active && k === 0) {
-                    const tip = sim.nodes[sim.nodes.length - 1]
-                    Position.x[eid] = tip.x
-                    Position.y[eid] = tip.y
-                }
-
                 for (let p = 0; p < pointsPerTentacle; p++) {
-                    const o = sim.outer[p]
-                    const n = sim.inner[p]
+                    const o2 = sim.outer[p]
+                    const n2 = sim.inner[p]
                     const outerIdx = vBase + p * 2
                     const innerIdx = outerIdx + 1
 
-                    positions[outerIdx * 3] = o.x
-                    positions[outerIdx * 3 + 1] = o.y
+                    positions[outerIdx * 3] = o2.x
+                    positions[outerIdx * 3 + 1] = o2.y
                     positions[outerIdx * 3 + 2] = 0.05
 
-                    positions[innerIdx * 3] = n.x
-                    positions[innerIdx * 3 + 1] = n.y
+                    positions[innerIdx * 3] = n2.x
+                    positions[innerIdx * 3 + 1] = n2.y
                     positions[innerIdx * 3 + 2] = 0.05
                 }
             }

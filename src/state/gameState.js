@@ -22,4 +22,5 @@ export const gameState = {
     deflectFlashY: 0,
 
     tentaclesEnabled: false,
+    octopusEnabled: true,
 }
