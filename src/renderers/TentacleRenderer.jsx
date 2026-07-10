@@ -149,14 +149,16 @@ varying float vSegmentT;
 varying float vSeed;
 
 void main() {
-  vUv = uv;
-  vSegmentT = aSegmentT;
-  vSeed = aSeed;
 
-vec4 worldPosition = instanceMatrix * vec4(position,1.0);
- 
-  vec4 mvPosition = modelViewMatrix * worldPosition;
-  gl_Position = projectionMatrix * mvPosition;
+    vUv = uv;
+    vSegmentT = aSegmentT;
+    vSeed = aSeed;
+
+    vec4 worldPosition = instanceMatrix * vec4(position, 1.0);
+
+    vec4 mvPosition = modelViewMatrix * worldPosition;
+
+    gl_Position = projectionMatrix * mvPosition;
 }
 `
 
@@ -229,18 +231,7 @@ export function TentacleRenderer() {
         opacity: { value: 0.85, min: 0, max: 2, step: 0.05 },
     }, { collapsed: false })
 
-      const segmentGeometry = useMemo(
-        () => buildSegmentPlaneGeometry(cfg.baseWidth, cfg.tipWidth, cfg.segmentLength),
-        [cfg.baseWidth, cfg.tipWidth, cfg.segmentLength]
-    )
-
-    const chainsRef = useRef(
-        Array.from({ length: MAX_TENTACLES }, () => createChain(cfg.segmentCount, 0, 0))
-    )
-
-    const reachWeights = useMemo(() => buildReachWeights(cfg.segmentCount), [cfg.segmentCount])
-
-    const totalSegments = MAX_TENTACLES * cfg.segmentCount
+        const totalSegments = MAX_TENTACLES * cfg.segmentCount
 
      const { segmentTArray, seedArray } = useMemo(() => {
         const segmentTArray = new Float32Array(totalSegments)
@@ -255,6 +246,44 @@ export function TentacleRenderer() {
         }
         return { segmentTArray, seedArray }
     }, [cfg.segmentCount, totalSegments])
+
+const segmentGeometry = useMemo(() => {
+
+    const geo = buildSegmentPlaneGeometry(
+        cfg.baseWidth,
+        cfg.tipWidth,
+        cfg.segmentLength
+    )
+
+    geo.setAttribute(
+        "aSegmentT",
+        new THREE.InstancedBufferAttribute(segmentTArray, 1)
+    )
+
+    geo.setAttribute(
+        "aSeed",
+        new THREE.InstancedBufferAttribute(seedArray, 1)
+    )
+
+    return geo
+
+}, [
+    cfg.baseWidth,
+    cfg.tipWidth,
+    cfg.segmentLength,
+    segmentTArray,
+    seedArray,
+])
+
+    const chainsRef = useRef(
+        Array.from({ length: MAX_TENTACLES }, () => createChain(cfg.segmentCount, 0, 0))
+    )
+
+    const reachWeights = useMemo(() => buildReachWeights(cfg.segmentCount), [cfg.segmentCount])
+
+
+
+
 
      const plumeMaterial = useMemo(() => new THREE.ShaderMaterial({
         vertexShader: plumeVertexShader,
@@ -365,13 +394,10 @@ const _matrix = useMemo(() => new THREE.Matrix4(), [])
     })
 
     return (
-        <instancedMesh
-            ref={meshRef}
-            args={[segmentGeometry, plumeMaterial, totalSegments]}
-            frustumCulled={false}
-        >
-            <instancedBufferAttribute attach="geometry-attributes-aSegmentT" args={[segmentTArray, 1]} />
-            <instancedBufferAttribute attach="geometry-attributes-aSeed" args={[seedArray, 1]} />
-        </instancedMesh>
+<instancedMesh
+    ref={meshRef}
+    args={[segmentGeometry, plumeMaterial, totalSegments]}
+    frustumCulled={false}
+/>
     )
 }
