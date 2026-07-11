@@ -1,4 +1,26 @@
 // src/renderers/BossRenderer.jsx
+//
+// Flying-saucer boss, built bird's-eye — same convention as the rest of
+// the game: flat shapes drawn in the XY plane and extruded a small
+// amount along Z, with Position.x/y driving world position and
+// Rotation[eid] driving heading (rotation around Z), exactly like the
+// original ship renderer.
+//
+// Each saucer has an inner "spin" group nested inside the ECS-driven
+// outer group. That inner group spins continuously around Z (since Z is
+// "up" toward the bird's-eye camera here, a Z spin is what reads as the
+// disc turning like a wheel from directly above), randomly flipping
+// between clockwise/counter-clockwise with smooth easing, plus a small
+// independent wobble layered on top (tiny X/Y tilts, which read as a
+// wobble-on-its-axis foreshortening effect even from directly overhead).
+// This spin is separate from Rotation[eid], so the saucer keeps turning
+// even while its heading stays fixed.
+//
+// NOTE on reflections: meshPhysicalMaterial (the dome + rim panels)
+// only looks glassy/reflective with an environment map present in the
+// scene. If you don't have one, wrap your scene in drei's
+// <Environment preset="city" /> (or similar) — otherwise the glass will
+// render flat and dark.
 
 import { useMemo, useRef, createRef } from "react"
 import { useFrame } from "@react-three/fiber"
@@ -82,17 +104,7 @@ function buildTrapezoidPanelShape(cfg) {
 // ============================================================
 
 function BossSaucer({ groupRef, geo, cfg }) {
-    const {
-    disc,
-    dome,
-    redRing,
-    blackRings,
-    podLights,
-    rimPanels,
-    discWedges,
-    spin,
-    wobble
-} = cfg
+    const { disc, dome, redRing, blackRings, podLights, rimPanels, spin, wobble } = cfg
 
     const spinRef = useRef()
 
@@ -311,7 +323,7 @@ export function BossRenderer() {
 
 const disc = useControls('Boss / Disc', {
 
-    color: '#2d3338',
+    color: '#9a9a9a',
 
     radiusX: {
         value: 0.95,
@@ -337,46 +349,46 @@ const disc = useControls('Boss / Disc', {
 })
 
     const dome = useControls('Boss / Dome', {
-        color: '#26ff96',
+        color: '#dfefff',
         radiusX: { value: 0.36, min: 0.05, max: 1, step: 0.01 },
         radiusY: { value: 0.36, min: 0.05, max: 1, step: 0.01 },
     }, { collapsed: true })
 
     const redRing = useControls('Boss / Red Ring', {
-        color: '#00ff84',
-        tube: { value: 0.02, min: 0.005, max: 0.1, step: 0.005 },
+        color: '#ff2d2d',
+        tube: { value: 0.03, min: 0.005, max: 0.1, step: 0.005 },
     }, { collapsed: true })
 
     const blackRings = useControls('Boss / Black Panel Rings', {
-        color: '#000000',
-        count: { value: 8, min: 0, max: 8, step: 1 },
-        tube: { value: 0.02, min: 0.003, max: 0.05, step: 0.001 },
-        startRadius: { value: 0.39, min: 0.1, max: 2, step: 0.01 },
-        endRadius: { value: 0.94, min: 0.1, max: 2, step: 0.01 },
+        color: '#0a0a0a',
+        count: { value: 3, min: 0, max: 8, step: 1 },
+        tube: { value: 0.015, min: 0.003, max: 0.05, step: 0.001 },
+        startRadius: { value: 0.5, min: 0.1, max: 2, step: 0.01 },
+        endRadius: { value: 0.88, min: 0.1, max: 2, step: 0.01 },
     }, { collapsed: true })
 
     const podLights = useControls('Boss / Pod Lights', {
         enabled: true,
-        color: '#3bbeff',
-        count: { value: 29, min: 0, max: 32, step: 1 },
-        radius: { value: 0.04, min: 0.01, max: 0.2, step: 0.005 },
-        ringRadiusX: { value: 0.92, min: 0, max: 2, step: 0.01 },
-        ringRadiusY: { value: 0.92, min: 0, max: 2, step: 0.01 },
-        zOffset: { value: 0.10, min: 0, max: 0.1, step: 0.001 },
-        maxEmissive: { value: 6.0, min: 0.2, max: 6, step: 0.1 },
-        pulseMinFreq: { value: 1.75, min: 0.05, max: 3, step: 0.05 },
-        pulseMaxFreq: { value: 3.05, min: 0.1, max: 5, step: 0.05 },
+        color: '#5dc9ff',
+        count: { value: 12, min: 0, max: 32, step: 1 },
+        radius: { value: 0.045, min: 0.01, max: 0.2, step: 0.005 },
+        ringRadiusX: { value: 0.68, min: 0, max: 2, step: 0.01 },
+        ringRadiusY: { value: 0.68, min: 0, max: 2, step: 0.01 },
+        zOffset: { value: 0.031, min: 0, max: 0.1, step: 0.001 },
+        maxEmissive: { value: 2.2, min: 0.2, max: 6, step: 0.1 },
+        pulseMinFreq: { value: 0.6, min: 0.05, max: 3, step: 0.05 },
+        pulseMaxFreq: { value: 2.0, min: 0.1, max: 5, step: 0.05 },
     }, { collapsed: true })
 
     const rimPanels = useControls('Boss / Rim Glass Panels', {
         enabled: true,
-        color: '#48ffa6',
+        color: '#dfefff',
         count: { value: 18, min: 0, max: 48, step: 1 },
         width: { value: 0.12, min: 0.01, max: 0.5, step: 0.005 },
         length: { value: 0.16, min: 0.01, max: 0.5, step: 0.005 },
-        ringRadiusX: { value: 0.66, min: 0, max: 2.2, step: 0.01 },
-        ringRadiusY: { value: 0.69, min: 0, max: 2.2, step: 0.01 },
-        zOffset: { value: 0.10, min: 0, max: 0.1, step: 0.001 },
+        ringRadiusX: { value: 0.90, min: 0, max: 2.2, step: 0.01 },
+        ringRadiusY: { value: 0.90, min: 0, max: 2.2, step: 0.01 },
+        zOffset: { value: 0.021, min: 0, max: 0.1, step: 0.001 },
     }, { collapsed: true })
 
     const discWedges = useControls('Boss / Disc Wedges', {
@@ -384,68 +396,68 @@ const disc = useControls('Boss / Disc', {
     enabled:true,
 
     count:{
-        value: 36,
-        min: 0,
-        max: 72,
-        step: 1
+        value:36,
+        min:0,
+        max:72,
+        step:1
     },
 
     innerRadius:{
-        value: 0.00,
-        min: 0,
-        max: 2,
-        step: 0.01
+        value:0.45,
+        min:0,
+        max:2,
+        step:0.01
     },
 
     outerRadius:{
-        value: 0.98,
-        min: 0,
-        max: 2,
-        step: 0.01
+        value:0.95,
+        min:0,
+        max:2,
+        step:0.01
     },
 
     innerWidth:{
-        value: 0.01,
-        min: 0.01,
-        max: 0.3,
-        step: 0.005
+        value:0.06,
+        min:0.01,
+        max:0.3,
+        step:0.005
     },
 
     outerWidth:{
-        value: 0.05,
-        min: 0.01,
-        max: 0.4,
-        step: 0.005
+        value:0.12,
+        min:0.01,
+        max:0.4,
+        step:0.005
     },
 
     length:{
-        value: 1.0,
-        min: 0.01,
-        max: 1,
-        step: 0.01
+        value:0.22,
+        min:0.01,
+        max:1,
+        step:0.01
     },
 
     zOffset:{
-        value: 0.04,
-        min: 0,
-        max: 0.2,
-        step: 0.001
+        value:0.03,
+        min:0,
+        max:0.2,
+        step:0.001
     },
 
-    color:'#000000'
+    color:'#1d1d1d'
 
 })
 
     const spin = useControls('Boss / Spin', {
-        speed: { value: 3.25, min: 0, max: 4, step: 0.05 },
-        directionChangeMin: { value: 20, min: 0.5, max: 20, step: 0.5 },
-        directionChangeMax: { value: 20, min: 0.5, max: 20, step: 0.5 },
+        speed: { value: 0.6, min: 0, max: 4, step: 0.05 },
+        directionChangeMin: { value: 3, min: 0.5, max: 20, step: 0.5 },
+        directionChangeMax: { value: 7, min: 0.5, max: 20, step: 0.5 },
         ease: { value: 0.5, min: 0.05, max: 3, step: 0.05 },
     }, { collapsed: true })
 
     const wobble = useControls('Boss / Wobble', {
-        amount: { value: 0.40, min: 0, max: 0.4, step: 0.005 },
-        speed: { value: 0.50, min: 0, max: 4, step: 0.05 },
+        amount: { value: 0.06, min: 0, max: 0.4, step: 0.005 },
+        speed: { value: 0.8, min: 0, max: 4, step: 0.05 },
     }, { collapsed: true })
 
     const healthBar = useControls('Boss / Health Bar', {
@@ -456,17 +468,7 @@ const disc = useControls('Boss / Disc', {
         offsetY: { value: BAR_OFFSET, min: 0.5, max: 4, step: 0.05 },
     }, { collapsed: true })
 
-    const cfg = {
-    disc,
-    dome,
-    redRing,
-    blackRings,
-    podLights,
-    rimPanels,
-    discWedges,
-    spin,
-    wobble
-}
+    const cfg = { disc, dome, redRing, blackRings, podLights, rimPanels, spin, wobble }
 
     // ========================================= 
 
