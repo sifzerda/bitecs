@@ -16,7 +16,6 @@ import { missileSystem } from "../ecs/systems/missileSystem"
 //import { tentacleSystem } from "../ecs/systems/tentacleSystem"
 //import { clearSpatialGrid, insertIntoSpatialGrid } from '../ecs/constants/spatialGrid.js'
 
-
 export function gameLoop(shootState, dt) {
 
     playerControlSystem(shootState)
