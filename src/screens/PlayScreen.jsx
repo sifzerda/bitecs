@@ -34,7 +34,7 @@ import { GunRenderer } from '../renderers/GunRenderer.jsx'
 import { GunMount } from '../renderers/GunMount.jsx'
 
 //import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
-import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
+//import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
 
 import { ExhaustMount } from '../renderers/ExhaustMount.jsx'
 // debug
@@ -111,7 +111,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
    {/*         <TentacleRenderer />            */}
 
-                <OctopusRenderer />
+   {/*             <OctopusRenderer />           */}       
 
 
                 <EffectComposer multisampling={0}>
