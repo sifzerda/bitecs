@@ -1,7 +1,8 @@
 // src/screens/PlayScreen.jsx
 
-import { useFrame } from '@react-three/fiber'
-import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
+import { useFrame, useThree } from '@react-three/fiber'
+import {
+    EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
     // ShockWave,
     // Glitch
 } from '@react-three/postprocessing';
@@ -11,8 +12,9 @@ import {
     Environment,
     //Trail -- effect to make moving things trail 
     //Float -- effect for floating power-ups
+
 } from '@react-three/drei'
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { HUD } from '../components/HUD.jsx'
 import { world } from '../ecs/constants/world.js'
 import { gameLoop } from '../state/gameLoop.js'
@@ -25,6 +27,8 @@ import { LaserRenderer } from '../renderers/LaserRenderer.jsx'
 import { FlameRenderer } from '../renderers/FlameRenderer.jsx'
 import { HazardRenderer } from '../renderers/HazardRenderer.jsx'
 import { DeflectRenderer } from '../renderers/DeflectRenderer.jsx'
+
+import { StarfieldRenderer } from '../renderers/StarfieldRenderer.jsx'
 
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
@@ -62,7 +66,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
             <HUD paused={paused} onPause={onPause} />
 
-                     <GodPanel />    
+            <GodPanel />
 
             <div className="relative flex-1 px-4">
 
@@ -72,70 +76,75 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     gl={{ antialias: false, powerPreference: "high-performance" }}
                     dpr={[1, 2]}>
 
-                <GameLoop 
-                    keysRef={keysRef} 
-                    paused={paused} />
-
-                <ambientLight 
-                    intensity={1.1} />
-                <directionalLight 
-                    position={[5, 8, 6]} 
-                    intensity={2.0} />
-                <pointLight 
-                    position={[0, 0, 6]} 
-                    intensity={4} 
-                    color="#ffffff" />
-
-                <Environment preset="sunset" />
-
-      {/*              <GunPanel />       */}
-
-                <PlayerRenderer />
-                <DeflectRenderer />
-                                        <GunMount />
-                <ExhaustMount />
-                <AsteroidRenderer />
-                <BulletRenderer />
-
-                <MissileRenderer />
-                <LaserRenderer />
-                <FlameRenderer />
-                <HazardRenderer />
-
-                <SparkRenderer />
-
-                <BossRenderer />
-                <BossLaserRenderer />
-
-                <GunRenderer />
-
-   {/*         <TentacleRenderer />            */}
-
-   {/*             <OctopusRenderer />           */}       
+                    <GameLoop
+                        keysRef={keysRef}
+                        paused={paused} />
 
 
-                <EffectComposer multisampling={0}>
 
-                    <Bloom
+
+
+                    <ambientLight
+                        intensity={1.1} />
+                    <directionalLight
+                        position={[5, 8, 6]}
+                        intensity={2.0} />
+                    <pointLight
+                        position={[0, 0, 6]}
+                        intensity={4}
+                        color="#ffffff" />
+
+                    <StarfieldRenderer />
+                    <Environment preset="sunset" />
+
+                    {/*              <GunPanel />       */}
+
+                    <PlayerRenderer />
+                    <DeflectRenderer />
+                    <GunMount />
+                    <ExhaustMount />
+                    <AsteroidRenderer />
+                    <BulletRenderer />
+
+                    <MissileRenderer />
+                    <LaserRenderer />
+                    <FlameRenderer />
+                    <HazardRenderer />
+
+                    <SparkRenderer />
+
+                    <BossRenderer />
+                    <BossLaserRenderer />
+
+                    <GunRenderer />
+
+                    {/*         <TentacleRenderer />            */}
+
+                    {/*             <OctopusRenderer />           */}
+
+
+                    <EffectComposer multisampling={0}>
+
+                        <Bloom
                             intensity={1.2}
                             luminanceThreshold={0.4}
                             luminanceSmoothing={0.7}
                             mipmapBlur
                         />
 
-                       
-               {/*      <ChromaticAberration 
+
+                        {/*      <ChromaticAberration 
                         blendFunction={BlendFunction.NORMAL} 
                         offset={[0.0015, 0.001]} />      */}
 
                         {/* Darken screen edges */}
-                    <Vignette 
-                        eskil={false} 
-                        offset={0.25} 
-                        darkness={0.45} />
+                        <Vignette
+                            eskil={false}
+                            offset={0.25}
+                            darkness={0.45} />
 
-                    <Noise 
-                        opacity={0.02} />
+                        <Noise
+                            opacity={0.02} />
                         {/* postprocessing */}
                     </EffectComposer>
 
