@@ -44,7 +44,7 @@ export const WEAPONS = [
         speed: 22,
         lifetime: 0.9,
         projectileCount: 1,
-        spreadAngle: 0.05,   // tiny jitter, feels less precise at high fire rate
+        spreadAngle: 0.05,   
         color: "#c9e8ff",
         glowColor: "#5599ff",
         haloColor: "#3366ff",
@@ -58,14 +58,14 @@ export const WEAPONS = [
         maxBullets: 128,
         hitRadius: 1.0,
         fireRate: 0.8,
-        speed: 10,          // slower than bullets, turn rate does the work
+        speed: 10,          
         lifetime: 3.0,
         projectileCount: 1,
         spreadAngle: 0,
         color: "#ffaa00",
         glowColor: "#ff6600",
         haloColor: "#ff2200",
-        turnRate: 3.0,       // radians/sec it can steer, only missiles use this
+        turnRate: 3.0,       
     },
     {
         id: 4,
@@ -86,14 +86,14 @@ export const WEAPONS = [
         id: 5,
         name: "grenadegun",
         category: "bullet",
-        explosive: true,          // triggers AOE explosion instead of single-target damage
+        explosive: true,         
         explosionRadius: 2.5,
-        damage: 25,               // full damage to everything caught in the explosion radius
-        maxBullets: 32,           // low count — these are slow, one-at-a-time weapons
-        hitRadius: 0.6,           // still used for the initial "did it hit something" check
+        damage: 25,            
+        maxBullets: 32,          
+        hitRadius: 0.6,        
         fireRate: 0.9,
         speed: 12,
-        lifetime: 1.6,            // expires (and explodes) if it doesn't hit anything first
+        lifetime: 1.6,           
         projectileCount: 1,
         spreadAngle: 0,
         color: "#ffcf80",
@@ -106,14 +106,14 @@ export const WEAPONS = [
         name: "acidsprayer",
         category: "thrower",
         leavesHazard: true,
-        damage: 3,                 // small direct tick on impact, puddle does the rest
+        damage: 3,                  
         hazardRadius: 1.5,
         hazardDamage: 4,
         hazardTickInterval: 0.3,
         hazardDuration: 3.0,
         maxBullets: 96,
         hitRadius: 0.4,
-        fireRate: 0.12,             // fast fire rate to feel like a "spray"
+        fireRate: 0.12,        
         speed: 15,
         lifetime: 0.8,
         projectileCount: 1,
@@ -128,7 +128,7 @@ export const WEAPONS = [
         name: "cryocannon",
         category: "bullet",
         freezeDuration: 2.5,
-        damage: 4,                  // low direct damage — the value is in the freeze setup
+        damage: 4,              
         maxBullets: 64,
         hitRadius: 0.5,
         fireRate: 0.3,
@@ -162,9 +162,9 @@ export const WEAPONS = [
         id: 9,
         name: "flamethrower",
         category: "thrower",
-        range: 6,                 // short range — flamethrowers are a close-quarters weapon
-        coneAngle: 0.6,            // radians, full cone width
-        damagePerSecond: 35,       // at point-blank; falls off with distance (see flameSystem)
+        range: 6,               
+        coneAngle: 0.6,          
+        damagePerSecond: 35,      
         tickSparkInterval: 0.06,
         color: "#ffcc66",
         glowColor: "#ff6600",
@@ -189,10 +189,10 @@ export const WEAPONS = [
     {
         id: 11,
         name: "proximityminelayer",
-        category: "mine",           // new category — dropped instantly at ship position, not fired forward
+        category: "mine",         
         hazardRadius: 2.0,
-        hazardDamage: 40,           // mines hit hard since they're a deliberate placement, not spam-fire
-        hazardTickInterval: 999,    // effectively "detonate once" — see armed-check below
+        hazardDamage: 40,           
+        hazardTickInterval: 999,    
         hazardDuration: 8.0,
         fireRate: 1.0,
         color: "#ff6666",
@@ -205,9 +205,9 @@ export const WEAPONS = [
         name: "particlebeam",
         category: "beam",
         range: 25,
-        damagePerSecond: 15,        // starting DPS
-        maxDamagePerSecond: 60,     // DPS after fully ramped
-        rampTime: 2.0,              // seconds of continuous lock to reach max DPS
+        damagePerSecond: 15,     
+        maxDamagePerSecond: 60,     
+        rampTime: 2.0,         
         beamWidth: 0.15,
         color: "#ffffff",
         glowColor: "#88ddff",
@@ -218,8 +218,8 @@ export const WEAPONS = [
         id: 13,
         name: "darkmattergun",
         category: "launcher",
-        leavesHazard: true,       // on hit or expiry, drops a static damage cloud instead of direct damage
-        damage: 0,                // no direct hit damage — the cloud does the work
+        leavesHazard: true,       
+        damage: 0,              
         hazardRadius: 3.0,
         hazardDamage: 6,
         hazardTickInterval: 0.5,
@@ -240,14 +240,14 @@ export const WEAPONS = [
         id: 14,
         name: "clustercannon",
         category: "bullet",
-        splitsInto: 4,              // fragments spawned on split
-        splitWeapon: 2,             // fragments use machinegun's stats/visuals — avoids duplicating a whole weapon def
+        splitsInto: 4,              
+        splitWeapon: 2,           
         damage: 14,
         maxBullets: 32,
         hitRadius: 0.6,
         fireRate: 0.6,
         speed: 14,
-        lifetime: 0.9,               // splits when this runs out, OR on first hit — whichever comes first
+        lifetime: 0.9,              
         projectileCount: 1,
         spreadAngle: 0,
         color: "#ffd9a0",
