@@ -1,7 +1,4 @@
-
-
 // UFO
-
 // src/renderers/BossRenderer.jsx
 
 import { useMemo, useRef, createRef } from "react"
@@ -23,8 +20,6 @@ const _barRotation = new THREE.Quaternion()
 const _barScale = new THREE.Vector3()
 const _scaleZero = new THREE.Vector3(0, 0, 0)
 
-// ============================================================
-// Shape builders — all drawn flat in XY, extruded along Z
 // ============================================================
 
 function buildDiscShape(cfg) {
@@ -80,23 +75,19 @@ function buildTrapezoidPanelShape(cfg) {
 }
 
 // ============================================================
-// Single saucer instance — owns its own spin/wobble animation and its
-// own randomized light-pulse phases, independent of the other boss
-// slots so multiple saucers on screen never move in lockstep.
-// ============================================================
 
 function BossSaucer({ groupRef, geo, cfg }) {
     const {
-    disc,
-    dome,
-    redRing,
-    blackRings,
-    podLights,
-    rimPanels,
-    discWedges,
-    spin,
-    wobble
-} = cfg
+        disc,
+        dome,
+        redRing,
+        blackRings,
+        podLights,
+        rimPanels,
+        discWedges,
+        spin,
+        wobble
+    } = cfg
 
     const spinRef = useRef()
 
@@ -137,39 +128,39 @@ function BossSaucer({ groupRef, geo, cfg }) {
 
     const wedgeLayout = useMemo(() => {
 
-    return Array.from(
-        { length: discWedges.count },
-        (_, i) => {
+        return Array.from(
+            { length: discWedges.count },
+            (_, i) => {
 
-            const angle =
-                (Math.PI * 2 * i) /
-                Math.max(1, discWedges.count)
+                const angle =
+                    (Math.PI * 2 * i) /
+                    Math.max(1, discWedges.count)
 
-            const radius =
-                (discWedges.innerRadius +
-                 discWedges.outerRadius) * 0.5
+                const radius =
+                    (discWedges.innerRadius +
+                        discWedges.outerRadius) * 0.5
 
-            return {
+                return {
 
-                position:[
-                    Math.cos(angle) * radius,
-                    Math.sin(angle) * radius,
-                    discWedges.zOffset
-                ],
+                    position: [
+                        Math.cos(angle) * radius,
+                        Math.sin(angle) * radius,
+                        discWedges.zOffset
+                    ],
 
-                rotationZ:
-                    angle + Math.PI * 0.5
+                    rotationZ:
+                        angle + Math.PI * 0.5
 
+                }
             }
-        }
-    )
+        )
 
-},[
-    discWedges.count,
-    discWedges.innerRadius,
-    discWedges.outerRadius,
-    discWedges.zOffset
-])
+    }, [
+        discWedges.count,
+        discWedges.innerRadius,
+        discWedges.outerRadius,
+        discWedges.zOffset
+    ])
 
     useFrame((state, delta) => {
         const t = state.clock.elapsedTime
@@ -210,31 +201,30 @@ function BossSaucer({ groupRef, geo, cfg }) {
 
                 {/* grey disc body */}
                 <mesh
-    geometry={geo.disc}
-    position={[0,0,disc.zOffset]}
->
+                    geometry={geo.disc}
+                    position={[0, 0, disc.zOffset]}>
                     <meshStandardMaterial color={disc.color} metalness={0.4} roughness={0.5} side={THREE.DoubleSide} />
                 </mesh>
 
                 {discWedges.enabled &&
-    wedgeLayout.map(
-        ({position,rotationZ},i)=>(
+                    wedgeLayout.map(
+                        ({ position, rotationZ }, i) => (
 
-        <mesh
-            key={i}
-            geometry={geo.wedge}
-            position={position}
-            rotation={[0,0,rotationZ]}
-        >
-            <meshStandardMaterial
-                color={discWedges.color}
-                metalness={0.3}
-                roughness={0.8}
-            />
-        </mesh>
+                            <mesh
+                                key={i}
+                                geometry={geo.wedge}
+                                position={position}
+                                rotation={[0, 0, rotationZ]}
+                            >
+                                <meshStandardMaterial
+                                    color={discWedges.color}
+                                    metalness={0.3}
+                                    roughness={0.8}
+                                />
+                            </mesh>
 
-    ))
-}
+                        ))
+                }
 
                 {/* black concentric panel rings */}
                 {geo.blackRings.map((ringGeo, i) => (
@@ -313,32 +303,32 @@ export function BossRenderer() {
         extrudeDepth: { value: 0.02, min: 0.005, max: 0.1, step: 0.005 },
     }, { collapsed: true })
 
-const disc = useControls('Boss / Disc', {
+    const disc = useControls('Boss / Disc', {
 
-    color: '#2d3338',
+        color: '#2d3338',
 
-    radiusX: {
-        value: 0.95,
-        min: 0.2,
-        max: 2,
-        step: 0.01,
-    },
+        radiusX: {
+            value: 0.95,
+            min: 0.2,
+            max: 2,
+            step: 0.01,
+        },
 
-    radiusY: {
-        value: 0.95,
-        min: 0.2,
-        max: 2,
-        step: 0.01,
-    },
+        radiusY: {
+            value: 0.95,
+            min: 0.2,
+            max: 2,
+            step: 0.01,
+        },
 
-    zOffset: {
-        value: 0,
-        min: -0.2,
-        max: 0.2,
-        step: 0.001,
-    }
+        zOffset: {
+            value: 0,
+            min: -0.2,
+            max: 0.2,
+            step: 0.001,
+        }
 
-})
+    })
 
     const dome = useControls('Boss / Dome', {
         color: '#26ff96',
@@ -385,60 +375,60 @@ const disc = useControls('Boss / Disc', {
 
     const discWedges = useControls('Boss / Disc Wedges', {
 
-    enabled:true,
+        enabled: true,
 
-    count:{
-        value: 36,
-        min: 0,
-        max: 72,
-        step: 1
-    },
+        count: {
+            value: 36,
+            min: 0,
+            max: 72,
+            step: 1
+        },
 
-    innerRadius:{
-        value: 0.00,
-        min: 0,
-        max: 2,
-        step: 0.01
-    },
+        innerRadius: {
+            value: 0.00,
+            min: 0,
+            max: 2,
+            step: 0.01
+        },
 
-    outerRadius:{
-        value: 0.98,
-        min: 0,
-        max: 2,
-        step: 0.01
-    },
+        outerRadius: {
+            value: 0.98,
+            min: 0,
+            max: 2,
+            step: 0.01
+        },
 
-    innerWidth:{
-        value: 0.01,
-        min: 0.01,
-        max: 0.3,
-        step: 0.005
-    },
+        innerWidth: {
+            value: 0.01,
+            min: 0.01,
+            max: 0.3,
+            step: 0.005
+        },
 
-    outerWidth:{
-        value: 0.05,
-        min: 0.01,
-        max: 0.4,
-        step: 0.005
-    },
+        outerWidth: {
+            value: 0.05,
+            min: 0.01,
+            max: 0.4,
+            step: 0.005
+        },
 
-    length:{
-        value: 1.0,
-        min: 0.01,
-        max: 1,
-        step: 0.01
-    },
+        length: {
+            value: 1.0,
+            min: 0.01,
+            max: 1,
+            step: 0.01
+        },
 
-    zOffset:{
-        value: 0.04,
-        min: 0,
-        max: 0.2,
-        step: 0.001
-    },
+        zOffset: {
+            value: 0.04,
+            min: 0,
+            max: 0.2,
+            step: 0.001
+        },
 
-    color:'#000000'
+        color: '#000000'
 
-})
+    })
 
     const spin = useControls('Boss / Spin', {
         speed: { value: 3.25, min: 0, max: 4, step: 0.05 },
@@ -461,16 +451,16 @@ const disc = useControls('Boss / Disc', {
     }, { collapsed: true })
 
     const cfg = {
-    disc,
-    dome,
-    redRing,
-    blackRings,
-    podLights,
-    rimPanels,
-    discWedges,
-    spin,
-    wobble
-}
+        disc,
+        dome,
+        redRing,
+        blackRings,
+        podLights,
+        rimPanels,
+        discWedges,
+        spin,
+        wobble
+    }
 
     // ========================================= 
 
@@ -525,18 +515,18 @@ const disc = useControls('Boss / Disc', {
     )
 
     const wedgeGeometry = useMemo(
-    () =>
-        new THREE.ExtrudeGeometry(
-            buildTrapezoidPanelShape(discWedges),
+        () =>
+            new THREE.ExtrudeGeometry(
+                buildTrapezoidPanelShape(discWedges),
+                thinExtrude
+            ),
+        [
+            discWedges.innerWidth,
+            discWedges.outerWidth,
+            discWedges.length,
             thinExtrude
-        ),
-    [
-        discWedges.innerWidth,
-        discWedges.outerWidth,
-        discWedges.length,
-        thinExtrude
-    ]
-)
+        ]
+    )
 
     const geo = {
         disc: discGeometry,
@@ -559,8 +549,6 @@ const disc = useControls('Boss / Disc', {
 
         const bosses = bossQuery(world)
 
-        // ============================================ 
-        // ECS-driven position + heading, same as the ship renderer
         // ============================================ 
 
         for (let i = 0; i < MAX_BOSSES; i++) {
