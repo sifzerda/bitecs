@@ -80,12 +80,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                         keysRef={keysRef}
                         paused={paused} />
 
-
-
-
-
-                    <ambientLight
-                        intensity={1.1} />
+                    <ambientLight intensity={1.1} />
                     <directionalLight
                         position={[5, 8, 6]}
                         intensity={2.0} />
@@ -143,8 +138,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                             offset={0.25}
                             darkness={0.45} />
 
-                        <Noise
-                            opacity={0.02} />
+                        <Noise opacity={0.02} />
                         {/* postprocessing */}
                     </EffectComposer>
 
