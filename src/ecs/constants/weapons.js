@@ -103,27 +103,6 @@ export const WEAPONS = [
 
     {
         id: 6,
-        name: "darkmattergun",
-        category: "launcher",
-        leavesHazard: true,       // on hit or expiry, drops a static damage cloud instead of direct damage
-        damage: 0,                // no direct hit damage — the cloud does the work
-        hazardRadius: 3.0,
-        hazardDamage: 6,
-        hazardTickInterval: 0.5,
-        hazardDuration: 4.0,
-        maxBullets: 32,
-        hitRadius: 0.5,
-        fireRate: 1.0,
-        speed: 14,
-        lifetime: 2.0,
-        projectileCount: 1,
-        spreadAngle: 0,
-        color: "#c9a3ff",
-        glowColor: "#7a33ff",
-        haloColor: "#4d0099",
-    },
-    {
-        id: 7,
         name: "acidsprayer",
         category: "thrower",
         leavesHazard: true,
@@ -145,40 +124,7 @@ export const WEAPONS = [
     },
 
     {
-        id: 8,
-        name: "clustercannon",
-        category: "bullet",
-        splitsInto: 4,              // fragments spawned on split
-        splitWeapon: 2,             // fragments use machinegun's stats/visuals — avoids duplicating a whole weapon def
-        damage: 14,
-        maxBullets: 32,
-        hitRadius: 0.6,
-        fireRate: 0.6,
-        speed: 14,
-        lifetime: 0.9,               // splits when this runs out, OR on first hit — whichever comes first
-        projectileCount: 1,
-        spreadAngle: 0,
-        color: "#ffd9a0",
-        glowColor: "#ff9900",
-        haloColor: "#cc6600",
-    },
-
-    {
-        id: 9,
-        name: "proximityminelayer",
-        category: "mine",           // new category — dropped instantly at ship position, not fired forward
-        hazardRadius: 2.0,
-        hazardDamage: 40,           // mines hit hard since they're a deliberate placement, not spam-fire
-        hazardTickInterval: 999,    // effectively "detonate once" — see armed-check below
-        hazardDuration: 8.0,
-        fireRate: 1.0,
-        color: "#ff6666",
-        glowColor: "#ff2222",
-        haloColor: "#aa0000",
-    },
-
-    {
-        id: 10,
+        id: 7,
         name: "cryocannon",
         category: "bullet",
         freezeDuration: 2.5,
@@ -196,7 +142,7 @@ export const WEAPONS = [
     },
 
     {
-        id: 11,
+        id: 8,
         name: "arcgun",
         category: "beam",
         jagged: true,
@@ -207,9 +153,51 @@ export const WEAPONS = [
         chainRange: 5,
         beamWidth: 0.09,
         tickSparkInterval: 0.06,
-        color: "#fffbe8",    
-        glowColor: "#1F51FF",   
-        haloColor: "#0818A8",   
+        color: "#fffbe8",
+        glowColor: "#1F51FF",
+        haloColor: "#0818A8",
+    },
+
+    {
+        id: 9,
+        name: "flamethrower",
+        category: "thrower",
+        range: 6,                 // short range — flamethrowers are a close-quarters weapon
+        coneAngle: 0.6,            // radians, full cone width
+        damagePerSecond: 35,       // at point-blank; falls off with distance (see flameSystem)
+        tickSparkInterval: 0.06,
+        color: "#ffcc66",
+        glowColor: "#ff6600",
+        haloColor: "#ff2200",
+    },
+
+    {
+        id: 10,
+        name: "prismbeam",
+        category: "beam",
+        range: 20,
+        damagePerSecond: 18,
+        beamCount: 3,
+        beamSpread: 0.35,
+        tickSparkInterval: 0.08,
+        beamWidth: 0.08,
+        color: "#ffe0ff",
+        glowColor: "#ff66ff",
+        haloColor: "#cc00cc",
+    },
+
+    {
+        id: 11,
+        name: "proximityminelayer",
+        category: "mine",           // new category — dropped instantly at ship position, not fired forward
+        hazardRadius: 2.0,
+        hazardDamage: 40,           // mines hit hard since they're a deliberate placement, not spam-fire
+        hazardTickInterval: 999,    // effectively "detonate once" — see armed-check below
+        hazardDuration: 8.0,
+        fireRate: 1.0,
+        color: "#ff6666",
+        glowColor: "#ff2222",
+        haloColor: "#aa0000",
     },
 
     {
@@ -228,30 +216,43 @@ export const WEAPONS = [
 
     {
         id: 13,
-        name: "prismbeam",
-        category: "beam",
-        range: 20,
-        damagePerSecond: 18,
-        beamCount: 3,
-        beamSpread: 0.35,
-        tickSparkInterval: 0.08,
-        beamWidth: 0.08,
-        color: "#ffe0ff",
-        glowColor: "#ff66ff",
-        haloColor: "#cc00cc",
+        name: "darkmattergun",
+        category: "launcher",
+        leavesHazard: true,       // on hit or expiry, drops a static damage cloud instead of direct damage
+        damage: 0,                // no direct hit damage — the cloud does the work
+        hazardRadius: 3.0,
+        hazardDamage: 6,
+        hazardTickInterval: 0.5,
+        hazardDuration: 4.0,
+        maxBullets: 32,
+        hitRadius: 0.5,
+        fireRate: 1.0,
+        speed: 14,
+        lifetime: 2.0,
+        projectileCount: 1,
+        spreadAngle: 0,
+        color: "#c9a3ff",
+        glowColor: "#7a33ff",
+        haloColor: "#4d0099",
     },
 
     {
         id: 14,
-        name: "flamethrower",
-        category: "thrower",
-        range: 6,                 // short range — flamethrowers are a close-quarters weapon
-        coneAngle: 0.6,            // radians, full cone width
-        damagePerSecond: 35,       // at point-blank; falls off with distance (see flameSystem)
-        tickSparkInterval: 0.06,
-        color: "#ffcc66",
-        glowColor: "#ff6600",
-        haloColor: "#ff2200",
+        name: "clustercannon",
+        category: "bullet",
+        splitsInto: 4,              // fragments spawned on split
+        splitWeapon: 2,             // fragments use machinegun's stats/visuals — avoids duplicating a whole weapon def
+        damage: 14,
+        maxBullets: 32,
+        hitRadius: 0.6,
+        fireRate: 0.6,
+        speed: 14,
+        lifetime: 0.9,               // splits when this runs out, OR on first hit — whichever comes first
+        projectileCount: 1,
+        spreadAngle: 0,
+        color: "#ffd9a0",
+        glowColor: "#ff9900",
+        haloColor: "#cc6600",
     },
 
 ]
