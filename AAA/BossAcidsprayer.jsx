@@ -803,7 +803,7 @@ export function BossRenderer() {
     }, { collapsed: true })
 
     const decal = useControls('Boss / Decal', {
-        enabled: false,
+        enabled: true,
         color: '#000000',
         width: { value: 0.06, min: 0, max: 0.3, step: 0.005 },
         length: { value: 0.65, min: 0, max: 2, step: 0.01 },
@@ -834,7 +834,7 @@ export function BossRenderer() {
     }, { collapsed: true })
 
     const engineIntake = useControls('Boss / Engine Intake', {
-        enabled: false,
+        enabled: true,
         color: '#3a6bd5',
         width: { value: 0.28, min: 0, max: 0.5, step: 0.01 },
         height: { value: 0.28, min: 0, max: 1, step: 0.01 },
@@ -843,7 +843,7 @@ export function BossRenderer() {
     }, { collapsed: true })
 
     const hullVent = useControls('Boss / Hull Vent', {
-        enabled: false,
+        enabled: true,
         color: '#dfff00',
         count: { value: 4, min: 1, max: 16, step: 1 },
         width: { value: 1.0, min: 0, max: 1.0, step: 0.01 },
@@ -908,7 +908,7 @@ export function BossRenderer() {
     }, { collapsed: true })
 
     const centerPropeller = useControls('Boss / Center Propeller', {
-        enabled: false,
+        enabled: true,
         bladeColor: '#ffffff',
         hubColor: '#ff004d',
         bladeCount: { value: 2, min: 2, max: 8, step: 1 },
