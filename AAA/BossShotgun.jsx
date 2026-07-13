@@ -524,7 +524,7 @@ export function BossRenderer() {
         sweep: { value: 0.00, min: 0, max: 1, step: 0.01 },
         offsetX: { value: 0.73, min: 0, max: 1, step: 0.01 },
         offsetY: { value: -0.64, min: -1.5, max: 1.5, step: 0.01 },
-        splayDeg: { value: E0, min: -45, max: 45, step: 1 },
+        splayDeg: { value: 0, min: -45, max: 45, step: 1 },
     }, { collapsed: true })
 
     const exhaustPort = useControls('Boss / Exhaust Port', {

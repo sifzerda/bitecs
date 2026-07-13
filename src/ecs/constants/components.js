@@ -36,6 +36,10 @@ export const BossAI = {
     targetRotation: new Float32Array(MAX),
 };
 
+export const BossType = {
+    typeIndex: new Uint8Array(MAX),
+};
+
 // Phase: 0 = hidden, 1 = emerging, 2 = active, 3 = retracting
 export const Tentacle = {
     phase: new Uint8Array(MAX),

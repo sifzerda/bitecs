@@ -1,4 +1,8 @@
 // src/renderers/BossRenderer.jsx
+//
+// Generic renderer: knows nothing about any one boss's look. All the
+// per-boss appearance data lives in ecs/constants/bosses.js — add a new
+// boss there, not here.
 
 import { useMemo, useRef, createRef } from "react"
 import { useFrame, useLoader } from "@react-three/fiber"
@@ -27,6 +31,9 @@ const _barRotation = new THREE.Quaternion()
 const _barScale = new THREE.Vector3()
 const _scaleZero = new THREE.Vector3(0, 0, 0)
 
+// ============================================================
+// Shape builders — pure functions of a part's config, unchanged from
+// boss to boss. These never need to know which boss they're building for.
 // ============================================================
 
 function buildFuselageShape(cfg) {
@@ -151,6 +158,8 @@ function buildHullVentShape(cfg) {
     return shape
 }
 
+// Nose spike — blends from a sharp point (roundness = 0) to a blunt,
+// domed cap (roundness = 1) via quadratic curves.
 function buildNoseSpikeShape(cfg) {
     const halfW = cfg.width / 2
     const round = THREE.MathUtils.clamp(cfg.roundness ?? 0, 0, 1)
@@ -190,6 +199,8 @@ function buildTailFinShape(cfg) {
     return shape
 }
 
+// Long tail boom — a tapering strip extending back from the fuselage
+// tail, plus twin fins splayed outward at the far end.
 function buildTailBoomShape(cfg) {
     const halfBase = cfg.baseWidth / 2
     const halfTip = cfg.tipWidth / 2
@@ -217,6 +228,7 @@ function buildBoomFinShape(cfg) {
     return shape
 }
 
+// Landing gear — tapered strut with a wheel disc at its far end.
 function buildLandingLegShape(cfg) {
     const halfW = cfg.legWidth / 2
     const shape = new THREE.Shape()
@@ -233,6 +245,8 @@ function buildLandingWheelShape(cfg) {
     return shape
 }
 
+// Propeller — top-down silhouette: hub + N paddle blades, tilted onto
+// its side so the spin axis points forward rather than at the camera.
 function buildPropellerBladeShape(cfg) {
     const r0 = cfg.hubRadius
     const len = cfg.bladeLength
@@ -262,7 +276,10 @@ function Propeller({ hubGeometry, bladeGeometry, cfg, position }) {
         }
     })
 
-    const bladeAngles = useMemo(() => Array.from({ length: cfg.bladeCount }, (_, i) => (Math.PI * 2 * i) / cfg.bladeCount), [cfg.bladeCount])
+    const bladeAngles = useMemo(
+        () => Array.from({ length: cfg.bladeCount }, (_, i) => (Math.PI * 2 * i) / cfg.bladeCount),
+        [cfg.bladeCount]
+    )
 
     return (
         <group position={position}>
@@ -282,6 +299,12 @@ function Propeller({ hubGeometry, bladeGeometry, cfg, position }) {
     )
 }
 
+// ============================================================
+// Hull texture material — meshPhysicalMaterial extended via onBeforeCompile
+// to blend a tiling overlay texture over the base color. Boss configs are
+// static data now (not live-tunable leva state), so the material is just
+// built once per boss type with final values baked in — no reactive hook
+// needed.
 // ============================================================
 
 function createHullMaterial(partCfg, hullTextureCfg, texture) {
@@ -369,13 +392,18 @@ function MirroredPair({
                 geometry={geometry}
                 position={[flipX ? -x : x, y, z]}
                 rotation={[0, rotateY ? Math.PI : 0, flipZAngle ? -rotationZ : rotationZ]}
-                material={material ?? undefined}>
+                material={material ?? undefined}
+            >
                 {material ? null : sharedMaterial}
             </mesh>
         </>
     )
 }
 
+// ============================================================
+// BossShip — purely presentational: given a precomputed geometry bundle,
+// a boss's data config, and its hull materials, it lays out the parts.
+// Identical for every boss type; only `geo`/`cfg`/`hullMaterials` differ.
 // ============================================================
 
 function BossShip({ groupRef, geo, cfg, hullMaterials }) {
@@ -408,6 +436,7 @@ function BossShip({ groupRef, geo, cfg, hullMaterials }) {
             )}
 
             <MirroredPair geometry={geo.wingPanel} position={[0, 0, 0.01]} color={wingPanel.color} material={hullMaterials.wingPanel} flipX={false} rotateY />
+
             <MirroredPair geometry={geo.wingtip} position={[wingtip.offsetX, wingtip.offsetY, wingtip.zOffset]} color={wingtip.color} />
 
             {horn.enabled && (
@@ -432,7 +461,9 @@ function BossShip({ groupRef, geo, cfg, hullMaterials }) {
                 />
             )}
 
-            {tailBoom.enabled && (<Panel geometry={geo.tailBoom} position={[0, 0, 0.02]} color={tailBoom.color} metalness={0.3} roughness={0.55} />)}
+            {tailBoom.enabled && (
+                <Panel geometry={geo.tailBoom} position={[0, 0, 0.02]} color={tailBoom.color} metalness={0.3} roughness={0.55} />
+            )}
 
             {tailBoom.enabled && boomFin.enabled && (
                 <MirroredPair
@@ -589,6 +620,9 @@ function applyPlanarUVs(geometry) {
 }
 
 // ============================================================
+// buildBossAssets — turns one bosses.js entry into geometries + hull
+// materials. Called once per boss type (memoized), never per frame.
+// ============================================================
 
 function buildBossAssets(cfg, textures) {
     const { fuselage, cockpit, wing, wingPanel, wingtip, horn, decal, cockpitGlass,
@@ -607,8 +641,12 @@ function buildBossAssets(cfg, textures) {
     const texture = textures[hullTexture.textureKey]
 
     const ventOffsets = []
-    { const total = (hullVent.count - 1) * hullVent.spacing
-        for (let i = 0; i < hullVent.count; i++) { ventOffsets.push(-total / 2 + i * hullVent.spacing) } }
+    {
+        const total = (hullVent.count - 1) * hullVent.spacing
+        for (let i = 0; i < hullVent.count; i++) {
+            ventOffsets.push(-total / 2 + i * hullVent.spacing)
+        }
+    }
 
     const shrunkCockpit = {
         topY: cockpit.topY - cockpitGlass.inset,
@@ -662,6 +700,7 @@ function buildBossAssets(cfg, textures) {
 
 export function BossRenderer() {
 
+    // Global, non-boss-specific tuning (per-boss look now lives in bosses.js).
     const healthBar = useControls('Boss / Health Bar', {
         bgColor: '#ff0000',
         fgColor: '#44ff88',
@@ -670,16 +709,38 @@ export function BossRenderer() {
         offsetY: { value: BAR_OFFSET, min: 0.5, max: 4, step: 0.05 },
     }, { collapsed: true })
 
-    const textureKeys = useMemo(() => [...new Set(BOSSES.map((b) => b.hullTexture.textureKey))], [])
+    // Load every distinct hull texture referenced across BOSSES exactly once.
+    const textureKeys = useMemo(
+        () => [...new Set(BOSSES.map((b) => b.hullTexture.textureKey))],
+        []
+    )
     const loadedTextures = useLoader(THREE.TextureLoader, textureKeys.map((k) => HULL_TEXTURES[k]))
-    const textures = useMemo(() => Object.fromEntries(textureKeys.map((k, i) => [k, loadedTextures[i]])), [textureKeys, loadedTextures])
-    const bossAssets = useMemo(() => BOSSES.map((cfg) => buildBossAssets(cfg, textures)), [textures])
-    const groupRefs = useMemo(() => Array.from({ length: MAX_BOSSES }, () => bossAssets.map(() => createRef())), [bossAssets])
+    const textures = useMemo(
+        () => Object.fromEntries(textureKeys.map((k, i) => [k, loadedTextures[i]])),
+        [textureKeys, loadedTextures]
+    )
+
+    // Build geometry + materials once per boss type in the roster.
+    const bossAssets = useMemo(
+        () => BOSSES.map((cfg) => buildBossAssets(cfg, textures)),
+        [textures]
+    )
+
+    // groupRefs[slot][typeIndex] — a small pool so each of the MAX_BOSSES
+    // "slots" can show any boss type without re-mounting React trees.
+    // Only the slot/type pair matching the live entity is made visible;
+    // everything else stays hidden, mirroring the existing imperative
+    // position/visibility updates below.
+    const groupRefs = useMemo(
+        () => Array.from({ length: MAX_BOSSES }, () => bossAssets.map(() => createRef())),
+        [bossAssets]
+    )
 
     const bgBarRef = useRef()
     const fgBarRef = useRef()
 
-    useFrame(() => { const bosses = bossQuery()
+    useFrame(() => {
+        const bosses = bossQuery()
 
         for (let slot = 0; slot < MAX_BOSSES; slot++) {
             const eid = slot < bosses.length ? bosses[slot] : null
