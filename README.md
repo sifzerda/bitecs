@@ -131,14 +131,15 @@ some of these boss dropped weapons, some upgrades
 
  - [ ] Adapt missile and lasersystem for boss use: missiles dont target player and need to not hurt boss, and laser needs to be held down not fired (boss never fires it)
 
-- [ ] change boss renderer to make enemy ship/ufo
+- [x] change boss renderer to make enemy ship/ufo
 
- - [ ] see if other renderers can be modelled off exhaust renderers gpu shaders
+- [ ] see if other renderers can be modelled off exhaust renderers gpu shaders
 - [ ] especially flamerenderer, acid spray, laser, arc, hazard,, spark
+- [x] add a leva menu to configure guns which can be applied to the ship and bosses
 
-- [ ] add a leva menu to configure guns which can be applied to the ship and bosses
- 
+- [ ] make each gun, it will look the same for boss as player
 
+- [ ] 
 
  
 
