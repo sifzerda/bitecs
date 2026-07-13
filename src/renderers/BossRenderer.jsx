@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, createRef } from "react"
 import { useFrame, useLoader } from "@react-three/fiber"
-import { useControls } from "leva"
+import { useControls, folder } from "leva"
 import * as THREE from "three"
 import { bossQuery } from "../ecs/constants/queries.js"
 import { Position, Health, Rotation, BossType } from "../ecs/constants/components.js"
@@ -264,20 +264,24 @@ function Propeller({ hubGeometry, bladeGeometry, cfg, position }) {
 
     const bladeAngles = useMemo(() => Array.from({ length: cfg.bladeCount }, (_, i) => (Math.PI * 2 * i) / cfg.bladeCount), [cfg.bladeCount])
 
+ const disc = (
+        <group ref={spinRef}>
+            <mesh geometry={hubGeometry}>
+                <meshPhysicalMaterial color={cfg.hubColor} metalness={0.6} roughness={0.3} side={THREE.DoubleSide} />
+            </mesh>
+            {bladeAngles.map((angle, i) => (
+                <mesh key={i} geometry={bladeGeometry} rotation={[0, 0, angle]}>
+                    <meshPhysicalMaterial color={cfg.bladeColor} metalness={0.35} roughness={0.45} side={THREE.DoubleSide} />
+                </mesh>
+            ))}
+        </group>
+    )
+
     return (
         <group position={position}>
-            <group rotation={[Math.PI / 2, 0, 0]}>
-                <group ref={spinRef}>
-                    <mesh geometry={hubGeometry}>
-                        <meshPhysicalMaterial color={cfg.hubColor} metalness={0.6} roughness={0.3} side={THREE.DoubleSide} />
-                    </mesh>
-                    {bladeAngles.map((angle, i) => (
-                        <mesh key={i} geometry={bladeGeometry} rotation={[0, 0, angle]}>
-                            <meshPhysicalMaterial color={cfg.bladeColor} metalness={0.35} roughness={0.45} side={THREE.DoubleSide} />
-                        </mesh>
-                    ))}
-                </group>
-            </group>
+            {cfg.sideways !== false
+                ? <group rotation={[Math.PI / 2, 0, 0]}>{disc}</group>
+                : disc}
         </group>
     )
 }
@@ -336,25 +340,10 @@ function Panel({ geometry, position, color, metalness = 0.2, roughness = 0.6, ma
     if (material) {
         return <mesh geometry={geometry} position={position} material={material} />
     }
-    return (
-        <mesh geometry={geometry} position={position}>
-            <meshPhysicalMaterial color={color} metalness={metalness} roughness={roughness} side={THREE.DoubleSide} />
-        </mesh>
-    )
+    return (<mesh geometry={geometry} position={position}><meshPhysicalMaterial color={color} metalness={metalness} roughness={roughness} side={THREE.DoubleSide} /></mesh>)
 }
 
-function MirroredPair({
-    geometry,
-    position,
-    color,
-    metalness = 0.2,
-    roughness = 0.6,
-    rotationZ = 0,
-    flipX = true,
-    rotateY = false,
-    flipZAngle = false,
-    material = null,
-}) {
+function MirroredPair({ geometry, position, color, metalness = 0.2, roughness = 0.6, rotationZ = 0, flipX = true, rotateY = false, flipZAngle = false, material = null }) {
     const [x, y, z] = position
     const sharedMaterial = material ?? (
         <meshPhysicalMaterial color={color} metalness={metalness} roughness={roughness} side={THREE.DoubleSide} />
@@ -362,14 +351,10 @@ function MirroredPair({
 
     return (
         <>
-            <mesh geometry={geometry} position={[x, y, z]} rotation={[0, 0, rotationZ]} material={material ?? undefined}>
+            <mesh geometry={geometry} position={[x, y, z]} rotation={[0, 0, rotationZ]} material={material ?? undefined}> 
                 {material ? null : sharedMaterial}
             </mesh>
-            <mesh
-                geometry={geometry}
-                position={[flipX ? -x : x, y, z]}
-                rotation={[0, rotateY ? Math.PI : 0, flipZAngle ? -rotationZ : rotationZ]}
-                material={material ?? undefined}>
+            <mesh geometry={geometry} position={[flipX ? -x : x, y, z]} rotation={[0, rotateY ? Math.PI : 0, flipZAngle ? -rotationZ : rotationZ]} material={material ?? undefined}> 
                 {material ? null : sharedMaterial}
             </mesh>
         </>
@@ -379,9 +364,7 @@ function MirroredPair({
 // ============================================================
 
 function BossShip({ groupRef, geo, cfg, hullMaterials }) {
-    const { fuselage, cockpit, wing, wingPanel, wingtip, decal, cockpitGlass,
-        engineIntake, hullVent, racingStripe, noseSpike, tailFin, exhaustPort, horn,
-        propeller, tailBoom, boomFin, centerPropeller, landingGear } = cfg
+    const { fuselage, cockpit, wing, wingPanel, wingtip, decal, cockpitGlass, engineIntake, hullVent, racingStripe, noseSpike, tailFin, exhaustPort, horn, propeller, tailBoom, boomFin, centerPropeller, landingGear } = cfg
 
     return (
         <group ref={groupRef} visible={false}>
@@ -390,20 +373,8 @@ function BossShip({ groupRef, geo, cfg, hullMaterials }) {
 
             {landingGear.enabled && (
                 <>
-                    <MirroredPair
-                        geometry={geo.landingLeg}
-                        position={[landingGear.offsetX, landingGear.offsetY, landingGear.zOffset]}
-                        color={landingGear.legColor}
-                        metalness={0.5}
-                        roughness={0.5}
-                    />
-                    <MirroredPair
-                        geometry={geo.landingWheel}
-                        position={[landingGear.offsetX + landingGear.legLength, landingGear.offsetY, landingGear.zOffset + 0.001]}
-                        color={landingGear.wheelColor}
-                        metalness={0.2}
-                        roughness={0.6}
-                    />
+                    <MirroredPair geometry={geo.landingLeg} position={[landingGear.offsetX, landingGear.offsetY, landingGear.zOffset]} color={landingGear.legColor} metalness={0.5} roughness={0.5}  />
+                    <MirroredPair geometry={geo.landingWheel} position={[landingGear.offsetX + landingGear.legLength, landingGear.offsetY, landingGear.zOffset + 0.001]} color={landingGear.wheelColor} metalness={0.2} roughness={0.6} />
                 </>
             )}
 
@@ -421,29 +392,9 @@ function BossShip({ groupRef, geo, cfg, hullMaterials }) {
                 </>
             )}
 
-            {tailFin.enabled && (
-                <MirroredPair
-                    geometry={geo.tailFin}
-                    position={[tailFin.offsetX, tailFin.offsetY, 0.025]}
-                    color={tailFin.color}
-                    rotationZ={-geo.tailFinSplayRad}
-                    rotateY
-                    flipZAngle
-                />
-            )}
-
+            {tailFin.enabled && (<MirroredPair geometry={geo.tailFin} position={[tailFin.offsetX, tailFin.offsetY, 0.025]} color={tailFin.color} rotationZ={-geo.tailFinSplayRad} rotateY flipZAngle /> )}
             {tailBoom.enabled && (<Panel geometry={geo.tailBoom} position={[0, 0, 0.02]} color={tailBoom.color} metalness={0.3} roughness={0.55} />)}
-
-            {tailBoom.enabled && boomFin.enabled && (
-                <MirroredPair
-                    geometry={geo.boomFin}
-                    position={[boomFin.offsetX, geo.boomFinY + boomFin.offsetY, 0.026]}
-                    color={boomFin.color}
-                    rotationZ={-geo.boomFinSplayRad}
-                    rotateY
-                    flipZAngle
-                />
-            )}
+            {tailBoom.enabled && boomFin.enabled && ( <MirroredPair geometry={geo.boomFin} position={[boomFin.offsetX, geo.boomFinY + boomFin.offsetY, 0.026]} color={boomFin.color} rotationZ={-geo.boomFinSplayRad} rotateY flipZAngle /> )}
 
             {exhaustPort.enabled && (
                 <Panel
@@ -488,17 +439,17 @@ function BossShip({ groupRef, geo, cfg, hullMaterials }) {
                 />
             )}
 
-            {decal.enabled && (
-                <MirroredPair
-                    geometry={geo.decal}
-                    position={[decal.offsetX, decal.offsetY, 0.041]}
-                    color={decal.color}
-                    metalness={0.1}
-                    roughness={0.4}
-                    rotationZ={geo.decalTiltRad}
-                    flipZAngle
-                />
-            )}
+{decal.enabled && (
+    <MirroredPair
+        geometry={geo.decal}
+        position={[decal.offsetX, decal.offsetY, decal.zOffset]}
+        color={decal.color}
+        metalness={0.1}
+        roughness={0.4}
+        rotationZ={geo.decalTiltRad}
+        flipZAngle
+    />
+)}
 
             {racingStripe.enabled && (
                 <MirroredPair
@@ -665,9 +616,9 @@ export function BossRenderer() {
     const healthBar = useControls('Boss / Health Bar', {
         bgColor: '#ff0000',
         fgColor: '#44ff88',
-        width: { value: BAR_WIDTH, min: 1, max: 6, step: 0.1 },
-        height: { value: BAR_HEIGHT, min: 0.05, max: 0.6, step: 0.01 },
-        offsetY: { value: BAR_OFFSET, min: 0.5, max: 4, step: 0.05 },
+        width: BAR_WIDTH ,
+        height: BAR_HEIGHT,
+        offsetY: BAR_OFFSET,
     }, { collapsed: true })
 
     const textureKeys = useMemo(() => [...new Set(BOSSES.map((b) => b.hullTexture.textureKey))], [])
