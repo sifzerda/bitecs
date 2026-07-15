@@ -93,7 +93,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <StarfieldRenderer />
                     <Environment preset="sunset" />
 
-
                     <GunPanel />
                     <PlayerRenderer />
                     <DeflectRenderer />
@@ -116,9 +115,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <GunRenderer />
 
                     {/*         <TentacleRenderer />            */}
-
                     {/*             <OctopusRenderer />           */}
-
 
                     <EffectComposer multisampling={0}>
 
