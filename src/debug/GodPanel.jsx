@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useControls, button } from 'leva'
 import { WEAPONS } from '../ecs/constants/weapons.js'
+import { BOSSES } from '../ecs/constants/bosses.js'
 import { gameState } from '../state/gameState.js'
 import { spawnBoss, spawnOctopus } from '../ecs/spawn.js'
 import { playerQuery } from '../ecs/constants/queries.js'
@@ -16,6 +17,15 @@ import { Position } from '../ecs/constants/components.js'
 // no manual syncing needed here.
 const weaponOptions = WEAPONS.reduce((acc, weapon) => {
     acc[`${weapon.id} — ${weapon.name}`] = weapon.id
+    return acc
+}, {})
+
+// Same self-updating pattern for bosses — new entries added to BOSSES
+// automatically show up here. "player" is excluded since it's the
+// player ship config, not a spawnable boss.
+const bossOptions = BOSSES.reduce((acc, boss) => {
+    if (boss.key === "player") return acc
+    acc[boss.name] = boss.key
     return acc
 }, {})
 
@@ -36,15 +46,18 @@ export function GodPanel() {
     }, [weapon])        */}
 
 
-    const { bossWeapon } = useControls('Boss Test', {
-        bossWeapon: {
-            options: weaponOptions,
-            value: 0,
+    // Boss weapon is no longer chosen separately — spawnBoss derives the
+    // fired weapon from whichever gun the selected boss visually carries
+    // (bossCfg.gun.typeId), so this panel only needs to pick which boss.
+    useControls('Boss Test', {
+        bossKey: {
+            label: 'Boss',
+            options: bossOptions,
+            value: Object.values(bossOptions)[0],
         },
         'Spawn Boss': button((get) => {
-            spawnBoss(get('Boss Test.bossWeapon'))
+            spawnBoss(get('Boss Test.bossKey'))
         }),
- 
     })
 
         const { octopusEnabled } = useControls('Eldritch / Octopuses', {

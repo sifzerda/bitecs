@@ -5,10 +5,9 @@ import { useFrame } from '@react-three/fiber'
 import { playerQuery } from '../ecs/constants/queries.js'
 import { Position, Rotation } from '../ecs/constants/components.js'
 import { gameState } from '../state/gameState.js'
-import { getGunTypeByWeaponId } from '../ecs/constants/gunConfigs.js'
-import { GunRenderer } from './GunRenderer.jsx'
+import { getGunTypeByWeaponId, getGunTypeById } from '../ecs/constants/gunConfigs.js'
+import { WeaponMount } from './WeaponMount.jsx'
 
-const GUN_DIRECTION = Math.PI / 2
 export function GunMount() {
 
     const groupRef = useRef()
@@ -29,25 +28,28 @@ export function GunMount() {
         group.rotation.set(0, 0, Rotation[pid])
     })
 
-    const gunType = getGunTypeByWeaponId(gameState.currentWeapon)
+    // Normally the player's gun appearance tracks their current weapon.
+    // Setting gameState.gunSkinOverride to any GUN_TYPES id (including
+    // one pulled straight from a boss's config) swaps the visual only —
+    // functional weapon/damage is untouched, this is cosmetic.
+    const gunType = gameState.gunSkinOverride
+        ? getGunTypeById(gameState.gunSkinOverride)
+        : getGunTypeByWeaponId(gameState.currentWeapon)
+
     const { mount } = gunType.config
+
+    const gunCfg = {
+        enabled: true,
+        typeId: gunType.id,
+        offsetX: mount.offsetX,
+        offsetY: mount.offsetY,
+        scale: mount.scale,
+        mirrored: true,
+    }
 
     return (
         <group ref={groupRef}>
-            {/* Left hardpoint */}
-            <GunRenderer
-                config={gunType.config}
-                position={[-mount.offsetX, mount.offsetY, 0.04]}
-                rotation={[0, 0, GUN_DIRECTION]}
-                scale={mount.scale}
-            />
-            {/* Right hardpoint (mirrored) */}
-            <GunRenderer
-                config={gunType.config}
-                position={[mount.offsetX, mount.offsetY, 0.04]}
-                rotation={[0, 0, GUN_DIRECTION]}
-                scale={mount.scale}
-            />
+            <WeaponMount gunCfg={gunCfg} />
         </group>
     )
 }

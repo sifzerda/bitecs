@@ -32,15 +32,17 @@ export function waveSystem() {
         !gameState.bossDone) {
 
         const bossNumber = gameState.wave / 3
-        const weaponId = Math.min(bossNumber, 4)
 
         // Cycle through the boss roster in order so each boss fight looks
         // different — bossNumber 1 → BOSS_ROSTER[0] (Space Cowboy),
         // 2 → BOSS_ROSTER[1] (Rambo), etc., wrapping back around once
-        // you've gone through every boss.
+        // you've gone through every boss. The weapon each boss fires is
+        // no longer chosen here — spawnBoss derives it from that boss's
+        // own mounted gun (bossCfg.gun.typeId), so it's always in sync
+        // with what's rendered on the ship.
         const bossKey = BOSS_ROSTER[(bossNumber - 1) % BOSS_ROSTER.length].key
 
-        spawnBoss(weaponId, bossKey)
+        spawnBoss(bossKey)
 
         gameState.bossAlive = true
         gameState.bossDone = true
