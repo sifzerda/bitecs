@@ -21,6 +21,8 @@ export const gameState = {
     deflectFlashX: 0,
     deflectFlashY: 0,
 
+    gunSkinOverride: null
+
 //    tentaclesEnabled: false,
 //    octopusEnabled: true,
 }

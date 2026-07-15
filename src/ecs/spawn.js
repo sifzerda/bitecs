@@ -25,7 +25,8 @@ import {
      Octopus,
     OctopusTag,
 } from "./constants/components";
-import { BOSS_INDEX_BY_KEY } from "./constants/bosses";
+import { BOSS_INDEX_BY_KEY, BOSSES } from "./constants/bosses";
+import { getGunTypeById } from "./constants/gunConfigs";
 import { gameState } from "../state/gameState";
 import { getWeapon } from "./constants/weapons";
 import { acquireSparkEntity } from "./pools/sparkPool"
@@ -240,9 +241,12 @@ export function spawnAsteroid(x, y) {
  
 // ============= Boss ============//
 // `bossKey` selects which entry of BOSSES (bosses.js) this boss looks
-// like — e.g. "interceptor", "ram", "longtail". Defaults to "interceptor"
-// so existing call sites that don't pass one keep working unchanged.
-export function spawnBoss(weaponId, bossKey = "shotgun") {
+// like — e.g. "shotgun", "machinegun", "boss5". The weapon it fires is
+// no longer a separate parameter: it's derived from that boss's own
+// mounted gun (bossCfg.gun.typeId), so visual appearance and functional
+// weapon can never drift apart. Defaults to "shotgun" so existing call
+// sites that don't pass a key keep working.
+export function spawnBoss(bossKey = "shotgun") {
  
     const id = addEntity(world)
  
@@ -269,12 +273,20 @@ export function spawnBoss(weaponId, bossKey = "shotgun") {
  
     BossAI.moveTimer[id] = 0
     BossAI.shootTimer[id] = 1
-    BossAI.weapon[id] = weaponId
+ 
+    const bossIndex = BOSS_INDEX_BY_KEY[bossKey] ?? 0
+    const bossCfg = BOSSES[bossIndex]
+ 
+    // Weapon fired = weapon belonging to whatever gun this boss visually
+    // carries. Falls back to weapon 0 if the boss has no gun mounted.
+    const gunType = bossCfg.gun?.enabled ? getGunTypeById(bossCfg.gun.typeId) : null
+    BossAI.weapon[id] = gunType ? gunType.weaponId : 0
+ 
     BossAI.beamCycleTimer[id] = 3.0
     BossAI.beamActive[id] = 1
     BossAI.targetRotation[id] = 0
  
-    BossType.typeIndex[id] = BOSS_INDEX_BY_KEY[bossKey] ?? 0
+    BossType.typeIndex[id] = bossIndex
  
     gameState.bossAlive = true
  

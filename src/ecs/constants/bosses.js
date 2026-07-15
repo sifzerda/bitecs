@@ -3,6 +3,19 @@
 const DEFAULT_PART_CONFIG = {
     general: { extrudeDepth: 0.03 },
 
+    gun: {
+        enabled: true,
+        typeId: 'pulse_blaster',   // drives BOTH appearance (GunRenderer) AND
+        // functional weapon (BossAI.weapon), via
+        // GUN_TYPES' weaponId field in gunConfigs.js
+        offsetX: 0.32,
+        offsetY: -0.05,
+        scale: 0.9,
+        rotation: 0,
+        zOffset: 0.04,
+        mirrored: true,
+    },
+
     fuselage: {
         color: '#cfe8ff',
         tipY: 0.78,
@@ -252,11 +265,13 @@ export const BOSSES = [
     withDefaults({
         key: "player",
         name: "Player",
+        gun: { enabled: false },
     }),
 
     withDefaults({
         key: "shotgun",
         name: "Space Cowboy",
+        gun: { typeId: 'shotgun_spread', offsetX: 0.30, offsetY: -0.15, scale: 0.8 },
         fuselage: {
             color: '#ff3355',
             tipY: 0.66,
@@ -296,6 +311,7 @@ export const BOSSES = [
     withDefaults({
         key: "machinegun",
         name: "Rambo The Space Copter",
+        gun: { typeId: 'rapid_cannon', offsetX: 0.45, offsetY: 0.10, scale: 0.9 },
         fuselage: { color: '#7be2af', shoulderY: 0.53, shoulderWidth: 0.21, waistY: -0.40, waistWidth: 0.26, tailY: -0.59, tailWidth: 0.77, notchY: 0.00 },
         cockpit: { color: '#00ad57', topY: 0.73, topWidth: 0.19, midWidth: 0.24, bottomY: 0.20, bottomWidth: 0.00 },
         wing: { color: '#00ad57', rootX: 0.22, rootY: 0.00, tipX: 0.68, trailX: 0.69, trailY: -0.25 },
@@ -320,6 +336,7 @@ export const BOSSES = [
     withDefaults({
         key: "grenagegun",
         name: "War Machine",
+        gun: { typeId: 'grenade_launcher', offsetX: 0.35, offsetY: 0.0, scale: 1.1 },
         fuselage: { color: '#63a9eb', tipY: 2.00, shoulderY: 1.83, shoulderWidth: 0.15, waistY: -0.32, waistWidth: 0.17, tailY: -2.00, tailWidth: 0.16, notchY: -1.83 },
         cockpit: { color: '#0070ff', topY: 1.83, topWidth: 0.15, midY: 1.38, midWidth: 0.17, bottomY: 1.53, bottomWidth: 0.13 },
         wing: { color: '#0070ff', rootX: 0.17, rootY: 0.08, tipX: 2.00, tipY: -0.45, trailX: 1.99, trailY: -0.25, innerX: 0.17, innerY: -0.57 },
@@ -340,6 +357,7 @@ export const BOSSES = [
     withDefaults({
         key: "missilegun",
         name: "Rogue Mars Missiler",
+        gun: { typeId: 'missile_pod', offsetX: 0.20, offsetY: -0.30, scale: 1.0 },
         fuselage: { color: '#cfe8ff', tipY: 1.17, shoulderY: 0.47, shoulderWidth: 0.19, waistY: -0.76, waistWidth: 0.15, tailY: -0.40, tailWidth: 0.06, notchY: -0.30 },
         cockpit: { color: '#ff3355', topY: 0.58, topWidth: 0.11, midY: 0.11, midWidth: 0.14, bottomY: 0.02, bottomWidth: 0.00 },
         wing: { color: '#818a8d' },
@@ -356,53 +374,6 @@ export const BOSSES = [
         tailBoom: { enabled: false, color: '#cfe8ff', length: 0.44, baseWidth: 0.17, tipWidth: 0.02 },
     }),
 
-    withDefaults({
-        key: "acidthrowergun",
-        name: "Space Tractor",
-        fuselage: {},
-        cockpit: {},
-        wing: {},
-        wingPanel: {},
-        wingtip: {},
-        decal: {},
-        cockpitGlass: {},
-        engineIntake: {},
-        hullVent: {},
-        racingStripe: {},
-        noseSpike: {},
-        tailFin: {},
-        propeller: {},
-        centerPropeller: {},
-        exhaustPort: {},
-        tailBoom: {},
-        boomFin: {},
-        landingGear: {},
-       
-    }),
-
-        withDefaults({
-        key: "acidthrowergun",
-        name: "Space Tractor",
-        fuselage: {},
-        cockpit: {},
-        wing: {},
-        wingPanel: {},
-        wingtip: {},
-        decal: {},
-        cockpitGlass: {},
-        engineIntake: {},
-        hullVent: {},
-        racingStripe: {},
-        noseSpike: {},
-        tailFin: {},
-        propeller: {},
-        centerPropeller: {},
-        exhaustPort: {},
-        tailBoom: {},
-        boomFin: {},
-        landingGear: {},
-       
-    }),
 
     withDefaults({
         key: "flamethrowergun",
@@ -425,55 +396,6 @@ export const BOSSES = [
         tailBoom: { enabled: true, color: '#3a6bd5', length: 0.25, baseWidth: 0.17, tipWidth: 0.06 },
         boomFin: { enabled: true, color: '#03ff00', length: 1.00, width: 0.17, sweep: 0.63, offsetX: 0.42, offsetY: 0.02, splayDeg: 0 },
         landingGear: { enabled: false },
-    }),
-
-
-    withDefaults({
-        key: "acidthrowergun",
-        name: "Space Tractor",
-        fuselage: {},
-        cockpit: {},
-        wing: {},
-        wingPanel: {},
-        wingtip: {},
-        decal: {},
-        cockpitGlass: {},
-        engineIntake: {},
-        hullVent: {},
-        racingStripe: {},
-        noseSpike: {},
-        tailFin: {},
-        propeller: {},
-        centerPropeller: {},
-        exhaustPort: {},
-        tailBoom: {},
-        boomFin: {},
-        landingGear: {},
-       
-    }),
-
-        withDefaults({
-        key: "acidthrowergun",
-        name: "Space Tractor",
-        fuselage: {},
-        cockpit: {},
-        wing: {},
-        wingPanel: {},
-        wingtip: {},
-        decal: {},
-        cockpitGlass: {},
-        engineIntake: {},
-        hullVent: {},
-        racingStripe: {},
-        noseSpike: {},
-        tailFin: {},
-        propeller: {},
-        centerPropeller: {},
-        exhaustPort: {},
-        tailBoom: {},
-        boomFin: {},
-        landingGear: {},
-       
     }),
 
 

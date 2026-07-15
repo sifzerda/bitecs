@@ -36,14 +36,15 @@ import { BossLaserRenderer } from '../renderers/BossLaserRenderer.jsx'
 
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
 import { GunMount } from '../renderers/GunMount.jsx'
+import { BossMount } from '../renderers/BossMount.jsx'
 
 //import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
 //import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
 
 import { ExhaustMount } from '../renderers/ExhaustMount.jsx'
 // debug
-import { GodPanel } from '../debug/GodPanel.jsx'
-//import { GunPanel } from '../debug/GunPanel.jsx'
+//import { GodPanel } from '../debug/GodPanel.jsx'
+import { GunPanel } from '../debug/GunPanel.jsx'
 
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
@@ -66,7 +67,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
             <HUD paused={paused} onPause={onPause} />
 
-            <GodPanel />
+            {/*        <GodPanel />      */}
 
             <div className="relative flex-1 px-4">
 
@@ -92,8 +93,8 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <StarfieldRenderer />
                     <Environment preset="sunset" />
 
-                    {/*              <GunPanel />       */}
 
+                    <GunPanel />
                     <PlayerRenderer />
                     <DeflectRenderer />
                     <GunMount />
@@ -109,6 +110,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <SparkRenderer />
 
                     <BossRenderer />
+                    <BossMount />
                     <BossLaserRenderer />
 
                     <GunRenderer />
