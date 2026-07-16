@@ -1,13 +1,4 @@
 // src/debug/BossGunBuilder.jsx
-//
-// Combined boss + gun builder for the debug scene:
-//   - pick a boss, tune every visual part group live (immediate geometry rebuild)
-//   - pick a gun, tune its core appearance, and position/rotate/scale it on the mount
-//   - log a paste-ready object for bosses.js and gunConfigs.js
-//
-// Must be rendered inside the R3F <Canvas>, same as <GunPanel /> and <BossRenderer />.
-// Requires two small exports added to BossRenderer.jsx: `buildBossAssets`, `HULL_TEXTURES`,
-// and BossShip accepting a `visible` prop (see patch notes).
 
 import { useMemo, useRef } from 'react'
 import { useLoader, useFrame } from '@react-three/fiber'
@@ -326,6 +317,8 @@ export function BossGunBuilder() {
         coreGlowColor: { value: baseGunCfg.coreGlow.color },
         coreGlowIntensity: { value: baseGunCfg.coreGlow.intensity, min: 0, max: 3, step: 0.05 },
         accentColor: { value: baseGunCfg.accentStripe.color },
+        muzzleColor: { value: baseGunCfg.muzzle.color,
+        },
     }, [baseGunCfg])
 
     // ------------------------------------------------------------
@@ -340,8 +333,16 @@ export function BossGunBuilder() {
         frame: { ...baseGunCfg.frame, color: gunAppearance.frameColor, length: gunAppearance.frameLength, height: gunAppearance.frameHeight },
         barrel: { ...baseGunCfg.barrel, color: gunAppearance.barrelColor, length: gunAppearance.barrelLength },
         mountBracket: { ...baseGunCfg.mountBracket, color: gunAppearance.mountBracketColor, length: gunAppearance.mountBracketLength, width: gunAppearance.mountBracketWidth },
-        coreGlow: { ...baseGunCfg.coreGlow, color: gunAppearance.coreGlowColor, intensity: gunAppearance.coreGlowIntensity },
+            coreGlow: {
+        ...baseGunCfg.coreGlow,
+        color: gunAppearance.coreGlowColor,
+        intensity: gunAppearance.coreGlowIntensity,
+    },
         accentStripe: { ...baseGunCfg.accentStripe, color: gunAppearance.accentColor },
+       muzzle: {
+        ...baseGunCfg.muzzle,
+        color: gunAppearance.muzzleColor,
+    },
     }
 
     const liveGunMountField = {
@@ -394,8 +395,7 @@ export function BossGunBuilder() {
     // ------------------------------------------------------------
     const textureKeys = useMemo(() => Object.keys(HULL_TEXTURES), [])
     const loadedTextures = useLoader(THREE.TextureLoader, textureKeys.map(k => HULL_TEXTURES[k]))
-    const textures = useMemo(
-        () => Object.fromEntries(textureKeys.map((k, i) => [k, loadedTextures[i]])),
+    const textures = useMemo(() => Object.fromEntries(textureKeys.map((k, i) => [k, loadedTextures[i]])),
         [textureKeys, loadedTextures]
     )
 
@@ -437,6 +437,7 @@ export function BossGunBuilder() {
                     mountBracket: liveGunCfg.mountBracket,
                     coreGlow: liveGunCfg.coreGlow,
                     accentStripe: liveGunCfg.accentStripe,
+                 muzzle: liveGunCfg.muzzle,
                 }, null, 2)
             )
         }),
