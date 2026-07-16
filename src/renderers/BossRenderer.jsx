@@ -7,6 +7,7 @@ import * as THREE from "three"
 import { bossQuery } from "../ecs/constants/queries.js"
 import { Position, Health, Rotation, BossType } from "../ecs/constants/components.js"
 import { BOSSES } from "../ecs/constants/bosses.js"
+import { debugState } from "../debug/debugState.js"
 
 import lightWool from "../assets/light-wool.png"
 
@@ -14,7 +15,7 @@ const HULL_TEXTURES = {
     "Light Wool": lightWool,
 }
 
-const MAX_BOSSES = 4
+const MAX_BOSSES = 5
 const BAR_WIDTH = 3.0
 const BAR_HEIGHT = 0.2
 const BAR_OFFSET = 2.2
@@ -363,7 +364,7 @@ function MirroredPair({ geometry, position, color, metalness = 0.2, roughness = 
 
 // ============================================================
 
-function BossShip({ groupRef, geo, cfg, hullMaterials }) {
+export function BossShip({ groupRef, geo, cfg, hullMaterials }) {
     const { fuselage, cockpit, wing, wingPanel, wingtip, decal, cockpitGlass, engineIntake, hullVent, racingStripe, noseSpike, tailFin, exhaustPort, horn, propeller, tailBoom, boomFin, centerPropeller, landingGear } = cfg
 
     return (
@@ -632,7 +633,7 @@ export function BossRenderer() {
 
     useFrame(() => { const bosses = bossQuery()
 
-        for (let slot = 0; slot < MAX_BOSSES; slot++) {
+        for (let slot = 0; slot < MAX_BOSSES - 1; slot++) {
             const eid = slot < bosses.length ? bosses[slot] : null
             const activeType = eid !== null ? BossType.typeIndex[eid] : -1
 
@@ -649,6 +650,42 @@ export function BossRenderer() {
                 }
             }
         }
+
+        /////////////// debug
+
+        const previewSlot = MAX_BOSSES - 1
+
+for (let t = 0; t < bossAssets.length; t++) {
+
+    const group = groupRefs[previewSlot][t].current
+
+    if (!group) continue
+
+if (
+    debugState.previewBossEnabled &&
+    t === debugState.previewBossIndex
+) {
+
+    group.visible = true
+
+   group.position.copy(debugState.previewBossPosition)
+
+group.rotation.set(
+    0,
+    0,
+    debugState.previewBossRotation
+)
+
+group.scale.setScalar(debugState.previewBossScale)
+
+} else {
+
+    group.visible = false
+
+}
+
+}
+//////////////////////
 
         const bgBar = bgBarRef.current
         const fgBar = fgBarRef.current
