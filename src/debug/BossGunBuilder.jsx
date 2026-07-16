@@ -1,7 +1,13 @@
-// 
-
 // src/debug/BossGunBuilder.jsx
-
+//
+// Combined boss + gun builder for the debug scene:
+//   - pick a boss, tune every visual part group live (immediate geometry rebuild)
+//   - pick a gun, tune its core appearance, and position/rotate/scale it on the mount
+//   - log a paste-ready object for bosses.js and gunConfigs.js
+//
+// Must be rendered inside the R3F <Canvas>, same as <GunPanel /> and <BossRenderer />.
+// Requires two small exports added to BossRenderer.jsx: `buildBossAssets`, `HULL_TEXTURES`,
+// and BossShip accepting a `visible` prop (see patch notes).
 
 import { useMemo, useRef } from 'react'
 import { useLoader, useFrame } from '@react-three/fiber'
@@ -44,7 +50,8 @@ export function BossGunBuilder() {
     // Preview transform (not part of any config, just staging)
     // ------------------------------------------------------------
     const preview = useControls('Builder / Preview', {
-        show: { value: true, label: 'Show' },
+        show: { value: true, label: 'Show Boss' },
+        showGun: { value: true, label: 'Show Gun' },
         x: { value: 0, min: -10, max: 10, step: 0.1 },
         y: { value: 0, min: -10, max: 10, step: 0.1 },
         z: { value: 5, min: -10, max: 20, step: 0.1 },
@@ -435,19 +442,19 @@ export function BossGunBuilder() {
         }),
     })
 
-    if (!preview.show) return null
-
     return (
         <group position={[preview.x, preview.y, preview.z]} rotation={[0, 0, preview.rotation]} scale={preview.scale}>
-            <BossShip
-                groupRef={shipGroupRef}
-                geo={bossAssets.geo}
-                cfg={liveBossCfg}
-                hullMaterials={bossAssets.hullMaterials}
-                visible={true}
-            />
+            {preview.show && (
+                <BossShip
+                    groupRef={shipGroupRef}
+                    geo={bossAssets.geo}
+                    cfg={liveBossCfg}
+                    hullMaterials={bossAssets.hullMaterials}
+                    visible={true}
+                />
+            )}
 
-            {mount.gunEnabled && (
+            {preview.showGun && mount.gunEnabled && (
                 mount.mirrored ? (
                     <>
                         <GunRenderer
