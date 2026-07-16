@@ -430,10 +430,10 @@ export function BossRenderer() {
 
     const wingtip = useControls('Boss / Wingtip', {
         color: '#ffe605',
-        width: { value: 0.07, min: 0, max: 0.3, step: 0.005 },
+        width: { value: 0.04, min: 0, max: 0.3, step: 0.005 },
         height: { value: 0.34, min: 0, max: 1.5, step: 0.01 },
-        offsetX: { value: 0.71, min: 0, max: 2, step: 0.01 },
-        offsetY: { value: -0.31, min: -1.5, max: 1.5, step: 0.01 },
+        offsetX: { value: 0.75, min: 0, max: 2, step: 0.01 },
+        offsetY: { value: -0.27, min: -1.5, max: 1.5, step: 0.01 },
     }, { collapsed: true })
 
     const horn = useControls('Boss / Horn', {
@@ -451,11 +451,11 @@ export function BossRenderer() {
     const decal = useControls('Boss / Decal', {
         enabled: true,
         color: '#ffe605',
-        width: { value: 0.07, min: 0, max: 0.3, step: 0.005 },
-        length: { value: 0.76, min: 0, max: 2, step: 0.01 },
+        width: { value: 0.05, min: 0, max: 0.3, step: 0.005 },
+        length: { value: 1.10, min: 0, max: 2, step: 0.01 },
         offsetX: { value: 0.35, min: 0, max: 1, step: 0.01 },
-        offsetY: { value: 0.00, min: -1, max: 1, step: 0.01 },
-        tiltDeg: { value: -18, min: -90, max: 90, step: 1 },
+        offsetY: { value: 0.20, min: -1, max: 1, step: 0.01 },
+        tiltDeg: { value: 42, min: -90, max: 90, step: 1 },
     }, { collapsed: true })
 
     const cockpitGlass = useControls('Boss / Cockpit Glass', {
@@ -502,28 +502,28 @@ export function BossRenderer() {
     const racingStripe = useControls('Boss / Racing Stripe', {
         enabled: true,
         color: '#ffe605',
-        width: { value: 0.07, min: 0, max: 0.3, step: 0.005 },
-        length: { value: 1.03, min: 0, max: 2, step: 0.01 },
-        offsetX: { value: 0.45, min: 0, max: 1, step: 0.01 },
-        offsetY: { value: -0.16, min: -1, max: 1, step: 0.01 },
-        tiltDeg: { value: -2, min: -90, max: 90, step: 1 },
+        width: { value: 0.06, min: 0, max: 0.3, step: 0.005 },
+        length: { value: 0.30, min: 0, max: 2, step: 0.01 },
+        offsetX: { value: 0.60, min: 0, max: 1, step: 0.01 },
+        offsetY: { value: -0.38, min: -1, max: 1, step: 0.01 },
+        tiltDeg: { value: 72, min: -90, max: 90, step: 1 },
     }, { collapsed: true })
 
     const noseSpike = useControls('Boss / Nose Spike', {
         enabled: true,
         color: '#ffe605',
-        length: { value: 0.13, min: 0, max: 1, step: 0.01 },
+        length: { value: 0.26, min: 0, max: 1, step: 0.01 },
         width: { value: 0.07, min: 0, max: 0.5, step: 0.01 },
     }, { collapsed: true })
 
     const tailFin = useControls('Boss / Tail Fin', {
         enabled: true,
         color: '#ffe605',
-        length: { value: 0.33, min: 0, max: 1, step: 0.01 },
-        width: { value: 0.15, min: 0, max: 1, step: 0.01 },
-        sweep: { value: 0.00, min: 0, max: 1, step: 0.01 },
+        length: { value: 0.85, min: 0, max: 1, step: 0.01 },
+        width: { value: 0.14, min: 0, max: 1, step: 0.01 },
+        sweep: { value: 0.40, min: 0, max: 1, step: 0.01 },
         offsetX: { value: 0.73, min: 0, max: 1, step: 0.01 },
-        offsetY: { value: -0.64, min: -1.5, max: 1.5, step: 0.01 },
+        offsetY: { value: -0.11, min: -1.5, max: 1.5, step: 0.01 },
         splayDeg: { value: 0, min: -45, max: 45, step: 1 },
     }, { collapsed: true })
 
