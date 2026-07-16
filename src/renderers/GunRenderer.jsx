@@ -50,12 +50,13 @@ function buildMuzzleShape(cfg) {
 // body to the hull hardpoint. Widens toward the hull side (-X) so it
 // reads as "bolted on" rather than a floating gun.
 function buildMountBracketShape(cfg) {
-    const halfW = cfg.width / 2
+    const halfL = cfg.length / 2  // shallow depth, stays under the frame's footprint
+    const halfW = cfg.width / 2   // sideways extent — pokes out past the frame's edges
     const shape = new THREE.Shape()
-    shape.moveTo(0, halfW * 0.6)
-    shape.lineTo(cfg.length, halfW)
-    shape.lineTo(cfg.length, -halfW)
-    shape.lineTo(0, -halfW * 0.6)
+    shape.moveTo(-halfL, -halfW)
+    shape.lineTo(halfL, -halfW)
+    shape.lineTo(halfL, halfW)
+    shape.lineTo(-halfL, halfW)
     shape.closePath()
     return shape
 }
@@ -174,7 +175,7 @@ export function GunRenderer({ config = DEFAULT_GUN_CONFIG, position = [0, 0, 0],
 
             {mountBracket.enabled && (
                 <Panel geometry={mountBracketGeometry}
-                    position={[mountBracket.offsetX, 0, 0.005]}
+                    position={[0, 0, -0.005]}
                     color={mountBracket.color} metalness={mountBracket.metalness} roughness={mountBracket.roughness} />
             )}
 
