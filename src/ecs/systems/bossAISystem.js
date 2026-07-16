@@ -100,10 +100,6 @@ export function bossAISystem() {
                 case "beam":
                     break
 
-                case "mine":
-                    spawnHazard(Position.x[id], Position.y[id], weapon.id, BULLET_OWNER.ENEMY, -1)
-                    break
-
                 default:
                     spawnBullet(Position.x[id], Position.y[id], rot, weapon.id, BULLET_OWNER.ENEMY)
                     break
