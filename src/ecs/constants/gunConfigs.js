@@ -21,7 +21,7 @@ export const DEFAULT_GUN_CONFIG = {
 
     frame: {
         color: '#cfe8ff',
-        length: 0.60,     // rifles read longer than the old pistol frame
+        length: 0.60,     
         height: 0.13,
         taper: 0.4,
     },
@@ -39,37 +39,35 @@ export const DEFAULT_GUN_CONFIG = {
     },
 
     muzzle: {
-        enabled: true, color: '#00ff88',
+        enabled: true, color: 'cyan',
         length: 0.09, width: 0.06, metalness: 0.4, roughness: 0.35,
     },
 
-    // Hull-attachment stub — sits at the rear of the frame, fixed to the
-    // hardpoint. Purely structural, no moving/handheld implication.
     mountBracket: {
         enabled: true, color: '#3a4650',
-        length: 0.14, width: 0.30,
+        length: 0.21, width: 0.23,
         offsetX: -0.42,
         metalness: 0.5, roughness: 0.6,
     },
 
+    // remove sight
     sight: {
         enabled: false, color: '#00ff88',
         width: 0.03, height: 0.035, offsetX: 0.30,
     },
 
     accentStripe: {
-        enabled: true, color: '#00ff88',
+        enabled: true, color: '#00e5ff',
         width: 0.09, length: 0.6, offsetY: 0.0,
     },
 
     coreGlow: {
-        enabled: true, color: '#00ff88',
+        enabled: true, color: '#00e5ff',
         size: 0.3, offsetX: 0.88, intensity: 1.0,
     },
 
-    // hull-mount placement — where the pair sits on the ship, mirrored on ±X
     mount: {
-        offsetX: 0.48,
+        offsetX: 0.45,
         offsetY: -0.05,
         scale: 0.9,
     },
@@ -83,10 +81,7 @@ const RAW_TYPES = [
 
     {
         id: 'pulse_blaster', name: 'Pulse Blaster', weaponId: 0,
-        overrides: {
-            frame: { color: '#cfe8ff' },
-            coreGlow: { color: '#00ffcc', intensity: 1.0 },
-        },
+ 
     },
     {
         id: 'rapid_cannon', name: 'Rapid Cannon', weaponId: 1,

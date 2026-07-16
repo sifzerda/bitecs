@@ -10,17 +10,9 @@ import { WeaponMount } from './WeaponMount.jsx'
 const MAX_BOSSES = 4
 
 export function BossMount() {
+    const groupRefs = useMemo(() => Array.from({ length: MAX_BOSSES }, () => BOSSES.map(() => createRef())), [])
 
-    // groupRefs[slot][bossType] — one outer group per boss slot (follows
-    // that slot's active entity), containing one inner group per boss
-    // type; only the slot's currently-active type is made visible.
-    const groupRefs = useMemo(
-        () => Array.from({ length: MAX_BOSSES }, () => BOSSES.map(() => createRef())),
-        []
-    )
-
-    useFrame(() => {
-        const bosses = bossQuery()
+    useFrame(() => { const bosses = bossQuery()
 
         for (let slot = 0; slot < MAX_BOSSES; slot++) {
             const eid = slot < bosses.length ? bosses[slot] : null
@@ -43,8 +35,7 @@ export function BossMount() {
 
     return (
         <>
-            {groupRefs.map((slotRefs, slot) =>
-                BOSSES.map((bossCfg, t) => (
+            {groupRefs.map((slotRefs, slot) => BOSSES.map((bossCfg, t) => (
                     <group key={`${slot}-${bossCfg.key}`} ref={slotRefs[t]} visible={false}>
                         <WeaponMount gunCfg={bossCfg.gun} />
                     </group>
