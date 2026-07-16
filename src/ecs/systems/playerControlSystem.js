@@ -125,14 +125,6 @@ if (input.deflectOn) {
     } else if (weapon.category === "flame") {
         // handled entirely by flameSystem
 
-    } else if (weapon.category === "mine") {
-        shootState.timer -= dt
-        if (input.fire && shootState.timer <= 0) {
-            spawnHazard(Position.x[pid], Position.y[pid], weapon.id, BULLET_OWNER.PLAYER, -1)
-            shootState.timer = weapon.fireRate
-        }
-
-
     } else {
         shootState.timer -= dt
         if (input.fire && shootState.timer <= 0) {

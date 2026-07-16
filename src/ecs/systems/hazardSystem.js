@@ -68,14 +68,7 @@ export function hazardSystem() {
                 removeEntity(world, hid)
             }
 
-
-
         } else {
-
-            if (weapon.name === "proximityminelayer") {
-                if (HazardZone.detonated[hid]) continue
-                HazardZone.detonated[hid] = 1
-            }
 
             // static cloud/puddle: damage everything currently overlapping it
             const radius = weapon.hazardRadius ?? 2

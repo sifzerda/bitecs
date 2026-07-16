@@ -113,9 +113,6 @@ laser -
 plasma gun - 
 
 Arc gun electric - 
-particle beam - 
-cluster cannon - 
-proximity mines - 
 prism beam - 
 cryo cannon - 
 

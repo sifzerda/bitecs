@@ -1,4 +1,4 @@
-// src/renderers/BossGunMount.jsx
+// src/renderers/BossMount.jsx
 
 import { createRef, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
