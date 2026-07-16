@@ -11,7 +11,7 @@ import { debugState } from "../debug/debugState.js"
 
 import lightWool from "../assets/light-wool.png"
 
-const HULL_TEXTURES = {
+export const HULL_TEXTURES = {
     "Light Wool": lightWool,
 }
 
@@ -364,7 +364,7 @@ function MirroredPair({ geometry, position, color, metalness = 0.2, roughness = 
 
 // ============================================================
 
-export function BossShip({ groupRef, geo, cfg, hullMaterials }) {
+export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false }) {
     const { fuselage, cockpit, wing, wingPanel, wingtip, decal, cockpitGlass, engineIntake, hullVent, racingStripe, noseSpike, tailFin, exhaustPort, horn, propeller, tailBoom, boomFin, centerPropeller, landingGear } = cfg
 
     return (
@@ -542,7 +542,7 @@ function applyPlanarUVs(geometry) {
 
 // ============================================================
 
-function buildBossAssets(cfg, textures) {
+export function buildBossAssets(cfg, textures) {
     const { fuselage, cockpit, wing, wingPanel, wingtip, horn, decal, cockpitGlass,
         engineIntake, hullVent, racingStripe, noseSpike, tailFin, exhaustPort,
         propeller, centerPropeller, tailBoom, boomFin, landingGear, hullTexture, general } = cfg

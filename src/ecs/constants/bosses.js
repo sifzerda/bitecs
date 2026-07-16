@@ -292,7 +292,13 @@ export const BOSSES = [
         engineIntake: { color: '#3a6bd5', width: 0.10, height: 0.46, offsetX: 0.35 },
         wing: { color: '#8d001c' },
         wingPanel: { color: '#ff3355' },
-        wingtip: { color: '#ffe605', width: 0.07, height: 0.34, offsetX: 0.71, offsetY: -0.31 }, // fixed casing
+        wingtip: { 
+            color: '#ffe605', 
+            width: 0.04, 
+            height: 0.34, 
+            offsetX: 0.75, 
+            offsetY: -0.27 
+        }, // fixed casing
         noseSpike: {
             color: '#ffe605',
             length: 0.13,
@@ -301,11 +307,11 @@ export const BOSSES = [
             roundness: 0,          // restores sharp triangular point
             zOffset: 0.032,        // matches old fixed z depth
         },
-        tailFin: { color: '#ffe605', length: 0.33, width: 0.15, sweep: 0, offsetX: 0.68, offsetY: 0 },
+        tailFin: { color: '#ffe605', length: 0.85, width: 0.14, sweep: 0.40, offsetX: 0.73, offsetY: -0.11, splayDeg: 0 },
         exhaustPort: { color: '#3a6bd5', width: 0.14, height: 0.17, offsetX: 0, offsetY: 0.23 },
         hullVent: { color: '#3a6bd5', width: 0.13, height: 0.05, spacing: 0.07, offsetX: 0.26, offsetY: 0 },
-        racingStripe: { color: '#ffe605', width: 0.07, length: 1.03, offsetX: 0.45, offsetY: -0.16, tiltDeg: -2 },
-        decal: { color: '#ffe605', width: 0.07, length: 0.76, offsetX: 0.35, offsetY: 0, tiltDeg: -18 },
+        racingStripe: { color: '#ffe605', width: 0.06, length: 0.30, offsetX: 0.60, offsetY: -0.38, tiltDeg: 72 },
+        decal: { color: '#ffe605', width: 0.05, length: 1.10, offsetX: 0.35, offsetY: 0.20, tiltDeg: 42 },
     }),
 
     withDefaults({
