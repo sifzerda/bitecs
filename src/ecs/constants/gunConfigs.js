@@ -86,10 +86,12 @@ const RAW_TYPES = [
     {
         id: 'rapid_cannon', name: 'Rapid Cannon', weaponId: 1,
         overrides: {
-            frame: { length: 0.75, height: 0.12 },
-            barrel: { length: 0.4, width: 0.03, color: '#4a5560' },
-            coreGlow: { color: '#ffd23f', intensity: 1.1 },
-            accentStripe: { color: '#ffaa00' },
+            muzzle: { color: '#ffe605' },
+            frame: { length: 0.44, height: 0.24, color: '#ff3355' },
+            barrel: { length: 0.60, width: 0.03, color: '#3a6bd5' },
+            coreGlow: { color: '#ffe605', intensity: 0.8 },
+            accentStripe: { color: '#ffe605' },
+            mountBracket: { color: '#4a5560', length: 0.23, width: 0.35 },
         },
     },
     {
