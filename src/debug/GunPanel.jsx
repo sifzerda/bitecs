@@ -5,8 +5,16 @@ import { useControls, button } from 'leva'
 import { GUN_TYPES, DEFAULT_GUN_CONFIG } from '../ecs/constants/gunConfigs.js'
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
 
+import { debugState } from "./debugState.js"
+import { BOSSES } from "../ecs/constants/bosses.js"
+
 const gunOptions = GUN_TYPES.reduce((acc, g) => {
     acc[g.name] = g.id
+    return acc
+}, {})
+
+const bossOptions = BOSSES.reduce((acc, b, i) => {
+    acc[b.name] = i
     return acc
 }, {})
 
@@ -14,10 +22,15 @@ const GUN_DIRECTION = Math.PI / 2
 
 export function GunPanel() {
 
-    const { gunVisible, selectedId, previewScale, mirrored } = useControls('Gun Test', {
+    const {
+    gunVisible,
+    selectedId,
+    gunPreviewScale,
+    mirrored
+} = useControls('Gun Test', {
         gunVisible: { value: false, label: 'Show Gun Preview' },
         selectedId: { options: gunOptions, value: GUN_TYPES[0].id, label: 'Gun Type' },
-        previewScale: { value: 3, min: 0.5, max: 8, step: 0.1 },
+        gunPreviewScale: { value: 3, min: 0.5, max: 8, step: 0.1 },
         mirrored: { value: true, label: 'Show Twin Pair' },
     })
 
@@ -69,8 +82,72 @@ export function GunPanel() {
         accentStripe: { ...baseCfg.accentStripe, color: controls.accentColor },
     }), [baseCfg, controls])
 
-    if (!gunVisible) return null
+    const {
+      showBoss,
+    bossIndex,
+    previewX,
+    previewY,
+    previewZ,
+    previewRotation,
+    previewScale,
+} = useControls("Boss Preview", {
+    showBoss: false,
 
+    bossIndex: {
+        value: 0,
+        options: bossOptions,
+    },
+
+    previewX: {
+        value: 0,
+        min: -20,
+        max: 20,
+        step: 0.1,
+    },
+
+    previewY: {
+        value: 0,
+        min: -20,
+        max: 20,
+        step: 0.1,
+    },
+
+    previewZ: {
+        value: 5,
+        min: -10,
+        max: 20,
+        step: 0.1,
+    },
+
+    previewRotation: {
+        value: 0,
+        min: -Math.PI,
+        max: Math.PI,
+        step: 0.01,
+    },
+
+    previewScale: {
+        value: 3,
+        min: 0.2,
+        max: 10,
+        step: 0.1,
+    },
+})
+
+debugState.previewBossEnabled = showBoss
+debugState.previewBossIndex = bossIndex
+
+debugState.previewBossPosition.set(
+    previewX,
+    previewY,
+    previewZ
+)
+
+debugState.previewBossRotation = previewRotation
+debugState.previewBossScale = previewScale
+
+   // if (!gunVisible) return null
+const showGun = gunVisible
     // Renders straight from GunRenderer (like before) rather than going
     // through WeaponMount/getGunTypeById, since liveCfg's tuned values
     // aren't registered in GUN_TYPES and wouldn't be found by that
@@ -79,14 +156,44 @@ export function GunPanel() {
     const rotation = [0, 0, GUN_DIRECTION]
     const zOffset = 0.04
 
-    if (!mirrored) {
-        return <GunRenderer config={liveCfg} position={[0, 0, 5]} rotation={rotation} scale={previewScale} />
-    }
+   // if (!mirrored) { return <GunRenderer config={liveCfg} position={[0, 0, 5]} rotation={rotation} scale={gunPreviewScale} /> }
 
-    return (
-        <group position={[0, 0, 5]}>
-            <GunRenderer config={liveCfg} position={[-controls.gunGap, controls.mountOffsetY, zOffset]} rotation={rotation} scale={previewScale} />
-            <GunRenderer config={liveCfg} position={[controls.gunGap, controls.mountOffsetY, zOffset]} rotation={rotation} scale={previewScale} />
-        </group>
-    )
+return (
+    <>
+        {showGun && (
+            mirrored ? (
+                <group position={[0,0,5]}>
+                    <GunRenderer
+                        config={liveCfg}
+                        position={[
+                            -controls.gunGap,
+                            controls.mountOffsetY,
+                            zOffset
+                        ]}
+                        rotation={rotation}
+                        scale={gunPreviewScale}
+                    />
+
+                    <GunRenderer
+                        config={liveCfg}
+                        position={[
+                            controls.gunGap,
+                            controls.mountOffsetY,
+                            zOffset
+                        ]}
+                        rotation={rotation}
+                        scale={gunPreviewScale}
+                    />
+                </group>
+            ) : (
+                <GunRenderer
+                    config={liveCfg}
+                    position={[0,0,5]}
+                    rotation={rotation}
+                    scale={gunPreviewScale}
+                />
+            )
+        )}
+    </>
+)
 }
