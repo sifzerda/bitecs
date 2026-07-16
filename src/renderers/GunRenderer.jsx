@@ -6,8 +6,6 @@ import * as THREE from 'three'
 import { DEFAULT_GUN_CONFIG } from '../ecs/constants/gunConfigs.js'
 
 // ============================================================
-// Shape builders — rifle points +X locally
-// ============================================================
 
 function buildFrameShape(cfg) {
     const halfH = cfg.height / 2
@@ -46,12 +44,9 @@ function buildMuzzleShape(cfg) {
     return shape
 }
 
-// Mount bracket — simple trapezoid stub at the rear, connects the rifle
-// body to the hull hardpoint. Widens toward the hull side (-X) so it
-// reads as "bolted on" rather than a floating gun.
 function buildMountBracketShape(cfg) {
-    const halfL = cfg.length / 2  // shallow depth, stays under the frame's footprint
-    const halfW = cfg.width / 2   // sideways extent — pokes out past the frame's edges
+    const halfL = cfg.length / 2  
+    const halfW = cfg.width / 2   
     const shape = new THREE.Shape()
     shape.moveTo(-halfL, -halfW)
     shape.lineTo(halfL, -halfW)
@@ -115,11 +110,6 @@ void main(){
     )
 }
 
-// ============================================================
-// Pure renderer — draws whatever `config` it's given.
-// Twin-mounted hull rifle: frame, slide, barrel, muzzle, mount bracket,
-// sight, accent stripe, core glow. No grip/magazine/triggerGuard —
-// this is a fixed hardpoint weapon, not a handheld one.
 // ============================================================
 
 export function GunRenderer({ config = DEFAULT_GUN_CONFIG, position = [0, 0, 0], rotation = [0, 0, 0], scale = 1 }) {

@@ -5,10 +5,6 @@ import { getGunTypeById } from '../ecs/constants/gunConfigs.js'
 
 const GUN_DIRECTION = Math.PI / 2
 
-// Renders whatever gun a ship is configured to carry, at that ship's
-// local hardpoint offset. Called by both GunMount (player) and
-// BossGunMount (bosses) — gun *appearance* lives entirely in gunCfg,
-// so any ship can carry any gun from GUN_TYPES.
 export function WeaponMount({ gunCfg }) {
     if (!gunCfg?.enabled) return null
 
