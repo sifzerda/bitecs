@@ -47,7 +47,7 @@ export const DEFAULT_GUN_CONFIG = {
     // hardpoint. Purely structural, no moving/handheld implication.
     mountBracket: {
         enabled: true, color: '#3a4650',
-        length: 0.14, width: 0.15,
+        length: 0.14, width: 0.30,
         offsetX: -0.42,
         metalness: 0.5, roughness: 0.6,
     },
@@ -69,7 +69,7 @@ export const DEFAULT_GUN_CONFIG = {
 
     // hull-mount placement — where the pair sits on the ship, mirrored on ±X
     mount: {
-        offsetX: 0.32,
+        offsetX: 0.48,
         offsetY: -0.05,
         scale: 0.9,
     },
