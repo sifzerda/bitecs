@@ -271,7 +271,7 @@ export const BOSSES = [
     withDefaults({
         key: "shotgun",
         name: "Space Cowboy",
-        gun: { typeId: 'shotgun_spread', offsetX: 0.30, offsetY: -0.15, scale: 0.8 },
+        gun: { typeId: '01_sg', offsetX: 0.30, offsetY: -0.15, scale: 0.8 },
         fuselage: {
             color: '#ff3355',
             tipY: 0.66,
@@ -317,7 +317,7 @@ export const BOSSES = [
     withDefaults({
         key: "machinegun",
         name: "Rambo The Space Copter",
-        gun: { typeId: 'rapid_cannon', offsetX: 0.45, offsetY: 0.10, scale: 0.9 },
+        gun: { typeId: '01_mg', offsetX: 0.45, offsetY: 0.10, scale: 0.9 },
         fuselage: { color: '#7be2af', shoulderY: 0.53, shoulderWidth: 0.21, waistY: -0.40, waistWidth: 0.26, tailY: -0.59, tailWidth: 0.77, notchY: 0.00 },
         cockpit: { color: '#00ad57', topY: 0.73, topWidth: 0.19, midWidth: 0.24, bottomY: 0.20, bottomWidth: 0.00 },
         wing: { color: '#00ad57', rootX: 0.22, rootY: 0.00, tipX: 0.68, trailX: 0.69, trailY: -0.25 },
@@ -342,7 +342,7 @@ export const BOSSES = [
     withDefaults({
         key: "grenagegun",
         name: "War Machine",
-        gun: { typeId: 'grenade_launcher', offsetX: 0.35, offsetY: 0.0, scale: 1.1 },
+        gun: { typeId: '03_gl', offsetX: 0.35, offsetY: 0.0, scale: 1.1 },
         fuselage: { color: '#63a9eb', tipY: 2.00, shoulderY: 1.83, shoulderWidth: 0.15, waistY: -0.32, waistWidth: 0.17, tailY: -2.00, tailWidth: 0.16, notchY: -1.83 },
         cockpit: { color: '#0070ff', topY: 1.83, topWidth: 0.15, midY: 1.38, midWidth: 0.17, bottomY: 1.53, bottomWidth: 0.13 },
         wing: { color: '#0070ff', rootX: 0.17, rootY: 0.08, tipX: 2.00, tipY: -0.45, trailX: 1.99, trailY: -0.25, innerX: 0.17, innerY: -0.57 },
@@ -363,7 +363,7 @@ export const BOSSES = [
     withDefaults({
         key: "missilegun",
         name: "Rogue Mars Missiler",
-        gun: { typeId: 'missile_pod', offsetX: 0.20, offsetY: -0.30, scale: 1.0 },
+        gun: { typeId: '04_ml', offsetX: 0.20, offsetY: -0.30, scale: 1.0 },
         fuselage: { color: '#cfe8ff', tipY: 1.17, shoulderY: 0.47, shoulderWidth: 0.19, waistY: -0.76, waistWidth: 0.15, tailY: -0.40, tailWidth: 0.06, notchY: -0.30 },
         cockpit: { color: '#ff3355', topY: 0.58, topWidth: 0.11, midY: 0.11, midWidth: 0.14, bottomY: 0.02, bottomWidth: 0.00 },
         wing: { color: '#818a8d' },
@@ -384,6 +384,7 @@ export const BOSSES = [
     withDefaults({
         key: "flamethrowergun",
         name: "A-10 Space Dragon", // pale cyan/amber, gunship silhouette: propeller + center propeller + tail boom + boom fins
+        gun: { typeId: '05_ft', offsetX: 0.20, offsetY: -0.30, scale: 1.0 },
         fuselage: { color: '#ddfdff', tipY: 0.68, shoulderY: 0.16, shoulderWidth: -0.73, waistY: -0.73, waistWidth: 0.13, tailY: -0.42, tailWidth: 0.0, notchY: -2.00 },
         cockpit: { color: '#ffbf00', topY: 0.11, topWidth: 0.11, midY: 0.39, midWidth: 0.16, bottomY: 0.46, bottomWidth: 0.0 },
         wing: { color: '#ff2d2d', rootX: 0.0, rootY: 0.57, tipX: 0.0, tipY: -1.50, trailX: 0.67, trailY: 0.63, innerX: 0.79, innerY: 0.04 },
