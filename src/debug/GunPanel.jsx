@@ -6,11 +6,7 @@ import { useControls, button } from 'leva'
 import { GUN_TYPES, DEFAULT_GUN_CONFIG } from '../ecs/constants/gunConfigs.js'
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
 
-import {
-    setPreviewGunConfigOverride,
-    subscribePreviewBossSelection,
-    getPreviewBossSelection,
-} from "./debugState.js"
+import { setPreviewGunConfigOverride, subscribePreviewBossSelection, getPreviewBossSelection } from "./debugState.js"
 import { BOSSES } from "../ecs/constants/bosses.js"
 
 const gunOptions = GUN_TYPES.reduce((acc, g) => {
@@ -25,9 +21,7 @@ const GUN_DIRECTION = Math.PI / 2
 // deps-array reset.
 function BossGunTuningPanel({ bossIndex }) {
     const gunTypeId = BOSSES[bossIndex]?.gun?.typeId
-
-    const baseCfg = useMemo(
-        () => GUN_TYPES.find(g => g.id === gunTypeId)?.config ?? DEFAULT_GUN_CONFIG,
+    const baseCfg = useMemo(() => GUN_TYPES.find(g => g.id === gunTypeId)?.config ?? DEFAULT_GUN_CONFIG,
         [gunTypeId]
     )
 
@@ -153,8 +147,7 @@ export function GunPanel() {
         mirrored: { value: true, label: 'Show Twin Pair' },
     })
 
-    const baseCfg = useMemo(
-        () => GUN_TYPES.find(g => g.id === selectedId)?.config ?? DEFAULT_GUN_CONFIG,
+    const baseCfg = useMemo(() => GUN_TYPES.find(g => g.id === selectedId)?.config ?? DEFAULT_GUN_CONFIG,
         [selectedId]
     )
 
