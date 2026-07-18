@@ -315,7 +315,7 @@ export const BOSSES = [
     withDefaults({
         key: "machinegun",
         name: "Rambo The Space Copter",
-        gun: { typeId: '01_mg', offsetX: 0.5, offsetY: -0.2 },
+        gun: { typeId: '02_mg', offsetX: 0.5, offsetY: -0.2 },
         fuselage: { color: '#7be2af', shoulderY: 0.53, shoulderWidth: 0.21, waistY: -0.40, waistWidth: 0.26, tailY: -0.59, tailWidth: 0.77, notchY: 0.00 },
         cockpit: { color: '#00ad57', topY: 0.73, topWidth: 0.19, midWidth: 0.24, bottomY: 0.20, bottomWidth: 0.00 },
         wing: { color: '#00ad57', rootX: 0.22, rootY: 0.00, tipX: 0.68, trailX: 0.69, trailY: -0.25 },
@@ -361,7 +361,7 @@ export const BOSSES = [
     withDefaults({
         key: "missilegun",
         name: "Rogue Mars Missiler",
-        gun: { typeId: '04_ml', offsetX: 0.20, offsetY: -0.30, scale: 1.0 },
+        gun: { typeId: '04_ml', offsetX: 0.9, offsetY: -0.4, scale: 1.0 },
         fuselage: { color: '#cfe8ff', tipY: 1.17, shoulderY: 0.47, shoulderWidth: 0.19, waistY: -0.76, waistWidth: 0.15, tailY: -0.40, tailWidth: 0.06, notchY: -0.30 },
         cockpit: { color: '#ff3355', topY: 0.58, topWidth: 0.11, midY: 0.11, midWidth: 0.14, bottomY: 0.02, bottomWidth: 0.00 },
         wing: { color: '#818a8d' },

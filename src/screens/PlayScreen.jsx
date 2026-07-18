@@ -43,7 +43,7 @@ import { GunMount } from '../renderers/GunMount.jsx'
 
 import { ExhaustMount } from '../renderers/ExhaustMount.jsx'
 // debug
-//import { GodPanel } from '../debug/GodPanel.jsx'
+import { GodPanel } from '../debug/GodPanel.jsx'
 import { GunPanel } from '../debug/GunPanel.jsx'
 //import { BossGunBuilder } from '../debug/BossGunBuilder.jsx'
 
@@ -68,8 +68,8 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
             <HUD paused={paused} onPause={onPause} />
 
-                     {/*       <GodPanel /> */ }
-
+                     {/*        */ }
+<GodPanel />
             <div className="relative flex-1 px-4">
 
                 <Canvas
