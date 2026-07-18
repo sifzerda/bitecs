@@ -89,8 +89,8 @@ const RAW_TYPES = [
         id: '01_sg', name: 'Shotgun', weaponId: 1,
         overrides: {
             frame: { color: '#ff3355', length: 0.45, height: 0.20 },
-            barrel: { color: '#3a6bd5', length: 0.27, width: 0.08, offsetX: 0.54, offsetY: 0 },
-            muzzle: { offsetX: -0.01, offsetY: 0 },
+            barrel: { color: '#3a6bd5', length: 0.27, width: 0.15, offsetX: 0.54, offsetY: 0 },
+            muzzle: { color: '#ffe605', width: 0.13, length: 0.1, offsetX: -0.01, offsetY: 0 },
             mountBracket: { color: '#4a5560', length: 0.2, width: 0.33 },
             mount: { offsetX: 0.45, offsetY: -0.05 },
             coreGlow: { color: '#ffe605', intensity: 0.8, offsetX: 0.74, offsetY: 0 },
@@ -106,7 +106,7 @@ const RAW_TYPES = [
             muzzle: { color: '#ff3355', offsetX: 0.1, offsetY: 0 },
             mountBracket: { color: '#ff3355', length: 0.08, width: 0.5 },
             mount: { color: '#000000', offsetX: 0.55, offsetY: -0.21 },
-            coreGlow: { color: '#ff3355', intensity: 1, offsetX: 1.0, offsetY: 0 },
+            coreGlow: { color: '#ff3355', intensity: 3, offsetX: 1.11, offsetY: 0 },
             accentStripe: { color: '#00224e', width: 0.2, length: 0.5 },
         },
     },
@@ -116,13 +116,15 @@ const RAW_TYPES = [
         overrides: {
             frame: { color: '#5a88eb', length: 0.9, height: 0.45 },
             barrel: { color: '#0049ff', length: 0.4, width: 0.2, offsetX: 1, offsetY: 0 },
-            muzzle: { offsetX: 0, offsetY: 0 },
+            muzzle: { color: '#ff8a1a', width: 0.15, length: 0.1, offsetX: 0, offsetY: 0 },
+            slide : { color: '#0049ff', length: 0.5, height: 0.06, offsetX: 0.05, offsetY: 0.020 },
             mountBracket: { color: '#3a4650', length: 0.4, width: 0.275 },
             mount: { offsetX: 0.74, offsetY: -0.5 },
-            coreGlow: { color: '#0049ff', intensity: 1, offsetX: 0.8, offsetY: 0 },
+            coreGlow: { color: '#ff8a1a', intensity: 3, offsetX: 0.8, offsetY: 0 },
             accentStripe: { color: '#00224e' },
         },
     },
+ 
     // homing missile
     {
         id: '04_ml', name: 'Missile Launcher', weaponId: 4,
