@@ -8,6 +8,7 @@ import { bossQuery } from "../ecs/constants/queries.js"
 import { Position, Health, Rotation, BossType } from "../ecs/constants/components.js"
 import { BOSSES } from "../ecs/constants/bosses.js"
 import { debugState } from "../debug/debugState.js"
+import { WeaponMount } from "./WeaponMount.jsx"
 
 import lightWool from "../assets/light-wool.png"
 
@@ -365,7 +366,7 @@ function MirroredPair({ geometry, position, color, metalness = 0.2, roughness = 
 // ============================================================
 
 export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false }) {
-    const { fuselage, cockpit, wing, wingPanel, wingtip, decal, cockpitGlass, engineIntake, hullVent, racingStripe, noseSpike, tailFin, exhaustPort, horn, propeller, tailBoom, boomFin, centerPropeller, landingGear } = cfg
+    const { fuselage, cockpit, wing, wingPanel, wingtip, decal, cockpitGlass, engineIntake, hullVent, racingStripe, noseSpike, tailFin, exhaustPort, horn, propeller, tailBoom, boomFin, centerPropeller, landingGear, gun } = cfg
 
     return (
         <group ref={groupRef} visible={false}>
@@ -512,6 +513,10 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false })
                     cfg={centerPropeller}
                     position={[0, centerPropeller.offsetY, centerPropeller.zOffset]}
                 />
+            )}
+
+            {gun?.enabled && (
+                <WeaponMount gunCfg={gun} />
             )}
 
         </group>
@@ -662,19 +667,12 @@ for (let t = 0; t < bossAssets.length; t++) {
     if (!group) continue
 
 if (
-    debugState.previewBossEnabled &&
-    t === debugState.previewBossIndex
+    debugState.previewBossEnabled && t === debugState.previewBossIndex
 ) {
 
     group.visible = true
-
    group.position.copy(debugState.previewBossPosition)
-
-group.rotation.set(
-    0,
-    0,
-    debugState.previewBossRotation
-)
+group.rotation.set(0, 0, debugState.previewBossRotation)
 
 group.scale.setScalar(debugState.previewBossScale)
 

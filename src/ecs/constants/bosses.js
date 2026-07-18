@@ -5,9 +5,7 @@ const DEFAULT_PART_CONFIG = {
 
     gun: {
         enabled: true,
-        typeId: 'pulse_blaster',   // drives BOTH appearance (GunRenderer) AND
-        // functional weapon (BossAI.weapon), via
-        // GUN_TYPES' weaponId field in gunConfigs.js
+        typeId: 'pulse_blaster',  
         offsetX: 0.32,
         offsetY: -0.05,
         scale: 0.9,
@@ -271,7 +269,7 @@ export const BOSSES = [
     withDefaults({
         key: "shotgun",
         name: "Space Cowboy",
-        gun: { typeId: '01_sg', offsetX: 0.30, offsetY: -0.15, scale: 0.8 },
+        gun: { typeId: '01_sg', offsetX: 0.50, offsetY: -0.15  },
         fuselage: {
             color: '#ff3355',
             tipY: 0.66,
@@ -304,8 +302,8 @@ export const BOSSES = [
             length: 0.13,
             width: 0.07,
             offsetY: 0,            // restores flush-with-tip position
-            roundness: 0,          // restores sharp triangular point
-            zOffset: 0.032,        // matches old fixed z depth
+            roundness: 5,          // restores sharp triangular point
+            zOffset: 0.03,        // matches old fixed z depth
         },
         tailFin: { color: '#ffe605', length: 0.85, width: 0.14, sweep: 0.40, offsetX: 0.73, offsetY: -0.11, splayDeg: 0 },
         exhaustPort: { color: '#3a6bd5', width: 0.14, height: 0.17, offsetX: 0, offsetY: 0.23 },
@@ -317,7 +315,7 @@ export const BOSSES = [
     withDefaults({
         key: "machinegun",
         name: "Rambo The Space Copter",
-        gun: { typeId: '01_mg', offsetX: 0.45, offsetY: 0.10, scale: 0.9 },
+        gun: { typeId: '01_mg', offsetX: 0.5, offsetY: -0.2 },
         fuselage: { color: '#7be2af', shoulderY: 0.53, shoulderWidth: 0.21, waistY: -0.40, waistWidth: 0.26, tailY: -0.59, tailWidth: 0.77, notchY: 0.00 },
         cockpit: { color: '#00ad57', topY: 0.73, topWidth: 0.19, midWidth: 0.24, bottomY: 0.20, bottomWidth: 0.00 },
         wing: { color: '#00ad57', rootX: 0.22, rootY: 0.00, tipX: 0.68, trailX: 0.69, trailY: -0.25 },
@@ -342,7 +340,7 @@ export const BOSSES = [
     withDefaults({
         key: "grenagegun",
         name: "War Machine",
-        gun: { typeId: '03_gl', offsetX: 0.35, offsetY: 0.0, scale: 1.1 },
+        gun: { typeId: '03_gl', offsetX: 0.8, offsetY: -0.6 },
         fuselage: { color: '#63a9eb', tipY: 2.00, shoulderY: 1.83, shoulderWidth: 0.15, waistY: -0.32, waistWidth: 0.17, tailY: -2.00, tailWidth: 0.16, notchY: -1.83 },
         cockpit: { color: '#0070ff', topY: 1.83, topWidth: 0.15, midY: 1.38, midWidth: 0.17, bottomY: 1.53, bottomWidth: 0.13 },
         wing: { color: '#0070ff', rootX: 0.17, rootY: 0.08, tipX: 2.00, tipY: -0.45, trailX: 1.99, trailY: -0.25, innerX: 0.17, innerY: -0.57 },
@@ -380,10 +378,9 @@ export const BOSSES = [
         tailBoom: { enabled: false, color: '#cfe8ff', length: 0.44, baseWidth: 0.17, tipWidth: 0.02 },
     }),
 
-
     withDefaults({
         key: "flamethrowergun",
-        name: "A-10 Space Dragon", // pale cyan/amber, gunship silhouette: propeller + center propeller + tail boom + boom fins
+        name: "A-10 Space Dragon", 
         gun: { typeId: '05_ft', offsetX: 0.20, offsetY: -0.30, scale: 1.0 },
         fuselage: { color: '#ddfdff', tipY: 0.68, shoulderY: 0.16, shoulderWidth: -0.73, waistY: -0.73, waistWidth: 0.13, tailY: -0.42, tailWidth: 0.0, notchY: -2.00 },
         cockpit: { color: '#ffbf00', topY: 0.11, topWidth: 0.11, midY: 0.39, midWidth: 0.16, bottomY: 0.46, bottomWidth: 0.0 },
@@ -405,60 +402,6 @@ export const BOSSES = [
         landingGear: { enabled: false },
     }),
 
-
 ]
 
 export const BOSS_INDEX_BY_KEY = Object.fromEntries(BOSSES.map((b, i) => [b.key, i]))
-
-
-
-/*
-
-    withDefaults({
-        key: "acidthrowergun",
-        name: "Space Tractor",
-        fuselage: {},
-        cockpit: {},
-        wing: {},
-        wingPanel: {},
-        wingtip: {},
-        decal: {},
-        cockpitGlass: {},
-        engineIntake: {},
-        hullVent: {},
-        racingStripe: {},
-        noseSpike: {},
-        tailFin: {},
-        propeller: {},
-        centerPropeller: {},
-        exhaustPort: {},
-        tailBoom: {},
-        boomFin: {},
-        landingGear: {},
-       
-    }),
-
-
-============================================================
-Wiring a boss entity to one of these configs
-============================================================
-BossRenderer looks up `BossType.typeIndex[eid]` for every entity returned
-by bossQuery() to decide which entry of BOSSES to render it with.
- 
-Add this next to your other components in components.js (same plain
-Float32Array/Uint8Array style as Position, Health, etc.):
- 
-    export const BossType = {
-        typeIndex: new Uint8Array(MAX),
-    };
- 
-Then, wherever you currently spawn a boss and addComponent(world, eid, BossTag),
-add the matching call (note this codebase's addComponent order is
-(world, eid, Component)):
- 
-    import { BossType } from "./components"
-    import { BOSS_INDEX_BY_KEY } from "./bosses"
- 
-    addComponent(world, eid, BossType)
-    BossType.typeIndex[eid] = BOSS_INDEX_BY_KEY.ram   // or .interceptor, .longtail, ...
-*/
