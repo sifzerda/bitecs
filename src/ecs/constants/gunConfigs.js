@@ -124,7 +124,6 @@ const RAW_TYPES = [
             accentStripe: { color: '#00224e' },
         },
     },
-
     // homing missile
     {
         id: '04_ml', name: 'Missile Launcher', weaponId: 4,
