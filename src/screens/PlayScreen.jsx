@@ -36,7 +36,7 @@ import { BossLaserRenderer } from '../renderers/BossLaserRenderer.jsx'
 
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
 import { GunMount } from '../renderers/GunMount.jsx'
-import { BossMount } from '../renderers/BossMount.jsx'
+ 
 
 //import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
 //import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
@@ -110,7 +110,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <SparkRenderer />
 
                     <BossRenderer />
-                    <BossMount />
+                 
                     <BossLaserRenderer />
 
                     <GunRenderer />
