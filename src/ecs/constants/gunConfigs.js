@@ -88,7 +88,7 @@ const RAW_TYPES = [
     {
         id: '01_sg', name: 'Shotgun', weaponId: 1,
         overrides: {
-            frame: { color: '#ff3355', length: 0.45, height: 0.205 },
+            frame: { color: '#ff3355', length: 0.45, height: 0.20 },
             barrel: { color: '#3a6bd5', length: 0.27, width: 0.08, offsetX: 0.54, offsetY: 0 },
             muzzle: { offsetX: -0.01, offsetY: 0 },
             mountBracket: { color: '#4a5560', length: 0.2, width: 0.33 },
@@ -101,21 +101,21 @@ const RAW_TYPES = [
     {
         id: '01_mg', name: 'Machine Gun', weaponId: 2,
         overrides: {
-            frame: { color: '#00444e', length: 0.64, height: 0.13 },
-            barrel: { color: '#dfff00', length: 0.2, width: 0.035, offsetX: 0.7, offsetY: 0 },
-            muzzle: { offsetX: -0.01, offsetY: 0 },
-            mountBracket: { color: '#3a4650', length: 0.18, width: 0.21 },
-            mount: { offsetX: 0.55, offsetY: -0.21 },
-            coreGlow: { color: '#ff4161', intensity: 1, offsetX: 0.83, offsetY: 0 },
-            accentStripe: { color: '#454b1b' },
+            frame: { color: '#00444e', length: 0.9, height: 0.14 },
+            barrel: { color: '#000000', length: 0.2, width: 0.037, offsetX: 0.7, offsetY: 0 },
+            muzzle: { color: '#ff3355', offsetX: 0.1, offsetY: 0 },
+            mountBracket: { color: '#ff3355', length: 0.08, width: 0.5 },
+            mount: { color: '#000000', offsetX: 0.55, offsetY: -0.21 },
+            coreGlow: { color: '#ff3355', intensity: 1, offsetX: 1.0, offsetY: 0 },
+            accentStripe: { color: '#00224e', width: 0.2, length: 0.5 },
         },
     },
     // grenade launcher
     {
         id: '03_gl', name: 'Grenade Launcher', weaponId: 3,
         overrides: {
-            frame: { color: '#5a88eb', length: 0.75, height: 0.35 },
-            barrel: { color: '#0049ff', length: 0.26, width: 0.15, offsetX: 0.84, offsetY: 0 },
+            frame: { color: '#5a88eb', length: 0.9, height: 0.45 },
+            barrel: { color: '#0049ff', length: 0.4, width: 0.2, offsetX: 1, offsetY: 0 },
             muzzle: { offsetX: 0, offsetY: 0 },
             mountBracket: { color: '#3a4650', length: 0.4, width: 0.275 },
             mount: { offsetX: 0.74, offsetY: -0.5 },
