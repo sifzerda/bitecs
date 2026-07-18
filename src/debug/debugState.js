@@ -1,36 +1,51 @@
 //src/debug/debugState.js
 
-import * as THREE from "three"
-
-const gunOverrideListeners = new Set()
-
-export const debugState = {
-    previewBossEnabled: false,
-    previewBossIndex: 0,
-    previewBossPosition: new THREE.Vector3(0, 0, 5),
-    previewBossRotation: 0,
-    previewBossScale: 3,
-
-    // Live-tuned gun config (from GunPanel's Gun Tuning controls) applied
-    // to whichever boss is shown in the debug preview slot. null when the
-    // preview isn't active — real gameplay guns never read this.
-    previewGunConfigOverride: null,
+// Tiny generic pub/sub so plain values can drive React re-renders via
+// useSyncExternalStore, without pulling in a state library. Used for any
+// debug value that needs to be *reacted to* by components other than the
+// one that owns its Leva controls.
+function createStore(initial) {
+    let value = initial
+    const listeners = new Set()
+    return {
+        get: () => value,
+        set: (next) => {
+            value = next
+            listeners.forEach((listener) => listener())
+        },
+        subscribe: (listener) => {
+            listeners.add(listener)
+            return () => listeners.delete(listener)
+        },
+    }
 }
 
-// Plain-object state can't drive React re-renders on its own, but
-// GunRenderer needs a fresh `config` prop to rebuild its geometry when
-// tuning sliders change. This tiny pub-sub lets BossShip subscribe via
-// useSyncExternalStore without pulling in a state-management library.
+// Plain mutable bag for values only ever read imperatively inside
+// useFrame (no React re-render needed for those reads).
+export const debugState = {}
+
+// --- Boss selection (owned by BossBuilder, read by BossBuilder + GunPanel) ---
+const bossSelectionStore = createStore({ enabled: false, index: 0 })
+
+export function setPreviewBossSelection(enabled, index) {
+    bossSelectionStore.set({ enabled, index })
+}
+export function subscribePreviewBossSelection(listener) {
+    return bossSelectionStore.subscribe(listener)
+}
+export function getPreviewBossSelection() {
+    return bossSelectionStore.get()
+}
+
+// --- Live-tuned gun config override (owned by GunPanel's Boss Gun Tuning) ---
+const gunConfigOverrideStore = createStore(null)
+
 export function setPreviewGunConfigOverride(config) {
-    debugState.previewGunConfigOverride = config
-    gunOverrideListeners.forEach((listener) => listener())
+    gunConfigOverrideStore.set(config)
 }
-
 export function subscribePreviewGunConfigOverride(listener) {
-    gunOverrideListeners.add(listener)
-    return () => gunOverrideListeners.delete(listener)
+    return gunConfigOverrideStore.subscribe(listener)
 }
-
 export function getPreviewGunConfigOverride() {
-    return debugState.previewGunConfigOverride
+    return gunConfigOverrideStore.get()
 }
