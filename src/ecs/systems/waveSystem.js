@@ -9,7 +9,6 @@ import { BOSSES } from "../constants/bosses.js"
 import { activeAsteroids, releaseAsteroidEntity } from "../pools/asteroidPool"
 
 const SPAWN_RADIUS = 16
-
 const BOSS_ROSTER = BOSSES.filter((b) => b.key !== "player")
 
 export function waveSystem() {
@@ -18,9 +17,7 @@ export function waveSystem() {
     if (gameState.asteroidsRemaining > 0 || gameState.bossAlive)
         return
     // -------------------------
-    if (gameState.wave > 0 &&
-        gameState.wave % 3 === 0 &&
-        !gameState.bossDone) {
+    if (gameState.wave > 0 && gameState.wave % 3 === 0 && !gameState.bossDone) {
 
         const bossNumber = gameState.wave / 3
         const bossKey = BOSS_ROSTER[(bossNumber - 1) % BOSS_ROSTER.length].key
@@ -51,7 +48,7 @@ export function waveSystem() {
     }
 }
 
-// -------------------------
+// ----------- debug --------------
 export function skipWave() {
 
     for (let i = activeAsteroids.length - 1; i >= 0; i--) {

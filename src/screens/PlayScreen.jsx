@@ -1,8 +1,7 @@
 // src/screens/PlayScreen.jsx
 
 import { useFrame, useThree } from '@react-three/fiber'
-import {
-    EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
+import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
     // ShockWave,
     // Glitch
 } from '@react-three/postprocessing';
@@ -36,7 +35,6 @@ import { BossLaserRenderer } from '../renderers/BossLaserRenderer.jsx'
 
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
 import { GunMount } from '../renderers/GunMount.jsx'
-
 
 //import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
 //import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
@@ -78,26 +76,17 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     gl={{ antialias: false, powerPreference: "high-performance" }}
                     dpr={[1, 2]}>
 
-                    <GameLoop
-                        keysRef={keysRef}
-                        paused={paused} />
+                    <GameLoop keysRef={keysRef} paused={paused} />
 
                     <ambientLight intensity={1.1} />
-                    <directionalLight
-                        position={[5, 8, 6]}
-                        intensity={2.0} />
-                    <pointLight
-                        position={[0, 0, 6]}
-                        intensity={4}
-                        color="#ffffff" />
+                    <directionalLight position={[5, 8, 6]} intensity={2.0} />
+                    <pointLight position={[0, 0, 6]} intensity={4} color="#ffffff" />
 
                     <StarfieldRenderer />
                     <Environment preset="sunset" />
 
                     <GunPanel />
                     <BossBuilder />
-
-
 
                     <PlayerRenderer />
                     <DeflectRenderer />
@@ -125,24 +114,14 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <EffectComposer multisampling={0}>
 
-                        <Bloom
-                            intensity={1.2}
-                            luminanceThreshold={0.4}
-                            luminanceSmoothing={0.7}
-                            mipmapBlur
-                        />
-
+                        <Bloom intensity={1.2} luminanceThreshold={0.4} luminanceSmoothing={0.7} mipmapBlur />
 
                         {/*      <ChromaticAberration 
                         blendFunction={BlendFunction.NORMAL} 
                         offset={[0.0015, 0.001]} />      */}
 
                         {/* Darken screen edges */}
-                        <Vignette
-                            eskil={false}
-                            offset={0.25}
-                            darkness={0.45} />
-
+                        <Vignette eskil={false} offset={0.25} darkness={0.45} />
                         <Noise opacity={0.02} />
                         {/* postprocessing */}
                     </EffectComposer>
