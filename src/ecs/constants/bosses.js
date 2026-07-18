@@ -402,6 +402,32 @@ export const BOSSES = [
         landingGear: { enabled: false },
     }),
 
+
+withDefaults({
+        key: "cryogun",
+        name: "The Flying Refrigerator",
+        gun: { typeId: '06_cg', offsetX: 0.5, offsetY: -0.2 },
+        fuselage: { color: '#eaf6ff', shoulderY: 0.53, shoulderWidth: 0.21, waistY: -0.40, waistWidth: 0.26, tailY: -0.59, tailWidth: 0.77, notchY: 0.00 },
+        cockpit: { color: '#00d4ff', topY: 0.73, topWidth: 0.19, midWidth: 0.24, bottomY: 0.20, bottomWidth: 0.00 },
+        wing: { color: '#c8d8e0', rootX: 0.22, rootY: 0.00, tipX: 0.68, trailX: 0.69, trailY: -0.25 },
+        wingPanel: { color: '#8fa8b8' },
+        wingtip: { color: '#aef6ff', width: 0, height: 0 },
+        decal: { enabled: false, color: '#aef6ff' },
+        cockpitGlass: { zOffset: 0.11, color: "#aef6ff", roughness: 0.01, iridescenceIOR: 1.62, iridescenceThicknessMin: 400, iridescenceThicknessMax: 750, attenuationColor: "#ffffff" },
+        engineIntake: { enabled: false, color: '#3a6bd5' },
+        hullVent: { enabled: false, color: '#3a6bd5' },
+        racingStripe: { color: '#aef6ff', width: 0.13, length: 0.23, offsetX: 0.37, offsetY: -0.65 },
+        noseSpike: { color: '#8fa8b8', length: 0.17, width: 0.42, offsetY: -0.10, roundness: 0, zOffset: 0.010 },
+        tailFin: { color: '#aef6ff', length: 1.00, width: 0.22, sweep: 0.00, offsetX: 0.23 },
+        exhaustPort: { color: '#8fa8b8', width: 0.07, height: 1.95, offsetX: -0.01, offsetY: 0.50 },
+        propeller: { enabled: true, bladeColor: '#c8d8e0', hubColor: '#3a4650', sideways: false },
+        centerPropeller: { enabled: true, bladeColor: '#c8d8e0', hubColor: '#3a4650', bladeCount: 4, bladeLength: 1.00, bladeWidth: 0.11, hubRadius: 0.06, offsetY: -0.34, spinSpeed: 4, sideways: false },
+        tailBoom: { enabled: true, color: '#b8e4ff', length: 1.38, baseWidth: 0.23, tipWidth: 0.09 },
+        boomFin: { enabled: true, color: '#8fe8ff', length: 0.21, width: 0.69, sweep: 0.18, offsetX: 0.08, offsetY: 0.04 },
+        hullTexture: { enabled: true },
+        healthBar: { fgColor: "#44ff88" },
+    }),
+
 ]
 
 export const BOSS_INDEX_BY_KEY = Object.fromEntries(BOSSES.map((b, i) => [b.key, i]))

@@ -56,29 +56,34 @@ function buildMountBracketShape(cfg) {
     return shape
 }
 
-function Panel({ geometry, position, rotation, color, metalness = 0.3, roughness = 0.5 }) {
+// transmission/thickness/ior/clearcoat default to inert values, so any gun
+// config that doesn't set them renders exactly as before (opaque, no glass).
+function Panel({
+    geometry, position, rotation, color,
+    metalness = 0.3, roughness = 0.5,
+    transmission = 0, thickness = 0.05, ior = 1.5,
+    clearcoat = 0, clearcoatRoughness = 0.1,
+}) {
     return (
         <mesh geometry={geometry} position={position} rotation={rotation}>
-            <meshPhysicalMaterial color={color} metalness={metalness} roughness={roughness} side={THREE.DoubleSide} />
+            <meshPhysicalMaterial
+                color={color}
+                metalness={metalness}
+                roughness={roughness}
+                transmission={transmission}
+                thickness={thickness}
+                ior={ior}
+                clearcoat={clearcoat}
+                clearcoatRoughness={clearcoatRoughness}
+                transparent={transmission > 0}
+                side={THREE.DoubleSide}
+            />
         </mesh>
     )
 }
 
-function CoreGlow({ cfg, position }) {
-
-    const material = useMemo(() => new THREE.ShaderMaterial({
-        transparent: true, depthWrite: false, depthTest: false,
-        side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false,
-        uniforms: {
-            uTime: { value: 0 },
-            uColor: { value: new THREE.Color(cfg.color) },
-            uIntensity: { value: cfg.intensity },
-        },
-        vertexShader: /* glsl */`
-varying vec2 vUv;
-void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-`,
-        fragmentShader: /* glsl */`
+// Fragment shader for the original radial pulse (unchanged behavior).
+const GLOW_FRAGMENT = /* glsl */`
 precision highp float;
 varying vec2 vUv;
 uniform float uTime;
@@ -95,7 +100,81 @@ void main(){
     gl_FragColor = vec4(result, alpha);
 }
 `
-    }), [])
+
+// Fragment shader for swirling mist: cheap value-noise FBM, rotated over time,
+// masked to an ellipse so it reads as vapor contained inside a canister
+// rather than a circular blob.
+const MIST_FRAGMENT = /* glsl */`
+precision highp float;
+varying vec2 vUv;
+uniform float uTime;
+uniform vec3 uColor;
+uniform float uIntensity;
+
+float hash(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
+
+float valueNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+}
+
+float fbm(vec2 p) {
+    float v = 0.0;
+    float amp = 0.5;
+    for (int i = 0; i < 4; i++) {
+        v += amp * valueNoise(p);
+        p *= 2.02;
+        amp *= 0.5;
+    }
+    return v;
+}
+
+void main(){
+    vec2 c = (vUv - 0.5) * 2.0;
+    float ellipse = (c.x * c.x) + (c.y * c.y * 2.2);
+    float mask = 1.0 - smoothstep(0.65, 1.0, ellipse);
+
+    vec2 swirl = vUv * vec2(4.0, 2.5);
+    float angle = uTime * 0.4;
+    vec2 rotated = vec2(
+        swirl.x * cos(angle) - swirl.y * sin(angle),
+        swirl.x * sin(angle) + swirl.y * cos(angle)
+    );
+    float n1 = fbm(rotated + uTime * 0.15);
+    float n2 = fbm(rotated * 1.7 - uTime * 0.22);
+    float mist = n1 * 0.6 + n2 * 0.4;
+
+    vec3 result = uColor * (0.4 + mist * 1.2) * uIntensity;
+    float alpha = mask * (0.25 + mist * 0.55) * uIntensity;
+    gl_FragColor = vec4(result, clamp(alpha, 0.0, 1.0));
+}
+`
+
+function CoreGlow({ cfg, position }) {
+    const isMist = !!cfg.mist
+    const width = cfg.width ?? cfg.size
+    const height = cfg.height ?? cfg.size
+
+    const material = useMemo(() => new THREE.ShaderMaterial({
+        transparent: true, depthWrite: false, depthTest: false,
+        side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false,
+        uniforms: {
+            uTime: { value: 0 },
+            uColor: { value: new THREE.Color(cfg.color) },
+            uIntensity: { value: cfg.intensity },
+        },
+        vertexShader: /* glsl */`
+varying vec2 vUv;
+void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+`,
+        fragmentShader: isMist ? MIST_FRAGMENT : GLOW_FRAGMENT,
+    }), [isMist])
 
     useFrame((state) => {
         material.uniforms.uTime.value = state.clock.elapsedTime
@@ -105,7 +184,7 @@ void main(){
 
     return (
         <mesh position={position} material={material}>
-            <planeGeometry args={[cfg.size, cfg.size]} />
+            <planeGeometry args={[width, height]} />
         </mesh>
     )
 }
@@ -154,7 +233,12 @@ export function GunRenderer({ config = DEFAULT_GUN_CONFIG, position = [0, 0, 0],
 
             {barrel.enabled && (
                 <Panel geometry={barrelGeometry} position={[barrel.offsetX, barrel.offsetY, 0.006]}
-                    color={barrel.color} metalness={barrel.metalness} roughness={barrel.roughness} />
+                    color={barrel.color} metalness={barrel.metalness} roughness={barrel.roughness}
+                    transmission={barrel.transmission ?? 0}
+                    thickness={barrel.thickness ?? 0.05}
+                    ior={barrel.ior ?? 1.5}
+                    clearcoat={barrel.clearcoat ?? 0}
+                    clearcoatRoughness={barrel.clearcoatRoughness ?? 0.1} />
             )}
 
             {muzzle.enabled && (
