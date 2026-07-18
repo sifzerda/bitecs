@@ -1,11 +1,16 @@
 // src/debug/GunPanel.jsx
 
 import { useMemo, useEffect } from 'react'
+import { useSyncExternalStore } from 'react'
 import { useControls, button } from 'leva'
 import { GUN_TYPES, DEFAULT_GUN_CONFIG } from '../ecs/constants/gunConfigs.js'
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
 
-import { debugState, setPreviewGunConfigOverride } from "./debugState.js"
+import {
+    setPreviewGunConfigOverride,
+    subscribePreviewBossSelection,
+    getPreviewBossSelection,
+} from "./debugState.js"
 import { BOSSES } from "../ecs/constants/bosses.js"
 
 const gunOptions = GUN_TYPES.reduce((acc, g) => {
@@ -13,17 +18,11 @@ const gunOptions = GUN_TYPES.reduce((acc, g) => {
     return acc
 }, {})
 
-const bossOptions = BOSSES.reduce((acc, b, i) => {
-    acc[b.name] = i
-    return acc
-}, {})
-
 const GUN_DIRECTION = Math.PI / 2
 
-// Only mounted while Boss Preview is active, and remounted (via `key`)
-// whenever bossIndex changes — this guarantees Leva always initializes
-// its controls fresh from the correct boss's gun, with no reliance on
-// deps-array diffing or reading selectedId back from another store.
+// Remounted (via `key`) whenever the selected boss changes — see
+// BossBuilder.jsx for why remount-on-selection is used instead of a
+// deps-array reset.
 function BossGunTuningPanel({ bossIndex }) {
     const gunTypeId = BOSSES[bossIndex]?.gun?.typeId
 
@@ -129,14 +128,10 @@ function BossGunTuningPanel({ bossIndex }) {
         accentStripe: { ...baseCfg.accentStripe, color: controls.accentColor },
     }), [baseCfg, controls])
 
-    // Push live-tuned config to the boss preview slot on every change.
     useEffect(() => {
         setPreviewGunConfigOverride(liveCfg)
     }, [liveCfg])
 
-    // Clear the override the moment this instance goes away — either the
-    // boss preview was turned off, or (thanks to `key={bossIndex}` on the
-    // parent) a different boss was selected and this remounted fresh.
     useEffect(() => {
         return () => setPreviewGunConfigOverride(null)
     }, [])
@@ -145,69 +140,11 @@ function BossGunTuningPanel({ bossIndex }) {
 }
 
 export function GunPanel() {
-    const {
-        showBoss,
-        bossIndex,
-        previewX,
-        previewY,
-        previewZ,
-        previewRotation,
-        previewScale,
-    } = useControls("Boss Preview", {
-        showBoss: false,
-
-        bossIndex: {
-            value: 0,
-            options: bossOptions,
-        },
-
-        previewX: {
-            value: 0,
-            min: -20,
-            max: 20,
-            step: 0.1,
-        },
-
-        previewY: {
-            value: 0,
-            min: -20,
-            max: 20,
-            step: 0.1,
-        },
-
-        previewZ: {
-            value: 5,
-            min: -10,
-            max: 20,
-            step: 0.1,
-        },
-
-        previewRotation: {
-            value: 0,
-            min: -Math.PI,
-            max: Math.PI,
-            step: 0.01,
-        },
-
-        previewScale: {
-            value: 3,
-            min: 0.2,
-            max: 10,
-            step: 0.1,
-        },
-    })
-
-    debugState.previewBossEnabled = showBoss
-    debugState.previewBossIndex = bossIndex
-
-    debugState.previewBossPosition.set(
-        previewX,
-        previewY,
-        previewZ
+    const { enabled: showBoss, index: bossIndex } = useSyncExternalStore(
+        subscribePreviewBossSelection,
+        getPreviewBossSelection,
+        getPreviewBossSelection
     )
-
-    debugState.previewBossRotation = previewRotation
-    debugState.previewBossScale = previewScale
 
     const { gunVisible, selectedId, gunPreviewScale, mirrored } = useControls('Gun Test', {
         gunVisible: { value: false, label: 'Show Gun Preview' },
@@ -216,16 +153,11 @@ export function GunPanel() {
         mirrored: { value: true, label: 'Show Twin Pair' },
     })
 
-    // Static config for the standalone Gun Test preview — untuned; tuning
-    // only exists in the boss context via BossGunTuningPanel below.
     const baseCfg = useMemo(
         () => GUN_TYPES.find(g => g.id === selectedId)?.config ?? DEFAULT_GUN_CONFIG,
         [selectedId]
     )
 
-    // Gun Test's standalone preview and Boss Preview both render near the
-    // same spot — never show both at once, or the unrelated Gun Test gun
-    // will look like it's attached to (and wrong for) the previewed boss.
     const showGun = gunVisible && !showBoss
     const rotation = [0, 0, GUN_DIRECTION]
     const zOffset = 0.04
@@ -239,22 +171,13 @@ export function GunPanel() {
                     <group position={[0, 0, 5]}>
                         <GunRenderer
                             config={baseCfg}
-                            position={[
-                                -baseCfg.mount.offsetX,
-                                baseCfg.mount.offsetY,
-                                zOffset
-                            ]}
+                            position={[-baseCfg.mount.offsetX, baseCfg.mount.offsetY, zOffset]}
                             rotation={rotation}
                             scale={gunPreviewScale}
                         />
-
                         <GunRenderer
                             config={baseCfg}
-                            position={[
-                                baseCfg.mount.offsetX,
-                                baseCfg.mount.offsetY,
-                                zOffset
-                            ]}
+                            position={[baseCfg.mount.offsetX, baseCfg.mount.offsetY, zOffset]}
                             rotation={rotation}
                             scale={gunPreviewScale}
                         />

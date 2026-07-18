@@ -7,7 +7,7 @@ import * as THREE from "three"
 import { bossQuery } from "../ecs/constants/queries.js"
 import { Position, Health, Rotation, BossType } from "../ecs/constants/components.js"
 import { BOSSES } from "../ecs/constants/bosses.js"
-import { debugState, subscribePreviewGunConfigOverride, getPreviewGunConfigOverride } from "../debug/debugState.js"
+import { subscribePreviewGunConfigOverride, getPreviewGunConfigOverride } from "../debug/debugState.js"
 import { WeaponMount } from "./WeaponMount.jsx"
 
 import lightWool from "../assets/light-wool.png"
@@ -16,7 +16,7 @@ export const HULL_TEXTURES = {
     "Light Wool": lightWool,
 }
 
-const MAX_BOSSES = 5
+const MAX_BOSSES = 4 // pool size for real spawned bosses only — no reserved debug slot anymore
 const BAR_WIDTH = 3.0
 const BAR_HEIGHT = 0.2
 const BAR_OFFSET = 2.2
@@ -266,7 +266,7 @@ function Propeller({ hubGeometry, bladeGeometry, cfg, position }) {
 
     const bladeAngles = useMemo(() => Array.from({ length: cfg.bladeCount }, (_, i) => (Math.PI * 2 * i) / cfg.bladeCount), [cfg.bladeCount])
 
- const disc = (
+    const disc = (
         <group ref={spinRef}>
             <mesh geometry={hubGeometry}>
                 <meshPhysicalMaterial color={cfg.hubColor} metalness={0.6} roughness={0.3} side={THREE.DoubleSide} />
@@ -353,10 +353,10 @@ function MirroredPair({ geometry, position, color, metalness = 0.2, roughness = 
 
     return (
         <>
-            <mesh geometry={geometry} position={[x, y, z]} rotation={[0, 0, rotationZ]} material={material ?? undefined}> 
+            <mesh geometry={geometry} position={[x, y, z]} rotation={[0, 0, rotationZ]} material={material ?? undefined}>
                 {material ? null : sharedMaterial}
             </mesh>
-            <mesh geometry={geometry} position={[flipX ? -x : x, y, z]} rotation={[0, rotateY ? Math.PI : 0, flipZAngle ? -rotationZ : rotationZ]} material={material ?? undefined}> 
+            <mesh geometry={geometry} position={[flipX ? -x : x, y, z]} rotation={[0, rotateY ? Math.PI : 0, flipZAngle ? -rotationZ : rotationZ]} material={material ?? undefined}>
                 {material ? null : sharedMaterial}
             </mesh>
         </>
@@ -385,7 +385,7 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, i
 
             {landingGear.enabled && (
                 <>
-                    <MirroredPair geometry={geo.landingLeg} position={[landingGear.offsetX, landingGear.offsetY, landingGear.zOffset]} color={landingGear.legColor} metalness={0.5} roughness={0.5}  />
+                    <MirroredPair geometry={geo.landingLeg} position={[landingGear.offsetX, landingGear.offsetY, landingGear.zOffset]} color={landingGear.legColor} metalness={0.5} roughness={0.5} />
                     <MirroredPair geometry={geo.landingWheel} position={[landingGear.offsetX + landingGear.legLength, landingGear.offsetY, landingGear.zOffset + 0.001]} color={landingGear.wheelColor} metalness={0.2} roughness={0.6} />
                 </>
             )}
@@ -404,9 +404,9 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, i
                 </>
             )}
 
-            {tailFin.enabled && (<MirroredPair geometry={geo.tailFin} position={[tailFin.offsetX, tailFin.offsetY, 0.025]} color={tailFin.color} rotationZ={-geo.tailFinSplayRad} rotateY flipZAngle /> )}
+            {tailFin.enabled && (<MirroredPair geometry={geo.tailFin} position={[tailFin.offsetX, tailFin.offsetY, 0.025]} color={tailFin.color} rotationZ={-geo.tailFinSplayRad} rotateY flipZAngle />)}
             {tailBoom.enabled && (<Panel geometry={geo.tailBoom} position={[0, 0, 0.02]} color={tailBoom.color} metalness={0.3} roughness={0.55} />)}
-            {tailBoom.enabled && boomFin.enabled && ( <MirroredPair geometry={geo.boomFin} position={[boomFin.offsetX, geo.boomFinY + boomFin.offsetY, 0.026]} color={boomFin.color} rotationZ={-geo.boomFinSplayRad} rotateY flipZAngle /> )}
+            {tailBoom.enabled && boomFin.enabled && (<MirroredPair geometry={geo.boomFin} position={[boomFin.offsetX, geo.boomFinY + boomFin.offsetY, 0.026]} color={boomFin.color} rotationZ={-geo.boomFinSplayRad} rotateY flipZAngle />)}
 
             {exhaustPort.enabled && (
                 <Panel
@@ -451,17 +451,17 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, i
                 />
             )}
 
-{decal.enabled && (
-    <MirroredPair
-        geometry={geo.decal}
-        position={[decal.offsetX, decal.offsetY, decal.zOffset]}
-        color={decal.color}
-        metalness={0.1}
-        roughness={0.4}
-        rotationZ={geo.decalTiltRad}
-        flipZAngle
-    />
-)}
+            {decal.enabled && (
+                <MirroredPair
+                    geometry={geo.decal}
+                    position={[decal.offsetX, decal.offsetY, decal.zOffset]}
+                    color={decal.color}
+                    metalness={0.1}
+                    roughness={0.4}
+                    rotationZ={geo.decalTiltRad}
+                    flipZAngle
+                />
+            )}
 
             {racingStripe.enabled && (
                 <MirroredPair
@@ -528,7 +528,6 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, i
             {gun?.enabled && (
                 <WeaponMount gunCfg={gun} configOverride={gunConfigOverride} />
             )}
-
         </group>
     )
 }
@@ -574,8 +573,10 @@ export function buildBossAssets(cfg, textures) {
     const texture = textures[hullTexture.textureKey]
 
     const ventOffsets = []
-    { const total = (hullVent.count - 1) * hullVent.spacing
-        for (let i = 0; i < hullVent.count; i++) { ventOffsets.push(-total / 2 + i * hullVent.spacing) } }
+    {
+        const total = (hullVent.count - 1) * hullVent.spacing
+        for (let i = 0; i < hullVent.count; i++) { ventOffsets.push(-total / 2 + i * hullVent.spacing) }
+    }
 
     const shrunkCockpit = {
         topY: cockpit.topY - cockpitGlass.inset,
@@ -632,7 +633,7 @@ export function BossRenderer() {
     const healthBar = useControls('Boss / Health Bar', {
         bgColor: '#ff0000',
         fgColor: '#44ff88',
-        width: BAR_WIDTH ,
+        width: BAR_WIDTH,
         height: BAR_HEIGHT,
         offsetY: BAR_OFFSET,
     }, { collapsed: true })
@@ -646,9 +647,10 @@ export function BossRenderer() {
     const bgBarRef = useRef()
     const fgBarRef = useRef()
 
-    useFrame(() => { const bosses = bossQuery()
+    useFrame(() => {
+        const bosses = bossQuery()
 
-        for (let slot = 0; slot < MAX_BOSSES - 1; slot++) {
+        for (let slot = 0; slot < MAX_BOSSES; slot++) {
             const eid = slot < bosses.length ? bosses[slot] : null
             const activeType = eid !== null ? BossType.typeIndex[eid] : -1
 
@@ -667,33 +669,6 @@ export function BossRenderer() {
         }
 
         /////////////// debug
-
-        const previewSlot = MAX_BOSSES - 1
-
-for (let t = 0; t < bossAssets.length; t++) {
-
-    const group = groupRefs[previewSlot][t].current
-
-    if (!group) continue
-
-if (
-    debugState.previewBossEnabled && t === debugState.previewBossIndex
-) {
-
-    group.visible = true
-   group.position.copy(debugState.previewBossPosition)
-group.rotation.set(0, 0, debugState.previewBossRotation)
-
-group.scale.setScalar(debugState.previewBossScale)
-
-} else {
-
-    group.visible = false
-
-}
-
-}
-//////////////////////
 
         const bgBar = bgBarRef.current
         const fgBar = fgBarRef.current
@@ -744,7 +719,6 @@ group.scale.setScalar(debugState.previewBossScale)
                         geo={assets.geo}
                         cfg={assets.cfg}
                         hullMaterials={assets.hullMaterials}
-                        isPreviewSlot={slot === MAX_BOSSES - 1}
                     />
                 ))
             )}
