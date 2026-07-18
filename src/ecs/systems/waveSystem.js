@@ -10,11 +10,6 @@ import { activeAsteroids, releaseAsteroidEntity } from "../pools/asteroidPool"
 
 const SPAWN_RADIUS = 16
 
-// The "player" entry in BOSSES (index 0) is the player ship config, not a
-// real boss — exclude it so wave progression only cycles through actual
-// bosses, in list order: Space Cowboy, Rambo, Rogue Mars Missiler, War
-// Machine, boss5, boss6, ... wrapping back to Space Cowboy once you've
-// cycled through everyone.
 const BOSS_ROSTER = BOSSES.filter((b) => b.key !== "player")
 
 export function waveSystem() {
@@ -22,24 +17,12 @@ export function waveSystem() {
     // still enemies alive → do nothing
     if (gameState.asteroidsRemaining > 0 || gameState.bossAlive)
         return
-
-    // -------------------------
-    // BOSS CHECK
-    // (only fires once per 3-wave cycle, after asteroids are cleared)
     // -------------------------
     if (gameState.wave > 0 &&
         gameState.wave % 3 === 0 &&
         !gameState.bossDone) {
 
         const bossNumber = gameState.wave / 3
-
-        // Cycle through the boss roster in order so each boss fight looks
-        // different — bossNumber 1 → BOSS_ROSTER[0] (Space Cowboy),
-        // 2 → BOSS_ROSTER[1] (Rambo), etc., wrapping back around once
-        // you've gone through every boss. The weapon each boss fires is
-        // no longer chosen here — spawnBoss derives it from that boss's
-        // own mounted gun (bossCfg.gun.typeId), so it's always in sync
-        // with what's rendered on the ship.
         const bossKey = BOSS_ROSTER[(bossNumber - 1) % BOSS_ROSTER.length].key
 
         spawnBoss(bossKey)
@@ -50,8 +33,6 @@ export function waveSystem() {
         return
     }
 
-    // -------------------------
-    // NEXT ASTEROID WAVE
     // -------------------------
     gameState.wave++
     gameState.bossDone = false
@@ -70,8 +51,6 @@ export function waveSystem() {
     }
 }
 
-
-// -------------------------
 // -------------------------
 export function skipWave() {
 

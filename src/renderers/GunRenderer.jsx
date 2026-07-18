@@ -45,8 +45,8 @@ function buildMuzzleShape(cfg) {
 }
 
 function buildMountBracketShape(cfg) {
-    const halfL = cfg.length / 2  
-    const halfW = cfg.width / 2   
+    const halfL = cfg.length / 2
+    const halfW = cfg.width / 2
     const shape = new THREE.Shape()
     shape.moveTo(-halfL, -halfW)
     shape.lineTo(halfL, -halfW)
@@ -159,7 +159,11 @@ export function GunRenderer({ config = DEFAULT_GUN_CONFIG, position = [0, 0, 0],
 
             {muzzle.enabled && (
                 <Panel geometry={muzzleGeometry}
-                    position={[barrel.offsetX + barrel.length / 2, barrel.offsetY, 0.007]}
+                    position={[
+                        barrel.offsetX + barrel.length / 2 + (muzzle.offsetX ?? 0),
+                        barrel.offsetY + (muzzle.offsetY ?? 0),
+                        0.007
+                    ]}
                     color={muzzle.color} metalness={muzzle.metalness} roughness={muzzle.roughness} />
             )}
 
@@ -180,7 +184,7 @@ export function GunRenderer({ config = DEFAULT_GUN_CONFIG, position = [0, 0, 0],
             )}
 
             {coreGlow.enabled && (
-                <CoreGlow cfg={coreGlow} position={[coreGlow.offsetX, barrel.offsetY, 0.02]} />
+                <CoreGlow cfg={coreGlow} position={[coreGlow.offsetX, barrel.offsetY + (coreGlow.offsetY ?? 0), 0.02]} />
             )}
 
         </group>

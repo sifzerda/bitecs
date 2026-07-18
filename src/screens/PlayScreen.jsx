@@ -44,8 +44,8 @@ import { BossMount } from '../renderers/BossMount.jsx'
 import { ExhaustMount } from '../renderers/ExhaustMount.jsx'
 // debug
 //import { GodPanel } from '../debug/GodPanel.jsx'
-//import { GunPanel } from '../debug/GunPanel.jsx'
-import { BossGunBuilder } from '../debug/BossGunBuilder.jsx'
+import { GunPanel } from '../debug/GunPanel.jsx'
+//import { BossGunBuilder } from '../debug/BossGunBuilder.jsx'
 
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
@@ -68,7 +68,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
             <HUD paused={paused} onPause={onPause} />
 
-            {/*        <GodPanel />      */}
+                     {/*       <GodPanel /> */ }
 
             <div className="relative flex-1 px-4">
 
@@ -94,8 +94,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <StarfieldRenderer />
                     <Environment preset="sunset" />
 
-                    <BossGunBuilder />
-    {/*                  <GunPanel />          */}
+                    <GunPanel />       
                     <PlayerRenderer />
                     <DeflectRenderer />
                     <GunMount />

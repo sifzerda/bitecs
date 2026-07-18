@@ -21,7 +21,7 @@ export const DEFAULT_GUN_CONFIG = {
 
     frame: {
         color: '#cfe8ff',
-        length: 0.60,     
+        length: 0.60,
         height: 0.13,
         taper: 0.4,
     },
@@ -41,6 +41,7 @@ export const DEFAULT_GUN_CONFIG = {
     muzzle: {
         enabled: true, color: 'cyan',
         length: 0.09, width: 0.06, metalness: 0.4, roughness: 0.35,
+        offsetX: 0, offsetY: 0,   
     },
 
     mountBracket: {
@@ -50,7 +51,6 @@ export const DEFAULT_GUN_CONFIG = {
         metalness: 0.5, roughness: 0.6,
     },
 
-    // remove sight
     sight: {
         enabled: false, color: '#00ff88',
         width: 0.03, height: 0.035, offsetX: 0.30,
@@ -63,7 +63,8 @@ export const DEFAULT_GUN_CONFIG = {
 
     coreGlow: {
         enabled: true, color: '#00e5ff',
-        size: 0.3, offsetX: 0.88, intensity: 1.0,
+        size: 0.3, offsetX: 0.88, offsetY: 0,  
+        intensity: 1.0,
     },
 
     mount: {
@@ -81,62 +82,74 @@ const RAW_TYPES = [
 
     {
         id: 'pulse_blaster', name: 'Pulse Blaster', weaponId: 0,
- 
+
     },
+    // shotgun
     {
-        id: 'rapid_cannon', name: 'Rapid Cannon', weaponId: 1,
+        id: '01_sg', name: 'Shotgun', weaponId: 1,
         overrides: {
-            muzzle: { color: '#ffe605' },
-            frame: { length: 0.44, height: 0.24, color: '#ff3355' },
-            barrel: { length: 0.60, width: 0.03, color: '#3a6bd5' },
-            coreGlow: { color: '#ffe605', intensity: 0.8 },
+            frame: { color: '#ff3355', length: 0.45, height: 0.205 },
+            barrel: { color: '#3a6bd5', length: 0.27, width: 0.08, offsetX: 0.54, offsetY: 0 },
+            muzzle: { offsetX: -0.01, offsetY: 0 },
+            mountBracket: { color: '#4a5560', length: 0.2, width: 0.33 },
+            mount: { offsetX: 0.45, offsetY: -0.05 },
+            coreGlow: { color: '#ffe605', intensity: 0.8, offsetX: 0.74, offsetY: 0 },
             accentStripe: { color: '#ffe605' },
-            mountBracket: { color: '#4a5560', length: 0.23, width: 0.35 },
         },
     },
+    // machinegun
     {
-        id: 'ricochet_blaster', name: 'Ricochet Blaster', weaponId: 2,
+        id: '01_mg', name: 'Machine Gun', weaponId: 2,
         overrides: {
-            frame: { color: '#d9f0ff' },
-            barrel: { width: 0.05, color: '#5c7a8c' },
-            muzzle: { color: '#3ad6ff', width: 0.08 },
-            coreGlow: { color: '#3ad6ff', intensity: 1.3 },
-            accentStripe: { color: '#00c8ff' },
+            frame: { color: '#00444e', length: 0.64, height: 0.13 },
+            barrel: { color: '#dfff00', length: 0.2, width: 0.035, offsetX: 0.7, offsetY: 0 },
+            muzzle: { offsetX: -0.01, offsetY: 0 },
+            mountBracket: { color: '#3a4650', length: 0.18, width: 0.21 },
+            mount: { offsetX: 0.55, offsetY: -0.21 },
+            coreGlow: { color: '#ff4161', intensity: 1, offsetX: 0.83, offsetY: 0 },
+            accentStripe: { color: '#454b1b' },
         },
     },
+    // grenade launcher
     {
-        id: 'grenade_launcher', name: 'Grenade Launcher', weaponId: 3,
+        id: '03_gl', name: 'Grenade Launcher', weaponId: 3,
         overrides: {
-            frame: { length: 0.65, height: 0.20, taper: 0.3 },
-            barrel: { length: 0.32, width: 0.08, color: '#3f3a35' },
-            muzzle: { width: 0.12, length: 0.1, color: '#ff7a1a' },
-            slide: { enabled: false },
-            coreGlow: { color: '#ff8c1a', intensity: 1.4, size: 0.13 },
-            accentStripe: { color: '#ff6a00' },
+            frame: { color: '#5a88eb', length: 0.75, height: 0.35 },
+            barrel: { color: '#0049ff', length: 0.26, width: 0.15, offsetX: 0.84, offsetY: 0 },
+            muzzle: { offsetX: 0, offsetY: 0 },
+            mountBracket: { color: '#3a4650', length: 0.4, width: 0.275 },
+            mount: { offsetX: 0.74, offsetY: -0.5 },
+            coreGlow: { color: '#0049ff', intensity: 1, offsetX: 0.8, offsetY: 0 },
+            accentStripe: { color: '#00224e' },
         },
     },
+    // homing missile
     {
-        id: 'dark_matter_siphon', name: 'Dark Matter Siphon', weaponId: 4,
+        id: '04_ml', name: 'Missile Launcher', weaponId: 4,
         overrides: {
-            frame: { color: '#3a2c4a', height: 0.16 },
-            barrel: { color: '#1a1220', width: 0.05 },
-            muzzle: { color: '#9b30ff', width: 0.09 },
-            coreGlow: { color: '#b84dff', intensity: 1.8, size: 0.14 },
-            accentStripe: { color: '#7a1aff' },
-            sight: { color: '#b84dff' },
+            frame: { color: '#b1bbc4', length: 0.67, height: 0.34 },
+            barrel: { color: '#cfe8ff', length: 0.17, width: 0.15, offsetX: 0.7, offsetY: 0 },
+            muzzle: { offsetX: 0, offsetY: 0 },
+            mountBracket: { color: '#3a4650', length: 0.34, width: 0.24 },
+            mount: { offsetX: 0.86, offsetY: -0.4 },
+            coreGlow: { color: '#ff3355', intensity: 1, offsetX: 0.88, offsetY: 0 },
+            accentStripe: { color: '#ff3355' },
         },
     },
+    // flamethrower
     {
-        id: 'cryo_freezer', name: 'Cryo Freezer', weaponId: 5,
+        id: '05_ft', name: 'Flamethrower', weaponId: 5,
         overrides: {
-            frame: { color: '#dff7ff' },
-            barrel: { color: '#5aa8c0', length: 0.36, width: 0.05 },
-            muzzle: { color: '#aef5ff', width: 0.09 },
-            coreGlow: { color: '#aef5ff', intensity: 1.3 },
-            accentStripe: { color: '#4fd8ff' },
+            frame: { color: '#000000', length: 0.74, height: 0.235 },
+            barrel: { color: '#ff3355', length: 0.6, width: 0.055, offsetX: 0.92, offsetY: 0 },
+            muzzle: { offsetX: 0, offsetY: 0 },
+            mountBracket: { color: '#3a4650', length: 0.21, width: 0.23 },
+            mount: { offsetX: 0.45, offsetY: -0.21 },
+            coreGlow: { color: '#ff3355', intensity: 1, offsetX: 1.34, offsetY: 0 },
+            accentStripe: { color: '#ff3355' },
         },
     },
-    {
+ /*   {
         id: 'cluster_cannon', name: 'Cluster Cannon', weaponId: 6,
         overrides: {
             frame: { length: 0.78, height: 0.17 },
@@ -146,6 +159,7 @@ const RAW_TYPES = [
             accentStripe: { color: '#ff5a3a' },
         },
     },
+ 
     {
         id: 'arc_gun', name: 'Arc Gun', weaponId: 7,
         overrides: {
@@ -286,6 +300,8 @@ const RAW_TYPES = [
             mount: { scale: 1.1 },
         },
     },
+
+        */
 ]
 
 export const GUN_TYPES = RAW_TYPES.map(({ id, name, weaponId, overrides }) => ({

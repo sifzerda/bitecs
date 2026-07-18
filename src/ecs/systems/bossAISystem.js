@@ -7,12 +7,12 @@ import { spawnBullet, spawnHazard } from "../spawn.js"
 import { getWeapon } from "../constants/weapons.js"
 import { explodeAt } from "./weaponEffects.js"
 
-const TURN_SPEED = 2.0          // rad/sec — slower than the player's 4.5, reads as heavier/bulkier
+const TURN_SPEED = 2.0   
 const THRUST = 16
 const MAX_SPEED = 9
 const DRAG = 0.99
 
-const MOVE_INTERVAL_MIN = 1.4    // pick a new target heading somewhere in this range
+const MOVE_INTERVAL_MIN = 1.4    
 const MOVE_INTERVAL_MAX = 2.6
 const SHOOT_INTERVAL = 1.4
 
@@ -37,8 +37,6 @@ export function bossAISystem() {
         const id = bosses[i]
 
         //----------------------------------
-        // Pick a new target heading periodically
-        //----------------------------------
 
         BossAI.moveTimer[id] -= dt
 
@@ -47,8 +45,6 @@ export function bossAISystem() {
             BossAI.moveTimer[id] = MOVE_INTERVAL_MIN + Math.random() * (MOVE_INTERVAL_MAX - MOVE_INTERVAL_MIN)
         }
 
-        //----------------------------------
-        // Turn toward target heading at a limited rate
         //----------------------------------
 
         const diff = normalizeAngle(BossAI.targetRotation[id] - Rotation[id])
@@ -61,14 +57,10 @@ export function bossAISystem() {
         }
 
         //----------------------------------
-        // Thrust forward along current facing (same convention as player)
-        //----------------------------------
 
         Velocity.x[id] += Math.sin(-Rotation[id]) * THRUST * dt
         Velocity.y[id] += Math.cos(-Rotation[id]) * THRUST * dt
 
-        //----------------------------------
-        // Clamp speed + drag
         //----------------------------------
 
         const speed = Math.hypot(Velocity.x[id], Velocity.y[id])
@@ -81,8 +73,6 @@ export function bossAISystem() {
         Velocity.x[id] *= DRAG
         Velocity.y[id] *= DRAG
 
-        //----------------------------------
-        // Shooting: aim at player, fire on a timer
         //----------------------------------
 
         BossAI.shootTimer[id] -= dt
