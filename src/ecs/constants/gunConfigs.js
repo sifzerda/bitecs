@@ -97,6 +97,9 @@ const RAW_TYPES = [
             accentStripe: { color: '#ffe605' },
         },
     },
+
+
+
     // machinegun
     {
         id: '02_mg', name: 'Machine Gun', weaponId: 2,
@@ -150,16 +153,44 @@ const RAW_TYPES = [
             accentStripe: { color: '#ff3355' },
         },
     },
- /*   {
-        id: 'cluster_cannon', name: 'Cluster Cannon', weaponId: 6,
+
+     // cryogun
+    {
+        id: '06_cg', name: 'Cryo Gun', weaponId: 6,
         overrides: {
-            frame: { length: 0.78, height: 0.17 },
-            barrel: { width: 0.07, length: 0.28, color: '#4a4038' },
-            muzzle: { width: 0.11 },
-            coreGlow: { color: '#ff5a3a', intensity: 1.3 },
-            accentStripe: { color: '#ff5a3a' },
+            frame: { color: '#c8d8e0', length: 0.62, height: 0.16, taper: 0.35 },
+            slide: {
+                color: '#8fa8b8', length: 0.48, height: 0.06,
+                offsetX: 0.04, offsetY: 0.02,
+                metalness: 0.85, roughness: 0.15,
+            },
+            barrel: {
+                color: '#eafcff', length: 0.34, width: 0.15,
+                offsetX: 0.74, offsetY: 0,
+                metalness: 0.05, roughness: 0.03,
+                transmission: 0.85, thickness: 0.15, ior: 1.4,
+                clearcoat: 1, clearcoatRoughness: 0.05,
+            },
+            muzzle: {
+                color: '#eafcff', width: 0.14, length: 0.06,
+                offsetX: 0.04, offsetY: 0,
+                metalness: 0.2, roughness: 0.05,
+            },
+            mountBracket: { color: '#7c8f9c', length: 0.22, width: 0.24 },
+            sight: { enabled: false },
+            accentStripe: { color: '#8fe8ff', width: 0.07, length: 0.55 },
+            coreGlow: {
+                color: '#aef6ff', intensity: 1.1,
+                offsetX: 0.74, offsetY: 0,
+                mist: true, width: 0.30, height: 0.13,
+            },
+            mount: { offsetX: 0.45, offsetY: -0.05, scale: 0.9 },
         },
     },
+
+    
+ /*  
+
  
     {
         id: 'arc_gun', name: 'Arc Gun', weaponId: 7,
