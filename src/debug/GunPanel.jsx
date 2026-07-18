@@ -1,6 +1,6 @@
 // src/debug/GunPanel.jsx
 
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useControls, button } from 'leva'
 import { GUN_TYPES, DEFAULT_GUN_CONFIG } from '../ecs/constants/gunConfigs.js'
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
@@ -21,17 +21,96 @@ const bossOptions = BOSSES.reduce((acc, b, i) => {
 const GUN_DIRECTION = Math.PI / 2
 
 export function GunPanel() {
+    // Boss Preview must be declared first — Gun Test's auto-sync effect
+    // and the showGun visibility guard both depend on showBoss/bossIndex.
     const {
-        gunVisible,
-        selectedId,
-        gunPreviewScale,
-        mirrored
-    } = useControls('Gun Test', {
-        gunVisible: { value: false, label: 'Show Gun Preview' },
-        selectedId: { options: gunOptions, value: GUN_TYPES[0].id, label: 'Gun Type' },
-        gunPreviewScale: { value: 3, min: 0.5, max: 8, step: 0.1 },
-        mirrored: { value: true, label: 'Show Twin Pair' },
+        showBoss,
+        bossIndex,
+        previewX,
+        previewY,
+        previewZ,
+        previewRotation,
+        previewScale,
+    } = useControls("Boss Preview", {
+        showBoss: false,
+
+        bossIndex: {
+            value: 0,
+            options: bossOptions,
+        },
+
+        previewX: {
+            value: 0,
+            min: -20,
+            max: 20,
+            step: 0.1,
+        },
+
+        previewY: {
+            value: 0,
+            min: -20,
+            max: 20,
+            step: 0.1,
+        },
+
+        previewZ: {
+            value: 5,
+            min: -10,
+            max: 20,
+            step: 0.1,
+        },
+
+        previewRotation: {
+            value: 0,
+            min: -Math.PI,
+            max: Math.PI,
+            step: 0.01,
+        },
+
+        previewScale: {
+            value: 3,
+            min: 0.2,
+            max: 10,
+            step: 0.1,
+        },
     })
+
+    debugState.previewBossEnabled = showBoss
+    debugState.previewBossIndex = bossIndex
+
+    debugState.previewBossPosition.set(
+        previewX,
+        previewY,
+        previewZ
+    )
+
+    debugState.previewBossRotation = previewRotation
+    debugState.previewBossScale = previewScale
+
+    // Function form so we can call `set` to auto-sync selectedId to
+    // whichever boss is selected in Boss Preview.
+    const [{ gunVisible, selectedId, gunPreviewScale, mirrored }, setGunTest] = useControls(
+        'Gun Test',
+        () => ({
+            gunVisible: { value: false, label: 'Show Gun Preview' },
+            selectedId: { options: gunOptions, value: GUN_TYPES[0].id, label: 'Gun Type' },
+            gunPreviewScale: { value: 3, min: 0.5, max: 8, step: 0.1 },
+            mirrored: { value: true, label: 'Show Twin Pair' },
+        }),
+        []
+    )
+
+    // Keep Gun Test's dropdown in sync with whichever boss is currently
+    // selected in Boss Preview, so if both panels are inspected together
+    // they always agree on which gun is "correct" for that boss.
+    useEffect(() => {
+        if (showBoss) {
+            const bossGunTypeId = BOSSES[bossIndex]?.gun?.typeId
+            if (bossGunTypeId) {
+                setGunTest({ selectedId: bossGunTypeId })
+            }
+        }
+    }, [showBoss, bossIndex, setGunTest])
 
     const baseCfg = useMemo(() => GUN_TYPES.find(g => g.id === selectedId)?.config ?? DEFAULT_GUN_CONFIG,
         [selectedId]
@@ -134,76 +213,12 @@ export function GunPanel() {
         accentStripe: { ...baseCfg.accentStripe, color: controls.accentColor },
     }), [baseCfg, controls])
 
-    const {
-        showBoss,
-        bossIndex,
-        previewX,
-        previewY,
-        previewZ,
-        previewRotation,
-        previewScale,
-    } = useControls("Boss Preview", {
-        showBoss: false,
-
-        bossIndex: {
-            value: 0,
-            options: bossOptions,
-        },
-
-        previewX: {
-            value: 0,
-            min: -20,
-            max: 20,
-            step: 0.1,
-        },
-
-        previewY: {
-            value: 0,
-            min: -20,
-            max: 20,
-            step: 0.1,
-        },
-
-        previewZ: {
-            value: 5,
-            min: -10,
-            max: 20,
-            step: 0.1,
-        },
-
-        previewRotation: {
-            value: 0,
-            min: -Math.PI,
-            max: Math.PI,
-            step: 0.01,
-        },
-
-        previewScale: {
-            value: 3,
-            min: 0.2,
-            max: 10,
-            step: 0.1,
-        },
-    })
-
-    debugState.previewBossEnabled = showBoss
-    debugState.previewBossIndex = bossIndex
-
-    debugState.previewBossPosition.set(
-        previewX,
-        previewY,
-        previewZ
-    )
-
-    debugState.previewBossRotation = previewRotation
-    debugState.previewBossScale = previewScale
-
-    // if (!gunVisible) return null
-    const showGun = gunVisible
+    // Gun Test's standalone preview and Boss Preview both render near the
+    // same spot — never show both at once, or the unrelated Gun Test gun
+    // will look like it's attached to (and wrong for) the previewed boss.
+    const showGun = gunVisible && !showBoss
     const rotation = [0, 0, GUN_DIRECTION]
     const zOffset = 0.04
-
-    // if (!mirrored) { return <GunRenderer config={liveCfg} position={[0, 0, 5]} rotation={rotation} scale={gunPreviewScale} /> }
 
     return (
         <>
