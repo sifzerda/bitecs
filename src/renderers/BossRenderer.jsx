@@ -1,13 +1,13 @@
 // src/renderers/BossRenderer.jsx
 
-import { useMemo, useRef, createRef } from "react"
+import { useMemo, useRef, createRef, useSyncExternalStore } from "react"
 import { useFrame, useLoader } from "@react-three/fiber"
 import { useControls, folder } from "leva"
 import * as THREE from "three"
 import { bossQuery } from "../ecs/constants/queries.js"
 import { Position, Health, Rotation, BossType } from "../ecs/constants/components.js"
 import { BOSSES } from "../ecs/constants/bosses.js"
-import { debugState } from "../debug/debugState.js"
+import { debugState, subscribePreviewGunConfigOverride, getPreviewGunConfigOverride } from "../debug/debugState.js"
 import { WeaponMount } from "./WeaponMount.jsx"
 
 import lightWool from "../assets/light-wool.png"
@@ -365,8 +365,18 @@ function MirroredPair({ geometry, position, color, metalness = 0.2, roughness = 
 
 // ============================================================
 
-export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false }) {
+export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, isPreviewSlot = false }) {
     const { fuselage, cockpit, wing, wingPanel, wingtip, decal, cockpitGlass, engineIntake, hullVent, racingStripe, noseSpike, tailFin, exhaustPort, horn, propeller, tailBoom, boomFin, centerPropeller, landingGear, gun } = cfg
+
+    // Only the single debug preview slot ever reads the live-tuned gun
+    // config from GunPanel; every real spawned boss slot gets `null` here
+    // and WeaponMount falls back to the gun type's normal static config.
+    const previewGunConfigOverride = useSyncExternalStore(
+        subscribePreviewGunConfigOverride,
+        getPreviewGunConfigOverride,
+        getPreviewGunConfigOverride
+    )
+    const gunConfigOverride = isPreviewSlot ? previewGunConfigOverride : null
 
     return (
         <group ref={groupRef} visible={false}>
@@ -516,7 +526,7 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false })
             )}
 
             {gun?.enabled && (
-                <WeaponMount gunCfg={gun} />
+                <WeaponMount gunCfg={gun} configOverride={gunConfigOverride} />
             )}
 
         </group>
@@ -734,6 +744,7 @@ group.scale.setScalar(debugState.previewBossScale)
                         geo={assets.geo}
                         cfg={assets.cfg}
                         hullMaterials={assets.hullMaterials}
+                        isPreviewSlot={slot === MAX_BOSSES - 1}
                     />
                 ))
             )}

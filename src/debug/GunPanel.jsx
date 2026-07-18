@@ -5,7 +5,7 @@ import { useControls, button } from 'leva'
 import { GUN_TYPES, DEFAULT_GUN_CONFIG } from '../ecs/constants/gunConfigs.js'
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
 
-import { debugState } from "./debugState.js"
+import { debugState, setPreviewGunConfigOverride } from "./debugState.js"
 import { BOSSES } from "../ecs/constants/bosses.js"
 
 const gunOptions = GUN_TYPES.reduce((acc, g) => {
@@ -101,8 +101,8 @@ export function GunPanel() {
     )
 
     // Keep Gun Test's dropdown in sync with whichever boss is currently
-    // selected in Boss Preview, so if both panels are inspected together
-    // they always agree on which gun is "correct" for that boss.
+    // selected in Boss Preview, so tuning always starts from that boss's
+    // actual gun rather than whatever was last picked manually.
     useEffect(() => {
         if (showBoss) {
             const bossGunTypeId = BOSSES[bossIndex]?.gun?.typeId
@@ -212,6 +212,20 @@ export function GunPanel() {
         },
         accentStripe: { ...baseCfg.accentStripe, color: controls.accentColor },
     }), [baseCfg, controls])
+
+    // Push live tuning values to the boss preview slot whenever it's
+    // active, so Gun Tuning sliders visibly affect the previewed boss's
+    // gun in real time. Cleared when the preview isn't showing so real
+    // gameplay bosses are never affected.
+    useEffect(() => {
+        setPreviewGunConfigOverride(showBoss ? liveCfg : null)
+    }, [showBoss, liveCfg])
+
+    // Belt-and-suspenders: clear the override if GunPanel itself unmounts
+    // while a preview override was active.
+    useEffect(() => {
+        return () => setPreviewGunConfigOverride(null)
+    }, [])
 
     // Gun Test's standalone preview and Boss Preview both render near the
     // same spot — never show both at once, or the unrelated Gun Test gun
