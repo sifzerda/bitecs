@@ -154,7 +154,7 @@ const RAW_TYPES = [
         },
     },
 
-     // cryogun
+ // cryogun
     {
         id: '06_cg', name: 'Cryo Gun', weaponId: 6,
         overrides: {
@@ -187,7 +187,6 @@ const RAW_TYPES = [
             mount: { offsetX: 0.45, offsetY: -0.05, scale: 0.9 },
         },
     },
-
     
  /*  
 
