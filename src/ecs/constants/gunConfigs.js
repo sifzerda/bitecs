@@ -189,7 +189,6 @@ const RAW_TYPES = [
     },
     
  /*  
-
  
     {
         id: 'arc_gun', name: 'Arc Gun', weaponId: 7,
