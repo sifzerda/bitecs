@@ -44,6 +44,20 @@ function buildMuzzleShape(cfg) {
     return shape
 }
 
+function buildCanisterShape(cfg) {
+    const halfL = cfg.length / 2
+    const halfW = cfg.width / 2
+    const r = Math.min(halfL, halfW)
+    const shape = new THREE.Shape()
+    shape.moveTo(-halfL + r, halfW)
+    shape.lineTo(halfL - r, halfW)
+    shape.absarc(halfL - r, 0, r, Math.PI / 2, -Math.PI / 2, true)
+    shape.lineTo(-halfL + r, -halfW)
+    shape.absarc(-halfL + r, 0, r, -Math.PI / 2, Math.PI / 2, true)
+    shape.closePath()
+    return shape
+}
+
 function buildMountBracketShape(cfg) {
     const halfL = cfg.length / 2
     const halfW = cfg.width / 2
@@ -193,7 +207,7 @@ void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(p
 
 export function GunRenderer({ config = DEFAULT_GUN_CONFIG, position = [0, 0, 0], rotation = [0, 0, 0], scale = 1 }) {
 
-    const { general, frame, slide, barrel, muzzle, mountBracket, sight, accentStripe, coreGlow } = config
+    const { general, frame, slide, barrel, muzzle, mountBracket, sight, accentStripe, coreGlow, canister } = config
 
     const extrude = useMemo(() => ({ depth: general.extrudeDepth, bevelEnabled: false }), [general.extrudeDepth])
     const thinExtrude = useMemo(() => ({ depth: general.extrudeDepth * 0.6, bevelEnabled: false }), [general.extrudeDepth])
@@ -203,6 +217,9 @@ export function GunRenderer({ config = DEFAULT_GUN_CONFIG, position = [0, 0, 0],
 
     const slideGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildBlockShape(slide.length, slide.height), extrude),
         [slide.length, slide.height, extrude])
+
+    const canisterGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildCanisterShape(canister), extrude),
+        [canister.length, canister.width, extrude])
 
     const barrelGeometry = useMemo(() => new THREE.ExtrudeGeometry(buildBlockShape(barrel.length, barrel.width), extrude),
         [barrel.length, barrel.width, extrude])
@@ -224,11 +241,21 @@ export function GunRenderer({ config = DEFAULT_GUN_CONFIG, position = [0, 0, 0],
     return (
         <group position={position} rotation={rotation} scale={scale}>
 
-            <Panel geometry={frameGeometry} position={[0, 0, 0]} color={frame.color} roughness={0.5} />
+            <Panel geometry={frameGeometry} position={[frame.offsetX, frame.offsetY, 0]} color={frame.color} roughness={0.5} />
 
             {slide.enabled && (
                 <Panel geometry={slideGeometry} position={[slide.offsetX, slide.offsetY, 0.008]}
                     color={slide.color} metalness={slide.metalness} roughness={slide.roughness} />
+            )}
+
+            {canister.enabled && (
+                <Panel geometry={canisterGeometry} position={[canister.offsetX, canister.offsetY, 0.0065]}
+                    color={canister.color} metalness={canister.metalness} roughness={canister.roughness}
+                    transmission={canister.transmission ?? 0}
+                    thickness={canister.thickness ?? 0.05}
+                    ior={canister.ior ?? 1.5}
+                    clearcoat={canister.clearcoat ?? 0}
+                    clearcoatRoughness={canister.clearcoatRoughness ?? 0.1} />
             )}
 
             {barrel.enabled && (
@@ -268,7 +295,7 @@ export function GunRenderer({ config = DEFAULT_GUN_CONFIG, position = [0, 0, 0],
             )}
 
             {coreGlow.enabled && (
-                <CoreGlow cfg={coreGlow} position={[coreGlow.offsetX, barrel.offsetY + (coreGlow.offsetY ?? 0), 0.02]} />
+                <CoreGlow cfg={coreGlow} position={[coreGlow.offsetX, coreGlow.offsetY ?? 0, 0.02]} />
             )}
 
         </group>

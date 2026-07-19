@@ -15,10 +15,6 @@ const gunOptions = GUN_TYPES.reduce((acc, g) => {
 }, {})
 
 const GUN_DIRECTION = Math.PI / 2
-
-// Remounted (via `key`) whenever the selected boss changes — see
-// BossBuilder.jsx for why remount-on-selection is used instead of a
-// deps-array reset.
 function BossGunTuningPanel({ bossIndex }) {
     const gunTypeId = BOSSES[bossIndex]?.gun?.typeId
     const baseCfg = useMemo(() => GUN_TYPES.find(g => g.id === gunTypeId)?.config ?? DEFAULT_GUN_CONFIG,
@@ -29,12 +25,22 @@ function BossGunTuningPanel({ bossIndex }) {
         frameColor: { value: baseCfg.frame.color },
         frameLength: { value: baseCfg.frame.length, min: 0.3, max: 1.3, step: 0.01 },
         frameHeight: { value: baseCfg.frame.height, min: 0.05, max: 0.35, step: 0.005 },
+        frameOffsetX: { value: baseCfg.frame.offsetX ?? 0, min: -1, max: 1.5, step: 0.01, label: 'Frame Offset X' },
+        frameOffsetY: { value: baseCfg.frame.offsetY ?? 0, min: -0.5, max: 0.5, step: 0.01, label: 'Frame Offset Y' },
 
         barrelColor: { value: baseCfg.barrel.color },
         barrelLength: { value: baseCfg.barrel.length, min: 0.05, max: 0.6, step: 0.01 },
         barrelWidth: { value: baseCfg.barrel.width, min: 0.01, max: 0.15, step: 0.005, label: 'Barrel Width' },
         barrelOffsetX: { value: baseCfg.barrel.offsetX, min: -1, max: 1.5, step: 0.01, label: 'Barrel Offset X' },
         barrelOffsetY: { value: baseCfg.barrel.offsetY, min: -0.5, max: 0.5, step: 0.01, label: 'Barrel Offset Y' },
+
+        canisterEnabled: { value: baseCfg.canister?.enabled ?? false, label: 'Canister Enabled' },
+        canisterColor: { value: baseCfg.canister?.color ?? '#eafcff', label: 'Canister Color' },
+        canisterLength: { value: baseCfg.canister?.length ?? 0.3, min: 0.05, max: 1, step: 0.01, label: 'Canister Length' },
+        canisterWidth: { value: baseCfg.canister?.width ?? 0.2, min: 0.05, max: 0.6, step: 0.005, label: 'Canister Width' },
+        canisterOffsetX: { value: baseCfg.canister?.offsetX ?? 0.6, min: -1, max: 1.5, step: 0.01, label: 'Canister Offset X' },
+        canisterOffsetY: { value: baseCfg.canister?.offsetY ?? 0, min: -0.5, max: 0.5, step: 0.01, label: 'Canister Offset Y' },
+        canisterTransmission: { value: baseCfg.canister?.transmission ?? 0.9, min: 0, max: 1, step: 0.01, label: 'Canister Glass' },
 
         muzzleOffsetX: { value: baseCfg.muzzle.offsetX ?? 0, min: -0.5, max: 0.5, step: 0.01, label: 'Muzzle Offset X' },
         muzzleOffsetY: { value: baseCfg.muzzle.offsetY ?? 0, min: -0.5, max: 0.5, step: 0.01, label: 'Muzzle Offset Y' },
@@ -58,6 +64,8 @@ function BossGunTuningPanel({ bossIndex }) {
                     color: get('Boss Gun Tuning.frameColor'),
                     length: get('Boss Gun Tuning.frameLength'),
                     height: get('Boss Gun Tuning.frameHeight'),
+                    offsetX: get('Boss Gun Tuning.frameOffsetX'),
+                    offsetY: get('Boss Gun Tuning.frameOffsetY'),
                 },
                 barrel: {
                     color: get('Boss Gun Tuning.barrelColor'),
@@ -65,6 +73,15 @@ function BossGunTuningPanel({ bossIndex }) {
                     width: get('Boss Gun Tuning.barrelWidth'),
                     offsetX: get('Boss Gun Tuning.barrelOffsetX'),
                     offsetY: get('Boss Gun Tuning.barrelOffsetY'),
+                },
+                canister: {
+                    enabled: get('Boss Gun Tuning.canisterEnabled'),
+                    color: get('Boss Gun Tuning.canisterColor'),
+                    length: get('Boss Gun Tuning.canisterLength'),
+                    width: get('Boss Gun Tuning.canisterWidth'),
+                    offsetX: get('Boss Gun Tuning.canisterOffsetX'),
+                    offsetY: get('Boss Gun Tuning.canisterOffsetY'),
+                    transmission: get('Boss Gun Tuning.canisterTransmission'),
                 },
                 muzzle: {
                     offsetX: get('Boss Gun Tuning.muzzleOffsetX'),
@@ -92,7 +109,14 @@ function BossGunTuningPanel({ bossIndex }) {
 
     const liveCfg = useMemo(() => ({
         ...baseCfg,
-        frame: { ...baseCfg.frame, color: controls.frameColor, length: controls.frameLength, height: controls.frameHeight },
+        frame: {
+            ...baseCfg.frame,
+            color: controls.frameColor,
+            length: controls.frameLength,
+            height: controls.frameHeight,
+            offsetX: controls.frameOffsetX,
+            offsetY: controls.frameOffsetY,
+        },
         barrel: {
             ...baseCfg.barrel,
             color: controls.barrelColor,
@@ -100,6 +124,16 @@ function BossGunTuningPanel({ bossIndex }) {
             width: controls.barrelWidth,
             offsetX: controls.barrelOffsetX,
             offsetY: controls.barrelOffsetY,
+        },
+        canister: {
+            ...baseCfg.canister,
+            enabled: controls.canisterEnabled,
+            color: controls.canisterColor,
+            length: controls.canisterLength,
+            width: controls.canisterWidth,
+            offsetX: controls.canisterOffsetX,
+            offsetY: controls.canisterOffsetY,
+            transmission: controls.canisterTransmission,
         },
         muzzle: {
             ...baseCfg.muzzle,
