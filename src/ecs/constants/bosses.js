@@ -402,7 +402,6 @@ export const BOSSES = [
         landingGear: { enabled: false },
     }),
 
-
 withDefaults({
         key: "cryogun",
         name: "The Flying Refrigerator",
