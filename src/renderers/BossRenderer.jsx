@@ -410,11 +410,11 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, i
 
             {exhaustPort.enabled && (
                 <Panel
-                    geometry={geo.exhaustPort}
-                    position={[exhaustPort.offsetX, fuselage.tailY + exhaustPort.offsetY, 0.032]}
-                    color={exhaustPort.color}
-                    metalness={0.4}
-                    roughness={0.4}
+                    geometry={geo.cockpit}
+                    position={[0, 0, cockpit.zOffset]}
+                    color={cockpit.color}
+                    metalness={0.3}
+                    roughness={0.3}
                 />
             )}
 
@@ -478,7 +478,10 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, i
             <Panel geometry={geo.cockpit} position={[0, 0, 0.05]} color={cockpit.color} metalness={0.3} roughness={0.3} />
 
             {cockpitGlass.enabled && (
-                <mesh geometry={geo.cockpitGlass} position={[0, 0, 0.05 + cockpitGlass.zOffset]}>
+                <mesh
+                    geometry={geo.cockpitGlass}
+                    position={[0, 0, cockpitGlass.zOffset]}
+                >
                     <meshPhysicalMaterial
                         color={cockpitGlass.color}
                         metalness={cockpitGlass.metalness}
