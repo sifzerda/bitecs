@@ -84,7 +84,6 @@ export const DEFAULT_GUN_CONFIG = {
         scale: 0.9,
     },
 
-
 }
 
 // ============================================================
@@ -111,8 +110,6 @@ const RAW_TYPES = [
         },
     },
 
-
-
     // machinegun
     {
         id: '02_mg', name: 'Machine Gun', weaponId: 2,
@@ -126,6 +123,7 @@ const RAW_TYPES = [
             accentStripe: { color: '#00224e', width: 0.2, length: 0.5 },
         },
     },
+
     // grenade launcher
     {
         id: '03_gl', name: 'Grenade Launcher', weaponId: 3,
@@ -140,6 +138,7 @@ const RAW_TYPES = [
             accentStripe: { color: '#00224e' },
         },
     },
+
     // homing missile
     {
         id: '04_ml', name: 'Missile Launcher', weaponId: 4,
@@ -153,6 +152,7 @@ const RAW_TYPES = [
             accentStripe: { color: '#ff3355', length: 0.6, offsetX: 0.6 },
         },
     },
+
     // flamethrower
     {
         id: '05_ft', name: 'Flamethrower', weaponId: 5,
@@ -209,21 +209,50 @@ const RAW_TYPES = [
         },
     },
 
-    /*  
     // acidthrower
-       {
-           id: '07_at', name: 'Acidthrower', weaponId: 7,
-           overrides: {
-               frame: { color: '#e8fdff' },
-               barrel: { color: '#6a7a80', width: 0.04 },
-               muzzle: { color: '#4dffe0', width: 0.08 },
-               coreGlow: { color: '#4dffe0', intensity: 1.6 },
-               accentStripe: { color: '#00ffcc' },
-               sight: { color: '#4dffe0' },
-           },
-       },
+ 
+    {
+        id: '07_at', name: 'Acidthrower', weaponId: 6,
+        overrides: {
+            frame: { color: '#98D6F5', length: 0.89, height: 0.27, taper: 0.35, offsetX: -0.12 },
+            slide: {
+                color: '#00FF40', length: 0.48, height: 0.06,
+                offsetX: 0.04, offsetY: 0.02,
+                metalness: 0.85, roughness: 0.15,
+            },
+            canister: {
+                enabled: true, color: '#98FB98',
+                length: 0.87, width: 0.44,
+                offsetX: 0.42, offsetY: 0,
+                metalness: 0.05, roughness: 0.03,
+                transmission: 1, thickness: 0.2, ior: 1.4,
+                clearcoat: 1, clearcoatRoughness: 0.05,
+            },
+            // starts right at the canister's front edge (0.5 + 0.6/2 = 0.8)
+            barrel: {
+                color: '#98D6F5', length: 0.6, width: 0.05,
+                offsetX: 1.08, offsetY: 0,
+                metalness: 0.75, roughness: 0.2,
+            },
+            muzzle: {
+                color: '#00FF7F', width: 0.065, length: 0.05,
+                offsetX: 0, offsetY: 0,
+                metalness: 0.3, roughness: 0.1,
+            },
+            mountBracket: { color: '#7c8f9c', length: 0.22, width: 0.24 },
+            sight: { enabled: false },
+            accentStripe: { color: '#0049ff', width: 0.07, length: 0.75 },
+            // sized and centered to match the canister's own footprint
+            coreGlow: {
+                color: '#00FF7F', intensity: 1.15,
+                offsetX: 0.45, offsetY: 0,
+                mist: true, width: 0.9, height: 0.7,
+            },
+            mount: { offsetX: 0.45, offsetY: -0.05, scale: 0.9 },
+        },
+    },
 
-
+    /*  
        {
            id: 'proximity_mine_layer', name: 'Proximity Mine Layer', weaponId: 8,
            overrides: {
