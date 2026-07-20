@@ -378,17 +378,16 @@ export const BOSSES = [
         tailBoom: { enabled: false, color: '#cfe8ff', length: 0.44, baseWidth: 0.17, tipWidth: 0.02 },
     }),
 
-
     withDefaults({
         key: "acidthrowergun",
         name: "Space Tractor",
-        gun: { typeId: '05_at', offsetX: 0.50, offsetY: -0.10, scale: 1.0 },
+        gun: { typeId: '07_at', offsetX: 0.70, offsetY: -0.10, scale: 1.0 },
         fuselage: { color: '#dfff00', tipY: 0.92, shoulderY: 0.53, shoulderWidth: 0.13, waistY: -0.34, waistWidth: 0.12, tailY: -0.83, tailWidth: 0.03, notchY: -0.84 },
         cockpit: { color: '#ffbf00', topY: 0.43, topWidth: 0.11, midY: 0.11, midWidth: 0.13, bottomY: 0.15, bottomWidth: 0.08 },
         wing: { color: '#ff2d2d', rootX: 0.13, rootY: 0.28, tipX: 1.68, tipY: -0.09, trailX: 1.67, trailY: -0.27, innerX: 0.10, innerY: -0.10 },
         wingPanel: { color: '#dfff00', inset: 0.08 },
         wingtip: { color: '#ff2d2d', width: 0.08, height: 0.41, offsetX: 0.65, offsetY: 0.02, zOffset: 0.02 },
-        decal: { enabled: true, color: '#000000', width: 0.06, length: 0.65, offsetX: 0.34, offsetY: 0.00, tiltDeg: -11 },
+        decal: { enabled: true, color: '#000000', width: 0.06, length: 0.41, offsetX: 0.31, offsetY: 0.05, tiltDeg: 0 },
         cockpitGlass: { enabled: true, inset: 0.08, zOffset: 0.30, color: "#00c6e5", roughness: 0.15, thickness: 0.72, ior: 1.00, attenuationColor: "#ffffff" },
         engineIntake: { enabled: true, color: '#3a6bd5', width: 0.21, height: 0.28, offsetX: 0.37, offsetY: -0.76 },
         hullVent: { enabled: true, color: '#dfff00', count: 4, width: 1.0, height: 0.15, spacing: 0.01, offsetX: 0.17, offsetY: -0.67 },
