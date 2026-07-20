@@ -210,9 +210,9 @@ const RAW_TYPES = [
     },
 
     /*  
-    
+    // acidthrower
        {
-           id: 'arc_gun', name: 'Arc Gun', weaponId: 7,
+           id: '07_at', name: 'Acidthrower', weaponId: 7,
            overrides: {
                frame: { color: '#e8fdff' },
                barrel: { color: '#6a7a80', width: 0.04 },
@@ -222,6 +222,8 @@ const RAW_TYPES = [
                sight: { color: '#4dffe0' },
            },
        },
+
+
        {
            id: 'proximity_mine_layer', name: 'Proximity Mine Layer', weaponId: 8,
            overrides: {
