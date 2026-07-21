@@ -5,9 +5,12 @@ import { world } from "../constants/world.js"
 import { hazardQuery, bossQuery } from "../constants/queries.js"
 import { Position, Health, HazardZone, Lifetime } from "../constants/components.js"
 import { getWeapon } from "../constants/weapons.js"
-import { spawnSparkBurst } from "../spawn.js"
+
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { activeAsteroids } from "../pools/asteroidPool"
+
+import { emitEffect } from "../../effects/effects.js"
+import { EFFECT } from "../../effects/EffectTypes.js"
 
 export function hazardSystem() {
 
@@ -107,7 +110,14 @@ export function hazardSystem() {
                 }
             }
 
-            spawnSparkBurst(Position.x[hid], Position.y[hid], { count: 6, speed: 2 })
+            emitEffect(EFFECT.SPARK_BURST, {
+                x: Position.x[hid],
+                y: Position.y[hid],
+                count: 6,
+                speed: 2,
+            })
+
+            
         }
     }
 }

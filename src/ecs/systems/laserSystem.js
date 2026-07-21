@@ -7,9 +7,12 @@ import { input } from "./input.js"
 import { gameState } from "../../state/gameState.js"
 import { getWeapon } from "../constants/weapons.js"
 import { laserState } from "../../state/laserState.js"
-import { spawnSparkBurst } from "../spawn.js"
+ 
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { activeAsteroids } from "../pools/asteroidPool"
+
+import { emitEffect } from "../../effects/effects.js"
+import { EFFECT } from "../../effects/EffectTypes.js"
 
 const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
@@ -233,13 +236,35 @@ export function laserSystem() {
     laserState.length = laserState.hits[0]?.hitT ?? weapon.range
 
     laserState.sparkTimer -= dt
-    if (laserState.sparkTimer <= 0) {
-        for (const h of laserState.hits) {
-            if (h.hit) spawnSparkBurst(h.hitX, h.hitY, { count: 6, speed: 4 })
+
+if (laserState.sparkTimer <= 0) {
+
+    for (const h of laserState.hits) {
+
+        if (h.hit) {
+
+            emitEffect(EFFECT.SPARK_BURST, {
+                x: h.hitX,
+                y: h.hitY,
+                count: 6,
+                speed: 4,
+            })
+
         }
-        for (const p of chainHitPoints) {
-            spawnSparkBurst(p.x, p.y, { count: 4, speed: 3 })
-        }
-        laserState.sparkTimer = weapon.tickSparkInterval
+
     }
+
+    for (const p of chainHitPoints) {
+
+        emitEffect(EFFECT.SPARK_BURST, {
+            x: p.x,
+            y: p.y,
+            count: 4,
+            speed: 3,
+        })
+
+    }
+
+    laserState.sparkTimer = weapon.tickSparkInterval
+}
 }

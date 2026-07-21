@@ -7,9 +7,12 @@ import { input } from "./input.js"
 import { gameState } from "../../state/gameState.js"
 import { getWeapon } from "../constants/weapons.js"
 import { flameState } from "../../state/flameState.js"
-import { spawnSparkBurst } from "../spawn.js"
+
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { activeAsteroids } from "../pools/asteroidPool"
+
+import { emitEffect } from "../../effects/effects.js"
+import { EFFECT } from "../../effects/EffectTypes.js"
 
 export function flameSystem() {
 
@@ -90,7 +93,16 @@ export function flameSystem() {
     if (flameState.sparkTimer <= 0) {
         for (let i = 0; i < hitIds.length; i++) {
             const eid = hitIds[i]
-            spawnSparkBurst(Position.x[eid], Position.y[eid], { count: 4, speed: 3 })
+
+
+            emitEffect(EFFECT.SPARK_BURST, {
+    x: Position.x[eid],
+    y: Position.y[eid],
+    count: 4,
+    speed: 3,
+})
+
+
         }
         flameState.sparkTimer = weapon.tickSparkInterval
     }

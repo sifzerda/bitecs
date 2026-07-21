@@ -3,7 +3,7 @@
 import { removeEntity } from "bitecs"
 import { world } from "../constants/world.js"
 import { gameState } from "../../state/gameState.js"
-import { spawnSparkBurst } from "../spawn.js"
+ 
 import { BossAI } from "../constants/components.js"
 import { releaseAsteroidEntity } from "../pools/asteroidPool"
 
@@ -17,6 +17,7 @@ export function killAsteroid(id, x, y) {
     gameState.score += 100
 
 emitEffect(EFFECT.SPARK_BURST, {
+    type: EFFECT.SPARK_BURST,
     x,
     y,
     count: 45,
@@ -34,7 +35,8 @@ export function killBoss(id, x, y) {
     gameState.bossAlive = false
     gameState.asteroidsRemaining = 0
 
-    emitEffect(EFFECT.SPARK_BURST, {
+emitEffect(EFFECT.SPARK_BURST, {
+    type: EFFECT.SPARK_BURST,
     x,
     y,
     count: 90,
