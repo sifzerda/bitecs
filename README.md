@@ -151,10 +151,13 @@ some of these boss dropped weapons, some upgrades
  ## Move effects into GPU particle system API:
 
  - [x] sparks
- - [ ] exhaust
+ - [x] exhaust
+ - [x] explosion on entity destruction
+    - explosion rendering needs improving
+ - [ ] debris (asteroid, player, boss) debris upon destruction
+ - [ ] smoke 
+
+
  - [ ] bullets (?)
  - [ ] fire
  - [ ] flash (or glow)
- - [ ] (asteroid, player, boss) debris upon destruction
- - [ ] smoke <<
- - [ ] 
