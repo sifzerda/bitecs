@@ -1,18 +1,20 @@
 // src/renderers/SparkRenderer.jsx
 
-import { useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
-import * as THREE from 'three'
-import { activeSparks } from '../ecs/pools/sparkPool.js'
-import { Position, Spark, Lifetime } from '../ecs/constants/components.js'
+import { useMemo, useRef } from "react"
+import { useFrame } from "@react-three/fiber"
+import * as THREE from "three"
+
+import {
+    particles,
+    updateSparkEmitter,
+} from "../effects/gpu/SparkEmitter.js"
 
 const MAX_SPARKS = 700
 
 const _matrix = new THREE.Matrix4()
 const _position = new THREE.Vector3()
-const _rotationIdentity = new THREE.Quaternion()
+const _rotation = new THREE.Quaternion()
 const _scale = new THREE.Vector3()
-const _scaleZero = new THREE.Vector3(0, 0, 0)
 
 export function SparkRenderer() {
 
@@ -20,56 +22,68 @@ export function SparkRenderer() {
     const emberRef = useRef()
     const geometry = useMemo(() => new THREE.SphereGeometry(0.5, 5, 5), [])
 
-    useFrame(() => {
+    useFrame((_, dt) => {
 
         const core = coreRef.current
         const ember = emberRef.current
-        if (!core || !ember) return
 
-        const count = Math.min(activeSparks.length, MAX_SPARKS)
+        if (!core || !ember)
+            return
 
+        let rendered = 0
         let coreIdx = 0
         let emberIdx = 0
 
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < particles.length; i++) {
 
-            const id = activeSparks[i]
+            if (rendered >= MAX_SPARKS)
+                break
 
-            const maxLife = Spark.maxLife[id]
-            const t = maxLife > 0
-                ? Math.max(0, Lifetime.remaining[id] / maxLife)
+            const p = particles[i]
+
+            if (!p.alive)
+                continue
+
+            rendered++
+
+            const t = p.maxLife > 0
+                ? Math.max(0, p.life / p.maxLife)
                 : 0
 
-            const baseSize = Spark.size[id] > 0
-                ? Spark.size[id]
-                : 0.15
+            const s = Math.max(0.001, p.size * t)
 
-            const s = baseSize * t
-
-            _position.set(Position.x[id], Position.y[id], 0.5)
+            _position.set(p.x, p.y, 0.5)
             _scale.set(s, s, s)
-
-            _matrix.compose(_position, _rotationIdentity, _scale)
+            _matrix.compose(_position, _rotation, _scale)
 
             if (t > 0.5) {
                 core.setMatrixAt(coreIdx++, _matrix)
             } else {
                 ember.setMatrixAt(emberIdx++, _matrix)
             }
+
         }
 
-        core.instanceMatrix.needsUpdate = true
         core.count = coreIdx
-
-        ember.instanceMatrix.needsUpdate = true
         ember.count = emberIdx
+
+        core.instanceMatrix.needsUpdate = true
+        ember.instanceMatrix.needsUpdate = true
+
     })
 
     return (
         <>
-            {/* Cooling embers — orange/red, older sparks */}
-            <instancedMesh ref={emberRef} args={[null, null, MAX_SPARKS]} frustumCulled={false}>
-                <primitive object={geometry} attach="geometry" />
+            <instancedMesh
+                ref={emberRef}
+                args={[null, null, MAX_SPARKS]}
+                frustumCulled={false}
+            >
+                <primitive
+                    object={geometry}
+                    attach="geometry"
+                />
+
                 <meshBasicMaterial
                     color="#ff5522"
                     transparent
@@ -79,9 +93,16 @@ export function SparkRenderer() {
                 />
             </instancedMesh>
 
-            {/* Hot core — white/yellow, young sparks */}
-            <instancedMesh ref={coreRef} args={[null, null, MAX_SPARKS]} frustumCulled={false}>
-                <primitive object={geometry} attach="geometry" />
+            <instancedMesh
+                ref={coreRef}
+                args={[null, null, MAX_SPARKS]}
+                frustumCulled={false}
+            >
+                <primitive
+                    object={geometry}
+                    attach="geometry"
+                />
+
                 <meshBasicMaterial
                     color="#fff2b0"
                     transparent
@@ -92,4 +113,5 @@ export function SparkRenderer() {
             </instancedMesh>
         </>
     )
+
 }

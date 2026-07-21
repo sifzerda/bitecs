@@ -4,7 +4,7 @@ import playerControlSystem from "../ecs/systems/playerControlSystem"
 import { movementSystem } from "../ecs/systems/movement"
 import { boundsSystem } from "../ecs/systems/bounds"
 import { combatSystem } from "../ecs/systems/combat"
-import { sparkSystem } from "../ecs/systems/sparkSystem"
+
 import { waveSystem } from "../ecs/systems/waveSystem"
 import { laserSystem } from "../ecs/systems/laserSystem"
 import { hazardSystem } from "../ecs/systems/hazardSystem"
@@ -12,6 +12,9 @@ import { flameSystem } from "../ecs/systems/flameSystem"
 import { bossAISystem } from "../ecs/systems/bossAISystem"
 import { bossLaserSystem } from "../ecs/systems/bossLaserSystem.js"
 import { missileSystem } from "../ecs/systems/missileSystem"
+
+import { updateSparkEmitter } from "../effects/gpu/SparkEmitter.js"
+import { updateEffects } from "../effects/index.js"
 
 //import { tentacleSystem } from "../ecs/systems/tentacleSystem"
 //import { clearSpatialGrid, insertIntoSpatialGrid } from '../ecs/constants/spatialGrid.js'
@@ -22,25 +25,28 @@ export function gameLoop(shootState, dt) {
     bossAISystem()
     bossLaserSystem()
 
-//    tentacleSystem(dt)
-    
+    //    tentacleSystem(dt)
+
     missileSystem()
 
     movementSystem()
     boundsSystem()
     waveSystem()
 
-      // Rebuild spatial grid using final positions
-  //clearSpatialGrid();
+    // Rebuild spatial grid using final positions
+    //clearSpatialGrid();
 
-  //for (const asteroid of asteroids) {
-  //  insertIntoSpatialGrid(asteroid);
-  //}
+    //for (const asteroid of asteroids) {
+    //  insertIntoSpatialGrid(asteroid);
+    //}
 
     hazardSystem()
     combatSystem()
     laserSystem()
-    sparkSystem()
+
+    updateEffects()
+    updateSparkEmitter(dt)
+
     flameSystem()
 
 }

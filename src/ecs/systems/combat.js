@@ -25,6 +25,9 @@ import { explodeAt, splitBullet, chainLightning } from "./weaponEffects.js"
 import { releaseBulletEntity, activeBullets } from "../pools/bulletPool"
 import { activeAsteroids } from "../pools/asteroidPool"
 
+import { emitEffect } from "../../effects/effects.js"
+import { EFFECT } from "../../effects/EffectTypes.js"
+
 const PLAYER_HIT_RADIUS = 0.6
 const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
@@ -128,7 +131,23 @@ export function combatSystem() {
                     } else {
 
                         Health.current[aid] -= weapon.damage
-                        spawnSparkBurst(Position.x[bid], Position.y[bid], { count: 20, speed: 8 })
+
+
+
+
+                        emitEffect(EFFECT.SPARK_BURST, {
+                            type: EFFECT.SPARK_BURST,
+                            x: Position.x[bid],
+                            y: Position.y[bid],
+                            count: 20,
+                            speed: 8,
+                        })
+
+
+
+
+
+
 
                         if (Health.current[aid] <= 0) {
                             killAsteroid(aid, Position.x[aid], Position.y[aid])
@@ -212,7 +231,16 @@ export function combatSystem() {
                     } else {
 
                         Health.current[bossId] -= weapon.damage
-                        spawnSparkBurst(Position.x[bid], Position.y[bid], { count: 26, speed: 10, big: true })
+                        effects.emit({
+
+                            type: EFFECT.SPARK_BURST,
+                            x: Position.x[bid],
+                            y: Position.y[bid],
+                            count: 26,
+                            speed: 10,
+                            big: true,
+
+                        })
 
                         if (Health.current[bossId] <= 0) {
                             killBoss(bossId, Position.x[bossId], Position.y[bossId])
@@ -242,7 +270,7 @@ export function combatSystem() {
             // Deflect — tap X while an enemy bullet is inside DEFLECT_RADIUS
             //----------------------------------
 
-if (gameState.deflectBufferTime > 0 && distSq <= DEFLECT_RADIUS * DEFLECT_RADIUS) {
+            if (gameState.deflectBufferTime > 0 && distSq <= DEFLECT_RADIUS * DEFLECT_RADIUS) {
 
                 const dist = Math.sqrt(distSq) || 1
                 const nx = dx / dist   // surface normal: ship center -> bullet

@@ -8,7 +8,6 @@ import { initializeInput } from "../ecs/systems/input.js"
 import { gameState } from "../state/gameState.js"
 import { initializeBulletPool } from '../ecs/pools/bulletPool.js'
 import { initializeAsteroidPool } from '../ecs/pools/asteroidPool.js'
-import { initializeSparkPool } from '../ecs/pools/sparkPool.js'
 
 export function Game() {
     const [paused, setPaused] = useState(false)
@@ -18,7 +17,6 @@ export function Game() {
         initializeInput(togglePause)
         initializeAsteroidPool()
         initializeBulletPool()
-        initializeSparkPool()
     }, [])
 
     function togglePause() {
