@@ -31,6 +31,7 @@ import { DeflectRenderer } from '../renderers/DeflectRenderer.jsx'
 import { StarfieldRenderer } from '../renderers/StarfieldRenderer.jsx'
 
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
+import { ExplosionRenderer } from '../renderers/ExplosionRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
 import { BossLaserRenderer } from '../renderers/BossLaserRenderer.jsx'
 
@@ -154,6 +155,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <HazardRenderer />
 
                     <SparkRenderer />
+                    <ExplosionRenderer />
 
                     <BossRenderer />
 
