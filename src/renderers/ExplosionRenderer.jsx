@@ -3,12 +3,7 @@
 import { useMemo, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
-
-import {
-    explosions,
-    updateExplosionEmitter,
-}
-from "../effects/gpu/ExplosionEmitter"
+import { explosions, updateExplosionEmitter } from "../effects/gpu/ExplosionEmitter"
 
 const MAX = 512
 
