@@ -150,7 +150,6 @@ export function ExplosionRenderer() {
     const geo = useMemo(() => {
 
         const g = new THREE.SphereGeometry(1, 12, 10)
-
         const ages = new Float32Array(MAX)
         const seeds = new Float32Array(MAX)
 
