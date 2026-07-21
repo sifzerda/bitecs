@@ -236,25 +236,6 @@ export const WEAPONS = [
         haloColor: "#4d0099",
     },
 
-    {
-        id: 14,
-        name: "clustercannon",
-        category: "bullet",
-        splitsInto: 4,              
-        splitWeapon: 2,           
-        damage: 14,
-        maxBullets: 32,
-        hitRadius: 0.6,
-        fireRate: 0.6,
-        speed: 14,
-        lifetime: 0.9,              
-        projectileCount: 1,
-        spreadAngle: 0,
-        color: "#ffd9a0",
-        glowColor: "#ff9900",
-        haloColor: "#cc6600",
-    },
-
 ]
 
 export function getWeapon(id) {

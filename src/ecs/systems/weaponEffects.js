@@ -59,19 +59,6 @@ export function explodeAt(x, y, weapon, asteroids, bosses) {
 }
 
 // -------------------------
-// Cluster cannon
-// -------------------------
-
-export function splitBullet(x, y, weapon, owner) {
-    const fragWeapon = getWeapon(weapon.splitWeapon)
-    const count = weapon.splitsInto ?? 3
-    for (let i = 0; i < count; i++) {
-        const angle = (Math.PI * 2 * i) / count
-        spawnBullet(x, y, angle, fragWeapon.id, owner)
-    }
-}
-
-// -------------------------
 // Arc gun — chains between nearby asteroids, excluding whatever it just hit
 // -------------------------
 
