@@ -17,6 +17,7 @@ for (let i = 0; i < MAX_EXPLOSIONS; i++) {
         maxLife: 0,
 
         size: 0,
+        seed: 0,
 
     }
 
@@ -41,6 +42,7 @@ export function emitExplosion({
     y,
 
     size = 1,
+    maxLife = 1.2,
 
 }) {
 
@@ -56,8 +58,10 @@ export function emitExplosion({
 
     e.size = size
 
-    e.maxLife = 0.4
+    e.maxLife = maxLife
     e.life = e.maxLife
+
+    e.seed = Math.random()
 
 }
 
