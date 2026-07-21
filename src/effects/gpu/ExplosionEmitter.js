@@ -26,7 +26,6 @@ function alloc() {
 
         if (!explosions[i].alive)
             return explosions[i]
-
     }
 
     return null
