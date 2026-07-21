@@ -3,6 +3,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { exhaustSources } from "../effects/gpu/ExhaustState"
 
 const PARTICLE_SIZE = 128
 
@@ -196,7 +197,7 @@ function createRenderTarget(size) {
 
 export function ExhaustRenderer({
   size = 4,
-  getShip,
+  slot = 0,
   nozzleOffset = -0.70,
   engineGap = 0.15,
   hotCore = '#ff2614',
@@ -280,7 +281,10 @@ export function ExhaustRenderer({
   }, [])
 
   useFrame((state, delta) => {
-    const ship = getShip()
+
+   // console.log(exhaustSources)
+
+    const ship = exhaustSources.find(s => s.slot === slot)
 
     const boostTarget = ship?.boost ? 1 : 0
     boostSmooth.current = THREE.MathUtils.lerp(boostSmooth.current, boostTarget, 0.2)

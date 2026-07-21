@@ -1,7 +1,8 @@
 // src/screens/PlayScreen.jsx
 
 import { useFrame, useThree } from '@react-three/fiber'
-import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
+import {
+    EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
     // ShockWave,
     // Glitch
 } from '@react-three/postprocessing';
@@ -39,11 +40,13 @@ import { GunMount } from '../renderers/GunMount.jsx'
 //import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
 //import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
 
-import { ExhaustMount } from '../renderers/ExhaustMount.jsx'
+import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 // debug
 import { GodPanel } from '../debug/GodPanel.jsx'
 import { GunPanel } from '../debug/GunPanel.jsx'
 import { BossBuilder } from '../debug/BossBuilder.jsx'
+
+import { updateEffects } from "../effects"
 
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
@@ -54,7 +57,12 @@ export function GameLoop({ keysRef, paused }) {
 
         world.time.delta = Math.min(delta, 0.05)
         world.time.elapsed += world.time.delta
-        gameLoop(shootState.current, world.time.delta)
+
+        gameLoop(
+            shootState.current,
+            world.time.delta
+        )
+
     })
 
     return null
@@ -91,7 +99,52 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <PlayerRenderer />
                     <DeflectRenderer />
                     <GunMount />
-                    <ExhaustMount />
+
+
+
+                    {/* Player */}
+                    <ExhaustRenderer slot={0} />
+
+                    {/* Bosses */}
+                    <ExhaustRenderer
+                        slot={1}
+                        size={5}
+                        nozzleOffset={-0.8}
+                        engineGap={0.35}
+                        hotCore="#ff8a1a"
+                        fireColor="#ff5a12"
+                    />
+
+                    <ExhaustRenderer
+                        slot={2}
+                        size={5}
+                        nozzleOffset={-0.8}
+                        engineGap={0.35}
+                        hotCore="#ff8a1a"
+                        fireColor="#ff5a12"
+                    />
+
+                    <ExhaustRenderer
+                        slot={3}
+                        size={5}
+                        nozzleOffset={-0.8}
+                        engineGap={0.35}
+                        hotCore="#ff8a1a"
+                        fireColor="#ff5a12"
+                    />
+
+                    <ExhaustRenderer
+                        slot={4}
+                        size={5}
+                        nozzleOffset={-0.8}
+                        engineGap={0.35}
+                        hotCore="#ff8a1a"
+                        fireColor="#ff5a12"
+                    />
+
+
+
+
                     <AsteroidRenderer />
                     <BulletRenderer />
 
