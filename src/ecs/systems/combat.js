@@ -17,7 +17,7 @@ import {
     BULLET_OWNER
 } from "../constants/components.js"
 
-import { spawnSparkBurst, spawnHazard } from "../spawn.js"
+import { spawnHazard } from "../spawn.js"
 import { gameState } from "../../state/gameState.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { getWeapon } from "../constants/weapons.js"
@@ -132,9 +132,6 @@ export function combatSystem() {
 
                         Health.current[aid] -= weapon.damage
 
-
-
-
                         emitEffect(EFFECT.SPARK_BURST, {
                             type: EFFECT.SPARK_BURST,
                             x: Position.x[bid],
@@ -142,12 +139,6 @@ export function combatSystem() {
                             count: 20,
                             speed: 8,
                         })
-
-
-
-
-
-
 
                         if (Health.current[aid] <= 0) {
                             killAsteroid(aid, Position.x[aid], Position.y[aid])

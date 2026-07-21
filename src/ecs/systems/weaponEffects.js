@@ -1,9 +1,12 @@
 // src/ecs/systems/weaponEffects.js
- 
+
 import { Position, Health } from "../constants/components.js"
-import { spawnSparkBurst, spawnHazard, spawnBullet } from "../spawn.js"
+import { spawnHazard, spawnBullet } from "../spawn.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { getWeapon } from "../constants/weapons.js"
+
+import { emitEffect } from "../../effects/effects.js"
+import { EFFECT } from "../../effects/EffectTypes.js"
 
 // -------------------------
 // Grenade launcher / any AOE explosive weapon
@@ -47,7 +50,12 @@ export function explodeAt(x, y, weapon, asteroids, bosses) {
         }
     }
 
-    spawnSparkBurst(x, y, { count: 40, speed: 14, big: true })
+    emitEffect(EFFECT.SPARK_BURST, {
+        type: EFFECT.SPARK_BURST,
+        count: 40,
+        speed: 14,
+    })
+
 }
 
 // -------------------------
@@ -96,7 +104,14 @@ export function chainLightning(startX, startY, weapon, asteroids, excludeId) {
         if (nearestId === -1) break
 
         Health.current[nearestId] -= weapon.damage
-        spawnSparkBurst(Position.x[nearestId], Position.y[nearestId], { count: 12, speed: 6 })
+
+        emitEffect(EFFECT.SPARK_BURST, {
+            type: EFFECT.SPARK_BURST,
+            x: Position.x[nearestId],
+            y: Position.y[nearestId],
+            count: 12,
+            speed: 6,
+        })
 
         if (Health.current[nearestId] <= 0) {
             killAsteroid(nearestId, Position.x[nearestId], Position.y[nearestId])

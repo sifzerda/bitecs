@@ -2,7 +2,6 @@
 
 import { registerEffect } from "../effects.js"
 import { EFFECT } from "../EffectTypes.js"
-import { spawnSparkBurst } from "../../ecs/spawn.js"
 import { emitSparkBurst } from "../gpu/SparkEmitter.js"
 
 const pending = []

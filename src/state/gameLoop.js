@@ -13,7 +13,7 @@ import { bossAISystem } from "../ecs/systems/bossAISystem"
 import { bossLaserSystem } from "../ecs/systems/bossLaserSystem.js"
 import { missileSystem } from "../ecs/systems/missileSystem"
 
-import { updateSparkEmitter } from "../effects/gpu/SparkEmitter.js"
+import { updateSparkEmitter } from "../effects/gpu/SparkEmitter"
 import { updateEffects } from "../effects/index.js"
 
 //import { tentacleSystem } from "../ecs/systems/tentacleSystem"

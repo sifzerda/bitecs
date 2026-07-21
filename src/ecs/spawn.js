@@ -19,7 +19,6 @@ import {
     HazardZone,
     HazardTag,
     StatusEffect,
- 
      Octopus,
     OctopusTag,
 } from "./constants/components";
@@ -153,69 +152,7 @@ export function spawnHazard(x, y, weaponId, owner, targetId = -1) {
     return id
 }
  
-// ============= Sparks ============//
- 
-function spawnSpark(x, y, speed, size, life) {
-    const id = acquireSparkEntity()
-    if (id === -1) return -1
- 
-    Position.x[id] = x
-    Position.y[id] = y
- 
-    const angle = Math.random() * Math.PI * 2
-    const s = speed * (0.4 + Math.random() * 0.9)
- 
-    Velocity.x[id] = Math.cos(angle) * s
-    Velocity.y[id] = Math.sin(angle) * s
- 
-    Lifetime.remaining[id] = life
-    Spark.maxLife[id] = life
-    Spark.size[id] = size
- 
-    return id
-}
- 
-export function spawnSparkBurst(x, y, options = {}) {
-    const count = options.count ?? 28
-    const speed = options.speed ?? 10
-    const big = options.big ?? false
- 
-    {
-        const id = acquireSparkEntity()
-        if (id !== -1) {
-            Position.x[id] = x
-            Position.y[id] = y
-            Velocity.x[id] = 0
-            Velocity.y[id] = 0
-            const life = 0.1
-            Lifetime.remaining[id] = life
-            Spark.maxLife[id] = life
-            Spark.size[id] = big ? 1.8 : 1.0
-        }
-    }
- 
-    for (let i = 0; i < count; i++) {
-        const id = acquireSparkEntity()
-        if (id === -1) break   // pool exhausted — drop remaining embers
- 
-        Position.x[id] = x
-        Position.y[id] = y
- 
-        const angle = Math.random() * Math.PI * 2
-        const s = speed * (0.3 + Math.random() * 1.1)
- 
-        Velocity.x[id] = Math.cos(angle) * s
-        Velocity.y[id] = Math.sin(angle) * s
- 
-        const life = 0.3 + Math.random() * 0.45
-        const size = (0.1 + Math.random() * 0.22) * (big ? 2.0 : 1.3)
- 
-        Lifetime.remaining[id] = life
-        Spark.maxLife[id] = life
-        Spark.size[id] = size
-    }
-}
- 
+
 // ============= Asteroids ============//
  
 export function spawnAsteroid(x, y) {
