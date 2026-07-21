@@ -4,6 +4,7 @@ export const EFFECT = {
 
     SPARK_BURST: "spark",
     // future
+     EXHAUST: "exhaust",
 //    SMOKE: "smoke",
  //   EXPLOSION: "explosion",
  //   SHOCKWAVE: "shockwave",

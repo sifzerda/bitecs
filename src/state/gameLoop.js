@@ -14,6 +14,7 @@ import { bossLaserSystem } from "../ecs/systems/bossLaserSystem.js"
 import { missileSystem } from "../ecs/systems/missileSystem"
 
 import { updateSparkEmitter } from "../effects/gpu/SparkEmitter"
+import { exhaustEmitter } from "../effects/gpu/exhaustEmitter"
 import { updateEffects } from "../effects/index.js"
 
 //import { tentacleSystem } from "../ecs/systems/tentacleSystem"
@@ -30,6 +31,9 @@ export function gameLoop(shootState, dt) {
     missileSystem()
 
     movementSystem()
+
+    exhaustEmitter()
+
     boundsSystem()
     waveSystem()
 
