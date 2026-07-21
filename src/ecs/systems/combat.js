@@ -21,7 +21,7 @@ import { spawnHazard } from "../spawn.js"
 import { gameState } from "../../state/gameState.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { getWeapon } from "../constants/weapons.js"
-import { explodeAt, splitBullet, chainLightning } from "./weaponEffects.js"
+import { explodeAt, chainLightning } from "./weaponEffects.js"
 import { releaseBulletEntity, activeBullets } from "../pools/bulletPool"
 import { activeAsteroids } from "../pools/asteroidPool"
 
@@ -64,8 +64,6 @@ export function combatSystem() {
                 explodeAt(Position.x[bid], Position.y[bid], weapon, asteroids, bosses)
             } else if (weapon.leavesHazard) {
                 spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], -1)
-            } else if (weapon.splitsInto) {
-                splitBullet(Position.x[bid], Position.y[bid], weapon, Bullet.owner[bid])
             }
 
             releaseBulletEntity(bid)
@@ -109,12 +107,6 @@ export function combatSystem() {
                     } else if (weapon.attachHazard) {
 
                         spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], aid)
-
-                    } else if (weapon.splitsInto) {
-
-                        Health.current[aid] -= weapon.damage
-                        if (Health.current[aid] <= 0) killAsteroid(aid, Position.x[aid], Position.y[aid])
-                        splitBullet(Position.x[bid], Position.y[bid], weapon, Bullet.owner[bid])
 
                     } else if (weapon.freezeDuration) {
 
@@ -183,12 +175,6 @@ export function combatSystem() {
 
                         // attach the DoT to the boss itself rather than an asteroid
                         spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], bossId)
-
-                    } else if (weapon.splitsInto) {
-
-                        Health.current[bossId] -= weapon.damage
-                        if (Health.current[bossId] <= 0) killBoss(bossId, Position.x[bossId], Position.y[bossId])
-                        splitBullet(Position.x[bid], Position.y[bid], weapon, Bullet.owner[bid])
 
                     } else if (weapon.freezeDuration) {
 
