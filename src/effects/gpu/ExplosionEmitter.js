@@ -9,13 +9,10 @@ for (let i = 0; i < MAX_EXPLOSIONS; i++) {
     explosions[i] = {
 
         alive: false,
-
         x: 0,
         y: 0,
-
         life: 0,
         maxLife: 0,
-
         size: 0,
         seed: 0,
 
@@ -36,15 +33,7 @@ function alloc() {
 
 }
 
-export function emitExplosion({
-
-    x,
-    y,
-
-    size = 1,
-    maxLife = 1.2,
-
-}) {
+export function emitExplosion({ x, y, size = 1, maxLife = 1.2 }) {
 
     const e = alloc()
 
@@ -52,15 +41,11 @@ export function emitExplosion({
         return
 
     e.alive = true
-
     e.x = x
     e.y = y
-
     e.size = size
-
     e.maxLife = maxLife
     e.life = e.maxLife
-
     e.seed = Math.random()
 
 }
@@ -75,9 +60,7 @@ export function updateExplosionEmitter(dt) {
         e.life -= dt
 
         if (e.life <= 0) {
-
             e.alive = false
-
         }
 
     }
