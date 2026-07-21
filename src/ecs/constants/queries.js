@@ -11,8 +11,6 @@ import {
     PlayerTag,
     Bullet,
     BulletTag,
-    Spark,
-    SparkTag,
     AsteroidTag,
 
     BossTag,

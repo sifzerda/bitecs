@@ -12,8 +12,6 @@ import {
     PlayerTag,
     Bullet,
     BulletTag,
-    Spark,
-    SparkTag,
     AsteroidTag,
     BossTag,
     BossAI,
@@ -29,7 +27,6 @@ import { BOSS_INDEX_BY_KEY, BOSSES } from "./constants/bosses";
 import { getGunTypeById } from "./constants/gunConfigs";
 import { gameState } from "../state/gameState";
 import { getWeapon } from "./constants/weapons";
-import { acquireSparkEntity } from "./pools/sparkPool"
 import { acquireBulletEntity } from "./pools/bulletPool"
 import { acquireAsteroidEntity } from './pools/asteroidPool'
  

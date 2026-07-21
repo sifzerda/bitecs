@@ -56,12 +56,6 @@ export const Octopus = {
     active: new Uint8Array(10000), // or whatever your MAX_ENTITIES is
 }
 
-export const Spark = {
-    size: new Float32Array(MAX),
-    maxLife: new Float32Array(MAX),
-    active: new Uint8Array(MAX),   // new
-};
-
 export const Bullet = {
     type: new Uint8Array(MAX),
     owner: new Uint8Array(MAX),
@@ -93,7 +87,6 @@ export const StatusEffect = {
 
 export const PlayerTag = {};
 export const BulletTag = {};
-export const SparkTag = {};
 export const AsteroidTag = {};
 export const BossTag = {};
 export const HazardTag = {};
