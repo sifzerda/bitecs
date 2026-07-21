@@ -17,7 +17,6 @@ const pool = createPool({
         Lifetime.remaining[id] = 0
         Bullet.type[id] = 0
         Bullet.owner[id] = 0
-        Bullet.bounces[id] = 0
         Bullet.colorR[id] = 0
         Bullet.colorG[id] = 0
         Bullet.colorB[id] = 0

@@ -143,21 +143,6 @@ export function combatSystem() {
                         if (Health.current[aid] <= 0) {
                             killAsteroid(aid, Position.x[aid], Position.y[aid])
                         }
-
-                        if (Bullet.bounces[bid] > 0) {
-
-                            const dist = Math.sqrt(dx * dx + dy * dy) || 1
-                            const nx = dx / dist
-                            const ny = dy / dist
-                            const dot = Velocity.x[bid] * nx + Velocity.y[bid] * ny
-
-                            Velocity.x[bid] -= 2 * dot * nx
-                            Velocity.y[bid] -= 2 * dot * ny
-                            Bullet.bounces[bid] -= 1
-
-                            hit = true
-                            break
-                        }
                     }
 
                     releaseBulletEntity(bid)
@@ -222,15 +207,14 @@ export function combatSystem() {
                     } else {
 
                         Health.current[bossId] -= weapon.damage
-                        effects.emit({
 
+                        emitEffect(EFFECT.SPARK_BURST, {
                             type: EFFECT.SPARK_BURST,
                             x: Position.x[bid],
                             y: Position.y[bid],
                             count: 26,
                             speed: 10,
                             big: true,
-
                         })
 
                         if (Health.current[bossId] <= 0) {
@@ -294,8 +278,6 @@ export function combatSystem() {
                 gameState.deflectFlashTimer = DEFLECT_FLASH_DURATION
                 gameState.deflectFlashX = Position.x[pid]
                 gameState.deflectFlashY = Position.y[pid]
-
-                console.log('[deflect] bullet', bid, 'reflected, dot=', dot.toFixed(2)) // DEBUG — remove later
 
                 continue
             }

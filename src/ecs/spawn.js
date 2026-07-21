@@ -104,7 +104,6 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner, gapOffset = 0) {
         Lifetime.remaining[id] = weapon.lifetime
         Bullet.type[id] = weapon.id
         Bullet.owner[id] = owner
-        Bullet.bounces[id] = weapon.maxBounces ?? 0
  
         const color = new THREE.Color(weapon.glowColor ?? weapon.color)
         color.offsetHSL(0, 0.30, 0.00)

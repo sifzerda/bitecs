@@ -58,8 +58,7 @@ export const Octopus = {
 
 export const Bullet = {
     type: new Uint8Array(MAX),
-    owner: new Uint8Array(MAX),
-    bounces: new Uint8Array(MAX),   
+    owner: new Uint8Array(MAX), 
     // render data cached at spawn time
     colorR: new Float32Array(MAX),
     colorG: new Float32Array(MAX),
