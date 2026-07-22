@@ -57,8 +57,9 @@ export function spawnPlayer(x, y) {
  
 // ============= Bullets ============//
  
-const MUZZLE_OFFSET = 0.9 
-const GUN_GAP = 0.35 // distance between twin guns
+const MUZZLE_OFFSET = 0.4 
+export const GUN_GAP = 0.45 // distance between twin guns
+
 export function spawnBullet(x, y, rot, weaponId = 0, owner, gapOffset = 0) {
  
     //const bullet = acquireBullet();
@@ -115,15 +116,20 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner, gapOffset = 0) {
         ids.push(id)
     }
  
-    return ids
+    return { ids, originX, originY }
 }
  
 // convenience wrapper: fires both guns for weapons that should be twin-mounted
 export function spawnPlayerBullet(x, y, rot, weaponId = 0, owner) {
-    return [
-        ...spawnBullet(x, y, rot, weaponId, owner, GUN_GAP),
-        ...spawnBullet(x, y, rot, weaponId, owner, -GUN_GAP),
-    ]
+    const left = spawnBullet(x, y, rot, weaponId, owner, GUN_GAP)
+    const right = spawnBullet(x, y, rot, weaponId, owner, -GUN_GAP)
+    return {
+        ids: [...left.ids, ...right.ids],
+        origins: [
+            { x: left.originX, y: left.originY },
+            { x: right.originX, y: right.originY },
+        ],
+    }
 }
  
 // ============= Hazards (clouds, puddles, attached DoT) ============//
