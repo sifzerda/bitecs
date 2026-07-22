@@ -154,8 +154,8 @@ some of these boss dropped weapons, some upgrades
  - [x] exhaust
  - [x] explosion on entity destruction
     - explosion rendering needs improving
- - [ ] debris (asteroid, player, boss) debris upon destruction
- - [ ] smoke 
+ - [x] debris (asteroid, player, boss) debris upon destruction
+ - [x] smoke 
 
 
  - [ ] bullets (?)

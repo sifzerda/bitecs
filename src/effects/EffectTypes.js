@@ -8,7 +8,7 @@ export const EFFECT = {
     DEBRIS: "debris",
     EXPLOSION: "explosion",
  //   SHOCKWAVE: "shockwave",
-  //  MUZZLE_FLASH: "muzzleFlash",
+    FLASH: "flash",
  //   CAMERA_SHAKE: "cameraShake",
 
 }
