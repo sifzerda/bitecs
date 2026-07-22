@@ -160,7 +160,7 @@ some of these boss dropped weapons, some upgrades
 
  - [ ] bullets (?)
  - [ ] fire
- - [ ] flash (or glow)
+ - [x] flash (or glow)
 
 
 - [ ] add pool for sparks, exhaust, etc

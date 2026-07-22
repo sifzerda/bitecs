@@ -10,5 +10,6 @@ export const EFFECT = {
  //   SHOCKWAVE: "shockwave",
     FLASH: "flash",
  //   CAMERA_SHAKE: "cameraShake",
+  TRAIL: "trail",  // missile trail smoke
 
 }
