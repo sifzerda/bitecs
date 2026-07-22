@@ -1,37 +1,27 @@
-// effects/managers/SmokeManager.js
+// src/effects/managers/SmokeManager.js
 
 import { registerEffect } from "../effects"
 import { EFFECT } from "../EffectTypes"
-import { smokeSources } from "../gpu/SmokeState"
-
-const pending = []
+import { emitSmoke, updateSmokeEmitter, smokeParticles } from "../gpu/SmokeEmitter"
+import { world } from "../../ecs/constants/world.js"
 
 const smokeManager = {
 
     emit(effect) {
-        pending.push(effect)
+        emitSmoke(effect)
     },
 
     update() {
-
-        smokeSources.length = 0
-
-        while (pending.length) {
-
-            smokeSources.push(
-                pending.pop()
-            )
-
-        }
-
+        updateSmokeEmitter(world.time.delta)
     },
 
     clear() {
 
-        pending.length = 0
-        smokeSources.length = 0
+        for (const p of smokeParticles) {
+            p.alive = false
+        }
 
-    }
+    },
 
 }
 

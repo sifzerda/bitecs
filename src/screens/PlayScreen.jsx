@@ -28,9 +28,11 @@ import { FlameRenderer } from '../renderers/FlameRenderer.jsx'
 import { HazardRenderer } from '../renderers/HazardRenderer.jsx'
 import { DeflectRenderer } from '../renderers/DeflectRenderer.jsx'
 
+
 import { ParticleRenderer } from '../renderers/ParticleRenderer.jsx'
 
 import { StarfieldRenderer } from '../renderers/StarfieldRenderer.jsx'
+
 
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { ExplosionRenderer } from '../renderers/ExplosionRenderer.jsx'
@@ -44,6 +46,7 @@ import { GunMount } from '../renderers/GunMount.jsx'
 //import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
 
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
+import { SmokeRenderer } from '../renderers/SmokeRenderer.jsx'
 // debug
 import { GodPanel } from '../debug/GodPanel.jsx'
 import { GunPanel } from '../debug/GunPanel.jsx'
@@ -163,6 +166,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <HazardRenderer />
 
                     <SparkRenderer />
+                    <SmokeRenderer />
                     <ExplosionRenderer />
 
                     <BossRenderer />
