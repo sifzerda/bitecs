@@ -8,14 +8,6 @@ import { smokeParticles } from '../effects/gpu/SmokeEmitter'
 const MAX_SMOKE = smokeParticles.length
 
 // ---------------------------------------------------------------------------
-// Single shared renderer for the whole pool — same shape as SparkRenderer/
-// ExplosionRenderer likely take: one Points buffer mirroring smokeParticles
-// each frame, no per-entity instances needed since bursts are one-shot.
-//
-// Color treatment mirrors ExhaustRenderer's hotCore -> fireColor -> smokeColor
-// age-based mix, just re-tuned so it starts hot red and cools to dark blue
-// instead of exhaust's red -> orange -> pale blue.
-// ---------------------------------------------------------------------------
 
 const vertexShader = /* glsl */ `
   attribute float aSize;
