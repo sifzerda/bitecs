@@ -45,6 +45,7 @@ import { GunMount } from '../renderers/GunMount.jsx'
 import { DebrisRenderer } from '../renderers/DebrisRenderer.jsx'
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 import { SmokeRenderer } from '../renderers/SmokeRenderer.jsx'
+import { TrailRenderer } from '../renderers/TrailRenderer.jsx'
 // debug
 import { GodPanel } from '../debug/GodPanel.jsx'
 import { GunPanel } from '../debug/GunPanel.jsx'
@@ -148,8 +149,9 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <AsteroidRenderer />
                     <BulletRenderer />
-
+                    <TrailRenderer />
                     <MissileRenderer />
+
                     <LaserRenderer />
                     <FlameRenderer />
                     <HazardRenderer />
