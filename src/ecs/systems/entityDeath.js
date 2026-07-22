@@ -33,6 +33,7 @@ export function killAsteroid(id, x, y) {
     emitEffect(EFFECT.EXPLOSION, { x, y, size: 1.5 })
     emitEffect(EFFECT.SPARK_BURST, { x, y, count: 45, speed: 13, big: true })
     emitEffect(EFFECT.SMOKE, { x, y, direction, count: 14 })
+    emitEffect(EFFECT.DEBRIS, { x, y, count: 8, speed: 10, size: 0.5, kind: "rock", maxLife: 1.6 })
 
 }
 
@@ -50,5 +51,6 @@ export function killBoss(id, x, y) {
     emitEffect(EFFECT.EXPLOSION, { x, y, size: 5 })
     emitEffect(EFFECT.SPARK_BURST, { x, y, count: 90, speed: 16, big: true })
     emitEffect(EFFECT.SMOKE, { x, y, direction, count: 40 })
+    emitEffect(EFFECT.DEBRIS, { x, y, count: 24, speed: 14, size: 1.2, kind: "metal", maxLife: 2.2 })
 
 }

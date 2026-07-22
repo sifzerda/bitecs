@@ -28,11 +28,7 @@ import { FlameRenderer } from '../renderers/FlameRenderer.jsx'
 import { HazardRenderer } from '../renderers/HazardRenderer.jsx'
 import { DeflectRenderer } from '../renderers/DeflectRenderer.jsx'
 
-
-import { ParticleRenderer } from '../renderers/ParticleRenderer.jsx'
-
 import { StarfieldRenderer } from '../renderers/StarfieldRenderer.jsx'
-
 
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { ExplosionRenderer } from '../renderers/ExplosionRenderer.jsx'
@@ -45,6 +41,7 @@ import { GunMount } from '../renderers/GunMount.jsx'
 //import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
 //import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
 
+import { DebrisRenderer } from '../renderers/DebrisRenderer.jsx'
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 import { SmokeRenderer } from '../renderers/SmokeRenderer.jsx'
 // debug
@@ -104,15 +101,9 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <PlayerRenderer />
 
-<ParticleRenderer
-    emitter={[5, 5]}
-    size={30}
-/>
 
                     <DeflectRenderer />
                     <GunMount />
-
-
 
                     {/* Player */}
                     <ExhaustRenderer slot={0} />
@@ -154,9 +145,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                         fireColor="#ff5a12"
                     />
 
-
-
-
                     <AsteroidRenderer />
                     <BulletRenderer />
 
@@ -167,6 +155,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <SparkRenderer />
                     <SmokeRenderer />
+                    <DebrisRenderer />
                     <ExplosionRenderer />
 
                     <BossRenderer />

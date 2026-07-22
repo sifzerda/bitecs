@@ -1,11 +1,11 @@
-//src/renderers/ExplosionRenderer.jsx
+// src/renderers/DebrisRenderer.jsx
 
 import { useMemo, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
-import { explosions, updateExplosionEmitter } from "../effects/gpu/ExplosionEmitter"
+import { debris, updateDebrisEmitter } from "../effects/gpu/DebrisEmitter"
 
-const MAX = 512
+const MAX = 256
 
 const matrix = new THREE.Matrix4()
 const pos = new THREE.Vector3()
@@ -16,12 +16,12 @@ const axis = new THREE.Vector3()
 const vertexShader = /* glsl */ `
 attribute float aAge;
 attribute float aSeed;
+attribute float aKind;
 
 varying vec3 vNormal;
 varying float vAge;
-varying float vSeed;
+varying float vKind;
 
-// classic 3D simplex-ish noise (cheap, good enough for silhouette breakup)
 vec3 mod289(vec3 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
 vec4 mod289(vec4 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
 vec4 permute(vec4 x){ return mod289(((x*34.0)+1.0)*x); }
@@ -84,25 +84,14 @@ float snoise(vec3 v){
     return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
 }
 
-float fbm(vec3 p){
-    float sum = 0.0;
-    float amp = 0.5;
-    for (int i = 0; i < 3; i++) {
-        sum += snoise(p) * amp;
-        p *= 2.0;
-        amp *= 0.5;
-    }
-    return sum;
-}
-
 void main() {
     vAge = aAge;
-    vSeed = aSeed;
+    vKind = aKind;
     vNormal = normalize(normalMatrix * normal);
 
-    // lumpy, licking-flame silhouette that settles as the fireball ages
-    float n = fbm(normal * 2.5 + aSeed * 12.0);
-    float bulge = n * 0.4 * (1.0 - aAge * 0.6);
+    // rock chunks get lumpy irregularity; metal shards stay crisp/faceted
+    float n = snoise(position * 2.0 + aSeed * 20.0);
+    float bulge = n * 0.22 * (1.0 - aKind);
     vec3 displaced = position * (1.0 + bulge);
 
     vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(displaced, 1.0);
@@ -113,45 +102,38 @@ void main() {
 const fragmentShader = /* glsl */ `
 varying vec3 vNormal;
 varying float vAge;
-varying float vSeed;
-
-vec3 fireRamp(float t) {
-    vec3 white  = vec3(1.0, 0.97, 0.85);
-    vec3 yellow = vec3(1.0, 0.82, 0.25);
-    vec3 orange = vec3(1.0, 0.42, 0.05);
-    vec3 red    = vec3(0.55, 0.08, 0.02);
-    vec3 smoke  = vec3(0.12, 0.11, 0.11);
-
-    if (t < 0.12) return mix(white, yellow, t / 0.12);
-    if (t < 0.35) return mix(yellow, orange, (t - 0.12) / 0.23);
-    if (t < 0.65) return mix(orange, red, (t - 0.35) / 0.30);
-    return mix(red, smoke, (t - 0.65) / 0.35);
-}
+varying float vKind;
 
 void main() {
+    vec3 rockColor  = vec3(0.32, 0.27, 0.22);
+    vec3 metalColor = vec3(0.5, 0.53, 0.58);
+    vec3 base = mix(rockColor, metalColor, vKind);
+
+    // fake directional shading off the (rotating) normal
+    float lightWrap = clamp(dot(vNormal, normalize(vec3(0.4, 0.6, 0.7))), 0.0, 1.0);
+    vec3 shaded = base * (0.35 + lightWrap * 0.85);
+
+    // hot edges right after spawn, cooling as it ages
     float fresnel = pow(1.0 - abs(vNormal.z), 1.6);
+    float emberBoost = smoothstep(0.35, 0.0, vAge);
+    shaded += vec3(1.0, 0.45, 0.12) * emberBoost * fresnel * 0.8;
 
-    vec3 color = fireRamp(vAge) * (1.0 + fresnel * 0.6);
+    float alpha = smoothstep(1.0, 0.82, vAge);
 
-    float coreBoost = smoothstep(0.25, 0.0, vAge) * 0.8;
-    color += vec3(1.0, 0.9, 0.6) * coreBoost;
-
-    float alpha = (1.0 - vAge * 0.85) * (0.55 + fresnel * 0.45);
-    alpha *= smoothstep(1.0, 0.8, vAge);
-
-    gl_FragColor = vec4(color, alpha);
+    gl_FragColor = vec4(shaded, alpha);
 }
 `
 
-export function ExplosionRenderer() {
+export function DebrisRenderer() {
 
     const ref = useRef()
 
     const geo = useMemo(() => {
 
-        const g = new THREE.SphereGeometry(1, 12, 10)
+        const g = new THREE.IcosahedronGeometry(1, 0)
         const ages = new Float32Array(MAX)
         const seeds = new Float32Array(MAX)
+        const kinds = new Float32Array(MAX)
 
         for (let i = 0; i < MAX; i++) {
             seeds[i] = Math.random()
@@ -159,6 +141,7 @@ export function ExplosionRenderer() {
 
         g.setAttribute("aAge", new THREE.InstancedBufferAttribute(ages, 1))
         g.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seeds, 1))
+        g.setAttribute("aKind", new THREE.InstancedBufferAttribute(kinds, 1))
 
         return g
 
@@ -168,50 +151,43 @@ export function ExplosionRenderer() {
         vertexShader: vertexShader,
         fragmentShader: fragmentShader,
         transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
+        depthWrite: true,
     }), [])
 
     useFrame((_, dt) => {
 
-        updateExplosionEmitter(dt)
+        updateDebrisEmitter(dt)
 
         const ageAttr = geo.attributes.aAge
+        const kindAttr = geo.attributes.aKind
 
         let count = 0
 
-        for (const e of explosions) {
+        for (const d of debris) {
 
-            if (!e.alive)
+            if (!d.alive)
                 continue
 
-            const t = 1 - e.life / e.maxLife
+            const t = 1 - d.life / d.maxLife
 
-            // fast burst growth, then a slow lingering expansion as it fades
-            const burstT = Math.min(t / 0.25, 1)
-            const burstEase = 1 - Math.pow(1 - burstT, 3)
-            const burstScale = THREE.MathUtils.lerp(0.25, 1.3, burstEase)
-            const lingerScale = 1 + t * 0.45
-            const s = e.size * burstScale * lingerScale
+            pos.set(d.x, d.y, 0.15 + (count % 7) * 0.001)
+            scaleVec.set(d.sx, d.sy, d.sz)
 
-            pos.set(e.x, e.y, 0.2 + (count % 7) * 0.001)
-            scaleVec.set(s, s, s)
-
-            const seedAngle = (e.seed ?? count * 0.618) * Math.PI * 2
-            
-            axis.set(Math.sin(seedAngle), Math.cos(seedAngle), 0.4).normalize()
-            rot.setFromAxisAngle(axis, t * 1.5 + seedAngle)
+            axis.set(d.axisX, d.axisY, d.axisZ).normalize()
+            rot.setFromAxisAngle(axis, t * d.spinSpeed + d.seedAngle)
             matrix.compose(pos, rot, scaleVec)
+
             ref.current.setMatrixAt(count, matrix)
             ageAttr.array[count] = t
+            kindAttr.array[count] = d.kind
 
             count++
-
         }
 
         ref.current.count = count
         ref.current.instanceMatrix.needsUpdate = true
         ageAttr.needsUpdate = true
+        kindAttr.needsUpdate = true
 
     })
 
