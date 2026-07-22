@@ -8,9 +8,6 @@ import { exhaustSources } from "../effects/gpu/ExhaustState"
 const PARTICLE_SIZE = 128
 
 // ---------------------------------------------------------------------------
-// GPGPU shaders (unchanged, now takes nozzle offset/gap as uniforms
-// instead of hardcoded constants so different ship sizes can reuse this)
-// ---------------------------------------------------------------------------
 
 const simVertexShader = /* glsl */
   `

@@ -1,4 +1,4 @@
-//src/effects/gpu/SmokeEmitter.js
+// src/effects/gpu/SmokeEmitter.js
 
 const MAX_SMOKE = 2048
 
@@ -49,8 +49,19 @@ export function emitSmoke({
     vy = 0,
 
     direction = 0,
+    spread = 0.5,       // radians, full width of the emission cone.
+                         // pass Math.PI * 2 for an all-directions death puff.
 
     count = 10,
+
+    speedMin = 2,
+    speedMax = 7,
+
+    sizeMin = 0.15,
+    sizeMax = 0.45,
+
+    lifeMin = 1.5,
+    lifeMax = 3.5,
 
 }) {
 
@@ -61,18 +72,18 @@ export function emitSmoke({
         if (!p)
             break
 
-        const spread = (Math.random() - 0.5) * 0.5
-        const speed = 2 + Math.random() * 5
+        const angle = direction + (Math.random() - 0.5) * spread
+        const speed = speedMin + Math.random() * (speedMax - speedMin)
 
         p.alive = true
 
         p.x = x
         p.y = y
 
-        p.vx = vx + Math.cos(direction + spread) * speed
-        p.vy = vy + Math.sin(direction + spread) * speed
-        p.size = 0.15 + Math.random() * 0.3
-        p.maxLife = 1.5 + Math.random() * 2.0
+        p.vx = vx + Math.cos(angle) * speed
+        p.vy = vy + Math.sin(angle) * speed
+        p.size = sizeMin + Math.random() * (sizeMax - sizeMin)
+        p.maxLife = lifeMin + Math.random() * (lifeMax - lifeMin)
 
         p.life = p.maxLife
 
@@ -121,6 +132,14 @@ export function updateSmokeEmitter(dt) {
 
         p.size += 0.8 * dt * (1 - age * 0.7)
 
+    }
+
+}
+
+export function clearSmoke() {
+
+    for (const p of smokeParticles) {
+        p.alive = false
     }
 
 }
