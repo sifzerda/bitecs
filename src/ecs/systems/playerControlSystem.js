@@ -9,6 +9,9 @@ import { gameState } from "../../state/gameState.js"
 import { getWeapon } from "../constants/weapons.js"
 import { explodeAt } from "./weaponEffects.js"
 
+import { emitEffect } from "../../effects/effects.js"
+import { EFFECT } from "../../effects/EffectTypes.js"
+
 const TURN_SPEED = 4.5
 const THRUST = 28
 const BRAKE = 18
@@ -22,6 +25,7 @@ export const BOOST_DURATION = 0.35
 export const BOOST_COOLDOWN = 2.0
 
 const DEFLECT_BUFFER = 0.6
+const MUZZLE_OFFSET = 0.9
 
 export default function playerControlSystem(shootState) {
 
@@ -118,7 +122,7 @@ if (input.deflectOn) {
     // Shooting
     //----------------------------------
 
-    const weapon = getWeapon(gameState.currentWeapon)
+const weapon = getWeapon(gameState.currentWeapon)
 
     if (weapon.category === "beam") {
         // beam weapons are handled entirely by laserSystem — no discrete spawn/cooldown here
@@ -128,7 +132,20 @@ if (input.deflectOn) {
     } else {
         shootState.timer -= dt
         if (input.fire && shootState.timer <= 0) {
+
+            const dirX = Math.sin(-Rotation[pid])
+            const dirY = Math.cos(-Rotation[pid])
+
             spawnPlayerBullet(Position.x[pid], Position.y[pid], Rotation[pid], weapon.id, BULLET_OWNER.PLAYER)
+
+            emitEffect(EFFECT.FLASH, {
+                x: Position.x[pid] + dirX * MUZZLE_OFFSET,
+                y: Position.y[pid] + dirY * MUZZLE_OFFSET,
+                angle: Math.atan2(dirY, dirX),
+                size: weapon.muzzleSize ?? 1,
+                color: weapon.glowColor,
+            })
+
             shootState.timer = weapon.fireRate
         }
     }
