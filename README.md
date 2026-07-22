@@ -164,3 +164,8 @@ some of these boss dropped weapons, some upgrades
 
 
 - [ ] add pool for sparks, exhaust, etc
+
+- Position of bullet emission and gun flash currently set in spawn.js const MUZZLE_OFFSET = 0.4 
+export const GUN_GAP = 0.45 // distance between twin guns
+
+may need to be customized inside weapons.js for each gun

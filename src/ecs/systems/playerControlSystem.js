@@ -27,6 +27,49 @@ export const BOOST_COOLDOWN = 2.0
 const DEFLECT_BUFFER = 0.6
 const MUZZLE_OFFSET = 0.9
 
+// helper to position twin muzzle flashes
+
+function emitTwinFlash(pid, weapon) {
+
+    const rot = Rotation[pid]
+
+    // gunCfg.offsetX == gun side offset, offsetY == gun forward offset,
+    // in the ship's local frame — same convention WeaponMount uses to
+    // place the twin GunRenderer instances, so the flash always sits
+    // exactly where the visible barrels are, even if mount tuning changes.
+    const gunType = getGunTypeByWeaponId(weapon.id)
+    const { offsetX: sideOffset, offsetY: forwardOffset } = gunType.config.mount
+
+    const fwdX = Math.sin(-rot)
+    const fwdY = Math.cos(-rot)
+    const perpX = Math.cos(-rot)
+    const perpY = -Math.sin(-rot)
+
+    const baseX = Position.x[pid] + fwdX * forwardOffset
+    const baseY = Position.y[pid] + fwdY * forwardOffset
+
+    const angle = Math.atan2(fwdY, fwdX)
+    const size = 0.8 + (weapon.hitRadius ?? 0.5) * 0.6
+    const color = weapon.glowColor
+
+    emitEffect(EFFECT.FLASH, {
+        x: baseX + perpX * sideOffset,
+        y: baseY + perpY * sideOffset,
+        angle,
+        size,
+        color,
+    })
+
+    emitEffect(EFFECT.FLASH, {
+        x: baseX - perpX * sideOffset,
+        y: baseY - perpY * sideOffset,
+        angle,
+        size,
+        color,
+    })
+
+}
+
 export default function playerControlSystem(shootState) {
 
     const dt = world.time.delta
@@ -86,13 +129,13 @@ export default function playerControlSystem(shootState) {
     // Deflect
     //----------------------------------
 
-gameState.deflectBufferTime = Math.max(0, gameState.deflectBufferTime - dt)
-gameState.deflectFlashTimer = Math.max(0, gameState.deflectFlashTimer - dt)
+    gameState.deflectBufferTime = Math.max(0, gameState.deflectBufferTime - dt)
+    gameState.deflectFlashTimer = Math.max(0, gameState.deflectFlashTimer - dt)
 
-if (input.deflectOn) {
-    gameState.deflectBufferTime = DEFLECT_BUFFER
-    input.deflectOn = false
-}
+    if (input.deflectOn) {
+        gameState.deflectBufferTime = DEFLECT_BUFFER
+        input.deflectOn = false
+    }
 
     //----------------------------------
     // Clamp speed
@@ -122,7 +165,7 @@ if (input.deflectOn) {
     // Shooting
     //----------------------------------
 
-const weapon = getWeapon(gameState.currentWeapon)
+    const weapon = getWeapon(gameState.currentWeapon)
 
     if (weapon.category === "beam") {
         // beam weapons are handled entirely by laserSystem — no discrete spawn/cooldown here
@@ -133,18 +176,21 @@ const weapon = getWeapon(gameState.currentWeapon)
         shootState.timer -= dt
         if (input.fire && shootState.timer <= 0) {
 
-            const dirX = Math.sin(-Rotation[pid])
-            const dirY = Math.cos(-Rotation[pid])
+            const rot = Rotation[pid]
+            const angle = Math.atan2(Math.cos(-rot), Math.sin(-rot)) // same fwd dir bullets use
+            const size = 0.8 + (weapon.hitRadius ?? 0.5) * 0.6
 
-            spawnPlayerBullet(Position.x[pid], Position.y[pid], Rotation[pid], weapon.id, BULLET_OWNER.PLAYER)
+            const { origins } = spawnPlayerBullet(Position.x[pid], Position.y[pid], rot, weapon.id, BULLET_OWNER.PLAYER)
 
-            emitEffect(EFFECT.FLASH, {
-                x: Position.x[pid] + dirX * MUZZLE_OFFSET,
-                y: Position.y[pid] + dirY * MUZZLE_OFFSET,
-                angle: Math.atan2(dirY, dirX),
-                size: weapon.muzzleSize ?? 1,
-                color: weapon.glowColor,
-            })
+            for (const o of origins) {
+                emitEffect(EFFECT.FLASH, {
+                    x: o.x,
+                    y: o.y,
+                    angle,
+                    size,
+                    color: weapon.glowColor,
+                })
+            }
 
             shootState.timer = weapon.fireRate
         }
