@@ -6,10 +6,7 @@ import * as THREE from 'three'
 import { Position, Velocity, Bullet } from '../ecs/constants/components.js'
 import { WEAPONS } from '../ecs/constants/weapons.js'
 import { activeBullets } from '../ecs/pools/bulletPool.js'
-import { trailPuffs, updateTrailEmitter } from '../effects/gpu/TrailEmitter.js'
-
-import { emitEffect } from '../effects/effects.js'
-import { EFFECT } from '../effects/EffectTypes.js'
+import { trailPuffs, spawnTrailPuff, updateTrailEmitter } from '../effects/gpu/TrailEmitter.js'
 
 const MAX_TRAIL = 400
 const TRAIL_BACK_OFFSET = 0.35   // how far behind the bullet's tail a puff spawns
