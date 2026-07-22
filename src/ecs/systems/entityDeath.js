@@ -33,6 +33,8 @@ export function killAsteroid(id, x, y) {
         big: true,
     })
 
+ 
+
 }
 
 export function killBoss(id, x, y) {

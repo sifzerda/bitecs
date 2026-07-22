@@ -28,6 +28,8 @@ import { FlameRenderer } from '../renderers/FlameRenderer.jsx'
 import { HazardRenderer } from '../renderers/HazardRenderer.jsx'
 import { DeflectRenderer } from '../renderers/DeflectRenderer.jsx'
 
+import { ParticleRenderer } from '../renderers/ParticleRenderer.jsx'
+
 import { StarfieldRenderer } from '../renderers/StarfieldRenderer.jsx'
 
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
@@ -98,6 +100,12 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <BossBuilder />
 
                     <PlayerRenderer />
+
+<ParticleRenderer
+    emitter={[5, 5]}
+    size={30}
+/>
+
                     <DeflectRenderer />
                     <GunMount />
 

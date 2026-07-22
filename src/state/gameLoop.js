@@ -14,7 +14,7 @@ import { bossLaserSystem } from "../ecs/systems/bossLaserSystem.js"
 import { missileSystem } from "../ecs/systems/missileSystem"
 
 import { updateSparkEmitter } from "../effects/gpu/SparkEmitter"
-import { exhaustEmitter } from "../effects/gpu/exhaustEmitter"
+import { exhaustEmitter } from "../effects/gpu/exhaustEmitter.js"
 import { updateEffects } from "../effects/index.js"
 
 //import { tentacleSystem } from "../ecs/systems/tentacleSystem"
