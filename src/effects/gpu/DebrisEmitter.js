@@ -1,6 +1,6 @@
 // src/effects/gpu/DebrisEmitter.js
 
-import { createTypedEffectPool } from "../pools/typedEffectPool.js"
+import { createTypedEffectPool } from "../effectPool.js"
 
 const MAX_DEBRIS = 256
 const DRAG = 0.985

@@ -1,6 +1,6 @@
 // src/effects/gpu/ExplosionEmitter.js
 
-import { createTypedEffectPool } from "../pools/typedEffectPool.js"
+import { createTypedEffectPool } from "../effectPool.js"
 
 
 const MAX_EXPLOSIONS = 512

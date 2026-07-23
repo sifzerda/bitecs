@@ -1,6 +1,6 @@
 // src/effects/gpu/SmokeEmitter.js
 
-import { createTypedEffectPool } from "../pools/typedEffectPool.js"
+import { createTypedEffectPool } from "../effectPool.js"
 
 
 const MAX_SMOKE = 2048
