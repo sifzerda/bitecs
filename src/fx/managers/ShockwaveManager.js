@@ -1,8 +1,8 @@
-//src/fx/managers/ExplosionManager.js
+// src/fx/managers/ShockwaveManager.js
 
 import { registerEffect } from "../effects"
 import { EFFECT } from "../FXTypes"
-import { emitExplosion } from "../gpu/ExplosionEmitter"
+import { emitShockwave } from "../gpu/ShockwaveEmitter"
 
 const pending = []
 
@@ -18,7 +18,7 @@ const manager = {
 
         while (pending.length) {
 
-            emitExplosion(
+            emitShockwave(
                 pending.pop()
             )
 
@@ -34,4 +34,4 @@ const manager = {
 
 }
 
-registerEffect( EFFECT.EXPLOSION, manager )
+registerEffect(EFFECT.SHOCKWAVE, manager)

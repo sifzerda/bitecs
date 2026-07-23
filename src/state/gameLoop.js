@@ -16,6 +16,9 @@ import { trailSystem } from "../ecs/systems/trailSystem"
 
 import { updateSparkEmitter } from "../fx/gpu/SparkEmitter"
 import { exhaustEmitter } from "../fx/gpu/exhaustEmitter.js"
+
+import { updateFireEmitter } from "../fx/gpu/FireEmitter.js"
+
 import { updateEffects } from "../fx/index.js"
 
 //import { tentacleSystem } from "../ecs/systems/tentacleSystem"
@@ -55,7 +58,6 @@ export function gameLoop(shootState, dt) {
 
     updateEffects()
     updateSparkEmitter(dt)
-
-    flameSystem()
+    updateFireEmitter(dt)
 
 }
