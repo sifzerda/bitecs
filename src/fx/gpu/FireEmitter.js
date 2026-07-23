@@ -4,22 +4,9 @@ import { createTypedEffectPool } from "../effectPool"
 
 const MAX_FIRE = 1024
 
-export const firePool =
-    createTypedEffectPool(
-        MAX_FIRE,
-        [
-            "size"
-        ]
-    )
+export const firePool = createTypedEffectPool(MAX_FIRE, ["size"])
 
-export function emitFire({
-
-    x,
-    y,
-
-    count = 20
-
-}) {
+export function emitFire({ x, y, count = 20 }) {
 
     const p = firePool
 
@@ -33,22 +20,13 @@ export function emitFire({
         p.x[id] = x
         p.y[id] = y
 
-        p.vx[id] =
-            (Math.random() - 0.5) * 3
+        p.vx[id] = (Math.random() - 0.5) * 3
+        p.vy[id] = Math.random() * 4
+        
+        p.size[id] = 0.2 + Math.random() * 0.4
+        p.life[id] = 0.5 + Math.random()
 
-        p.vy[id] =
-            Math.random() * 4
-
-        p.size[id] =
-            0.2 +
-            Math.random() * 0.4
-
-        p.life[id] =
-            0.5 +
-            Math.random()
-
-        p.maxLife[id] =
-            p.life[id]
+        p.maxLife[id] = p.life[id]
 
         if (p.seed) p.seed[id] = Math.random()
 
