@@ -192,57 +192,7 @@ export const WEAPONS = [
         glowColor: "#ff66ff",
         haloColor: "#cc00cc",
     },
-
-    {
-        id: 11,
-        name: "proximityminelayer",
-        category: "mine",
-        hazardRadius: 2.0,
-        hazardDamage: 40,
-        hazardTickInterval: 999,
-        hazardDuration: 8.0,
-        fireRate: 1.0,
-        color: "#ff6666",
-        glowColor: "#ff2222",
-        haloColor: "#aa0000",
-    },
-
-    {
-        id: 12,
-        name: "particlebeam",
-        category: "beam",
-        range: 25,
-        damagePerSecond: 15,
-        maxDamagePerSecond: 60,
-        rampTime: 2.0,
-        beamWidth: 0.15,
-        color: "#ffffff",
-        glowColor: "#88ddff",
-        haloColor: "#3399ff",
-    },
-
-    {
-        id: 13,
-        name: "darkmattergun",
-        category: "launcher",
-        leavesHazard: true,
-        damage: 0,
-        hazardRadius: 3.0,
-        hazardDamage: 6,
-        hazardTickInterval: 0.5,
-        hazardDuration: 4.0,
-        maxBullets: 32,
-        hitRadius: 0.5,
-        fireRate: 1.0,
-        speed: 14,
-        lifetime: 2.0,
-        projectileCount: 1,
-        spreadAngle: 0,
-        color: "#c9a3ff",
-        glowColor: "#7a33ff",
-        haloColor: "#4d0099",
-    },
-
+ 
 ]
 
 export function getWeapon(id) {
