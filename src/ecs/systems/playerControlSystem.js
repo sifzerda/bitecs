@@ -10,7 +10,7 @@ import { getWeapon } from "../constants/weapons.js"
 import { explodeAt } from "./weaponEffects.js"
 
 import { emitEffect } from "../../fx/effects.js"
-import { EFFECT } from "../../fx/EffectTypes.js"
+import { EFFECT } from "../../fx/FXTypes.js"
 
 const TURN_SPEED = 4.5
 const THRUST = 28

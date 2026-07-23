@@ -1,7 +1,7 @@
 // src/fx/managers/ExhaustManager.js
 
 import { registerEffect } from "../effects"
-import { EFFECT } from "../EffectTypes"
+import { EFFECT } from "../FXTypes"
 import { exhaustSources } from "../gpu/ExhaustState"
 
 const pending = []

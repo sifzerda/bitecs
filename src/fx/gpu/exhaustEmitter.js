@@ -1,7 +1,7 @@
 // src/fx/gpu/exhaustEmitter.js
 
 import { emitEffect } from "../effects"
-import { EFFECT } from "../EffectTypes"
+import { EFFECT } from "../FXTypes"
 import { Position, Velocity, Rotation } from "../../ecs/constants/components"
 import { playerQuery, bossAIQuery } from "../../ecs/constants/queries"
 import { input } from "../../ecs/systems/input"

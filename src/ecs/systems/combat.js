@@ -26,7 +26,7 @@ import { releaseBulletEntity, activeBullets } from "../pools/bulletPool"
 import { activeAsteroids } from "../pools/asteroidPool"
 
 import { emitEffect } from "../../fx/effects.js"
-import { EFFECT } from "../../fx/EffectTypes.js"
+import { EFFECT } from "../../fx/FXTypes.js"
 
 const PLAYER_HIT_RADIUS = 0.6
 const ASTEROID_RADIUS = 0.7

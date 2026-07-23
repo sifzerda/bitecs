@@ -1,7 +1,7 @@
 // src/fx/managers/DebrisManager.js
 
 import { registerEffect } from "../effects"
-import { EFFECT } from "../EffectTypes"
+import { EFFECT } from "../FXTypes"
 import { emitDebrisBurst } from "../gpu/DebrisEmitter"
 
 const pending = []
