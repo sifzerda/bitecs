@@ -23,8 +23,7 @@ export function FireRenderer() {
     const capacity = firePool.capacity
     const totalPoints = capacity * SEGMENTS
 
-    const geometry = useMemo(() => {
-        const geo = new THREE.BufferGeometry()
+    const geometry = useMemo(() => { const geo = new THREE.BufferGeometry()
 
         const positions = new Float32Array(totalPoints * 3)
         const sizes = new Float32Array(totalPoints)
