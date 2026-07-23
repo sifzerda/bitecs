@@ -93,12 +93,12 @@ export const DEFAULT_GUN_CONFIG = {
 const RAW_TYPES = [
 
     {
-        id: 'pulse_blaster', name: 'Pulse Blaster', weaponId: 0,
+        id: '00_raygun', name: 'Ray Gun', weaponId: 0,
 
     },
     // shotgun
     {
-        id: '01_sg', name: 'Shotgun', weaponId: 1,
+        id: '01_shotgun', name: 'Shotgun', weaponId: 1,
         overrides: {
             frame: { color: '#ff3355', length: 0.45, height: 0.20 },
             barrel: { color: '#3a6bd5', length: 0.27, width: 0.15, offsetX: 0.54, offsetY: 0 },
@@ -112,7 +112,7 @@ const RAW_TYPES = [
 
     // machinegun
     {
-        id: '02_mg', name: 'Machine Gun', weaponId: 2,
+        id: '02_machinegun', name: 'Machine Gun', weaponId: 2,
         overrides: {
             frame: { color: '#00444e', length: 0.9, height: 0.14 },
             barrel: { color: '#000000', length: 0.2, width: 0.037, offsetX: 0.7, offsetY: 0 },
@@ -126,7 +126,7 @@ const RAW_TYPES = [
 
     // grenade launcher
     {
-        id: '03_gl', name: 'Grenade Launcher', weaponId: 3,
+        id: '03_grenadelauncher', name: 'Grenade Launcher', weaponId: 3,
         overrides: {
             frame: { color: '#5a88eb', length: 0.9, height: 0.45 },
             barrel: { color: '#0049ff', length: 0.4, width: 0.3, offsetX: 1, offsetY: 0 },
@@ -141,7 +141,7 @@ const RAW_TYPES = [
 
     // homing missile
     {
-        id: '04_ml', name: 'Missile Launcher', weaponId: 4,
+        id: '04_missilelauncher', name: 'Missile Launcher', weaponId: 4,
         overrides: {
             frame: { color: '#cfe8ff', length: 0.9, height: 0.34 },
             barrel: { color: '#ff3355', length: 0.15, width: 0.25, offsetX: 0.9, offsetY: 0 },
@@ -155,7 +155,7 @@ const RAW_TYPES = [
 
     // flamethrower
     {
-        id: '05_ft', name: 'Flamethrower', weaponId: 5,
+        id: '05_flamethrower', name: 'Flamethrower', weaponId: 5,
         overrides: {
             frame: { color: '#000000', length: 0.74, height: 0.235 },
             barrel: { color: '#ff3355', length: 0.6, width: 0.055, offsetX: 0.92, offsetY: 0 },
@@ -169,7 +169,7 @@ const RAW_TYPES = [
 
   // cryogun
     {
-        id: '06_cg', name: 'Cryo Gun', weaponId: 6,
+        id: '06_cryogun', name: 'Cryo Gun', weaponId: 6,
         overrides: {
             frame: { color: '#c8d8e0', length: 0.89, height: 0.27, taper: 0.35, offsetX: -0.12 },
             slide: {
@@ -212,7 +212,7 @@ const RAW_TYPES = [
     // acidthrower
  
     {
-        id: '07_at', name: 'Acidthrower', weaponId: 6,
+        id: '07_acidthrower', name: 'Acidthrower', weaponId: 6,
         overrides: {
             frame: { color: '#98D6F5', length: 0.89, height: 0.27, taper: 0.35, offsetX: -0.12 },
             slide: {
@@ -253,37 +253,9 @@ const RAW_TYPES = [
     },
 
     /*  
-       {
-           id: 'proximity_mine_layer', name: 'Proximity Mine Layer', weaponId: 8,
-           overrides: {
-               frame: { length: 0.6, height: 0.2, taper: 0.25 },
-               barrel: { length: 0.14, width: 0.09, color: '#3a3a3a' },
-               muzzle: { enabled: false },
-               slide: { enabled: false },
-               coreGlow: { color: '#ffcc00', intensity: 1.2, offsetX: 0.5 },
-               accentStripe: { color: '#ffcc00' },
-           },
-       },
-       {
-           id: 'pulse_wave_emitter', name: 'Pulse Wave Emitter', weaponId: 9,
-           overrides: {
-               frame: { height: 0.18 },
-               barrel: { length: 0.16, width: 0.1, color: '#5a5a6a' },
-               muzzle: { width: 0.13, length: 0.06 },
-               coreGlow: { color: '#c8b6ff', intensity: 1.6, size: 0.13 },
-               accentStripe: { color: '#a78bff' },
-           },
-       },
-       {
-           id: 'particle_beam_rifle', name: 'Particle Beam Rifle', weaponId: 10,
-           overrides: {
-               frame: { length: 1.0, height: 0.12 },
-               barrel: { length: 0.46, width: 0.03, color: '#2f3a42' },
-               slide: { length: 0.6 },
-               coreGlow: { color: '#00e5ff', intensity: 1.7, offsetX: 1.1 },
-               accentStripe: { color: '#00e5ff', length: 0.8 },
-           },
-       },
+ 
+ 
+ 
        {
            id: 'prism_beam_splitter', name: 'Prism Beam Splitter', weaponId: 11,
            overrides: {
@@ -295,18 +267,7 @@ const RAW_TYPES = [
                sight: { color: '#ff6bff' },
            },
        },
-       {
-           id: 'orbital_drone_bay', name: 'Orbital Drone Bay', weaponId: 12,
-           overrides: {
-               frame: { length: 0.7, height: 0.24, taper: 0.2 },
-               barrel: { enabled: false },
-               muzzle: { enabled: false },
-               slide: { length: 0.55, height: 0.09 },
-               coreGlow: { color: '#7fffb0', intensity: 1.5, size: 0.15, offsetX: 0.4 },
-               accentStripe: { color: '#5affa0' },
-               mount: { scale: 1.05 },
-           },
-       },
+ 
        {
            id: 'flamethrower', name: 'Flamethrower', weaponId: 13,
            overrides: {
@@ -317,47 +278,9 @@ const RAW_TYPES = [
                accentStripe: { color: '#ff5a1a' },
            },
        },
-       {
-           id: 'railgun', name: 'Railgun', weaponId: 14,
-           overrides: {
-               frame: { length: 1.1, height: 0.11, taper: 0.55 },
-               barrel: { length: 0.55, width: 0.028, color: '#5c5c66' },
-               slide: { length: 0.65, offsetX: 0.08 },
-               coreGlow: { color: '#79e0ff', intensity: 1.8, offsetX: 1.25, size: 0.08 },
-               accentStripe: { color: '#79e0ff', length: 0.95 },
-           },
-       },
-       {
-           id: 'shotgun_spread', name: 'Shotgun Spread', weaponId: 15,
-           overrides: {
-               frame: { length: 0.6, height: 0.18, taper: 0.35 },
-               barrel: { length: 0.2, width: 0.08, color: '#4a4038' },
-               muzzle: { width: 0.12, length: 0.07 },
-               coreGlow: { color: '#ffb347', intensity: 1.2 },
-               accentStripe: { color: '#ffb347' },
-           },
-       },
-       {
-           id: 'missile_pod', name: 'Missile Pod', weaponId: 16,
-           overrides: {
-               frame: { length: 0.65, height: 0.26, taper: 0.15 },
-               barrel: { enabled: false },
-               muzzle: { enabled: false },
-               slide: { length: 0.5, height: 0.1 },
-               coreGlow: { color: '#ff3a3a', intensity: 1.4, offsetX: 0.4 },
-               accentStripe: { color: '#ff3a3a' },
-           },
-       },
-       {
-           id: 'laser_emitter', name: 'Laser Emitter', weaponId: 17,
-           overrides: {
-               frame: { length: 0.88, height: 0.11 },
-               barrel: { length: 0.42, width: 0.028, color: '#4a5560' },
-               coreGlow: { color: '#ff2e2e', intensity: 1.8, offsetX: 1.05 },
-               accentStripe: { color: '#ff2e2e' },
-               sight: { color: '#ff2e2e' },
-           },
-       },
+ 
+ 
+ 
        {
            id: 'chain_lightning_coil', name: 'Chain Lightning Coil', weaponId: 18,
            overrides: {
@@ -369,19 +292,7 @@ const RAW_TYPES = [
                sight: { color: '#e0ff4d' },
            },
        },
-       {
-           id: 'void_ripper', name: 'Void Ripper', weaponId: 19,
-           overrides: {
-               frame: { color: '#151018', length: 1.05, height: 0.17, taper: 0.45 },
-               barrel: { color: '#0a0810', length: 0.4, width: 0.05 },
-               muzzle: { color: '#ff0090', width: 0.12 },
-               mountBracket: { color: '#0a0810' },
-               coreGlow: { color: '#ff0090', intensity: 2.2, size: 0.16, offsetX: 1.15 },
-               accentStripe: { color: '#ff0090', length: 0.9 },
-               sight: { color: '#ff0090' },
-               mount: { scale: 1.1 },
-           },
-       },
+ 
    
            */
 ]
