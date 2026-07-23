@@ -1,107 +1,203 @@
 // src/effects/gpu/DebrisEmitter.js
 
+import { createTypedEffectPool } from "../pools/typedEffectPool.js"
+
 const MAX_DEBRIS = 256
+const DRAG = 0.985
 
-export const debris = new Array(MAX_DEBRIS)
+export const debrisPool = createTypedEffectPool(
+        MAX_DEBRIS,
+        [
+            "sx",
+            "sy",
+            "sz",
 
-for (let i = 0; i < MAX_DEBRIS; i++) {
+            "axisX",
+            "axisY",
+            "axisZ",
 
-    debris[i] = {
-        alive: false,
-        x: 0, y: 0,
-        vx: 0, vy: 0,
-        sx: 1, sy: 1, sz: 1,
-        axisX: 0, axisY: 0, axisZ: 1,
-        spinSpeed: 0,
-        seedAngle: 0,
-        kind: 0, // 0 = rock, 1 = metal
-        life: 0,
-        maxLife: 0,
-        seed: 0,
-    }
+            "spinSpeed",
+            "seedAngle",
+
+            "seed"
+        ]
+    )
+
+
+// integer attributes
+export const kind = new Uint8Array(MAX_DEBRIS)
+
+const KIND_MAP = {
+    rock: 0,
+    metal: 1
 }
-
-function alloc() {
-
-    for (let i = 0; i < MAX_DEBRIS; i++) {
-
-        if (!debris[i].alive)
-            return debris[i]
-    }
-
-    return null
-}
-
-const KIND_MAP = { rock: 0, metal: 1 }
 
 export function emitDebrisBurst({
-    x, y,
+
+    x,
+    y,
+
     count = 10,
     speed = 8,
     size = 1,
-    kind = "rock",
+    kind: type = "rock",
     maxLife = 1.4,
-    spread = Math.PI * 2, // full circle by default
-    direction = 0,        // center angle if spread < full circle
+    spread = Math.PI * 2,
+    direction = 0
+
 }) {
 
-    const kindVal = KIND_MAP[kind] ?? 0
 
-    for (let i = 0; i < count; i++) {
+    const p = debrisPool
+    const kindValue = KIND_MAP[type] ?? 0
 
-        const d = alloc()
+    for(let i = 0; i < count; i++) {
 
-        if (!d)
-            return
+        const id = p.allocate()
+
+
+        if(id < 0)
+            break
 
         const angle = direction + (Math.random() - 0.5) * spread
-        const spd = speed * (0.4 + Math.random() * 0.9)
 
-        d.alive = true
-        d.x = x + (Math.random() - 0.5) * 0.2
-        d.y = y + (Math.random() - 0.5) * 0.2
-        d.vx = Math.cos(angle) * spd
-        d.vy = Math.sin(angle) * spd
 
-        const s = size * (0.35 + Math.random() * 0.65)
-        d.sx = s * (0.7 + Math.random() * 0.6)
-        d.sy = s * (0.7 + Math.random() * 0.6)
-        d.sz = s * (0.7 + Math.random() * 0.6)
 
-        d.axisX = Math.random() * 2 - 1
-        d.axisY = Math.random() * 2 - 1
-        d.axisZ = Math.random() * 2 - 1
-        d.spinSpeed = (Math.random() - 0.5) * 10
-        d.seedAngle = Math.random() * Math.PI * 2
+        const velocity =
+            speed *
+            (0.4 + Math.random() * 0.9)
 
-        d.kind = kindVal
-        d.maxLife = maxLife * (0.7 + Math.random() * 0.6)
-        d.life = d.maxLife
-        d.seed = Math.random()
+
+
+        p.x[id] =
+            x + (Math.random() - 0.5) * 0.2
+
+
+        p.y[id] =
+            y + (Math.random() - 0.5) * 0.2
+
+
+
+        p.vx[id] =
+            Math.cos(angle) * velocity
+
+
+        p.vy[id] =
+            Math.sin(angle) * velocity
+
+
+
+        const s =
+            size *
+            (0.35 + Math.random() * 0.65)
+
+
+
+        p.sx[id] =
+            s * (0.7 + Math.random() * 0.6)
+
+        p.sy[id] =
+            s * (0.7 + Math.random() * 0.6)
+
+        p.sz[id] =
+            s * (0.7 + Math.random() * 0.6)
+
+
+
+        p.axisX[id] =
+            Math.random() * 2 - 1
+
+        p.axisY[id] =
+            Math.random() * 2 - 1
+
+        p.axisZ[id] =
+            Math.random() * 2 - 1
+
+
+
+        p.spinSpeed[id] =
+            (Math.random() - 0.5) * 10
+
+
+        p.seedAngle[id] =
+            Math.random() *
+            Math.PI * 2
+
+
+
+        kind[id] =
+            kindValue
+
+
+
+        const life =
+            maxLife *
+            (0.7 + Math.random() * 0.6)
+
+
+        p.life[id] =
+            life
+
+
+        p.maxLife[id] =
+            life
+
+
+        p.seed[id] =
+            Math.random()
+
     }
-}
 
-const DRAG = 0.985
+}
 
 export function updateDebrisEmitter(dt) {
 
-    for (const d of debris) {
 
-        if (!d.alive)
+    const p = debrisPool
+
+
+    const drag =
+        Math.pow(
+            DRAG,
+            dt * 60
+        )
+
+
+
+    for(let i = 0; i < p.capacity; i++) {
+
+
+        if(!p.alive[i])
             continue
 
-        d.life -= dt
 
-        if (d.life <= 0) {
-            d.alive = false
+
+        p.life[i] -= dt
+
+
+
+        if(p.life[i] <= 0) {
+
+            p.kill(i)
+
             continue
+
         }
 
-        const drag = Math.pow(DRAG, dt * 60)
-        d.vx *= drag
-        d.vy *= drag
 
-        d.x += d.vx * dt
-        d.y += d.vy * dt
+
+        p.vx[i] *= drag
+        p.vy[i] *= drag
+
+
+
+        p.x[i] +=
+            p.vx[i] * dt
+
+
+        p.y[i] +=
+            p.vy[i] * dt
+
     }
+
 }

@@ -3,7 +3,7 @@
 import { useMemo, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
-import { explosions, updateExplosionEmitter } from "../effects/gpu/ExplosionEmitter"
+import { explosionPool, updateExplosionEmitter } from "../effects/gpu/ExplosionEmitter"
 
 const MAX = 512
 
@@ -178,31 +178,93 @@ export function ExplosionRenderer() {
 
         const ageAttr = geo.attributes.aAge
 
+        const p = explosionPool
+
         let count = 0
 
-        for (const e of explosions) {
+        for (let i = 0; i < p.capacity; i++) {
 
-            if (!e.alive)
+            if (!p.alive[i])
                 continue
 
-            const t = 1 - e.life / e.maxLife
 
-            // fast burst growth, then a slow lingering expansion as it fades
-            const burstT = Math.min(t / 0.25, 1)
-            const burstEase = 1 - Math.pow(1 - burstT, 3)
-            const burstScale = THREE.MathUtils.lerp(0.25, 1.3, burstEase)
-            const lingerScale = 1 + t * 0.45
-            const s = e.size * burstScale * lingerScale
+            const t =
+                1 -
+                p.life[i] / p.maxLife[i]
 
-            pos.set(e.x, e.y, 0.2 + (count % 7) * 0.001)
-            scaleVec.set(s, s, s)
 
-            const seedAngle = (e.seed ?? count * 0.618) * Math.PI * 2
-            
-            axis.set(Math.sin(seedAngle), Math.cos(seedAngle), 0.4).normalize()
-            rot.setFromAxisAngle(axis, t * 1.5 + seedAngle)
-            matrix.compose(pos, rot, scaleVec)
-            ref.current.setMatrixAt(count, matrix)
+            const burstT =
+                Math.min(t / 0.25, 1)
+
+            const burstEase =
+                1 - Math.pow(1 - burstT, 3)
+
+
+            const burstScale =
+                THREE.MathUtils.lerp(
+                    0.25,
+                    1.3,
+                    burstEase
+                )
+
+
+            const lingerScale =
+                1 + t * 0.45
+
+
+            const s =
+                p.size[i] *
+                burstScale *
+                lingerScale
+
+
+
+            pos.set(
+                p.x[i],
+                p.y[i],
+                0.2 + (count % 7) * 0.001
+            )
+
+
+            scaleVec.set(
+                s,
+                s,
+                s
+            )
+
+
+            const seedAngle =
+                p.seed[i] *
+                Math.PI *
+                2
+
+
+            axis.set(
+                Math.sin(seedAngle),
+                Math.cos(seedAngle),
+                0.4
+            ).normalize()
+
+
+            rot.setFromAxisAngle(
+                axis,
+                t * 1.5 + seedAngle
+            )
+
+
+            matrix.compose(
+                pos,
+                rot,
+                scaleVec
+            )
+
+
+            ref.current.setMatrixAt(
+                count,
+                matrix
+            )
+
+
             ageAttr.array[count] = t
 
             count++

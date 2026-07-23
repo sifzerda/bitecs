@@ -1,78 +1,128 @@
 // src/effects/gpu/FlashEmitter.js
 
 import * as THREE from "three"
+import { createTypedEffectPool } from "../pools/typedEffectPool.js"
 
 const MAX_FLASHES = 64
 
+export const flashPool =
+    createTypedEffectPool(
+        MAX_FLASHES,
+        [
+            "angle",
+            "size",
+            "r",
+            "g",
+            "b",
+            "seed"
+        ]
+    )
+
 const tmpColor = new THREE.Color()
 
-export const flashes = new Array(MAX_FLASHES)
-
-for (let i = 0; i < MAX_FLASHES; i++) {
-
-    flashes[i] = {
-        alive: false,
-        x: 0, y: 0,
-        angle: 0,
-        size: 1,
-        life: 0,
-        maxLife: 0,
-        seed: 0,
-        r: 1, g: 0.9, b: 0.7,
-    }
-}
-
-function alloc() {
-
-    for (let i = 0; i < MAX_FLASHES; i++) {
-
-        if (!flashes[i].alive)
-            return flashes[i]
-    }
-
-    return null
-}
-
 export function emitFlash({
-    x, y,
+
+    x,
+    y,
+
     angle = 0,
+
     size = 1,
+
     maxLife = 0.08,
-    color = "#fff2b0",
+
+    color = "#fff2b0"
+
 }) {
 
-    const f = alloc()
 
-    if (!f)
+    const id =
+        flashPool.allocate()
+
+
+    if(id < 0)
         return
+
+
 
     tmpColor.set(color)
 
-    f.alive = true
-    f.x = x
-    f.y = y
-    f.angle = angle
-    f.size = size
-    f.maxLife = maxLife
-    f.life = maxLife
-    f.seed = Math.random()
-    f.r = tmpColor.r
-    f.g = tmpColor.g
-    f.b = tmpColor.b
+
+
+    flashPool.x[id] =
+        x
+
+
+    flashPool.y[id] =
+        y
+
+
+
+    flashPool.angle[id] =
+        angle
+
+
+
+    flashPool.size[id] =
+        size
+
+
+
+    flashPool.r[id] =
+        tmpColor.r
+
+
+    flashPool.g[id] =
+        tmpColor.g
+
+
+    flashPool.b[id] =
+        tmpColor.b
+
+
+
+    flashPool.seed[id] =
+        Math.random()
+
+
+
+    flashPool.life[id] =
+        maxLife
+
+
+    flashPool.maxLife[id] =
+        maxLife
 
 }
 
+
+
+
+
 export function updateFlashEmitter(dt) {
 
-    for (const f of flashes) {
 
-        if (!f.alive)
+    const p =
+        flashPool
+
+
+
+    for(let i = 0; i < p.capacity; i++) {
+
+
+        if(!p.alive[i])
             continue
 
-        f.life -= dt
 
-        if (f.life <= 0) {
-            f.alive = false
+
+        p.life[i] -= dt
+
+
+
+        if(p.life[i] <= 0) {
+
+            p.kill(i)
+
         }
 
     }

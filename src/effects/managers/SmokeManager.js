@@ -2,27 +2,62 @@
 
 import { registerEffect } from "../effects"
 import { EFFECT } from "../EffectTypes"
-import { emitSmoke, updateSmokeEmitter, smokeParticles } from "../gpu/SmokeEmitter"
+
+import {
+    emitSmoke,
+    updateSmokeEmitter,
+    smokePool
+} from "../gpu/SmokeEmitter"
+
 import { world } from "../../ecs/constants/world.js"
+
+
+const pending = []
+
 
 const smokeManager = {
 
+
     emit(effect) {
-        emitSmoke(effect)
+
+        pending.push(effect)
+
     },
 
+
     update() {
-        updateSmokeEmitter(world.time.delta)
+
+
+        // spawn queued smoke
+        while (pending.length) {
+
+            emitSmoke(
+                pending.pop()
+            )
+
+        }
+
+
+        // update typed arrays
+        updateSmokeEmitter(
+            world.time.delta
+        )
+
     },
+
 
     clear() {
 
-        for (const p of smokeParticles) {
-            p.alive = false
-        }
+        pending.length = 0
 
-    },
+        smokePool.clear()
+
+    }
 
 }
 
-registerEffect(EFFECT.SMOKE, smokeManager)
+
+registerEffect(
+    EFFECT.SMOKE,
+    smokeManager
+)

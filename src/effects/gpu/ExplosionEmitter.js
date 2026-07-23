@@ -1,63 +1,103 @@
-//src/effects/gpu/ExplosionEmitter.js
+// src/effects/gpu/ExplosionEmitter.js
+
+import { createTypedEffectPool } from "../pools/typedEffectPool.js"
+
 
 const MAX_EXPLOSIONS = 512
 
-export const explosions = new Array(MAX_EXPLOSIONS)
 
-for (let i = 0; i < MAX_EXPLOSIONS; i++) {
 
-    explosions[i] = {
-        alive: false,
-        x: 0,
-        y: 0,
-        life: 0,
-        maxLife: 0,
-        size: 0,
-        seed: 0,
-    }
+export const explosionPool =
+    createTypedEffectPool(
+        MAX_EXPLOSIONS,
+        [
+            "size",
+            "seed"
+        ]
+    )
 
-}
 
-function alloc() {
 
-    for (let i = 0; i < MAX_EXPLOSIONS; i++) {
 
-        if (!explosions[i].alive)
-            return explosions[i]
-    }
+export function emitExplosion({
 
-    return null
+    x,
 
-}
+    y,
 
-export function emitExplosion({ x, y, size = 1, maxLife = 1.2 }) {
+    size = 1,
 
-    const e = alloc()
+    maxLife = 1.2
 
-    if (!e)
+}) {
+
+
+    const id =
+        explosionPool.allocate()
+
+
+    if(id < 0)
         return
 
-    e.alive = true
-    e.x = x
-    e.y = y
-    e.size = size
-    e.maxLife = maxLife
-    e.life = e.maxLife
-    e.seed = Math.random()
+
+
+    explosionPool.x[id] =
+        x
+
+
+    explosionPool.y[id] =
+        y
+
+
+
+    explosionPool.size[id] =
+        size
+
+
+
+    explosionPool.seed[id] =
+        Math.random()
+
+
+
+    explosionPool.life[id] =
+        maxLife
+
+
+    explosionPool.maxLife[id] =
+        maxLife
 
 }
+
+
+
+
 
 export function updateExplosionEmitter(dt) {
 
-    for (const e of explosions) {
 
-        if (!e.alive)
+    const p =
+        explosionPool
+
+
+
+    for(let i = 0; i < p.capacity; i++) {
+
+
+        if(!p.alive[i])
             continue
 
-        e.life -= dt
 
-        if (e.life <= 0) {
-            e.alive = false
+
+        p.life[i] -= dt
+
+
+
+        if(p.life[i] <= 0) {
+
+
+            p.kill(i)
+
         }
 
     }

@@ -3,9 +3,9 @@
 import { useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { smokeParticles } from '../effects/gpu/SmokeEmitter'
+import { smokePool, smokeSize } from '../effects/gpu/SmokeEmitter'
 
-const MAX_SMOKE = smokeParticles.length
+const MAX_SMOKE = smokePool.capacity
 
 // ---------------------------------------------------------------------------
 
@@ -111,25 +111,25 @@ export function SmokeRenderer({
 
     for (let i = 0; i < MAX_SMOKE; i++) {
 
-      const p = smokeParticles[i]
+      if (!smokePool.alive[i]) {
 
-      if (!p.alive) {
         alphaAttr.array[i] = 0
         continue
+
       }
 
-      const age = 1 - p.life / p.maxLife
-
+      const age = 1 - smokePool.life[i] / smokePool.maxLife[i]
       const fadeIn = smoothstepJS(0.0, 0.1, age)
       const fadeOut = 1.0 - smoothstepJS(0.6, 1.0, age)
 
-      posAttr.array[i * 3 + 0] = p.x
-      posAttr.array[i * 3 + 1] = p.y
+      posAttr.array[i * 3 + 0] = smokePool.x[i]
+      posAttr.array[i * 3 + 1] = smokePool.y[i]
       posAttr.array[i * 3 + 2] = 0
 
-      sizeAttr.array[i] = p.size * sizeMultiplier
+      sizeAttr.array[i] = smokeSize[i] * sizeMultiplier
       ageAttr.array[i] = age
       alphaAttr.array[i] = fadeIn * fadeOut * baseOpacity
+
     }
 
     posAttr.needsUpdate = true

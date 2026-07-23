@@ -2,11 +2,7 @@
 
 import { registerEffect } from "../effects"
 import { EFFECT } from "../EffectTypes"
-
-import {
-    emitExplosion
-}
-from "../gpu/ExplosionEmitter"
+import { emitExplosion } from "../gpu/ExplosionEmitter"
 
 const pending = []
 

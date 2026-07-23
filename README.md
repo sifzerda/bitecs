@@ -163,3 +163,11 @@ export const GUN_GAP = 0.45 // distance between twin guns
 may need to be customized inside weapons.js for each gun
 
 - [x] trailrenderer needs to replace smoke in missile renderer
+
+
+
+
+
+
+
+- expose the typed arrays ( in emitters) directly to InstancedBufferAttribute

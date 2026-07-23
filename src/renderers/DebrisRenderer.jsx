@@ -3,7 +3,7 @@
 import { useMemo, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
-import { debris, updateDebrisEmitter } from "../effects/gpu/DebrisEmitter"
+import { debrisPool, kind, updateDebrisEmitter } from "../effects/gpu/DebrisEmitter"
 
 const MAX = 256
 
@@ -127,7 +127,6 @@ void main() {
 export function DebrisRenderer() {
 
     const ref = useRef()
-
     const geo = useMemo(() => {
 
         const g = new THREE.IcosahedronGeometry(1, 0)
@@ -163,25 +162,66 @@ export function DebrisRenderer() {
 
         let count = 0
 
-        for (const d of debris) {
+        const p = debrisPool
 
-            if (!d.alive)
+
+        for (let i = 0; i < p.capacity; i++) {
+
+            if (!p.alive[i])
                 continue
 
-            const t = 1 - d.life / d.maxLife
 
-            pos.set(d.x, d.y, 0.15 + (count % 7) * 0.001)
-            scaleVec.set(d.sx, d.sy, d.sz)
+            const t =
+                1 -
+                p.life[i] /
+                p.maxLife[i]
 
-            axis.set(d.axisX, d.axisY, d.axisZ).normalize()
-            rot.setFromAxisAngle(axis, t * d.spinSpeed + d.seedAngle)
-            matrix.compose(pos, rot, scaleVec)
 
-            ref.current.setMatrixAt(count, matrix)
+            pos.set(
+                p.x[i],
+                p.y[i],
+                0.15
+            )
+
+
+            scaleVec.set(
+                p.sx[i],
+                p.sy[i],
+                p.sz[i]
+            )
+
+
+            axis.set(
+                p.axisX[i],
+                p.axisY[i],
+                p.axisZ[i]
+            ).normalize()
+
+
+            rot.setFromAxisAngle(
+                axis,
+                t * p.spinSpeed[i] + p.seedAngle[i]
+            )
+
+
+            matrix.compose(
+                pos,
+                rot,
+                scaleVec
+            )
+
+
+            ref.current.setMatrixAt(
+                count,
+                matrix
+            )
+
+
             ageAttr.array[count] = t
-            kindAttr.array[count] = d.kind
+            kindAttr.array[count] = kind[i]
 
             count++
+
         }
 
         ref.current.count = count
