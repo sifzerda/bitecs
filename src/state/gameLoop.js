@@ -12,6 +12,7 @@ import { flameSystem } from "../ecs/systems/flameSystem"
 import { bossAISystem } from "../ecs/systems/bossAISystem"
 import { bossLaserSystem } from "../ecs/systems/bossLaserSystem.js"
 import { missileSystem } from "../ecs/systems/missileSystem"
+import { trailSystem } from "../ecs/systems/trailSystem"
 
 import { updateSparkEmitter } from "../effects/gpu/SparkEmitter"
 import { exhaustEmitter } from "../effects/gpu/exhaustEmitter.js"
@@ -47,6 +48,10 @@ export function gameLoop(shootState, dt) {
     hazardSystem()
     combatSystem()
     laserSystem()
+
+    // reads final post-movement bullet positions, same as combat/hazard above;
+    // pushes into the TRAIL effect queue that updateEffects() drains below
+    trailSystem()
 
     updateEffects()
     updateSparkEmitter(dt)
