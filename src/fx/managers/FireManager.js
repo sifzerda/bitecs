@@ -1,8 +1,8 @@
-//src/fx/managers/ExplosionManager.js
+// src/fx/managers/FireManager.js
 
 import { registerEffect } from "../effects"
 import { EFFECT } from "../FXTypes"
-import { emitExplosion } from "../gpu/ExplosionEmitter"
+import { emitFire } from "../gpu/FireEmitter"
 
 const pending = []
 
@@ -18,7 +18,7 @@ const manager = {
 
         while (pending.length) {
 
-            emitExplosion(
+            emitFire(
                 pending.pop()
             )
 
@@ -34,4 +34,7 @@ const manager = {
 
 }
 
-registerEffect( EFFECT.EXPLOSION, manager )
+registerEffect(
+    EFFECT.FIRE,
+    manager
+)
