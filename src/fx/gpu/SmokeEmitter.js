@@ -30,11 +30,9 @@ export function emitSmoke({
     lifeMax = 3.5
 }) {
 
-
     for (let i = 0; i < count; i++) {
 
         const id = smokePool.allocate()
-
 
         if (id < 0)
             break

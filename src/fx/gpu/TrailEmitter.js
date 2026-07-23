@@ -8,15 +8,7 @@ const MAX_TRAIL = 400
 
 export const trailPool = createTypedEffectPool(MAX_TRAIL, [ "size", "r", "g", "b", "spin" ])
 
-export function spawnTrailPuff({
-    x,
-    y,
-    size = 0.2,
-    maxLife = 0.4,
-    r = 0.5,
-    g = 0.5,
-    b = 0.5
-}) {
+export function spawnTrailPuff({ x, y, size = 0.2, maxLife = 0.4, r = 0.5, g = 0.5, b = 0.5 }) {
 
     const id = trailPool.allocate()
 

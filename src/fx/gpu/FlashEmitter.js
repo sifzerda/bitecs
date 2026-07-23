@@ -5,28 +5,11 @@ import { createTypedEffectPool } from "../effectPool.js"
 
 const MAX_FLASHES = 64
 
-export const flashPool = createTypedEffectPool(
-        MAX_FLASHES,
-        [
-            "angle",
-            "size",
-            "r",
-            "g",
-            "b",
-            "seed"
-        ]
-    )
+export const flashPool = createTypedEffectPool(MAX_FLASHES, [ "angle", "size", "r", "g", "b", "seed" ])
 
 const tmpColor = new THREE.Color()
 
-export function emitFlash({
-    x,
-    y,
-    angle = 0,
-    size = 1,
-    maxLife = 0.08,
-    color = "#fff2b0"
-}) {
+export function emitFlash({ x, y, angle = 0, size = 1, maxLife = 0.08, color = "#fff2b0" }) {
 
     const id = flashPool.allocate()
 
