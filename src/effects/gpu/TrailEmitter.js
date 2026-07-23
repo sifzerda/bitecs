@@ -13,6 +13,7 @@ for (let i = 0; i < MAX_TRAIL; i++) {
         maxLife: 0,
         size: 0,
         r: 0.5, g: 0.5, b: 0.5,
+        spin: 0,
     }
 }
 
@@ -39,6 +40,7 @@ export function spawnTrailPuff({ x, y, size = 0.2, maxLife = 0.4, r = 0.5, g = 0
     p.r = r
     p.g = g
     p.b = b
+    p.spin = Math.random() * Math.PI * 2   // random orientation so overlapping puffs don't read as stamped copies
 
 }
 
