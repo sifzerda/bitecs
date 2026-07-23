@@ -7,7 +7,7 @@ import { BossAI, Velocity } from "../constants/components.js"
 import { releaseAsteroidEntity } from "../pools/asteroidPool"
 
 import { emitEffect } from "../../fx/effects.js"
-import { EFFECT } from "../../fx/EffectTypes.js"
+import { EFFECT } from "../../fx/FXTypes"
 
 function smokeDirectionFor(id) {
 

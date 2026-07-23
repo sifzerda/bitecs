@@ -12,7 +12,7 @@ import { killAsteroid, killBoss } from "./entityDeath.js"
 import { activeAsteroids } from "../pools/asteroidPool"
 
 import { emitEffect } from "../../fx/effects.js"
-import { EFFECT } from "../../fx/EffectTypes.js"
+import { EFFECT } from "../../fx/FXTypes.js"
 
 const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0

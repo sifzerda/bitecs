@@ -1,7 +1,7 @@
 // src/fx/managers/SmokeManager.js
 
 import { registerEffect } from "../effects"
-import { EFFECT } from "../EffectTypes"
+import { EFFECT } from "../FXTypes"
 
 import {
     emitSmoke,

@@ -1,7 +1,7 @@
 // src/fx/managers/SparkManager.js
 
 import { registerEffect } from "../effects.js"
-import { EFFECT } from "../EffectTypes.js"
+import { EFFECT } from "../FXTypes.js"
 import { emitSparkBurst } from "../gpu/SparkEmitter.js"
 
 const pending = []

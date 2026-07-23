@@ -1,7 +1,7 @@
 // src/fx/managers/TrailManager.js
 
 import { registerEffect } from "../effects"
-import { EFFECT } from "../EffectTypes"
+import { EFFECT } from "../FXTypes"
 
 import {
     spawnTrailPuff

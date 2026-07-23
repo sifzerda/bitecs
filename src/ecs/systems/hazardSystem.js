@@ -10,7 +10,7 @@ import { killAsteroid, killBoss } from "./entityDeath.js"
 import { activeAsteroids } from "../pools/asteroidPool"
 
 import { emitEffect } from "../../fx/effects.js"
-import { EFFECT } from "../../fx/EffectTypes.js"
+import { EFFECT } from "../../fx/FXTypes.js"
 
 export function hazardSystem() {
 

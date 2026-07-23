@@ -1,4 +1,4 @@
-// src/fx/EffectTypes.js
+// src/fx/FXTypes.js
 
 export const EFFECT = {
 

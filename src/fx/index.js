@@ -9,4 +9,4 @@ import "./managers/FlashManager.js"
 import "./managers/TrailManager.js"
 
 export * from "./effects.js"
-export * from "./EffectTypes.js"
+export * from "./FXTypes.js"
