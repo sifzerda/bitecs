@@ -138,15 +138,7 @@ some of these boss dropped weapons, some upgrades
 
 - [ ] 
 
- 
-
-
  -  Verlet mesh, chain etc physics, or engine
- 
-
-
-
-
 
  ## Move effects into GPU particle system API:
 
