@@ -170,4 +170,4 @@ export const GUN_GAP = 0.45 // distance between twin guns
 
 may need to be customized inside weapons.js for each gun
 
-- [ ] trailrenderer needs to replace smoke in missile renderer
+- [x] trailrenderer needs to replace smoke in missile renderer
