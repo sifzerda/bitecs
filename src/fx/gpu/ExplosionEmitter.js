@@ -6,12 +6,7 @@ const MAX_EXPLOSIONS = 512
 
 export const explosionPool = createTypedEffectPool(MAX_EXPLOSIONS, ["size", "seed"])
 
-export function emitExplosion({
-    x,
-    y,
-    size = 1,
-    maxLife = 1.2
-}) {
+export function emitExplosion({ x, y, size = 1, maxLife = 1.2 }) {
 
     const id = explosionPool.allocate()
 

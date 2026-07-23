@@ -6,13 +6,7 @@ const MAX_SPARKS = 4096
 
 export const sparkPool = createTypedEffectPool(MAX_SPARKS, ["size", "hot"])
 
-export function emitSparkBurst({
-    x,
-    y,
-    count = 20,
-    speed = 8,
-    big = false
-}) {
+export function emitSparkBurst({ x, y, count = 20, speed = 8, big = false }) {
 
     for (let i = 0; i < count; i++) {
 
