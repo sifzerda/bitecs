@@ -45,21 +45,14 @@ export function emitSmoke({
         smokePool.x[id] = x
         smokePool.y[id] = y
 
-
         smokePool.vx[id] = vx + Math.cos(angle) * speed
         smokePool.vy[id] = vy + Math.sin(angle) * speed
-        smokeSize[id] = sizeMin +
-            Math.random() *
-            (sizeMax - sizeMin)
+        smokeSize[id] = sizeMin + Math.random() * (sizeMax - sizeMin)
 
-        const life =
-            lifeMin +
-            Math.random() *
-            (lifeMax - lifeMin)
+        const life = lifeMin + Math.random() * (lifeMax - lifeMin)
 
         smokePool.life[id] = life
         smokePool.maxLife[id] = life
-
 
         smokeSeed[id] = Math.random()
 
@@ -67,23 +60,16 @@ export function emitSmoke({
 
 }
 
-
-
 export function updateSmokeEmitter(dt) {
 
     const p = smokePool
 
-
     for (let i = 0; i < p.capacity; i++) {
-
 
         if (!p.alive[i])
             continue
 
-
-
         p.life[i] -= dt
-
 
         if (p.life[i] <= 0) {
 
@@ -92,29 +78,19 @@ export function updateSmokeEmitter(dt) {
 
         }
 
-
-
         p.x[i] += p.vx[i] * dt
         p.y[i] += p.vy[i] * dt
-
-
 
         p.vx[i] *= .985
         p.vy[i] *= .985
 
-
-
         p.vy[i] += 0.4 * dt
-
-
 
         smokeSize[i] += 0.8 * dt
 
     }
 
 }
-
-
 
 export function clearSmoke() {
 

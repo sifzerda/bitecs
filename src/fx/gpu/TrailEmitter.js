@@ -39,11 +39,7 @@ export function updateTrailEmitter(dt) {
 
     const p = trailPool
 
-    for(
-        let i = 0;
-        i < p.capacity;
-        i++
-    ) {
+    for(let i = 0; i < p.capacity; i++) {
 
         if(!p.alive[i])
             continue
