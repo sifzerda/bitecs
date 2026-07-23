@@ -1,5 +1,7 @@
 // src/effects/gpu/TrailEmitter.js
 
+// smoke trails behind explosive projectiles, e.g. missiles, grenades
+
 const MAX_TRAIL = 400
 
 export const trailPuffs = new Array(MAX_TRAIL)

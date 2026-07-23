@@ -15,11 +15,7 @@ const quat = new THREE.Quaternion()
 const euler = new THREE.Euler()
 
 // -------------------------
-// Soft, irregular smoke sprite baked once into a canvas texture.
-// A single perfect radial gradient reads as a glowing orb; overlapping a
-// few off-center soft blobs breaks up the silhouette so it reads as a puff
-// of smoke instead of a sphere/disc.
-// -------------------------
+
 let _smokeTexture = null
 function getSmokeTexture() {
 
@@ -77,7 +73,7 @@ export function TrailRenderer() {
             map: getSmokeTexture(),
             transparent: true,
             depthWrite: false,
-            blending: THREE.NormalBlending,   // real alpha blend reads as smoke; swap to AdditiveBlending for a glowier energy-trail look
+            blending: THREE.AdditiveBlending,   // real alpha blend reads as smoke; swap to AdditiveBlending for a glowier energy-trail look
         })
 
         mat.onBeforeCompile = (shader) => {
