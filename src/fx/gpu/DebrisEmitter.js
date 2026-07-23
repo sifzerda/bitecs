@@ -1,4 +1,4 @@
-// src/effects/gpu/DebrisEmitter.js
+// src/fx/gpu/DebrisEmitter.js
 
 import { createTypedEffectPool } from "../effectPool.js"
 

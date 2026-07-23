@@ -3,7 +3,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { trailPool, updateTrailEmitter } from "../effects/gpu/TrailEmitter.js"
+import { trailPool, updateTrailEmitter } from "../fx/gpu/TrailEmitter.js"
 
 const MAX_TRAIL = 400
 

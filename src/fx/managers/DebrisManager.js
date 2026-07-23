@@ -1,13 +1,10 @@
+// src/fx/managers/DebrisManager.js
+
 import { registerEffect } from "../effects"
 import { EFFECT } from "../EffectTypes"
-
-import {
-    spawnTrailPuff
-} from "../gpu/TrailEmitter.js"
-
+import { emitDebrisBurst } from "../gpu/DebrisEmitter"
 
 const pending = []
-
 
 const manager = {
 
@@ -17,19 +14,17 @@ const manager = {
 
     },
 
-
     update() {
 
         while (pending.length) {
 
-            const effect = pending.pop()
-
-            spawnTrailPuff(effect)
+            emitDebrisBurst(
+                pending.pop()
+            )
 
         }
 
     },
-
 
     clear() {
 
@@ -39,8 +34,4 @@ const manager = {
 
 }
 
-
-registerEffect(
-    EFFECT.TRAIL,
-    manager
-)
+registerEffect(EFFECT.DEBRIS, manager)

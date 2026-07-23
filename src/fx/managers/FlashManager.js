@@ -1,24 +1,28 @@
-// effects/managers/ExhaustManager.js
+// src/fx/managers/FlashManager.js
 
 import { registerEffect } from "../effects"
 import { EFFECT } from "../EffectTypes"
-import { exhaustSources } from "../gpu/ExhaustState"
+
+import {
+    emitFlash
+}
+from "../gpu/FlashEmitter"
 
 const pending = []
 
-const exhaustManager = {
+const manager = {
 
     emit(effect) {
+
         pending.push(effect)
+
     },
 
     update() {
 
-        exhaustSources.length = 0
-
         while (pending.length) {
 
-            exhaustSources.push(
+            emitFlash(
                 pending.pop()
             )
 
@@ -29,10 +33,12 @@ const exhaustManager = {
     clear() {
 
         pending.length = 0
-        exhaustSources.length = 0
 
     }
 
 }
 
-registerEffect(EFFECT.EXHAUST, exhaustManager)
+registerEffect(
+    EFFECT.FLASH,
+    manager
+)

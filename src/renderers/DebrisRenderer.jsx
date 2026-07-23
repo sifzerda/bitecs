@@ -3,7 +3,7 @@
 import { useMemo, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
-import { debrisPool, kind, updateDebrisEmitter } from "../effects/gpu/DebrisEmitter"
+import { debrisPool, kind, updateDebrisEmitter } from "../fx/gpu/DebrisEmitter"
 
 const MAX = 256
 

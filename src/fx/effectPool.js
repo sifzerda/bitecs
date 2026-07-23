@@ -1,4 +1,4 @@
-// src/effects/effectPool.js
+// src/fx/effectPool.js
 
 
 export function createTypedEffectPool(

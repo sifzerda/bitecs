@@ -1,4 +1,4 @@
-//src/effects/managers/ExplosionManager.js
+//src/fx/managers/ExplosionManager.js
 
 import { registerEffect } from "../effects"
 import { EFFECT } from "../EffectTypes"

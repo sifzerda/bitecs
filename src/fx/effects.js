@@ -1,4 +1,4 @@
-// src/effects/effects.js
+// src/fx/effects.js
 
 const registry = new Map()
 

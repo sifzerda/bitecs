@@ -6,8 +6,8 @@ import { gameState } from "../../state/gameState.js"
 import { BossAI, Velocity } from "../constants/components.js"
 import { releaseAsteroidEntity } from "../pools/asteroidPool"
 
-import { emitEffect } from "../../effects/effects.js"
-import { EFFECT } from "../../effects/EffectTypes.js"
+import { emitEffect } from "../../fx/effects.js"
+import { EFFECT } from "../../fx/EffectTypes.js"
 
 function smokeDirectionFor(id) {
 

@@ -1,4 +1,4 @@
-// src/effects/EffectTypes.js
+// src/fx/EffectTypes.js
 
 export const EFFECT = {
 
@@ -10,6 +10,6 @@ export const EFFECT = {
  //   SHOCKWAVE: "shockwave",
     FLASH: "flash",
  //   CAMERA_SHAKE: "cameraShake",
-  TRAIL: "trail",  // missile trail smoke
+    TRAIL: "trail",  // missile trail smoke
 
 }

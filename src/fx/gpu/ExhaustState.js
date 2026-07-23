@@ -1,3 +1,3 @@
-// effects/gpu/ExhaustState.js
+// src/fx/gpu/ExhaustState.js
 
 export const exhaustSources = []

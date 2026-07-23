@@ -1,4 +1,4 @@
-// src/effects/gpu/ExplosionEmitter.js
+// src/fx/gpu/ExplosionEmitter.js
 
 import { createTypedEffectPool } from "../effectPool.js"
 
