@@ -3,7 +3,7 @@
 import { useMemo, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
-import { flashes, updateFlashEmitter } from "../effects/gpu/FlashEmitter"
+import { flashPool, updateFlashEmitter } from "../effects/gpu/FlashEmitter.js"
 
 const MAX = 64
 
@@ -89,37 +89,102 @@ export function FlashRenderer() {
         const ageAttr = geo.attributes.aAge
         const tintAttr = geo.attributes.aTint
 
+        const p = flashPool
+
         let count = 0
 
-        for (const f of flashes) {
 
-            if (!f.alive)
+        for (let i = 0; i < p.capacity; i++) {
+
+
+            if (!p.alive[i])
                 continue
 
-            const t = 1 - f.life / f.maxLife
 
-            pos.set(f.x, f.y, 0.3)
 
-            // elongate along local +x (forward) and pop-shrink over life
-            const pop = 1 - t * 0.5
-            scaleVec.set(f.size * 1.6 * pop, f.size * 0.9 * pop, 1)
+            const t =
+                1 -
+                p.life[i] / p.maxLife[i]
 
-            rot.setFromAxisAngle(zAxis, f.angle)
-            matrix.compose(pos, rot, scaleVec)
 
-            ref.current.setMatrixAt(count, matrix)
-            ageAttr.array[count] = t
 
-            tintAttr.array[count * 3 + 0] = f.r
-            tintAttr.array[count * 3 + 1] = f.g
-            tintAttr.array[count * 3 + 2] = f.b
+            pos.set(
+                p.x[i],
+                p.y[i],
+                0.3
+            )
+
+
+
+            const pop =
+                1 -
+                t * 0.5
+
+
+
+            scaleVec.set(
+                p.size[i] * 1.6 * pop,
+                p.size[i] * 0.9 * pop,
+                1
+            )
+
+
+
+            rot.setFromAxisAngle(
+                zAxis,
+                p.angle[i]
+            )
+
+
+
+            matrix.compose(
+                pos,
+                rot,
+                scaleVec
+            )
+
+
+
+            ref.current.setMatrixAt(
+                count,
+                matrix
+            )
+
+
+
+            ageAttr.array[count] =
+                t
+
+
+
+            tintAttr.array[count * 3 + 0] =
+                p.r[i]
+
+
+            tintAttr.array[count * 3 + 1] =
+                p.g[i]
+
+
+            tintAttr.array[count * 3 + 2] =
+                p.b[i]
+
+
 
             count++
+
         }
 
-        ref.current.count = count
+
+
+        ref.current.count =
+            count
+
+
+
         ref.current.instanceMatrix.needsUpdate = true
+
         ageAttr.needsUpdate = true
+
         tintAttr.needsUpdate = true
 
     })

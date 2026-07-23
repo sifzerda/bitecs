@@ -1,111 +1,152 @@
 //src/effects/gpu/SparkEmitter.js
 
+import { createTypedEffectPool } from "../pools/typedEffectPool.js"
+
 const MAX_SPARKS = 4096
-const DRAG = 0.985
 
-export const particles = new Array(MAX_SPARKS)
 
-for (let i = 0; i < MAX_SPARKS; i++) {
 
-    particles[i] = {
+export const sparkPool =
+    createTypedEffectPool(
+        MAX_SPARKS,
+        [
+            "size",
+            "hot"
+        ]
+    )
 
-        alive: false,
 
-        x: 0,
-        y: 0,
-
-        vx: 0,
-        vy: 0,
-
-        life: 0,
-        maxLife: 0,
-
-        size: 0,
-
-        hot: true,
-
-    }
-
-}
-
-function allocateParticle() {
-
-    for (let i = 0; i < MAX_SPARKS; i++) {
-
-        if (!particles[i].alive)
-            return particles[i]
-
-    }
-
-    return null
-
-}
 
 export function emitSparkBurst({
 
     x,
     y,
-
     count = 20,
     speed = 8,
-    big = false,
+    big = false
 
 }) {
 
-    for (let i = 0; i < count; i++) {
 
-        const p = allocateParticle()
+    for(let i=0;i<count;i++) {
 
-        if (!p)
+
+        const id =
+            sparkPool.allocate()
+
+
+        if(id < 0)
             break
 
-        const angle = Math.random() * Math.PI * 2
-        const s = speed * (0.3 + Math.random() * 1.1)
 
-        p.alive = true
 
-        p.x = x
-        p.y = y
+        const angle =
+            Math.random() *
+            Math.PI * 2
 
-        p.vx = Math.cos(angle) * s
-        p.vy = Math.sin(angle) * s
 
-        p.maxLife = 0.3 + Math.random() * 0.45
-        p.life = p.maxLife
 
-        p.size = (0.1 + Math.random() * 0.22) * (big ? 2.0 : 1.3)
+        const velocity =
+            speed *
+            (
+                0.3 +
+                Math.random()*1.1
+            )
 
-        p.hot = true
+
+
+        sparkPool.x[id]=x
+        sparkPool.y[id]=y
+
+
+        sparkPool.vx[id]=
+            Math.cos(angle) *
+            velocity
+
+
+        sparkPool.vy[id]=
+            Math.sin(angle) *
+            velocity
+
+
+
+        const life =
+            0.3 +
+            Math.random()*0.45
+
+
+
+        sparkPool.life[id]=life
+
+        sparkPool.maxLife[id]=life
+
+
+
+        sparkPool.size[id] =
+            (
+                0.1 +
+                Math.random()*0.22
+            )
+            *
+            (
+                big ? 2 : 1.3
+            )
+
+
+        sparkPool.hot[id]=1
 
     }
 
 }
 
+
+
 export function updateSparkEmitter(dt) {
 
-    for (let i = 0; i < MAX_SPARKS; i++) {
 
-        const p = particles[i]
+    const p=sparkPool
 
-        if (!p.alive)
+
+    for(
+        let i=0;
+        i<p.capacity;
+        i++
+    ) {
+
+
+        if(!p.alive[i])
             continue
 
-        p.x += p.vx * dt
-        p.y += p.vy * dt
 
-        p.vx *= DRAG
-        p.vy *= DRAG
 
-        p.life -= dt
+        p.x[i]+=p.vx[i]*dt
+        p.y[i]+=p.vy[i]*dt
 
-        if (p.life <= 0) {
 
-            p.alive = false
+
+        p.vx[i]*=0.985
+        p.vy[i]*=0.985
+
+
+
+        p.life[i]-=dt
+
+
+
+        if(p.life[i]<=0) {
+
+            p.kill(i)
             continue
 
         }
 
-        p.hot = p.life > p.maxLife * 0.5
+
+
+        p.hot[i] =
+            p.life[i] >
+            p.maxLife[i]*0.5
+            ? 1
+            : 0
 
     }
 

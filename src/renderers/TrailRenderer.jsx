@@ -3,7 +3,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { trailPuffs, updateTrailEmitter } from '../effects/gpu/TrailEmitter.js'
+import { trailPool, updateTrailEmitter } from "../effects/gpu/TrailEmitter.js"
 
 const MAX_TRAIL = 400
 
@@ -124,37 +124,36 @@ export function TrailRenderer() {
         const colorAttr = mesh.geometry.attributes.puffColor
         const alphaAttr = mesh.geometry.attributes.puffAlpha
 
+        const p = trailPool
+
         for (let i = 0; i < MAX_TRAIL; i++) {
 
-            const p = trailPuffs[i]
+            if (!p.alive[i]) {
 
-            if (!p.alive) {
                 matrix.compose(pos.set(0, 0, 0), quat, scaleZero)
                 mesh.setMatrixAt(i, matrix)
+
                 alphaAttr.array[i] = 0
+
                 continue
             }
 
-            const t = Math.max(0, p.life / p.maxLife)   // 1 -> 0 across life
-            const grow = 1.6 - t                        // swells as it dissipates, like real smoke
-
-            const s = p.size * grow * 3.2
-
-            euler.set(0, 0, p.spin)
+            const t = Math.max(0, p.life[i] / p.maxLife[i])
+            const grow = 1.6 - t
+            const s = p.size[i] * grow * 3.2
+           
+            euler.set(0, 0, p.spin[i])
             quat.setFromEuler(euler)
-
-            pos.set(p.x, p.y, -0.01)
+            pos.set(p.x[i], p.y[i], -0.01)
             scaleVec.set(s, s, s)
             matrix.compose(pos, quat, scaleVec)
             mesh.setMatrixAt(i, matrix)
 
             const cIdx = i * 3
-            colorAttr.array[cIdx] = p.r
-            colorAttr.array[cIdx + 1] = p.g
-            colorAttr.array[cIdx + 2] = p.b
 
-            // true alpha fade now (not a color-darkening hack), capped below 1
-            // so overlapping puffs layer/blend instead of reading as flat discs
+            colorAttr.array[cIdx] = p.r[i]
+            colorAttr.array[cIdx + 1] = p.g[i]
+            colorAttr.array[cIdx + 2] = p.b[i]
             alphaAttr.array[i] = t * 0.75
 
         }

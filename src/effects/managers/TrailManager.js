@@ -3,7 +3,7 @@ import { EFFECT } from "../EffectTypes"
 
 import {
     spawnTrailPuff
-} from "../gpu/TrailEmitter"
+} from "../gpu/TrailEmitter.js"
 
 
 const pending = []

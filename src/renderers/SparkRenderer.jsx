@@ -3,7 +3,7 @@
 import { useMemo, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
-import { particles, updateSparkEmitter } from "../effects/gpu/SparkEmitter.js"
+import { sparkPool, updateSparkEmitter } from "../effects/gpu/SparkEmitter.js"
 
 const MAX_SPARKS = 700
 
@@ -20,42 +20,73 @@ export function SparkRenderer() {
 
     useFrame((_, dt) => {
 
+        updateSparkEmitter(dt)
+
         const core = coreRef.current
         const ember = emberRef.current
 
         if (!core || !ember)
             return
 
+        const p = sparkPool
+
         let rendered = 0
         let coreIdx = 0
         let emberIdx = 0
 
-        for (let i = 0; i < particles.length; i++) {
+        for (let i = 0; i < p.capacity; i++) {
 
             if (rendered >= MAX_SPARKS)
                 break
 
-            const p = particles[i]
-
-            if (!p.alive)
+            if (!p.alive[i])
                 continue
 
             rendered++
 
-            const t = p.maxLife > 0
-                ? Math.max(0, p.life / p.maxLife)
-                : 0
+            const t =
+                p.maxLife[i] > 0
+                    ? p.life[i] / p.maxLife[i]
+                    : 0
 
-            const s = Math.max(0.001, p.size * t)
+            const s =
+                Math.max(
+                    0.001,
+                    p.size[i] * t
+                )
 
-            _position.set(p.x, p.y, 0.5)
-            _scale.set(s, s, s)
-            _matrix.compose(_position, _rotation, _scale)
+            _position.set(
+                p.x[i],
+                p.y[i],
+                0.5
+            )
 
-            if (t > 0.5) {
-                core.setMatrixAt(coreIdx++, _matrix)
+            _scale.set(
+                s,
+                s,
+                s
+            )
+
+            _matrix.compose(
+                _position,
+                _rotation,
+                _scale
+            )
+
+            if (p.hot[i]) {
+
+                core.setMatrixAt(
+                    coreIdx++,
+                    _matrix
+                )
+
             } else {
-                ember.setMatrixAt(emberIdx++, _matrix)
+
+                ember.setMatrixAt(
+                    emberIdx++,
+                    _matrix
+                )
+
             }
 
         }
