@@ -1,7 +1,7 @@
 // src/effects/gpu/FlashEmitter.js
 
 import * as THREE from "three"
-import { createTypedEffectPool } from "../pools/typedEffectPool.js"
+import { createTypedEffectPool } from "../effectPool.js"
 
 const MAX_FLASHES = 64
 
