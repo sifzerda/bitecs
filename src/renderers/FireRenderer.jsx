@@ -62,7 +62,6 @@ export function FireRenderer() {
 
                     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
 
-                    // perspective-scaled point sprite size
                     gl_PointSize = aSize * (300.0 / -mvPosition.z);
 
                     gl_Position = projectionMatrix * mvPosition;
@@ -74,8 +73,6 @@ export function FireRenderer() {
 
                 void main() {
 
-                    // slight vertical squash so each sprite reads a little
-                    // "licked" rather than a perfect disc
                     vec2 uv = gl_PointCoord - 0.5;
                     float d = length(uv * vec2(1.0, 1.2));
 
@@ -151,16 +148,8 @@ export function FireRenderer() {
                 // fast per-segment flicker on top of the sway
                 const flicker = 0.8 + Math.sin(elapsed * 20.0 + seed * 50.0 + frac * 9.0) * 0.2
 
-                sizeAttr.array[idx] =
-                    p.size[i] *
-                    THREE.MathUtils.lerp(1.7, 0.12, frac) *
-                    flicker *
-                    (1.0 - age * 0.35) * 100
-
-                alphaAttr.array[idx] =
-                    (1.0 - frac * 0.85) *
-                    Math.pow(t, 0.5) *
-                    flicker
+                sizeAttr.array[idx] = p.size[i] * THREE.MathUtils.lerp(1.7, 0.12, frac) * flicker * (1.0 - age * 0.35) * 100
+                alphaAttr.array[idx] = (1.0 - frac * 0.85) * Math.pow(t, 0.5) * flicker
 
                 // color ramps hot at the root, cooling toward the tip,
                 // and shifting to smoke as the whole particle ages out
