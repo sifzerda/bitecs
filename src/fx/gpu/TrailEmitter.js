@@ -1,4 +1,4 @@
-// src/effects/gpu/TrailEmitter.js
+// src/fx/gpu/TrailEmitter.js
 
 // smoke trails behind explosive projectiles, e.g. missiles, grenades
 

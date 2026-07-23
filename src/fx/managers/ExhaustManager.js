@@ -1,28 +1,24 @@
-// src/effects/managers/DebrisManager.js
+// src/fx/managers/ExhaustManager.js
 
 import { registerEffect } from "../effects"
 import { EFFECT } from "../EffectTypes"
-
-import {
-    emitDebrisBurst
-}
-from "../gpu/DebrisEmitter"
+import { exhaustSources } from "../gpu/ExhaustState"
 
 const pending = []
 
-const manager = {
+const exhaustManager = {
 
     emit(effect) {
-
         pending.push(effect)
-
     },
 
     update() {
 
+        exhaustSources.length = 0
+
         while (pending.length) {
 
-            emitDebrisBurst(
+            exhaustSources.push(
                 pending.pop()
             )
 
@@ -33,12 +29,10 @@ const manager = {
     clear() {
 
         pending.length = 0
+        exhaustSources.length = 0
 
     }
 
 }
 
-registerEffect(
-    EFFECT.DEBRIS,
-    manager
-)
+registerEffect(EFFECT.EXHAUST, exhaustManager)

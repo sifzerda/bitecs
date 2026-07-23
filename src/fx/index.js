@@ -1,4 +1,4 @@
-// src/effects/index.js
+// src/fx/index.js
 
 import "./managers/SparkManager.js"
 import "./managers/ExhaustManager.js"

@@ -4,8 +4,8 @@ import { Position, Velocity, Bullet } from "../constants/components.js"
 import { WEAPONS } from "../constants/weapons.js"
 import { activeBullets } from "../pools/bulletPool.js"
 
-import { emitEffect } from "../../effects/effects.js"
-import { EFFECT } from "../../effects/EffectTypes.js"
+import { emitEffect } from "../../fx/effects.js"
+import { EFFECT } from "../../fx/EffectTypes.js"
 
 const TRAIL_BACK_OFFSET = 0.35   // how far behind the bullet's tail a puff spawns
 const TRAIL_SIZE_MIN = 0.12

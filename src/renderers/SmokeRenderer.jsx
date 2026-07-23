@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { smokePool, smokeSize } from '../effects/gpu/SmokeEmitter'
+import { smokePool, smokeSize } from '../fx/gpu/SmokeEmitter'
 
 const MAX_SMOKE = smokePool.capacity
 

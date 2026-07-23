@@ -51,7 +51,7 @@ import { GodPanel } from '../debug/GodPanel.jsx'
 import { GunPanel } from '../debug/GunPanel.jsx'
 import { BossBuilder } from '../debug/BossBuilder.jsx'
 
-import { updateEffects } from "../effects"
+import { updateEffects } from "../fx"
 
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })

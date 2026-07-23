@@ -5,8 +5,8 @@ import { spawnHazard, spawnBullet } from "../spawn.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { getWeapon } from "../constants/weapons.js"
 
-import { emitEffect } from "../../effects/effects.js"
-import { EFFECT } from "../../effects/EffectTypes.js"
+import { emitEffect } from "../../fx/effects.js"
+import { EFFECT } from "../../fx/EffectTypes.js"
 
 // -------------------------
 // Grenade launcher / any AOE explosive weapon

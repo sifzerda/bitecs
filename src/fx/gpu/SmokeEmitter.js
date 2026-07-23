@@ -1,4 +1,4 @@
-// src/effects/gpu/SmokeEmitter.js
+// src/fx/gpu/SmokeEmitter.js
 
 import { createTypedEffectPool } from "../effectPool.js"
 

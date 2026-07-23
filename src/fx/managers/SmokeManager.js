@@ -1,4 +1,4 @@
-// src/effects/managers/SmokeManager.js
+// src/fx/managers/SmokeManager.js
 
 import { registerEffect } from "../effects"
 import { EFFECT } from "../EffectTypes"
@@ -7,7 +7,7 @@ import {
     emitSmoke,
     updateSmokeEmitter,
     smokePool
-} from "../gpu/SmokeEmitter"
+} from "../gpu/SmokeEmitter.js"
 
 import { world } from "../../ecs/constants/world.js"
 

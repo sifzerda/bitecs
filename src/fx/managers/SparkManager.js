@@ -1,4 +1,4 @@
-// src/effects/managers/SparkManager.js
+// src/fx/managers/SparkManager.js
 
 import { registerEffect } from "../effects.js"
 import { EFFECT } from "../EffectTypes.js"

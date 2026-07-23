@@ -1,4 +1,4 @@
-// src/ecs/systems/exhaustEmitter.js
+// src/fx/gpu/exhaustEmitter.js
 
 import { emitEffect } from "../effects"
 import { EFFECT } from "../EffectTypes"

@@ -1,4 +1,4 @@
-// src/effects/gpu/FlashEmitter.js
+// src/fx/gpu/FlashEmitter.js
 
 import * as THREE from "three"
 import { createTypedEffectPool } from "../effectPool.js"

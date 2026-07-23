@@ -1,4 +1,4 @@
-//src/effects/gpu/SparkEmitter.js
+//src/fx/gpu/SparkEmitter.js
 
 import { createTypedEffectPool } from "../effectPool.js"
 

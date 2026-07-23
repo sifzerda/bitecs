@@ -14,9 +14,9 @@ import { bossLaserSystem } from "../ecs/systems/bossLaserSystem.js"
 import { missileSystem } from "../ecs/systems/missileSystem"
 import { trailSystem } from "../ecs/systems/trailSystem"
 
-import { updateSparkEmitter } from "../effects/gpu/SparkEmitter"
-import { exhaustEmitter } from "../effects/gpu/exhaustEmitter.js"
-import { updateEffects } from "../effects/index.js"
+import { updateSparkEmitter } from "../fx/gpu/SparkEmitter"
+import { exhaustEmitter } from "../fx/gpu/exhaustEmitter.js"
+import { updateEffects } from "../fx/index.js"
 
 //import { tentacleSystem } from "../ecs/systems/tentacleSystem"
 //import { clearSpatialGrid, insertIntoSpatialGrid } from '../ecs/constants/spatialGrid.js'

@@ -1,14 +1,15 @@
-// src/effects/managers/FlashManager.js
+// src/fx/managers/TrailManager.js
 
 import { registerEffect } from "../effects"
 import { EFFECT } from "../EffectTypes"
 
 import {
-    emitFlash
-}
-from "../gpu/FlashEmitter"
+    spawnTrailPuff
+} from "../gpu/TrailEmitter.js"
+
 
 const pending = []
+
 
 const manager = {
 
@@ -18,17 +19,19 @@ const manager = {
 
     },
 
+
     update() {
 
         while (pending.length) {
 
-            emitFlash(
-                pending.pop()
-            )
+            const effect = pending.pop()
+
+            spawnTrailPuff(effect)
 
         }
 
     },
+
 
     clear() {
 
@@ -38,7 +41,8 @@ const manager = {
 
 }
 
+
 registerEffect(
-    EFFECT.FLASH,
+    EFFECT.TRAIL,
     manager
 )

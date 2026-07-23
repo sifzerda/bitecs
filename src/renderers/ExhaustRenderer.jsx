@@ -3,7 +3,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { exhaustSources } from "../effects/gpu/ExhaustState"
+import { exhaustSources } from "../fx/gpu/ExhaustState"
 
 const PARTICLE_SIZE = 128
 

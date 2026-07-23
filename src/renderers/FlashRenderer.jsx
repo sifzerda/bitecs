@@ -3,7 +3,7 @@
 import { useMemo, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
-import { flashPool, updateFlashEmitter } from "../effects/gpu/FlashEmitter.js"
+import { flashPool, updateFlashEmitter } from "../fx/gpu/FlashEmitter.js"
 
 const MAX = 64
 
