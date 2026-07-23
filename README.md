@@ -154,7 +154,7 @@ some of these boss dropped weapons, some upgrades
  - [x] flash (or glow)
 
 
-- [ ] add pool for sparks, exhaust, etc
+- [x] add pool for sparks, exhaust, etc
 
 - Position of bullet emission and gun flash currently set in spawn.js const MUZZLE_OFFSET = 0.4 
 export const GUN_GAP = 0.45 // distance between twin guns
@@ -170,3 +170,9 @@ may need to be customized inside weapons.js for each gun
 
 
 - expose the typed arrays ( in emitters) directly to InstancedBufferAttribute
+
+
+- make more guns and bosses:
+- arc gun and boss
+- flamethrower boss
+- plasma gun (for starscream boss)

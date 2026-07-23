@@ -5,7 +5,7 @@ const DEFAULT_PART_CONFIG = {
 
     gun: {
         enabled: true,
-        typeId: 'pulse_blaster',
+        typeId: '00_raygun',
         offsetX: 0.32,
         offsetY: -0.05,
         scale: 0.9,
@@ -269,7 +269,7 @@ export const BOSSES = [
     withDefaults({
         key: "shotgun",
         name: "Space Cowboy",
-        gun: { typeId: '01_sg', offsetX: 0.50, offsetY: -0.15 },
+        gun: { typeId: '01_shotgun', offsetX: 0.50, offsetY: -0.15 },
         fuselage: {
             color: '#ff3355',
             tipY: 0.66,
@@ -315,7 +315,7 @@ export const BOSSES = [
     withDefaults({
         key: "machinegun",
         name: "Rambo The Space Copter",
-        gun: { typeId: '02_mg', offsetX: 0.5, offsetY: -0.2 },
+        gun: { typeId: '02_machinegun', offsetX: 0.5, offsetY: -0.2 },
         fuselage: { color: '#7be2af', shoulderY: 0.53, shoulderWidth: 0.21, waistY: -0.40, waistWidth: 0.26, tailY: -0.59, tailWidth: 0.77, notchY: 0.00 },
         cockpit: { color: '#00ad57', topY: 0.73, topWidth: 0.19, midWidth: 0.24, bottomY: 0.20, bottomWidth: 0.00 },
         wing: { color: '#00ad57', rootX: 0.22, rootY: 0.00, tipX: 0.68, trailX: 0.69, trailY: -0.25 },
@@ -340,7 +340,7 @@ export const BOSSES = [
     withDefaults({
         key: "grenagegun",
         name: "War Machine",
-        gun: { typeId: '03_gl', offsetX: 0.8, offsetY: -0.6 },
+        gun: { typeId: '03_grenadelauncher', offsetX: 0.8, offsetY: -0.6 },
         fuselage: { color: '#63a9eb', tipY: 2.00, shoulderY: 1.83, shoulderWidth: 0.15, waistY: -0.32, waistWidth: 0.17, tailY: -2.00, tailWidth: 0.16, notchY: -1.83 },
         cockpit: { color: '#0070ff', topY: 1.83, topWidth: 0.15, midY: 1.38, midWidth: 0.17, bottomY: 1.53, bottomWidth: 0.13 },
         wing: { color: '#0070ff', rootX: 0.17, rootY: 0.08, tipX: 2.00, tipY: -0.45, trailX: 1.99, trailY: -0.25, innerX: 0.17, innerY: -0.57 },
@@ -361,7 +361,7 @@ export const BOSSES = [
     withDefaults({
         key: "missilegun",
         name: "Rogue Mars Missiler",
-        gun: { typeId: '04_ml', offsetX: 0.9, offsetY: -0.4, scale: 1.0 },
+        gun: { typeId: '04_missilelauncher', offsetX: 0.9, offsetY: -0.4, scale: 1.0 },
         fuselage: { color: '#cfe8ff', tipY: 1.17, shoulderY: 0.47, shoulderWidth: 0.19, waistY: -0.76, waistWidth: 0.15, tailY: -0.40, tailWidth: 0.06, notchY: -0.30 },
         cockpit: { color: '#ff3355', topY: 0.58, topWidth: 0.11, midY: 0.11, midWidth: 0.14, bottomY: 0.02, bottomWidth: 0.00 },
         wing: { color: '#818a8d' },
@@ -381,7 +381,7 @@ export const BOSSES = [
     withDefaults({
         key: "acidthrowergun",
         name: "Space Tractor",
-        gun: { typeId: '07_at', offsetX: 0.70, offsetY: -0.10, scale: 1.0 },
+        gun: { typeId: '07_acidthrower', offsetX: 0.70, offsetY: -0.10, scale: 1.0 },
         fuselage: { color: '#dfff00', tipY: 0.92, shoulderY: 0.53, shoulderWidth: 0.13, waistY: -0.34, waistWidth: 0.12, tailY: -0.83, tailWidth: 0.03, notchY: -0.84 },
         cockpit: { color: '#ffbf00', topY: 0.43, topWidth: 0.11, midY: 0.11, midWidth: 0.13, bottomY: 0.15, bottomWidth: 0.08 },
         wing: { color: '#ff2d2d', rootX: 0.13, rootY: 0.28, tipX: 1.68, tipY: -0.09, trailX: 1.67, trailY: -0.27, innerX: 0.10, innerY: -0.10 },
@@ -402,6 +402,53 @@ export const BOSSES = [
         landingGear: { enabled: false },
     }),
 
+    withDefaults({
+        key: "cryogun",
+        name: "The Flying Refrigerator",
+        gun: { typeId: '06_cryogun', offsetX: 0.87, offsetY: -0.5 },
+        fuselage: { color: '#cfffff', tipY: 0.18, shoulderY: 0.56, shoulderWidth: 0.44, waistY: -0.85, waistWidth: -0.40, tailY: 0.11, tailWidth: -0.24, notchY: 0.80 },
+        cockpit: { color: '#6c00ff', topY: 0.60, topWidth: 0.21, midY: 0.11, midWidth: 0.35, bottomY: 0.23, bottomWidth: 0.20 },
+        wing: { color: '#004cd1', rootX: 0.62, rootY: -0.09, tipX: 0.14, tipY: 0.97, trailX: 0.6, trailY: -0.60, innerX: 0.31, innerY: -1.17 },
+        wingPanel: { color: '#cfffff' },
+        wingtip: { color: '#cfffff', width: -0.05, height: 0, offsetX: 0.66, offsetY: -0.14, zOffset: 2.00 },
+        decal: { enabled: true, color: '#004cd1', width: 0.06, length: 0.82, offsetX: 0.34, offsetY: 0.00, zOffset: 2.00 },
+        cockpitGlass: { zOffset: 0.11, color: "#ddfdff", roughness: 0.01, iridescenceIOR: 1.62, iridescenceThicknessMin: 400, iridescenceThicknessMax: 750, attenuationColor: "#ffffff" },
+        engineIntake: { enabled: true, color: '#000000', width: -0.18, height: 0.83, offsetX: 0.14, offsetY: 0.33 },
+        hullVent: { enabled: false, color: '#3a6bd5' },
+        racingStripe: { color: '#0049ff', width: 0.11, length: 0.38, offsetX: 0.15, offsetY: -0.60 },
+        noseSpike: { color: '#cfffff', length: 0.39, width: 0.56, offsetY: 0.17, roundness: 3.76, zOffset: 0.04 },
+        tailFin: { color: '#cfffff', length: 1.05, width: 1.52, sweep: -0.33, offsetX: 0.18, offsetY: 0.15 },
+        exhaustPort: { color: '#ffffff', width: -0.02, height: -0.87, offsetX: -0.01, offsetY: -0.15 },
+        propeller: { enabled: false },
+        centerPropeller: { enabled: false },
+        tailBoom: { enabled: true, color: '#cfffff', length: 0.30, baseWidth: 0.42, tipWidth: -0.01 },
+        boomFin: { enabled: true, color: '#0031c4', length: 1, width: 0.27, sweep: 0.61, offsetX: 0.41, offsetY: 0.31 },
+        healthBar: { fgColor: "#44ff88" },
+    }),
+
+    withDefaults({
+        key: "flamethrowergun",
+        name: "A-10 Space Dragon",
+        gun: { typeId: '05_flamethrower', offsetX: 0.20, offsetY: -0.30, scale: 1.0 },
+        fuselage: { color: '#ddfdff', tipY: 0.68, shoulderY: 0.16, shoulderWidth: -0.73, waistY: -0.73, waistWidth: 0.13, tailY: -0.42, tailWidth: 0.0, notchY: -2.00 },
+        cockpit: { color: '#ffbf00', topY: 0.11, topWidth: 0.11, midY: 0.39, midWidth: 0.16, bottomY: 0.46, bottomWidth: 0.0 },
+        wing: { color: '#ff2d2d', rootX: 0.0, rootY: 0.57, tipX: 0.0, tipY: -1.50, trailX: 0.67, trailY: 0.63, innerX: 0.79, innerY: 0.04 },
+        wingPanel: { color: '#dfff00', inset: 0.08 },
+        wingtip: { color: '#003479', width: 0.11, height: 0.66, offsetX: 0.43, offsetY: -0.04, zOffset: 0.02 },
+        decal: { enabled: true, color: '#000000', width: 0.06, length: 0.65, offsetX: 0.34, offsetY: 0.00, tiltDeg: -11 },
+        cockpitGlass: { enabled: true, inset: 0.08, zOffset: 0.30, color: "#71f550", roughness: 0.15, thickness: 0.72, ior: 1.00, attenuationColor: "#ffffff" },
+        engineIntake: { enabled: true, color: '#00439a', width: 0.11, height: 0.63, offsetX: 0.18, offsetY: 0.39 },
+        hullVent: { enabled: true, color: '#dfff00', count: 1, width: 0.28, height: 0.29, spacing: 0.10, offsetX: 0.35, offsetY: 0.24 },
+        racingStripe: { enabled: true, color: '#ff2d2d', width: 0.04, length: 0.94, offsetX: 0.30, offsetY: -0.14, tiltDeg: -10 },
+        noseSpike: { enabled: true, color: '#ff2d2d', length: 0.37, width: 0.16, offsetY: -0.32, roundness: 0.94, zOffset: 0.04 },
+        tailFin: { enabled: true, color: '#3a6bd5', length: 1.00, width: 0.38, sweep: 0.00, offsetX: 0.24, offsetY: -0.22, splayDeg: 0 },
+        exhaustPort: { enabled: true, color: '#ff2d2d', width: 0.17, height: 0.46, offsetX: 0.0, offsetY: 0.50 },
+        propeller: { enabled: true, bladeColor: '#5f5f5f', hubColor: '#000000', bladeCount: 3, bladeLength: 0.15, bladeWidth: 0.05, hubRadius: 0.03, offsetX: 0.24, offsetY: -1.96, zOffset: 0.30, spinSpeed: 6 },
+        centerPropeller: { enabled: true, bladeColor: '#ffffff', hubColor: '#ff004d', bladeCount: 2, bladeLength: 0.33, bladeWidth: 0.40, hubRadius: 0.09, offsetY: 0.75, zOffset: 0.30, spinSpeed: 20.0 },
+        tailBoom: { enabled: true, color: '#3a6bd5', length: 0.25, baseWidth: 0.17, tipWidth: 0.06 },
+        boomFin: { enabled: true, color: '#03ff00', length: 1.00, width: 0.17, sweep: 0.63, offsetX: 0.42, offsetY: 0.02, splayDeg: 0 },
+        landingGear: { enabled: false },
+    }),
 
 
 
@@ -414,7 +461,7 @@ export const BOSSES = [
         withDefaults({
         key: "plasmagun",
         name: "Starscream", 
-       gun: { typeId: 'pulse_blaster', offsetX: 0.4, offsetY: -0.30, scale: 1.0 },    
+       gun: { typeId: '00_raygun', offsetX: 0.4, offsetY: -0.30, scale: 1.0 },    
           fuselage: { color: '#cfffff', tipY: 0.78, shoulderY: 0.39, shoulderWidth: 0.18, waistY: -0.26, waistWidth: 0.15, tailY: -0.52, tailWidth: 0.12, notchY: -0.41 },      
           cockpit: { color: '#e9ff00', topY: 0.62, topWidth: 0.06, midY: 0.11, midWidth: 0.18, bottomY: 0.0, bottomWidth: 0.09, zOffset: 0.05, },                    
           wing: { color: '#ff3355', rootX: 0.17, rootY: 0.40, tipX: 0.79, tipY: -0.25, trailX: 0.76, trailY: -0.45, innerX: 0.14, innerY: -0.24 },      
@@ -437,55 +484,9 @@ export const BOSSES = [
 
         */
 
-    /*
-    withDefaults({   
-        key: "flamethrowergun",
-        name: "A-10 Space Dragon", 
-        gun: { typeId: '05_ft', offsetX: 0.20, offsetY: -0.30, scale: 1.0 },
-        fuselage: { color: '#ddfdff', tipY: 0.68, shoulderY: 0.16, shoulderWidth: -0.73, waistY: -0.73, waistWidth: 0.13, tailY: -0.42, tailWidth: 0.0, notchY: -2.00 },
-        cockpit: { color: '#ffbf00', topY: 0.11, topWidth: 0.11, midY: 0.39, midWidth: 0.16, bottomY: 0.46, bottomWidth: 0.0 },
-        wing: { color: '#ff2d2d', rootX: 0.0, rootY: 0.57, tipX: 0.0, tipY: -1.50, trailX: 0.67, trailY: 0.63, innerX: 0.79, innerY: 0.04 },
-        wingPanel: { color: '#dfff00', inset: 0.08 },
-        wingtip: { color: '#003479', width: 0.11, height: 0.66, offsetX: 0.43, offsetY: -0.04, zOffset: 0.02 },
-        decal: { enabled: true, color: '#000000', width: 0.06, length: 0.65, offsetX: 0.34, offsetY: 0.00, tiltDeg: -11 },
-        cockpitGlass: { enabled: true, inset: 0.08, zOffset: 0.30, color: "#71f550", roughness: 0.15, thickness: 0.72, ior: 1.00, attenuationColor: "#ffffff" },
-        engineIntake: { enabled: true, color: '#00439a', width: 0.11, height: 0.63, offsetX: 0.18, offsetY: 0.39 },
-        hullVent: { enabled: true, color: '#dfff00', count: 1, width: 0.28, height: 0.29, spacing: 0.10, offsetX: 0.35, offsetY: 0.24 },
-        racingStripe: { enabled: true, color: '#ff2d2d', width: 0.04, length: 0.94, offsetX: 0.30, offsetY: -0.14, tiltDeg: -10 },
-        noseSpike: { enabled: true, color: '#ff2d2d', length: 0.37, width: 0.16, offsetY: -0.32, roundness: 0.94, zOffset: 0.04 },
-        tailFin: { enabled: true, color: '#3a6bd5', length: 1.00, width: 0.38, sweep: 0.00, offsetX: 0.24, offsetY: -0.22, splayDeg: 0 },
-        exhaustPort: { enabled: true, color: '#ff2d2d', width: 0.17, height: 0.46, offsetX: 0.0, offsetY: 0.50 },
-        propeller: { enabled: true, bladeColor: '#5f5f5f', hubColor: '#000000', bladeCount: 3, bladeLength: 0.15, bladeWidth: 0.05, hubRadius: 0.03, offsetX: 0.24, offsetY: -1.96, zOffset: 0.30, spinSpeed: 6 },
-        centerPropeller: { enabled: true, bladeColor: '#ffffff', hubColor: '#ff004d', bladeCount: 2, bladeLength: 0.33, bladeWidth: 0.40, hubRadius: 0.09, offsetY: 0.75, zOffset: 0.30, spinSpeed: 20.0 },
-        tailBoom: { enabled: true, color: '#3a6bd5', length: 0.25, baseWidth: 0.17, tipWidth: 0.06 },
-        boomFin: { enabled: true, color: '#03ff00', length: 1.00, width: 0.17, sweep: 0.63, offsetX: 0.42, offsetY: 0.02, splayDeg: 0 },
-        landingGear: { enabled: false },
-    }),
-    */
 
-    withDefaults({
-        key: "cryogun",
-        name: "The Flying Refrigerator",
-        gun: { typeId: '06_cg', offsetX: 0.87, offsetY: -0.5 },
-        fuselage: { color: '#cfffff', tipY: 0.18, shoulderY: 0.56, shoulderWidth: 0.44, waistY: -0.85, waistWidth: -0.40, tailY: 0.11, tailWidth: -0.24, notchY: 0.80 },
-        cockpit: { color: '#6c00ff', topY: 0.60, topWidth: 0.21, midY: 0.11, midWidth: 0.35, bottomY: 0.23, bottomWidth: 0.20 },
-        wing: { color: '#004cd1', rootX: 0.62, rootY: -0.09, tipX: 0.14, tipY: 0.97, trailX: 0.6, trailY: -0.60, innerX: 0.31, innerY: -1.17 },
-        wingPanel: { color: '#cfffff' },
-        wingtip: { color: '#cfffff', width: -0.05, height: 0, offsetX: 0.66, offsetY: -0.14, zOffset: 2.00 },
-        decal: { enabled: true, color: '#004cd1', width: 0.06, length: 0.82, offsetX: 0.34, offsetY: 0.00, zOffset: 2.00 },
-        cockpitGlass: { zOffset: 0.11, color: "#ddfdff", roughness: 0.01, iridescenceIOR: 1.62, iridescenceThicknessMin: 400, iridescenceThicknessMax: 750, attenuationColor: "#ffffff" },
-        engineIntake: { enabled: true, color: '#000000', width: -0.18, height: 0.83, offsetX: 0.14, offsetY: 0.33 },
-        hullVent: { enabled: false, color: '#3a6bd5' },
-        racingStripe: { color: '#0049ff', width: 0.11, length: 0.38, offsetX: 0.15, offsetY: -0.60 },
-        noseSpike: { color: '#cfffff', length: 0.39, width: 0.56, offsetY: 0.17, roundness: 3.76, zOffset: 0.04 },
-        tailFin: { color: '#cfffff', length: 1.05, width: 1.52, sweep: -0.33, offsetX: 0.18, offsetY: 0.15 },
-        exhaustPort: { color: '#ffffff', width: -0.02, height: -0.87, offsetX: -0.01, offsetY: -0.15 },
-        propeller: { enabled: false },
-        centerPropeller: { enabled: false },
-        tailBoom: { enabled: true, color: '#cfffff', length: 0.30, baseWidth: 0.42, tipWidth: -0.01 },
-        boomFin: { enabled: true, color: '#0031c4', length: 1, width: 0.27, sweep: 0.61, offsetX: 0.41, offsetY: 0.31 },
-        healthBar: { fgColor: "#44ff88" },
-    }),
+
+
 
 
 
