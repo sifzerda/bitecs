@@ -162,7 +162,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <DebrisRenderer />
                     <ExplosionRenderer />
                     <FireRenderer />
-                    <ShockwaveRenderer /> 
+                    <ShockwaveRenderer />
                     <FlashRenderer />
 
                     <BossRenderer />
@@ -176,17 +176,24 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     {/*             <OctopusRenderer />           */}
 
                     <EffectComposer multisampling={0}>
+                        {/* === FIRE BLOOM SETUP === */}
+                        <Bloom
+                            intensity={1.65}           // Overall glow strength
+                            luminanceThreshold={0.35}  // Lower = more things glow (good for fire)
+                            luminanceSmoothing={0.6}   // Softer transition
+                            radius={0.9}               // How wide the glow spreads
+                            mipmapBlur                 // Better quality
+                        />
 
-                        <Bloom intensity={1.2} luminanceThreshold={0.4} luminanceSmoothing={0.7} mipmapBlur />
+                        {/* Optional: Keep these if you like them */}
+                        <Vignette
+                            eskil={false}
+                            offset={0.25}
+                            darkness={0.45}
+                        />
+                        <Noise opacity={0.018} />
 
-                        {/*      <ChromaticAberration 
-                        blendFunction={BlendFunction.NORMAL} 
-                        offset={[0.0015, 0.001]} />      */}
-
-                        {/* Darken screen edges */}
-                        <Vignette eskil={false} offset={0.25} darkness={0.45} />
-                        <Noise opacity={0.02} />
-                        {/* postprocessing */}
+                        {/* <ChromaticAberration offset={[0.001, 0.001]} /> */}
                     </EffectComposer>
 
                     <SMAA />
