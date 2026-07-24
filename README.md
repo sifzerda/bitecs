@@ -148,7 +148,6 @@ some of these boss dropped weapons, some upgrades
  - [x] debris (asteroid, player, boss) debris upon destruction
  - [x] smoke 
 
-
  - [ ] bullets (?)
  - [ ] fire
  - [x] flash (or glow)
