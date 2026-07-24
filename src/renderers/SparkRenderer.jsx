@@ -80,39 +80,32 @@ varying float vAlpha;
 
 void main() {
 
-    // center the uv, y is the thin axis (ember body), x is the stretch/tail axis
     vec2 p = vUv - 0.5;
 
-    // tight bright body across the thin axis, elongated along the tail axis
-    float body = length(p * vec2(0.6, 1.4));
-    float core = smoothstep(0.55, 0.0, body);
-    core = pow(core, 1.4);
+    // taper the streak to a point at both ends, like a real spark trail
+    float taper = smoothstep(0.0, 0.1, vUv.x) * smoothstep(1.0, 0.8, vUv.x);
 
-    // wide soft halo, much larger than the body, for glow bleed
-    float haloDist = length(p * vec2(0.35, 0.9));
-    float halo = smoothstep(1.0, 0.0, haloDist);
-    halo = pow(halo, 1.6);
+    // thin bright core line running along the streak
+    float distY = abs(p.y) * 2.0;
+    float core = pow(smoothstep(0.22, 0.0, distY), 2.2) * taper;
 
-    // tail fade: hot bright head at x=1 (leading edge), cooling / thinning toward x=0 (trailing)
-    float tail = smoothstep(0.0, 1.0, vUv.x);
-    float heat = core * mix(0.45, 1.0, tail);
+    // tighter red glow hugging the core
+    float innerGlow = pow(smoothstep(0.55, 0.0, distY), 1.6) * taper;
 
-    // molten ember color ramp, pushed toward saturated red/orange, white core stays small
-    vec3 edgeColor = vec3(0.75, 0.03, 0.0);
-    vec3 midColor  = vec3(1.0, 0.22, 0.02);
-    vec3 hotCore   = vec3(1.0, 0.75, 0.35);
+    // wide soft radial halo for neon bleed, blooms past the tapered tips
+    float haloDist = length(p * vec2(0.5, 1.1));
+    float halo = pow(smoothstep(1.0, 0.0, haloDist), 1.4);
 
-    vec3 emberColor = mix(edgeColor, midColor, smoothstep(0.0, 0.7, heat));
-    emberColor = mix(emberColor, hotCore, smoothstep(0.8, 1.0, heat));
+    vec3 hotCore  = vec3(1.0, 0.95, 0.78);
+    vec3 innerRed = vec3(1.0, 0.10, 0.02);
+    vec3 neonRed  = vec3(1.0, 0.0, 0.06);
 
-    // subtle per-instance tint for variation, kept mild so it stays "hot metal" not rainbow
-    emberColor = mix(emberColor, emberColor * vColor * 1.4, 0.2);
+    vec3 finalColor = hotCore * core * 2.6 + innerRed * innerGlow * 2.0 + neonRed * halo * 1.6;
 
-    // red-biased outer glow layered under the core
-    vec3 glowColor = vec3(0.9, 0.12, 0.02);
+    // subtle per-instance tint, kept mild so the neon red reads clean
+    finalColor = mix(finalColor, finalColor * vColor * 1.3, 0.15);
 
-    vec3 finalColor = emberColor * core * 2.2 + glowColor * halo * 1.3;
-    float alpha = clamp(core * 1.4 + halo * 0.8, 0.0, 1.0) * vAlpha;
+    float alpha = clamp(core * 1.6 + innerGlow * 1.2 + halo * 0.9, 0.0, 1.0) * vAlpha;
 
     gl_FragColor = vec4(finalColor, alpha);
 }
