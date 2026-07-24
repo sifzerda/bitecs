@@ -51,17 +51,25 @@ function getSmokeTexture() {
 export function TrailRenderer() {
 
     const meshRef = useRef()
-
     const geometry = useMemo(() => {
 
         const geo = new THREE.PlaneGeometry(1, 1)
 
-        // custom per-instance attributes, driven manually through
-        // onBeforeCompile below — the built-in mesh.instanceColor path
-        // wasn't reliably reaching the shader, so color + alpha both
-        // go through our own attributes instead.
-        geo.setAttribute('puffColor', new THREE.InstancedBufferAttribute(new Float32Array(MAX_TRAIL * 3), 3))
-        geo.setAttribute('puffAlpha', new THREE.InstancedBufferAttribute(new Float32Array(MAX_TRAIL), 1))
+        geo.setAttribute(
+            "puffColor",
+            new THREE.InstancedBufferAttribute(
+                trailPool.color,
+                3
+            )
+        )
+
+        geo.setAttribute(
+            "puffAlpha",
+            new THREE.InstancedBufferAttribute(
+                trailPool.alpha,
+                1
+            )
+        )
 
         return geo
 
@@ -133,28 +141,19 @@ export function TrailRenderer() {
                 matrix.compose(pos.set(0, 0, 0), quat, scaleZero)
                 mesh.setMatrixAt(i, matrix)
 
-                alphaAttr.array[i] = 0
-
                 continue
             }
 
             const t = Math.max(0, p.life[i] / p.maxLife[i])
             const grow = 1.6 - t
             const s = p.size[i] * grow * 3.2
-           
+
             euler.set(0, 0, p.spin[i])
             quat.setFromEuler(euler)
             pos.set(p.x[i], p.y[i], -0.01)
             scaleVec.set(s, s, s)
             matrix.compose(pos, quat, scaleVec)
             mesh.setMatrixAt(i, matrix)
-
-            const cIdx = i * 3
-
-            colorAttr.array[cIdx] = p.r[i]
-            colorAttr.array[cIdx + 1] = p.g[i]
-            colorAttr.array[cIdx + 2] = p.b[i]
-            alphaAttr.array[i] = t * 0.75
 
         }
 
