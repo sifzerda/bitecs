@@ -8,23 +8,18 @@ const DRAG = 0.985
 export const debrisPool = createTypedEffectPool(
     MAX_DEBRIS,
     [
-        "sx",
-        "sy",
-        "sz",
-
-        "axisX",
-        "axisY",
-        "axisZ",
-
         "spinSpeed",
         "seedAngle",
-
-        "seed"
+        "seed",
+        "age",
+    ],
+    [
+        "scale",  // non-uniform sx/sy/sz — instanceScale is scalar-only, doesn't fit
+        "axis",   // arbitrary rotation axis — instanceRotation is scalar-only, doesn't fit
     ]
 )
 
-
-// integer attributes
+// integer attributes — static per id, no per-frame update needed, left as-is
 export const kind = new Uint8Array(MAX_DEBRIS)
 
 const KIND_MAP = { rock: 0, metal: 1 }
@@ -52,7 +47,7 @@ export function emitDebrisBurst({
             break
 
         const angle = direction + (Math.random() - 0.5) * spread
-        const velocity =  speed * (0.4 + Math.random() * 0.9)
+        const velocity = speed * (0.4 + Math.random() * 0.9)
 
         p.x[id] = x + (Math.random() - 0.5) * 0.2
         p.y[id] = y + (Math.random() - 0.5) * 0.2
@@ -60,15 +55,21 @@ export function emitDebrisBurst({
         p.vy[id] = Math.sin(angle) * velocity
 
         const s = size * (0.35 + Math.random() * 0.65)
+        const sp = id * 3
 
-        p.sx[id] = s * (0.7 + Math.random() * 0.6)
-        p.sy[id] = s * (0.7 + Math.random() * 0.6)
-        p.sz[id] = s * (0.7 + Math.random() * 0.6)
+        p.scale[sp] = s * (0.7 + Math.random() * 0.6)
+        p.scale[sp + 1] = s * (0.7 + Math.random() * 0.6)
+        p.scale[sp + 2] = s * (0.7 + Math.random() * 0.6)
 
-        p.axisX[id] = Math.random() * 2 - 1
-        p.axisY[id] = Math.random() * 2 - 1
-        p.axisZ[id] = Math.random() * 2 - 1
-        
+        const ax = Math.random() * 2 - 1
+        const ay = Math.random() * 2 - 1
+        const az = Math.random() * 2 - 1
+        const axLen = Math.sqrt(ax * ax + ay * ay + az * az) || 1
+
+        p.axis[sp] = ax / axLen
+        p.axis[sp + 1] = ay / axLen
+        p.axis[sp + 2] = az / axLen
+
         p.spinSpeed[id] = (Math.random() - 0.5) * 10
         p.seedAngle[id] = Math.random() * Math.PI * 2
 
@@ -79,6 +80,14 @@ export function emitDebrisBurst({
         p.life[id] = life
         p.maxLife[id] = life
         p.seed[id] = Math.random()
+        p.age[id] = 0
+
+        const pos = id * 3
+        p.instancePosition[pos] = p.x[id]
+        p.instancePosition[pos + 1] = p.y[id]
+        p.instancePosition[pos + 2] = 0.15
+
+        p.instanceRotation[id] = p.seedAngle[id]
 
     }
 
@@ -106,6 +115,17 @@ export function updateDebrisEmitter(dt) {
 
         p.x[i] += p.vx[i] * dt
         p.y[i] += p.vy[i] * dt
+
+        const pos = i * 3
+        p.instancePosition[pos] = p.x[i]
+        p.instancePosition[pos + 1] = p.y[i]
+
+        const t = 1 - p.life[i] / p.maxLife[i]
+
+        p.age[i] = t
+        p.instanceRotation[i] = t * p.spinSpeed[i] + p.seedAngle[i]
+
+        p.dirty = true
 
     }
 

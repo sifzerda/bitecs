@@ -5,13 +5,13 @@ import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
 import { debrisPool, kind, updateDebrisEmitter } from "../fx/gpu/DebrisEmitter"
 
-const MAX = 256
+const MAX = debrisPool.capacity
 
-const matrix = new THREE.Matrix4()
-const pos = new THREE.Vector3()
-const scaleVec = new THREE.Vector3()
-const rot = new THREE.Quaternion()
-const axis = new THREE.Vector3()
+const _matrix = new THREE.Matrix4()
+const _pos = new THREE.Vector3()
+const _scale = new THREE.Vector3()
+const _rot = new THREE.Quaternion()
+const _axis = new THREE.Vector3()
 
 const vertexShader = /* glsl */ `
 attribute float aAge;
@@ -89,7 +89,6 @@ void main() {
     vKind = aKind;
     vNormal = normalize(normalMatrix * normal);
 
-    // rock chunks get lumpy irregularity; metal shards stay crisp/faceted
     float n = snoise(position * 2.0 + aSeed * 20.0);
     float bulge = n * 0.22 * (1.0 - aKind);
     vec3 displaced = position * (1.0 + bulge);
@@ -109,11 +108,9 @@ void main() {
     vec3 metalColor = vec3(0.5, 0.53, 0.58);
     vec3 base = mix(rockColor, metalColor, vKind);
 
-    // fake directional shading off the (rotating) normal
     float lightWrap = clamp(dot(vNormal, normalize(vec3(0.4, 0.6, 0.7))), 0.0, 1.0);
     vec3 shaded = base * (0.35 + lightWrap * 0.85);
 
-    // hot edges right after spawn, cooling as it ages
     float fresnel = pow(1.0 - abs(vNormal.z), 1.6);
     float emberBoost = smoothstep(0.35, 0.0, vAge);
     shaded += vec3(1.0, 0.45, 0.12) * emberBoost * fresnel * 0.8;
@@ -127,24 +124,28 @@ void main() {
 export function DebrisRenderer() {
 
     const ref = useRef()
+
+    // local compacted-index buffers — same reasoning as Shockwave/Flash/Explosion:
+    // instance attributes are read by compacted index (0..count-1), not raw pool slot id
+    const ageBuffer = useMemo(() => new Float32Array(MAX), [])
+    const kindBuffer = useMemo(() => new Float32Array(MAX), [])
+    const seedBuffer = useMemo(() => {
+        const seeds = new Float32Array(MAX)
+        for (let i = 0; i < MAX; i++) seeds[i] = Math.random()
+        return seeds
+    }, [])
+
     const geo = useMemo(() => {
 
         const g = new THREE.IcosahedronGeometry(1, 0)
-        const ages = new Float32Array(MAX)
-        const seeds = new Float32Array(MAX)
-        const kinds = new Float32Array(MAX)
 
-        for (let i = 0; i < MAX; i++) {
-            seeds[i] = Math.random()
-        }
-
-        g.setAttribute("aAge", new THREE.InstancedBufferAttribute(ages, 1))
-        g.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seeds, 1))
-        g.setAttribute("aKind", new THREE.InstancedBufferAttribute(kinds, 1))
+        g.setAttribute("aAge", new THREE.InstancedBufferAttribute(ageBuffer, 1))
+        g.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seedBuffer, 1))
+        g.setAttribute("aKind", new THREE.InstancedBufferAttribute(kindBuffer, 1))
 
         return g
 
-    }, [])
+    }, [ageBuffer, seedBuffer, kindBuffer])
 
     const material = useMemo(() => new THREE.ShaderMaterial({
         vertexShader: vertexShader,
@@ -157,77 +158,38 @@ export function DebrisRenderer() {
 
         updateDebrisEmitter(dt)
 
-        const ageAttr = geo.attributes.aAge
-        const kindAttr = geo.attributes.aKind
+        const p = debrisPool
+        const mesh = ref.current
+        if (!mesh) return
 
         let count = 0
-
-        const p = debrisPool
-
 
         for (let i = 0; i < p.capacity; i++) {
 
             if (!p.alive[i])
                 continue
 
+            const pos3 = i * 3
 
-            const t =
-                1 -
-                p.life[i] /
-                p.maxLife[i]
+            _pos.set(p.instancePosition[pos3], p.instancePosition[pos3 + 1], p.instancePosition[pos3 + 2])
+            _scale.set(p.scale[pos3], p.scale[pos3 + 1], p.scale[pos3 + 2])
+            _axis.set(p.axis[pos3], p.axis[pos3 + 1], p.axis[pos3 + 2])
+            _rot.setFromAxisAngle(_axis, p.instanceRotation[i])
 
+            _matrix.compose(_pos, _rot, _scale)
+            mesh.setMatrixAt(count, _matrix)
 
-            pos.set(
-                p.x[i],
-                p.y[i],
-                0.15
-            )
-
-
-            scaleVec.set(
-                p.sx[i],
-                p.sy[i],
-                p.sz[i]
-            )
-
-
-            axis.set(
-                p.axisX[i],
-                p.axisY[i],
-                p.axisZ[i]
-            ).normalize()
-
-
-            rot.setFromAxisAngle(
-                axis,
-                t * p.spinSpeed[i] + p.seedAngle[i]
-            )
-
-
-            matrix.compose(
-                pos,
-                rot,
-                scaleVec
-            )
-
-
-            ref.current.setMatrixAt(
-                count,
-                matrix
-            )
-
-
-            ageAttr.array[count] = t
-            kindAttr.array[count] = kind[i]
+            ageBuffer[count] = p.age[i]
+            kindBuffer[count] = kind[i]
 
             count++
 
         }
 
-        ref.current.count = count
-        ref.current.instanceMatrix.needsUpdate = true
-        ageAttr.needsUpdate = true
-        kindAttr.needsUpdate = true
+        mesh.count = count
+        mesh.instanceMatrix.needsUpdate = true
+        mesh.geometry.attributes.aAge.needsUpdate = true
+        mesh.geometry.attributes.aKind.needsUpdate = true
 
     })
 
