@@ -5,13 +5,13 @@ import { useFrame } from "@react-three/fiber"
 import * as THREE from "three"
 import { explosionPool, updateExplosionEmitter } from "../fx/gpu/ExplosionEmitter"
 
-const MAX = 512
+const MAX = explosionPool.capacity
 
-const matrix = new THREE.Matrix4()
-const pos = new THREE.Vector3()
-const scaleVec = new THREE.Vector3()
-const rot = new THREE.Quaternion()
-const axis = new THREE.Vector3()
+const _matrix = new THREE.Matrix4()
+const _pos = new THREE.Vector3()
+const _scale = new THREE.Vector3()
+const _rot = new THREE.Quaternion()
+const _axis = new THREE.Vector3()
 
 const vertexShader = /* glsl */ `
 attribute float aAge;
@@ -147,22 +147,27 @@ export function ExplosionRenderer() {
 
     const ref = useRef()
 
+    // local compacted-index buffers — GPU instance attributes are read by
+    // compacted instance index (0..count-1), not raw pool slot id, so these
+    // can't bind directly to explosionPool's raw-slot-indexed arrays
+    // (same fix as ShockwaveRenderer/FlashRenderer)
+    const ageBuffer = useMemo(() => new Float32Array(MAX), [])
+    const seedBuffer = useMemo(() => {
+        const seeds = new Float32Array(MAX)
+        for (let i = 0; i < MAX; i++) seeds[i] = Math.random()
+        return seeds
+    }, [])
+
     const geo = useMemo(() => {
 
         const g = new THREE.SphereGeometry(1, 12, 10)
-        const ages = new Float32Array(MAX)
-        const seeds = new Float32Array(MAX)
 
-        for (let i = 0; i < MAX; i++) {
-            seeds[i] = Math.random()
-        }
-
-        g.setAttribute("aAge", new THREE.InstancedBufferAttribute(ages, 1))
-        g.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seeds, 1))
+        g.setAttribute("aAge", new THREE.InstancedBufferAttribute(ageBuffer, 1))
+        g.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seedBuffer, 1))
 
         return g
 
-    }, [])
+    }, [ageBuffer, seedBuffer])
 
     const material = useMemo(() => new THREE.ShaderMaterial({
         vertexShader: vertexShader,
@@ -176,9 +181,9 @@ export function ExplosionRenderer() {
 
         updateExplosionEmitter(dt)
 
-        const ageAttr = geo.attributes.aAge
-
         const p = explosionPool
+        const mesh = ref.current
+        if (!mesh) return
 
         let count = 0
 
@@ -187,93 +192,32 @@ export function ExplosionRenderer() {
             if (!p.alive[i])
                 continue
 
+            const pos3 = i * 3
 
-            const t =
-                1 -
-                p.life[i] / p.maxLife[i]
-
-
-            const burstT =
-                Math.min(t / 0.25, 1)
-
-            const burstEase =
-                1 - Math.pow(1 - burstT, 3)
-
-
-            const burstScale =
-                THREE.MathUtils.lerp(
-                    0.25,
-                    1.3,
-                    burstEase
-                )
-
-
-            const lingerScale =
-                1 + t * 0.45
-
-
-            const s =
-                p.size[i] *
-                burstScale *
-                lingerScale
-
-
-
-            pos.set(
-                p.x[i],
-                p.y[i],
-                0.2 + (count % 7) * 0.001
+            _pos.set(
+                p.instancePosition[pos3],
+                p.instancePosition[pos3 + 1],
+                p.instancePosition[pos3 + 2] + (count % 7) * 0.001
             )
 
+            const s = p.instanceScale[i]
+            _scale.set(s, s, s)
 
-            scaleVec.set(
-                s,
-                s,
-                s
-            )
+            _axis.set(p.axis[pos3], p.axis[pos3 + 1], p.axis[pos3 + 2])
+            _rot.setFromAxisAngle(_axis, p.rotAngle[i])
 
+            _matrix.compose(_pos, _rot, _scale)
+            mesh.setMatrixAt(count, _matrix)
 
-            const seedAngle =
-                p.seed[i] *
-                Math.PI *
-                2
-
-
-            axis.set(
-                Math.sin(seedAngle),
-                Math.cos(seedAngle),
-                0.4
-            ).normalize()
-
-
-            rot.setFromAxisAngle(
-                axis,
-                t * 1.5 + seedAngle
-            )
-
-
-            matrix.compose(
-                pos,
-                rot,
-                scaleVec
-            )
-
-
-            ref.current.setMatrixAt(
-                count,
-                matrix
-            )
-
-
-            ageAttr.array[count] = t
+            ageBuffer[count] = p.age[i]
 
             count++
 
         }
 
-        ref.current.count = count
-        ref.current.instanceMatrix.needsUpdate = true
-        ageAttr.needsUpdate = true
+        mesh.count = count
+        mesh.instanceMatrix.needsUpdate = true
+        mesh.geometry.attributes.aAge.needsUpdate = true
 
     })
 
