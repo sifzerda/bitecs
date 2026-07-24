@@ -7,7 +7,6 @@ import { sparkPool, updateSparkEmitter } from "../fx/gpu/SparkEmitter.js"
 
 const MAX_SPARKS = 4096
 
-
 export function SparkRenderer() {
 
     const meshRef = useRef()
