@@ -1,12 +1,14 @@
 // src/renderers/SmokeRenderer.jsx
 
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { smokePool, smokeSize } from '../fx/gpu/SmokeEmitter'
+import { smokePool, updateSmokeEmitter } from '../fx/gpu/SmokeEmitter'
 
 const MAX_SMOKE = smokePool.capacity
 
+// ---------------------------------------------------------------------------
+// shaders
 // ---------------------------------------------------------------------------
 
 const vertexShader = /* glsl */ `
@@ -15,12 +17,13 @@ const vertexShader = /* glsl */ `
   attribute float aAge;
   varying float vAlpha;
   varying float vAge;
+  uniform float uSizeMultiplier;
 
   void main() {
     vAlpha = aAlpha;
     vAge = aAge;
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-    gl_PointSize = aSize * mix(1.0, 1.6, aAge) * (60.0 / -mvPosition.z);
+    gl_PointSize = aSize * uSizeMultiplier * mix(1.0, 1.6, aAge) * (60.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
 `
@@ -32,6 +35,7 @@ const fragmentShader = /* glsl */ `
   uniform vec3 uHotCore;
   uniform vec3 uFireColor;
   uniform vec3 uSmokeColor;
+  uniform float uOpacity;
 
   void main() {
     if (vAlpha <= 0.0) discard;
@@ -44,26 +48,20 @@ const fragmentShader = /* glsl */ `
     vec3 color = mix(uHotCore, uFireColor, smoothstep(0.0, 0.15, vAge));
     color = mix(color, uSmokeColor, smoothstep(0.15, 1.0, vAge));
 
-    gl_FragColor = vec4(color, falloff * vAlpha);
+    gl_FragColor = vec4(color, falloff * vAlpha * uOpacity);
   }
 `
-
-// ---------------------------------------------------------------------------
-// helpers
-// ---------------------------------------------------------------------------
-
-function smoothstepJS(edge0, edge1, x) {
-  const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)))
-  return t * t * (3 - 2 * t)
-}
 
 // ---------------------------------------------------------------------------
 // component
 // ---------------------------------------------------------------------------
 //
-// DEBUG STYLING: still oversized (sizeMultiplier) for visibility while
-// wiring this up — drop back to ~1 once confirmed. Colors now match the
-// exhaust's hot-core-to-cool three-stage gradient rather than flat green.
+// Binds directly to smokePool's typed arrays — no per-frame copying.
+// Position/scale/alpha come from the factory's standard GPU fields
+// (instancePosition / instanceScale / instanceAlpha, same as sparkPool).
+// Age comes from the plain `age` scalar field (SmokeEmitter's scalarFields
+// list) since the factory has no instanceAge — this pool has no per-instance
+// color use yet, so instanceColor is left unbound here.
 
 export function SmokeRenderer({
   hotCore = '#ff2614',
@@ -73,18 +71,15 @@ export function SmokeRenderer({
   sizeMultiplier = 4,
 }) {
 
+  const pointsRef = useRef()
+
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry()
 
-    const positions = new Float32Array(MAX_SMOKE * 3)
-    const sizes = new Float32Array(MAX_SMOKE)
-    const alphas = new Float32Array(MAX_SMOKE)
-    const ages = new Float32Array(MAX_SMOKE)
-
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1))
-    geo.setAttribute('aAlpha', new THREE.BufferAttribute(alphas, 1))
-    geo.setAttribute('aAge', new THREE.BufferAttribute(ages, 1))
+    geo.setAttribute('position', new THREE.BufferAttribute(smokePool.instancePosition, 3))
+    geo.setAttribute('aSize', new THREE.BufferAttribute(smokePool.instanceScale, 1))
+    geo.setAttribute('aAlpha', new THREE.BufferAttribute(smokePool.instanceAlpha, 1))
+    geo.setAttribute('aAge', new THREE.BufferAttribute(smokePool.age, 1))
 
     return geo
   }, [])
@@ -94,52 +89,36 @@ export function SmokeRenderer({
       uHotCore: { value: new THREE.Color(hotCore) },
       uFireColor: { value: new THREE.Color(fireColor) },
       uSmokeColor: { value: new THREE.Color(smokeColor) },
+      uOpacity: { value: baseOpacity },
+      uSizeMultiplier: { value: sizeMultiplier },
     },
     vertexShader,
     fragmentShader,
     transparent: true,
     depthWrite: false,
     blending: THREE.NormalBlending,
-  }), [hotCore, fireColor, smokeColor])
+  }), [hotCore, fireColor, smokeColor, baseOpacity, sizeMultiplier])
 
-  useFrame(() => {
+  useFrame((_, dt) => {
 
-    const posAttr = geometry.attributes.position
-    const sizeAttr = geometry.attributes.aSize
-    const alphaAttr = geometry.attributes.aAlpha
-    const ageAttr = geometry.attributes.aAge
+    updateSmokeEmitter(dt)
 
-    for (let i = 0; i < MAX_SMOKE; i++) {
+    if (!smokePool.dirty) return
 
-      if (!smokePool.alive[i]) {
+    const attributes = geometry.attributes
 
-        alphaAttr.array[i] = 0
-        continue
+    attributes.position.needsUpdate = true
+    attributes.aSize.needsUpdate = true
+    attributes.aAlpha.needsUpdate = true
+    attributes.aAge.needsUpdate = true
 
-      }
+    smokePool.dirty = false
 
-      const age = 1 - smokePool.life[i] / smokePool.maxLife[i]
-      const fadeIn = smoothstepJS(0.0, 0.1, age)
-      const fadeOut = 1.0 - smoothstepJS(0.6, 1.0, age)
-
-      posAttr.array[i * 3 + 0] = smokePool.x[i]
-      posAttr.array[i * 3 + 1] = smokePool.y[i]
-      posAttr.array[i * 3 + 2] = 0
-
-      sizeAttr.array[i] = smokeSize[i] * sizeMultiplier
-      ageAttr.array[i] = age
-      alphaAttr.array[i] = fadeIn * fadeOut * baseOpacity
-
-    }
-
-    posAttr.needsUpdate = true
-    sizeAttr.needsUpdate = true
-    alphaAttr.needsUpdate = true
-    ageAttr.needsUpdate = true
   })
 
   return (
     <points
+      ref={pointsRef}
       geometry={geometry}
       material={material}
       frustumCulled={false}

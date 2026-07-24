@@ -158,7 +158,15 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <HazardRenderer />
 
                     <SparkRenderer />
-                    <SmokeRenderer />
+
+                    <SmokeRenderer // debug colors and props
+                        hotCore="#ffffff"
+                        fireColor="#00ffff"
+                        smokeColor="#0088ff"
+                        baseOpacity={0.9}
+                        sizeMultiplier={4}
+                    />
+
                     <DebrisRenderer />
                     <ExplosionRenderer />
                     <FireRenderer />
