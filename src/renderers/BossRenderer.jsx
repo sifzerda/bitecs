@@ -297,6 +297,18 @@ function createHullMaterial(partCfg, hullTextureCfg, texture) {
         metalness: 0.2,
         roughness: partCfg.roughness ?? 0.5,
         map: texture ?? null,
+        emissive: new THREE.Color(partCfg.emissive ?? '#000000'),
+        emissiveIntensity: partCfg.emissiveIntensity ?? 0,
+
+                clearcoat: partCfg.clearcoat ?? 0,
+        clearcoatRoughness: partCfg.clearcoatRoughness ?? 0.1,
+        iridescence: partCfg.iridescence ?? 0,
+        iridescenceIOR: partCfg.iridescenceIOR ?? 1.3,
+        iridescenceThicknessRange: [
+            partCfg.iridescenceThicknessMin ?? 100,
+            partCfg.iridescenceThicknessMax ?? 400,
+        ],
+        envMapIntensity: partCfg.envMapIntensity ?? 1,
     })
 
     const opacity = hullTextureCfg.enabled ? hullTextureCfg.opacity : 0
@@ -338,17 +350,47 @@ function createHullMaterial(partCfg, hullTextureCfg, texture) {
 
 // ============================================================
 
-function Panel({ geometry, position, color, metalness = 0.2, roughness = 0.6, material = null }) {
+function Panel({ geometry, position, color, metalness = 0.2, roughness = 0.6, emissive = '#000000', emissiveIntensity = 0, clearcoat = 0, clearcoatRoughness = 0.1, iridescence = 0, iridescenceIOR = 1.3, iridescenceThicknessRange = [100, 400], envMapIntensity = 1, material = null }) {
     if (material) {
         return <mesh geometry={geometry} position={position} material={material} />
     }
-    return (<mesh geometry={geometry} position={position}><meshPhysicalMaterial color={color} metalness={metalness} roughness={roughness} side={THREE.DoubleSide} /></mesh>)
+    return (
+        <mesh geometry={geometry} position={position}>
+            <meshPhysicalMaterial
+                color={color}
+                metalness={metalness}
+                roughness={roughness}
+                emissive={emissive}
+                emissiveIntensity={emissiveIntensity}
+                clearcoat={clearcoat}
+                clearcoatRoughness={clearcoatRoughness}
+                iridescence={iridescence}
+                iridescenceIOR={iridescenceIOR}
+                iridescenceThicknessRange={iridescenceThicknessRange}
+                envMapIntensity={envMapIntensity}
+                side={THREE.DoubleSide}
+            />
+        </mesh>
+    )
 }
 
-function MirroredPair({ geometry, position, color, metalness = 0.2, roughness = 0.6, rotationZ = 0, flipX = true, rotateY = false, flipZAngle = false, material = null }) {
+function MirroredPair({ geometry, position, color, metalness = 0.2, roughness = 0.6, emissive = '#000000', emissiveIntensity = 0, clearcoat = 0, clearcoatRoughness = 0.1, iridescence = 0, iridescenceIOR = 1.3, iridescenceThicknessRange = [100, 400], envMapIntensity = 1, rotationZ = 0, flipX = true, rotateY = false, flipZAngle = false, material = null }) {
     const [x, y, z] = position
     const sharedMaterial = material ?? (
-        <meshPhysicalMaterial color={color} metalness={metalness} roughness={roughness} side={THREE.DoubleSide} />
+        <meshPhysicalMaterial
+            color={color}
+            metalness={metalness}
+            roughness={roughness}
+            emissive={emissive}
+            emissiveIntensity={emissiveIntensity}
+            clearcoat={clearcoat}
+            clearcoatRoughness={clearcoatRoughness}
+            iridescence={iridescence}
+            iridescenceIOR={iridescenceIOR}
+            iridescenceThicknessRange={iridescenceThicknessRange}
+            envMapIntensity={envMapIntensity}
+            side={THREE.DoubleSide}
+        />
     )
 
     return (
@@ -381,7 +423,23 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, i
     return (
         <group ref={groupRef} visible={false}>
 
-            <MirroredPair geometry={geo.wing} position={[0, 0, 0]} color={wing.color} flipX={false} rotateY />
+            <MirroredPair
+    geometry={geo.wing}
+    position={[0, 0, 0]}
+    color={wing.color}
+    metalness={wing.metalness}
+    roughness={wing.roughness}
+    emissive={wing.emissive}
+    emissiveIntensity={wing.emissiveIntensity}
+    clearcoat={wing.clearcoat}
+    clearcoatRoughness={wing.clearcoatRoughness}
+    iridescence={wing.iridescence}
+    iridescenceIOR={wing.iridescenceIOR}
+    iridescenceThicknessRange={[wing.iridescenceThicknessMin, wing.iridescenceThicknessMax]}
+    envMapIntensity={wing.envMapIntensity}
+    flipX={false}
+    rotateY
+/>
 
             {landingGear.enabled && (
                 <>
@@ -390,7 +448,12 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, i
                 </>
             )}
 
-            <MirroredPair geometry={geo.wingPanel} position={[0, 0, 0.01]} color={wingPanel.color} material={hullMaterials.wingPanel} flipX={false} rotateY />
+            <MirroredPair geometry={geo.wingPanel} position={[0, 0, 0.01]} color={wingPanel.color} material={hullMaterials.wingPanel} clearcoat={wing.clearcoat}
+    clearcoatRoughness={wing.clearcoatRoughness}
+    iridescence={wing.iridescence}
+    iridescenceIOR={wing.iridescenceIOR}
+    iridescenceThicknessRange={[wing.iridescenceThicknessMin, wing.iridescenceThicknessMax]}
+    envMapIntensity={wing.envMapIntensity} flipX={false} rotateY />
             <MirroredPair geometry={geo.wingtip} position={[wingtip.offsetX, wingtip.offsetY, wingtip.zOffset]} color={wingtip.color} />
 
             {horn.enabled && (
@@ -404,9 +467,63 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, i
                 </>
             )}
 
-            {tailFin.enabled && (<MirroredPair geometry={geo.tailFin} position={[tailFin.offsetX, tailFin.offsetY, 0.025]} color={tailFin.color} rotationZ={-geo.tailFinSplayRad} rotateY flipZAngle />)}
-            {tailBoom.enabled && (<Panel geometry={geo.tailBoom} position={[0, 0, 0.02]} color={tailBoom.color} metalness={0.3} roughness={0.55} />)}
-            {tailBoom.enabled && boomFin.enabled && (<MirroredPair geometry={geo.boomFin} position={[boomFin.offsetX, geo.boomFinY + boomFin.offsetY, 0.026]} color={boomFin.color} rotationZ={-geo.boomFinSplayRad} rotateY flipZAngle />)}
+{tailFin.enabled && (
+    <MirroredPair
+        geometry={geo.tailFin}
+        position={[tailFin.offsetX, tailFin.offsetY, 0.025]}
+        color={tailFin.color}
+        metalness={tailFin.metalness}
+        roughness={tailFin.roughness}
+        emissive={tailFin.emissive}
+        emissiveIntensity={tailFin.emissiveIntensity}
+        clearcoat={tailFin.clearcoat}
+        clearcoatRoughness={tailFin.clearcoatRoughness}
+        iridescence={tailFin.iridescence}
+        iridescenceIOR={tailFin.iridescenceIOR}
+        iridescenceThicknessRange={[tailFin.iridescenceThicknessMin, tailFin.iridescenceThicknessMax]}
+        envMapIntensity={tailFin.envMapIntensity}
+        rotationZ={-geo.tailFinSplayRad}
+        rotateY
+        flipZAngle
+    />
+)}
+           {tailBoom.enabled && (
+    <Panel
+        geometry={geo.tailBoom}
+        position={[0, 0, 0.02]}
+        color={tailBoom.color}
+        metalness={tailBoom.metalness}
+        roughness={tailBoom.roughness}
+        emissive={tailBoom.emissive}
+        emissiveIntensity={tailBoom.emissiveIntensity}
+        clearcoat={tailBoom.clearcoat}
+        clearcoatRoughness={tailBoom.clearcoatRoughness}
+        iridescence={tailBoom.iridescence}
+        iridescenceIOR={tailBoom.iridescenceIOR}
+        iridescenceThicknessRange={[tailBoom.iridescenceThicknessMin, tailBoom.iridescenceThicknessMax]}
+        envMapIntensity={tailBoom.envMapIntensity}
+    />
+)}
+{tailBoom.enabled && boomFin.enabled && (
+    <MirroredPair
+        geometry={geo.boomFin}
+        position={[boomFin.offsetX, geo.boomFinY + boomFin.offsetY, 0.026]}
+        color={boomFin.color}
+        metalness={boomFin.metalness}
+        roughness={boomFin.roughness}
+        emissive={boomFin.emissive}
+        emissiveIntensity={boomFin.emissiveIntensity}
+        clearcoat={boomFin.clearcoat}
+        clearcoatRoughness={boomFin.clearcoatRoughness}
+        iridescence={boomFin.iridescence}
+        iridescenceIOR={boomFin.iridescenceIOR}
+        iridescenceThicknessRange={[boomFin.iridescenceThicknessMin, boomFin.iridescenceThicknessMax]}
+        envMapIntensity={boomFin.envMapIntensity}
+        rotationZ={-geo.boomFinSplayRad}
+        rotateY
+        flipZAngle
+    />
+)}
 
             {exhaustPort.enabled && (
                 <Panel

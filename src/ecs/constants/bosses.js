@@ -24,6 +24,18 @@ const DEFAULT_PART_CONFIG = {
         tailY: -0.55,
         tailWidth: 0.30,
         notchY: -0.37,
+        emissive: '#1a3a5c',
+        emissiveIntensity: 0.4,
+
+        metalness: 0.2,
+        roughness: 0.5,
+        clearcoat: 0,
+        clearcoatRoughness: 0.1,
+        iridescence: 0,
+        iridescenceIOR: 1.3,
+        iridescenceThicknessMin: 100,
+        iridescenceThicknessMax: 400,
+        envMapIntensity: 1,
     },
 
     cockpit: {
@@ -32,7 +44,7 @@ const DEFAULT_PART_CONFIG = {
         topWidth: 0.06,
         midY: 0.14,
         midWidth: 0.15,
-        bottomY: 0.04,
+        bottomY: 0.39,
         bottomWidth: 0.09,
     },
 
@@ -46,11 +58,35 @@ const DEFAULT_PART_CONFIG = {
         trailY: -0.45,
         innerX: 0.14,
         innerY: -0.24,
+        emissive: '#1a3a5c',
+        emissiveIntensity: 0.4,
+
+        metalness: 0.2,
+        roughness: 0.5,
+        clearcoat: 0,
+        clearcoatRoughness: 0.1,
+        iridescence: 0,
+        iridescenceIOR: 1.3,
+        iridescenceThicknessMin: 100,
+        iridescenceThicknessMax: 400,
+        envMapIntensity: 1,
     },
 
     wingPanel: {
         color: '#dff1ff',
         inset: 0.08,
+        emissive: '#1a3a5c',
+        emissiveIntensity: 0,
+
+        metalness: 0.2,
+        roughness: 0.5,
+        clearcoat: 0,
+        clearcoatRoughness: 0.1,
+        iridescence: 0,
+        iridescenceIOR: 1.3,
+        iridescenceThicknessMin: 100,
+        iridescenceThicknessMax: 400,
+        envMapIntensity: 1,
     },
 
     wingtip: {
@@ -79,8 +115,8 @@ const DEFAULT_PART_CONFIG = {
         color: '#00ff10',
         width: 0.06,
         length: 0.65,
-        offsetX: 0.30,
-        offsetY: 0.00,
+        offsetX: 30,
+        offsetY: 0,
         tiltDeg: -11,
         zOffset: 0.041,
     },
@@ -155,6 +191,18 @@ const DEFAULT_PART_CONFIG = {
         offsetX: 0.14,
         offsetY: -0.33,
         splayDeg: 0,
+        emissive: '#1a3a5c',
+        emissiveIntensity: 0.4,
+
+            metalness: 0.2,
+    roughness: 0.5,
+    clearcoat: 0,
+    clearcoatRoughness: 0.1,
+    iridescence: 0,
+    iridescenceIOR: 1.3,
+    iridescenceThicknessMin: 100,
+    iridescenceThicknessMax: 400,
+    envMapIntensity: 1,
     },
 
     exhaustPort: {
@@ -198,7 +246,19 @@ const DEFAULT_PART_CONFIG = {
         color: "#3a6bd5",
         length: 0.25,
         baseWidth: 0.17,
-        tipWidth: 0.06
+        tipWidth: 0.06,
+        emissive: '#1a3a5c',
+        emissiveIntensity: 0.4,
+
+            metalness: 0.2,
+    roughness: 0.5,
+    clearcoat: 0,
+    clearcoatRoughness: 0.1,
+    iridescence: 0,
+    iridescenceIOR: 1.3,
+    iridescenceThicknessMin: 100,
+    iridescenceThicknessMax: 400,
+    envMapIntensity: 1,
     },
 
     boomFin: {
@@ -210,6 +270,18 @@ const DEFAULT_PART_CONFIG = {
         offsetX: 0.42,
         offsetY: 0.02,
         splayDeg: 0,
+        emissive: '#1a3a5c',
+        emissiveIntensity: 0.4,
+
+            metalness: 0.2,
+    roughness: 0.5,
+    clearcoat: 0,
+    clearcoatRoughness: 0.1,
+    iridescence: 0,
+    iridescenceIOR: 1.3,
+    iridescenceThicknessMin: 100,
+    iridescenceThicknessMax: 400,
+    envMapIntensity: 1,
     },
 
     landingGear: {
@@ -428,7 +500,7 @@ export const BOSSES = [
 
     withDefaults({
         key: "flamethrowergun",
-        name: "A-10 Space Dragon",
+        name: "rando",
         gun: { typeId: '05_flamethrower', offsetX: 0.20, offsetY: -0.30, scale: 1.0 },
         fuselage: { color: '#ddfdff', tipY: 0.68, shoulderY: 0.16, shoulderWidth: -0.73, waistY: -0.73, waistWidth: 0.13, tailY: -0.42, tailWidth: 0.0, notchY: -2.00 },
         cockpit: { color: '#ffbf00', topY: 0.11, topWidth: 0.11, midY: 0.39, midWidth: 0.16, bottomY: 0.46, bottomWidth: 0.0 },
@@ -485,7 +557,216 @@ export const BOSSES = [
         */
 
 
+        
+        
+ 
 
+
+withDefaults({
+    key: "flamethrowergun",
+    name: "A-10 Space Dragon",
+
+    gun: {
+        enabled: true,
+        typeId: "05_flamethrower", // Change to any weapon you like
+        offsetX: 0.5,
+        offsetY: -0.4,
+        scale: 1.0,
+        mirrored: true,
+    },
+
+    fuselage: {
+        color: "#24005f",
+        tipY: 0.78,
+        shoulderY: 0.50,
+        shoulderWidth: 0.18,
+        waistY: -0.26,
+        waistWidth: 0.14,
+        tailY: -0.60,
+        tailWidth: 0.26,
+        notchY: -0.38,
+        emissive: "#1a3a5c",
+        emissiveIntensity: 0.4,
+    },
+
+    cockpit: {
+        color: "#0099ff",
+        topY: 0.62,
+        topWidth: 0.11,
+        midY: 0.25,
+        midWidth: 0.18,
+        bottomY: 0.39,
+        bottomWidth: 0.09,
+    },
+
+    wing: {
+        color: "#24005f",
+        rootX: 0.20,
+        rootY: 0.40,
+        tipX: 0.79,
+        tipY: -0.25,
+        trailX: 0.76,
+        trailY: -0.45,
+        innerX: 0.14,
+        innerY: -0.24,
+        emissive: "#1a3a5c",
+        emissiveIntensity: 0.4,
+    },
+
+    wingPanel: {
+        color: "#24005f",
+        inset: 0.08,
+        emissive: "#1a3a5c",
+        emissiveIntensity: 0,
+    },
+
+    wingtip: {
+        color: "#000810",
+        width: -0.03,
+        height: 0.70,
+        offsetX: 0.50,
+        offsetY: -0.10,
+        zOffset: 1.04,
+    },
+
+    horn: {
+        enabled: false,
+    },
+
+    decal: {
+        enabled: true,
+        color: "#ff3355",
+        width: 0.05,
+        length: 0.9,
+        offsetX: 0.2,
+        offsetY: -0.1,
+        tiltDeg: -11,
+        zOffset: 0.041,
+    },
+
+    cockpitGlass: {
+        enabled: true,
+        inset: 0.08,
+        zOffset: 0.05,
+        color: "#ddfdff",
+        metalness: 0,
+        roughness: 0.015,
+        transmission: 1,
+        thickness: 0.75,
+        ior: 1.52,
+        clearcoat: 1,
+        clearcoatRoughness: 0,
+        envMapIntensity: 8,
+        iridescence: 10,
+        iridescenceIOR: 1.35,
+        iridescenceThicknessMin: 180,
+        iridescenceThicknessMax: 900,
+        attenuationColor: "#006eff",
+        attenuationDistance: 2.2,
+    },
+
+    engineIntake: {
+        enabled: true,
+        color: "#002448",
+        width: 0.10,
+        height: 0.70,
+        offsetX: 0.76,
+        offsetY: -0.03,
+    },
+
+    hullVent: {
+        enabled: true,
+        color: "#000000",
+        count: 8,
+        width: 0.09,
+        height: 0.03,
+        spacing: 0.05,
+        offsetX: 0.21,
+        offsetY: -0.08,
+    },
+
+    racingStripe: {
+        enabled: true,
+        color: "#383f6f",
+        width: 0.05,
+        length: 0.73,
+        offsetX: 0.60,
+        offsetY: -0.10,
+        tiltDeg: 0,
+    },
+
+    noseSpike: {
+        enabled: true,
+        color: "#ff0030",
+        length: 0.31,
+        width: 0.07,
+        offsetY: -0.21,
+        roundness: 0.94,
+        zOffset: 0.04,
+    },
+
+    tailFin: {
+        enabled: true,
+        color: "#383f6f",
+        length: 0.19,
+        width: 0.27,
+        sweep: 0.65,
+        offsetX: 0.45,
+        offsetY: -0.39,
+        splayDeg: 0,
+        emissive: "#1a3a5c",
+        emissiveIntensity: 0.4,
+    },
+
+    exhaustPort: {
+        enabled: true,
+        color: "#002448",
+        width: 0.22,
+        height: 0.14,
+        offsetX: 0.01,
+        offsetY: 0.15,
+    },
+
+    propeller: {
+        enabled: false,
+    },
+
+    centerPropeller: {
+        enabled: false,
+    },
+
+    tailBoom: {
+        enabled: true,
+        color: "#1a3a5c",
+        length: -0.24,
+        baseWidth: 0.15,
+        tipWidth: 0.23,
+
+    },
+
+    boomFin: {
+        enabled: true,
+        color: "#ff0030",
+        length: 1.39,
+        width: 0.18,
+        sweep: 0.20,
+        offsetX: 0.81,
+        offsetY: 0.27,
+
+    },
+
+    landingGear: {
+        enabled: false,
+    },
+
+    hullTexture: {
+        enabled: false,
+    },
+
+    healthBar: {
+        fgColor: "#44ff88",
+    },
+}),
 
 
 

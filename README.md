@@ -175,3 +175,499 @@ may need to be customized inside weapons.js for each gun
 - arc gun and boss
 - flamethrower boss
 - plasma gun (for starscream boss)
+
+
+
+
+dragon/flamethrower boss SHAPES:
+
+player overrides: {
+  "general": {
+    "extrudeDepth": 0.03
+  },
+  "fuselage": {
+    "color": "#cfe8ff",
+    "tipY": 0.78,
+    "shoulderY": 0.5,
+    "shoulderWidth": 0.18,
+    "waistY": -0.26,
+    "waistWidth": 0.14,
+    "tailY": -0.55,
+    "tailWidth": 0.3,
+    "notchY": -0.37,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0.4
+  },
+  "cockpit": {
+    "color": "#0070ff",
+    "topY": 0.62,
+    "topWidth": 0.06,
+    "midY": 0.14,
+    "midWidth": 0.15,
+    "bottomY": 0.04,
+    "bottomWidth": 0.09
+  },
+  "wing": {
+    "color": "#cfe8ff",
+    "rootX": 0.2,
+    "rootY": 0.4,
+    "tipX": 0.79,
+    "tipY": -0.25,
+    "trailX": 0.76,
+    "trailY": -0.45,
+    "innerX": 0.14,
+    "innerY": -0.24,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0.4
+  },
+  "wingPanel": {
+    "color": "#dff1ff",
+    "inset": 0.08,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0
+  },
+  "wingtip": {
+    "color": "#00ff10",
+    "width": 0.04,
+    "height": 0.43,
+    "offsetX": 0.77,
+    "offsetY": -0.35,
+    "zOffset": 0.02
+  },
+  "horn": {
+    "enabled": false,
+    "color": "#ffe605",
+    "baseWidth": 0.09,
+    "length": 0.82,
+    "curveAmount": 0.18,
+    "offsetX": 0.13,
+    "offsetY": 0.07,
+    "sweepDeg": 25,
+    "tiltDeg": 8
+  },
+  "decal": {
+    "enabled": true,
+    "color": "#00ff10",
+    "width": 0.06,
+    "length": 0.65,
+    "offsetX": 0.3,
+    "offsetY": 0,
+    "tiltDeg": 0,
+    "zOffset": 0.041
+  },
+  "cockpitGlass": {
+    "enabled": true,
+    "inset": 0.08,
+    "zOffset": 0.05,
+    "color": "#ddfdff",
+    "metalness": 0,
+    "roughness": 0.015,
+    "transmission": 1,
+    "thickness": 0.75,
+    "ior": 1.52,
+    "clearcoat": 1,
+    "clearcoatRoughness": 0,
+    "envMapIntensity": 8,
+    "iridescence": 10,
+    "iridescenceIOR": 1.35,
+    "iridescenceThicknessMin": 180,
+    "iridescenceThicknessMax": 900,
+    "attenuationColor": "#006eff",
+    "attenuationDistance": 2.2
+  },
+  "engineIntake": {
+    "enabled": true,
+    "color": "#00b9ff",
+    "width": 0.09,
+    "height": 0.3,
+    "offsetX": 0.4,
+    "offsetY": -0.28
+  },
+  "hullVent": {
+    "enabled": true,
+    "color": "#2030ff",
+    "count": 8,
+    "width": 0.09,
+    "height": 0.03,
+    "spacing": 0.05,
+    "offsetX": 0.21,
+    "offsetY": -0.08
+  },
+  "racingStripe": {
+    "enabled": true,
+    "color": "#00ff10",
+    "width": 0.04,
+    "length": 0.94,
+    "offsetX": 0.3,
+    "offsetY": -0.14,
+    "tiltDeg": 0
+  },
+  "noseSpike": {
+    "enabled": true,
+    "color": "#00ff10",
+    "length": 0.26,
+    "width": 0.07,
+    "offsetY": -0.32,
+    "roundness": 0.94,
+    "zOffset": 0.04
+  },
+  "tailFin": {
+    "enabled": true,
+    "color": "#7cfff4",
+    "length": 0.25,
+    "width": 0.35,
+    "sweep": 0.5,
+    "offsetX": 0.14,
+    "offsetY": -0.33,
+    "splayDeg": 0,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0.4
+  },
+  "exhaustPort": {
+    "enabled": true,
+    "color": "#0070ff",
+    "width": 0.22,
+    "height": 0.14,
+    "offsetX": 0.01,
+    "offsetY": 0.15
+  },
+  "propeller": {
+    "enabled": false,
+    "bladeColor": "#5f5f5f",
+    "hubColor": "#000000",
+    "bladeCount": 3,
+    "bladeLength": 0.15,
+    "bladeWidth": 0.05,
+    "hubRadius": 0.03,
+    "offsetX": 0.24,
+    "offsetY": -1.96,
+    "zOffset": 0.3,
+    "spinSpeed": 6
+  },
+  "centerPropeller": {
+    "enabled": false,
+    "bladeColor": "#ffffff",
+    "hubColor": "#ff004d",
+    "bladeCount": 2,
+    "bladeLength": 0.33,
+    "bladeWidth": 0.4,
+    "hubRadius": 0.09,
+    "offsetY": 0.75,
+    "zOffset": 0.3,
+    "spinSpeed": 20
+  },
+  "tailBoom": {
+    "enabled": false,
+    "color": "#3a6bd5",
+    "length": 0.25,
+    "baseWidth": 0.17,
+    "tipWidth": 0.06,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0.4
+  },
+  "boomFin": {
+    "enabled": false,
+    "color": "#03ff00",
+    "length": 1,
+    "width": 0.17,
+    "sweep": 0.63,
+    "offsetX": 0.42,
+    "offsetY": 0.02,
+    "splayDeg": 0,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0.4
+  },
+  "landingGear": {
+    "enabled": false,
+    "legColor": "#000000",
+    "wheelColor": "#ff0000",
+    "legLength": 0.28,
+    "legWidth": 0.09,
+    "wheelRadius": 0.06,
+    "offsetX": 0,
+    "offsetY": 0.48,
+    "zOffset": 0.04
+  },
+  "hullTexture": {
+    "enabled": false,
+    "textureKey": "Light Wool",
+    "opacity": 1,
+    "repeatX": 1,
+    "repeatY": 1
+  }
+}
+
+//////////////////////
+
+
+iridescence
+
+player overrides: {
+  "general": {
+    "extrudeDepth": 0.03
+  },
+  "fuselage": {
+    "color": "#cfe8ff",
+    "tipY": 0.78,
+    "shoulderY": 0.5,
+    "shoulderWidth": 0.18,
+    "waistY": -0.26,
+    "waistWidth": 0.14,
+    "tailY": -0.55,
+    "tailWidth": 0.3,
+    "notchY": -0.37,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0.4,
+    "metalness": 0.2,
+    "roughness": 0.5,
+    "clearcoat": 0,
+    "clearcoatRoughness": 0.1,
+    "iridescence": 0,
+    "iridescenceIOR": 1.3,
+    "iridescenceThicknessMin": 100,
+    "iridescenceThicknessMax": 400,
+    "envMapIntensity": 1
+  },
+  "cockpit": {
+    "color": "#0070ff",
+    "topY": 0.62,
+    "topWidth": 0.06,
+    "midY": 0.14,
+    "midWidth": 0.15,
+    "bottomY": 0.04,
+    "bottomWidth": 0.09
+  },
+  "wing": {
+    "color": "#cfe8ff",
+    "rootX": 0.2,
+    "rootY": 0.4,
+    "tipX": 0.79,
+    "tipY": -0.25,
+    "trailX": 0.76,
+    "trailY": -0.45,
+    "innerX": 0.14,
+    "innerY": -0.24,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0.4,
+    "metalness": 0.2,
+    "roughness": 0.5,
+    "clearcoat": 0,
+    "clearcoatRoughness": 0.1,
+    "iridescence": 0,
+    "iridescenceIOR": 1.3,
+    "iridescenceThicknessMin": 100,
+    "iridescenceThicknessMax": 400,
+    "envMapIntensity": 1
+  },
+  "wingPanel": {
+    "color": "#dff1ff",
+    "inset": 0.08,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0,
+    "metalness": 0.2,
+    "roughness": 0.5,
+    "clearcoat": 0,
+    "clearcoatRoughness": 0.1,
+    "iridescence": 0,
+    "iridescenceIOR": 1.3,
+    "iridescenceThicknessMin": 100,
+    "iridescenceThicknessMax": 400,
+    "envMapIntensity": 1
+  },
+  "wingtip": {
+    "color": "#00ff10",
+    "width": 0.04,
+    "height": 0.43,
+    "offsetX": 0.77,
+    "offsetY": -0.35,
+    "zOffset": 0.02
+  },
+  "horn": {
+    "enabled": false,
+    "color": "#ffe605",
+    "baseWidth": 0.09,
+    "length": 0.82,
+    "curveAmount": 0.18,
+    "offsetX": 0.13,
+    "offsetY": 0.07,
+    "sweepDeg": 25,
+    "tiltDeg": 8
+  },
+  "decal": {
+    "enabled": true,
+    "color": "#00ff10",
+    "width": 0.06,
+    "length": 0.65,
+    "offsetX": 0.3,
+    "offsetY": 0,
+    "tiltDeg": 0,
+    "zOffset": 0.041
+  },
+  "cockpitGlass": {
+    "enabled": true,
+    "inset": 0.08,
+    "zOffset": 0.05,
+    "color": "#ddfdff",
+    "metalness": 0,
+    "roughness": 0.015,
+    "transmission": 1,
+    "thickness": 0.75,
+    "ior": 1.52,
+    "clearcoat": 1,
+    "clearcoatRoughness": 0,
+    "envMapIntensity": 8,
+    "iridescence": 10,
+    "iridescenceIOR": 1.35,
+    "iridescenceThicknessMin": 180,
+    "iridescenceThicknessMax": 900,
+    "attenuationColor": "#006eff",
+    "attenuationDistance": 2.2
+  },
+  "engineIntake": {
+    "enabled": true,
+    "color": "#00b9ff",
+    "width": 0.09,
+    "height": 0.3,
+    "offsetX": 0.4,
+    "offsetY": -0.28
+  },
+  "hullVent": {
+    "enabled": true,
+    "color": "#2030ff",
+    "count": 8,
+    "width": 0.09,
+    "height": 0.03,
+    "spacing": 0.05,
+    "offsetX": 0.21,
+    "offsetY": -0.08
+  },
+  "racingStripe": {
+    "enabled": true,
+    "color": "#00ff10",
+    "width": 0.04,
+    "length": 0.94,
+    "offsetX": 0.3,
+    "offsetY": -0.14,
+    "tiltDeg": 0
+  },
+  "noseSpike": {
+    "enabled": true,
+    "color": "#00ff10",
+    "length": 0.26,
+    "width": 0.07,
+    "offsetY": -0.32,
+    "roundness": 0.94,
+    "zOffset": 0.04
+  },
+  "tailFin": {
+    "enabled": true,
+    "color": "#7cfff4",
+    "length": 0.25,
+    "width": 0.35,
+    "sweep": 0.5,
+    "offsetX": 0.14,
+    "offsetY": -0.33,
+    "splayDeg": 0,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0.4,
+    "metalness": 0.2,
+    "roughness": 0.5,
+    "clearcoat": 0,
+    "clearcoatRoughness": 0.1,
+    "iridescence": 0,
+    "iridescenceIOR": 1.3,
+    "iridescenceThicknessMin": 100,
+    "iridescenceThicknessMax": 400,
+    "envMapIntensity": 1
+  },
+  "exhaustPort": {
+    "enabled": true,
+    "color": "#0070ff",
+    "width": 0.22,
+    "height": 0.14,
+    "offsetX": 0.01,
+    "offsetY": 0.15
+  },
+  "propeller": {
+    "enabled": false,
+    "bladeColor": "#5f5f5f",
+    "hubColor": "#000000",
+    "bladeCount": 3,
+    "bladeLength": 0.15,
+    "bladeWidth": 0.05,
+    "hubRadius": 0.03,
+    "offsetX": 0.24,
+    "offsetY": -1.96,
+    "zOffset": 0.3,
+    "spinSpeed": 6
+  },
+  "centerPropeller": {
+    "enabled": false,
+    "bladeColor": "#ffffff",
+    "hubColor": "#ff004d",
+    "bladeCount": 2,
+    "bladeLength": 0.33,
+    "bladeWidth": 0.4,
+    "hubRadius": 0.09,
+    "offsetY": 0.75,
+    "zOffset": 0.3,
+    "spinSpeed": 20
+  },
+  "tailBoom": {
+    "enabled": false,
+    "color": "#3a6bd5",
+    "length": 0.25,
+    "baseWidth": 0.17,
+    "tipWidth": 0.06,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0.4,
+    "metalness": 0.2,
+    "roughness": 0.5,
+    "clearcoat": 0,
+    "clearcoatRoughness": 0.1,
+    "iridescence": 0,
+    "iridescenceIOR": 1.3,
+    "iridescenceThicknessMin": 100,
+    "iridescenceThicknessMax": 400,
+    "envMapIntensity": 1
+  },
+  "boomFin": {
+    "enabled": false,
+    "color": "#03ff00",
+    "length": 1,
+    "width": 0.17,
+    "sweep": 0.63,
+    "offsetX": 0.42,
+    "offsetY": 0.02,
+    "splayDeg": 0,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0.4,
+    "metalness": 0.2,
+    "roughness": 0.5,
+    "clearcoat": 0,
+    "clearcoatRoughness": 0.1,
+    "iridescence": 0,
+    "iridescenceIOR": 1.3,
+    "iridescenceThicknessMin": 100,
+    "iridescenceThicknessMax": 400,
+    "envMapIntensity": 1
+  },
+  "landingGear": {
+    "enabled": false,
+    "legColor": "#000000",
+    "wheelColor": "#ff0000",
+    "legLength": 0.28,
+    "legWidth": 0.09,
+    "wheelRadius": 0.06,
+    "offsetX": 0,
+    "offsetY": 0.48,
+    "zOffset": 0.04
+  },
+  "hullTexture": {
+    "enabled": false,
+    "textureKey": "Light Wool",
+    "opacity": 1,
+    "repeatX": 1,
+    "repeatY": 1
+  }
+}

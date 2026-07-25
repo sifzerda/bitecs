@@ -16,7 +16,6 @@ const cool = new THREE.Color(1.6, 0.22, 0.07)
 const smoke = new THREE.Color(0.13, 0.11, 0.11)
 
 const tmpColor = new THREE.Color()
-
 export function FireRenderer() {
 
     const pointsRef = useRef()
