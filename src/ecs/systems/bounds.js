@@ -58,7 +58,7 @@ export function boundsSystem() {
     }
 
     //-------------------------
-    // Boss Clamp + Bounce
+    // Boss Clamp
     //-------------------------
 
     const bosses = bossQuery()
