@@ -7,12 +7,12 @@ import { spawnBullet, spawnHazard } from "../spawn.js"
 import { getWeapon } from "../constants/weapons.js"
 import { explodeAt } from "./weaponEffects.js"
 
-const TURN_SPEED = 2.0   
+const TURN_SPEED = 2.0
 const THRUST = 16
 const MAX_SPEED = 9
 const DRAG = 0.99
 
-const MOVE_INTERVAL_MIN = 1.4    
+const MOVE_INTERVAL_MIN = 1.4
 const MOVE_INTERVAL_MAX = 2.6
 const SHOOT_INTERVAL = 1.4
 
@@ -88,6 +88,7 @@ export function bossAISystem() {
             switch (weapon.category) {
 
                 case "beam":
+                case "thrower":
                     break
 
                 default:

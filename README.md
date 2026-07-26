@@ -80,6 +80,11 @@ Distributed under the MIT License. See LICENSE.txt for more information.
 
 This project is incomplete and requires further development.
 
+## Config Options
+
+- boss order in bosses.js
+- 
+
 ## Tasks
 
 Priority:
@@ -164,7 +169,11 @@ may need to be customized inside weapons.js for each gun
 
 
 
-
+- [ ] missiler needs to shoot missiles,
+ - [ ] war machine needs to shoot grenades
+ - [ ] space tractor needs to shoot acid
+ - [ ] fridgey needs to shoot cryo
+ - [ ] space dragon needs to shoot flamethrower
 
 
 

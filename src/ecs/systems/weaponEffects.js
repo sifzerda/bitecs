@@ -4,6 +4,7 @@ import { Position, Health } from "../constants/components.js"
 import { spawnHazard, spawnBullet } from "../spawn.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { getWeapon } from "../constants/weapons.js"
+import { pushArc } from "../../state/arcState.js"
 
 import { emitEffect } from "../../fx/effects.js"
 import { EFFECT } from "../../fx/FXTypes.js"

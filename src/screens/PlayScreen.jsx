@@ -22,8 +22,14 @@ import { PlayerRenderer } from '../renderers/PlayerRenderer.jsx'
 import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
 import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
 import { MissileRenderer } from '../renderers/MissileRenderer.jsx'
+
+import { ArcRenderer } from '../renderers/ArcRenderer.jsx'
+//import { IceRenderer } from '../renderers/IceRenderer.jsx'
+// import { AcidRenderer } from '../renderers/AcidRenderer.jsx'
+//import { GrenadeRenderer } from '../renderers/GrenadeRenderer.jsx'
+
 import { LaserRenderer } from '../renderers/LaserRenderer.jsx'
-import { FlameRenderer } from '../renderers/FlameRenderer.jsx'
+import { ThrowerRenderer } from '../renderers/ThrowerRenderer.jsx'
 import { HazardRenderer } from '../renderers/HazardRenderer.jsx'
 import { DeflectRenderer } from '../renderers/DeflectRenderer.jsx'
 
@@ -153,9 +159,16 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <TrailRenderer />
                     <MissileRenderer />
 
+                    {/*               <GrenadeRenderer />     */}
+
                     <LaserRenderer />
-                    <FlameRenderer />
+                    <ArcRenderer />
+
+                    <ThrowerRenderer />
                     <HazardRenderer />
+
+                    {/*        <IceRenderer />           */}
+                    {/*          <AcidRenderer />    */}
 
                     <SparkRenderer />
 

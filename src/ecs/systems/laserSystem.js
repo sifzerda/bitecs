@@ -10,6 +10,7 @@ import { laserState } from "../../state/laserState.js"
  
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { activeAsteroids } from "../pools/asteroidPool"
+import { pushArc } from "../../state/arcState.js"
 
 import { emitEffect } from "../../fx/effects.js"
 import { EFFECT } from "../../fx/FXTypes.js"

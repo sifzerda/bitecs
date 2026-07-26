@@ -169,8 +169,8 @@ export default function playerControlSystem(shootState) {
 
     if (weapon.category === "beam") {
         // beam weapons are handled entirely by laserSystem — no discrete spawn/cooldown here
-    } else if (weapon.category === "flame") {
-        // handled entirely by flameSystem
+    } else if (weapon.category === "thrower") {
+        // handled entirely by throwerSystem
 
     } else {
         shootState.timer -= dt

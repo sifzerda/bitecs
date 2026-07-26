@@ -1,11 +1,11 @@
-// src/renderers/FlameRenderer.jsx
+// src/renderers/ThrowerRenderer.jsx
 
-// for the flamethrower weapon
+// for the flamethrower, acidthrower, and cryo ice mist weapon
 
 import { useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { flameState } from '../state/flameState.js'
+import { throwerState } from '../state/throwerState.js'
 import { gameState } from '../state/gameState.js'
 import { getWeapon } from '../ecs/constants/weapons.js'
 
@@ -36,6 +36,8 @@ const simFragmentShader = /* glsl */ `
   uniform float uDelta;
   uniform float uTime;
   uniform float uEmitting;
+  uniform float uTurbulence;
+  uniform float uSpeedMult;
 
   vec2 curl(vec2 p) {
     float n1 = sin(p.y * 1.5 + uTime * 6.0);
@@ -47,11 +49,10 @@ const simFragmentShader = /* glsl */ `
     vec4 data = texture2D(uPosTex, vUv);
 
     vec2 pos = data.xy;
-    float life = data.z; // > 0: actively flying. <= 0: dormant, counting up toward 0.
+    float life = data.z;
     float seed = data.w;
 
     if (life > 0.0) {
-      // active — age it and push it outward along its own fixed spread angle
       life -= uDelta;
 
       float spread = (seed - 0.5) * uConeAngle;
@@ -59,23 +60,22 @@ const simFragmentShader = /* glsl */ `
       float sa = sin(spread);
       vec2 dir = vec2(uDir.x * ca - uDir.y * sa, uDir.x * sa + uDir.y * ca);
 
-      float speed = uRange / 0.5; // matches average spawn lifetime below
-      vec2 turbulence = curl(pos) * 0.35;
+      float speed = (uRange / 0.5) * uSpeedMult;
+      vec2 turbulence = curl(pos) * uTurbulence;
 
       pos += (dir * speed + turbulence) * uDelta;
 
       if (life <= 0.0) {
-        life = -(0.02 + seed * 0.10); // short stagger before it's eligible again
+        life = -(0.02 + seed * 0.10);
       }
     } else {
-      // dormant — count up toward zero
       life += uDelta;
 
       if (life >= 0.0) {
         if (uEmitting > 0.5) {
           vec2 jitter = vec2(sin(seed * 78.233), cos(seed * 45.164)) * 0.04;
           pos = uOrigin + jitter;
-          life = 0.35 + seed * 0.35; // ~0.35–0.70s outward lifetime
+          life = 0.35 + seed * 0.35;
         } else {
           life = -(0.02 + seed * 0.99);
         }
@@ -93,6 +93,7 @@ const renderVertexShader = /* glsl */ `
 
   uniform sampler2D uPosTex;
   uniform float uSize;
+  uniform float uSizeMult;
 
   void main() {
     vec4 data = texture2D(uPosTex, particleUv);
@@ -103,10 +104,9 @@ const renderVertexShader = /* glsl */ `
     vec3 pos = vec3(data.xy, 0.0);
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
 
-    // grows slightly as it ages (young = tight ember, old = puffy dissipating smoke)
     float ageGrow = mix(0.6, 1.4, clamp(1.0 - vLife / 0.7, 0.0, 1.0));
 
-    gl_PointSize = uSize * ageGrow * (40.0 / -mvPosition.z);
+    gl_PointSize = uSize * uSizeMult * ageGrow * (40.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
 `
@@ -116,27 +116,32 @@ const renderFragmentShader = /* glsl */ `
   varying float vLife;
   varying float vSeed;
 
+  uniform vec3 uColorLow;   // cool/base tone (smoke, dark acid, deep frost)
+  uniform vec3 uColorMid;   // mid tone (weapon's glowColor)
+  uniform vec3 uColorHigh;  // hot/bright tone (weapon's color)
+  uniform float uFlicker;
+  uniform float uMist;      // 1.0 = soft uniform mist look, 0.0 = punchy fire/spray look
+
   void main() {
     if (vLife <= 0.0) discard;
 
     float d = length(gl_PointCoord - vec2(0.5));
     if (d > 0.5) discard;
 
-    float t = clamp(vLife / 0.6, 0.0, 1.0); // 1 = just spawned (hot), 0 = dying (cool)
+    float t = clamp(vLife / 0.6, 0.0, 1.0);
 
     float soft = smoothstep(0.5, 0.0, d);
-    float alpha = soft * clamp(vLife * 3.0, 0.0, 1.0) * mix(0.25, 0.85, t);
 
-    // heat gradient: dark ember smoke -> orange -> white-hot core
-    vec3 smoke  = vec3(0.25, 0.06, 0.03);
-    vec3 orange = vec3(1.0, 0.42, 0.05);
-    vec3 hot    = vec3(1.0, 0.92, 0.55);
+    // mist particles fade in/out more gently and stay softer overall;
+    // fire/spray particles keep the punchier core-glow falloff
+    float alphaFireLike = soft * clamp(vLife * 3.0, 0.0, 1.0) * mix(0.25, 0.85, t);
+    float alphaMistLike = soft * clamp(vLife * 2.0, 0.0, 1.0) * mix(0.12, 0.45, t) * soft;
+    float alpha = mix(alphaFireLike, alphaMistLike, uMist);
 
-    vec3 color = mix(smoke, orange, smoothstep(0.0, 0.4, t));
-    color = mix(color, hot, smoothstep(0.55, 0.9, t));
+    vec3 color = mix(uColorLow, uColorMid, smoothstep(0.0, 0.4, t));
+    color = mix(color, uColorHigh, smoothstep(0.55, 0.9, t));
 
-    // tiny per-particle flicker so the flame reads as alive, not static
-    float flicker = 0.85 + 0.15 * sin(vSeed * 53.0 + t * 20.0);
+    float flicker = 1.0 - uFlicker + uFlicker * (0.85 + 0.15 * sin(vSeed * 53.0 + t * 20.0));
     color *= flicker;
 
     gl_FragColor = vec4(color, alpha);
@@ -179,7 +184,7 @@ function createRenderTarget(size) {
 // component
 // ---------------------------------------------------------------------------
 
-export function FlameRenderer({ size = 10 }) {
+export function ThrowerRenderer({ size = 10 }) {
   const { gl } = useThree()
 
   const simScene = useMemo(() => new THREE.Scene(), [])
@@ -193,7 +198,7 @@ export function FlameRenderer({ size = 10 }) {
   const writeTarget = useRef(rtA)
   const otherTarget = useRef(rtB)
 
-  const simMaterial = useMemo(() => new THREE.ShaderMaterial({
+ const simMaterial = useMemo(() => new THREE.ShaderMaterial({
     uniforms: {
       uPosTex: { value: null },
       uOrigin: { value: new THREE.Vector2() },
@@ -203,6 +208,8 @@ export function FlameRenderer({ size = 10 }) {
       uDelta: { value: 0 },
       uTime: { value: 0 },
       uEmitting: { value: 0 },
+      uTurbulence: { value: 0.35 },
+      uSpeedMult: { value: 1.0 },
     },
     vertexShader: simVertexShader,
     fragmentShader: simFragmentShader,
@@ -217,6 +224,12 @@ export function FlameRenderer({ size = 10 }) {
     uniforms: {
       uPosTex: { value: null },
       uSize: { value: size },
+      uSizeMult: { value: 1.0 },
+      uColorLow: { value: new THREE.Color('#25100a') },
+      uColorMid: { value: new THREE.Color('#ff6600') },
+      uColorHigh: { value: new THREE.Color('#ffe895') },
+      uFlicker: { value: 0.15 },
+      uMist: { value: 0.0 },
     },
     vertexShader: renderVertexShader,
     fragmentShader: renderFragmentShader,
@@ -249,19 +262,30 @@ export function FlameRenderer({ size = 10 }) {
     return geo
   }, [])
 
-  useFrame((state, delta) => {
+ useFrame((state, delta) => {
 
     const weapon = getWeapon(gameState.currentWeapon)
-    const active = weapon.category === "flame" && flameState.active
+    const active = weapon.category === "thrower" && throwerState.active
 
     simMaterial.uniforms.uPosTex.value = readTexture.current
     simMaterial.uniforms.uDelta.value = Math.min(delta, 0.1)
     simMaterial.uniforms.uTime.value = state.clock.elapsedTime
-    simMaterial.uniforms.uOrigin.value.set(flameState.originX, flameState.originY)
-    simMaterial.uniforms.uDir.value.set(flameState.dirX, flameState.dirY)
-    simMaterial.uniforms.uConeAngle.value = flameState.coneAngle
-    simMaterial.uniforms.uRange.value = flameState.range
+    simMaterial.uniforms.uOrigin.value.set(throwerState.originX, throwerState.originY)
+    simMaterial.uniforms.uDir.value.set(throwerState.dirX, throwerState.dirY)
+    simMaterial.uniforms.uConeAngle.value = throwerState.coneAngle
+    simMaterial.uniforms.uRange.value = throwerState.range
     simMaterial.uniforms.uEmitting.value = active ? 1 : 0
+    simMaterial.uniforms.uTurbulence.value = weapon.particleTurbulence ?? 0.35
+    simMaterial.uniforms.uSpeedMult.value = weapon.particleSpeedMult ?? 1.0
+
+    // low tone darkens/deepens whichever haloColor the weapon defines,
+    // rather than assuming fire's near-black smoke
+    renderMaterial.uniforms.uColorLow.value.set(weapon.haloColor ?? '#331100').multiplyScalar(0.6)
+    renderMaterial.uniforms.uColorMid.value.set(weapon.glowColor ?? '#ff6600')
+    renderMaterial.uniforms.uColorHigh.value.set(weapon.color ?? '#ffe895')
+    renderMaterial.uniforms.uFlicker.value = weapon.particleFlicker ?? 0.15
+    renderMaterial.uniforms.uMist.value = weapon.particleMist ? 1.0 : 0.0
+    renderMaterial.uniforms.uSizeMult.value = weapon.particleSizeMult ?? 1.0
 
     const prevTarget = gl.getRenderTarget()
 
