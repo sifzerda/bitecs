@@ -763,9 +763,6 @@ withDefaults({
     },
 }),
 
-
-
-
 ]
 
 export const BOSS_INDEX_BY_KEY = Object.fromEntries(BOSSES.map((b, i) => [b.key, i]))
