@@ -499,7 +499,7 @@ export const BOSSES = [
     }),
 
     withDefaults({
-        key: "flamethrowergun",
+        key: "randogun",
         name: "rando",
         gun: { typeId: '05_flamethrower', offsetX: 0.20, offsetY: -0.30, scale: 1.0 },
         fuselage: { color: '#ddfdff', tipY: 0.68, shoulderY: 0.16, shoulderWidth: -0.73, waistY: -0.73, waistWidth: 0.13, tailY: -0.42, tailWidth: 0.0, notchY: -2.00 },
@@ -521,11 +521,6 @@ export const BOSSES = [
         boomFin: { enabled: true, color: '#03ff00', length: 1.00, width: 0.17, sweep: 0.63, offsetX: 0.42, offsetY: 0.02, splayDeg: 0 },
         landingGear: { enabled: false },
     }),
-
-
-
-
-
 
 
     /*
@@ -564,7 +559,7 @@ export const BOSSES = [
 
 withDefaults({
     key: "flamethrowergun",
-    name: "A-10 Space Dragon",
+    name: "X-10 Space Dragon",
 
     gun: {
         enabled: true,

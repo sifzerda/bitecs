@@ -13,17 +13,19 @@ const _scale = new THREE.Vector3()
 const _rot = new THREE.Quaternion()
 const _zAxis = new THREE.Vector3(0, 0, 1)
 
-const vertexShader = /* glsl */ 
-`
+const vertexShader = /* glsl */ `
 attribute float aAlpha;
 attribute vec3 aTint;
 
 varying float vAlpha;
 varying vec3 vTint;
+varying vec2 vUv;
 
 void main() {
+
     vAlpha = aAlpha;
     vTint = aTint;
+    vUv = uv;
 
     vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mvPosition;
@@ -34,10 +36,25 @@ const fragmentShader = /* glsl */
 `
 varying float vAlpha;
 varying vec3 vTint;
+varying vec2 vUv;
 
 void main() {
-    // gl_PointCoord isn't available for instanced planes — use a manual UV-style coord
-    vec2 p = (gl_FragCoord.xy - gl_FragCoord.xy); // placeholder, replaced below
+
+    vec2 p = (vUv - 0.5) * vec2(1.0, 1.65);
+    float d = length(p);
+
+    float core = smoothstep(0.32, 0.0, d);
+    float glow = smoothstep(0.65, 0.05, d);
+
+    vec3 white = vec3(1.0, 0.98, 0.92);
+    vec3 color = mix(vTint, white, core);
+
+    float alpha = glow * vAlpha;
+    alpha *= alpha;
+
+    if (alpha < 0.001) discard;
+
+    gl_FragColor = vec4(color, alpha); 
 }
 `
 
@@ -62,32 +79,13 @@ export function FlashRenderer() {
         return geo
     }, [geo, tintBuffer, alphaBuffer])
 
-    const material = useMemo(() => new THREE.ShaderMaterial({
-        vertexShader,
-        fragmentShader: /* glsl */ `
-varying float vAlpha;
-varying vec3 vTint;
-
-void main() {
-    vec2 p = (vUv - 0.5) * vec2(1.0, 1.65);
-    float d = length(p);
-
-    float core = smoothstep(0.32, 0.0, d);
-    float glow = smoothstep(0.65, 0.05, d);
-
-    vec3 white = vec3(1.0, 0.98, 0.92);
-    vec3 color = mix(vTint, white, core);
-
-    float alpha = glow * vAlpha;
-    alpha *= alpha;
-
-    gl_FragColor = vec4(color, alpha);
-}
-        `,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-    }), [])
+const material = useMemo(() => new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+}), [])
 
     useFrame((_, dt) => {
 

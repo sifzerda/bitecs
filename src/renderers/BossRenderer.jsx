@@ -12,9 +12,7 @@ import { WeaponMount } from "./WeaponMount.jsx"
 
 import lightWool from "../assets/light-wool.png"
 
-export const HULL_TEXTURES = {
-    "Light Wool": lightWool,
-}
+export const HULL_TEXTURES = { "Light Wool": lightWool }
 
 const MAX_BOSSES = 4 // pool size for real spawned bosses only — no reserved debug slot anymore
 const BAR_WIDTH = 3.0
