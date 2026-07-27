@@ -92,7 +92,7 @@ export const GUN_GAP = 0.45 // distance between twin guns
 ~~- [ ] reduce gun related renderers: weaponmount, gunmount, gunrenderer, bossmount~~
 - [ ] consolidate fx and renderers: debris, exhaust, explosion, fire, flash, shockwave, spark, trail
 
-- [ ] re-do/update pools
+- [x] re-do/update pools
 
 Priority:
 - [x] gameloop difficulty scaling

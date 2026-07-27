@@ -100,9 +100,9 @@ const RAW = [
     {
         name: "plasmabeam",
         category: "beam",
-        range: 20, damagePerSecond: 18, beamCount: 3, beamSpread: 0.35,
-        tickSparkInterval: 0.08, beamWidth: 0.08,
-        color: "#ffe0ff", glowColor: "#ff66ff", haloColor: "#cc00cc",
+        range: 20, damagePerSecond: 22, beamWidth: 0.16, surgeSpeed: 2.2,
+        tickSparkInterval: 0.08, rainbow: true, surgeIntensity: 0.6,  
+        color: "#ffffff", glowColor: "#ff66ff", haloColor: "#66ffff",
     },
 ]
 
