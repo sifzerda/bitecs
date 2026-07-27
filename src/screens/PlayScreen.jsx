@@ -22,7 +22,7 @@ import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
 import { MissileRenderer } from '../renderers/MissileRenderer.jsx'
 
 import { ArcRenderer } from '../renderers/ArcRenderer.jsx'
-//import { GrenadeRenderer } from '../renderers/GrenadeRenderer.jsx'
+import { GrenadeRenderer } from '../renderers/GrenadeRenderer.jsx'
 
 import { LaserRenderer } from '../renderers/LaserRenderer.jsx'
 import { ThrowerRenderer } from '../renderers/ThrowerRenderer.jsx'
@@ -152,8 +152,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <BulletRenderer />
                     <TrailRenderer />
                     <MissileRenderer />
-
-                    {/*               <GrenadeRenderer />     */}
+                    <GrenadeRenderer />     
 
                     <LaserRenderer source="player" />
                     <LaserRenderer source="boss" />
