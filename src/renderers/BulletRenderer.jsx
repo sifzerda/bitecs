@@ -4,8 +4,7 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Position, Velocity, Bullet } from '../ecs/constants/components.js'
-import { WEAPONS } from '../ecs/weapons/config/weapons.js'
-import { activeBullets } from '../ecs/pools/bulletPool.js'
+import { activeBullets, categorizedBullets, CATEGORY } from '../ecs/pools/bulletPool.js'
 
 const MAX_BULLETS = 512
 const BULLET_LENGTH = 0.9
@@ -92,8 +91,6 @@ void main(){
 
     alpha = clamp(alpha,0.0,1.0);
 
-    // "hot core" now derived from the bullet's own color (brightened), not white,
-    // so the core reads as an intense version of the bullet color instead of washing to white
     vec3 core = clamp(vColor * 1.6, 0.0, 1.0);
 
     vec3 color =
@@ -124,18 +121,13 @@ void main(){
 
         material.uniforms.uTime.value = state.clock.elapsedTime
 
-        const {
-            instancePosition,
-            instanceAngle,
-            instanceColor,
-        } = arrays
+        const { instancePosition, instanceAngle, instanceColor } = arrays
 
         let count = 0
 
         for (let i = 0; i < activeBullets.length; i++) {
 
-            if (count >= MAX_BULLETS)
-                break
+            if (count >= MAX_BULLETS) break
 
             const eid = activeBullets[i]
             const weapon = WEAPONS[Bullet.type[eid]]
@@ -147,10 +139,7 @@ void main(){
             instancePosition[p] = Position.x[eid]
             instancePosition[p + 1] = Position.y[eid]
 
-            instanceAngle[count] = Math.atan2(
-                Velocity.y[eid],
-                Velocity.x[eid]
-            )
+            instanceAngle[count] = Math.atan2(Velocity.y[eid], Velocity.x[eid])
 
             const c = count * 3
 
