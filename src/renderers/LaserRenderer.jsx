@@ -1,18 +1,77 @@
 // src/renderers/LaserRenderer.jsx
+// Straight-beam weapons only (lasergun, plasmabeam, any future non-jagged
+// beam). Jagged beams (arcgun) are handled entirely by ArcRenderer instead —
+// see that file for both the primary bolt and its chain-lightning segments.
 
-import { useMemo, useRef } from 'react'
-import { createRef } from 'react'
+import { useMemo, useRef, createRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { laserState } from '../ecs/weapons/weaponState/laserState.js'
+import { bossLaserState } from '../ecs/weapons/weaponState/bossLaserState.js'
 import { gameState } from '../state/gameState.js'
 import { getWeapon } from '../ecs/weapons/config/weapons.js'
+import { bossAIQuery } from '../ecs/constants/queries.js'
+import { BossAI } from '../ecs/constants/components.js'
 
-const MAX_BEAMS = 3
-export function LaserRenderer() {
+const MAX_BEAMS = 3 // covers prism's 3 simultaneous beams
 
-    const beamRefs = useRef(Array.from({ length: MAX_BEAMS }, () => createRef()))
-    const jagState = useRef(Array.from({ length: MAX_BEAMS }, () => ({ timer: 0, seed: Math.random() })))
+// -------------------------
+// Source adapters — only report active when the weapon is a non-jagged beam.
+// Jagged beams are claimed by ArcRenderer's own adapters instead, so a
+// weapon can never be drawn by both renderers at once.
+// -------------------------
+
+function getPlayerLaserData() {
+    const weapon = getWeapon(gameState.currentWeapon)
+    const active = weapon.category === "beam" && !weapon.jagged
+        && laserState.active && laserState.hits?.length > 0
+    return {
+        active,
+        originX: laserState.originX,
+        originY: laserState.originY,
+        weapon,
+        hits: active ? laserState.hits : [],
+    }
+}
+
+function getBossLaserData() {
+    const bosses = bossAIQuery()
+    if (bosses.length === 0 || !bossLaserState.active || !bossLaserState.hit) {
+        return { active: false, originX: 0, originY: 0, weapon: null, hits: [] }
+    }
+
+    const weapon = getWeapon(BossAI.weapon[bosses[0]])
+    if (weapon.jagged) return { active: false, originX: 0, originY: 0, weapon: null, hits: [] }
+
+    const dx = bossLaserState.hitX - bossLaserState.originX
+    const dy = bossLaserState.hitY - bossLaserState.originY
+    const hitT = Math.hypot(dx, dy)
+
+    if (hitT < 0.01) return { active: false, originX: 0, originY: 0, weapon: null, hits: [] }
+
+    return {
+        active: true,
+        originX: bossLaserState.originX,
+        originY: bossLaserState.originY,
+        weapon,
+        hits: [{ dirX: dx / hitT, dirY: dy / hitT, hitT }],
+    }
+}
+
+const SOURCE_GETTERS = {
+    player: getPlayerLaserData,
+    boss: getBossLaserData,
+}
+
+// -------------------------
+// Renderer
+// -------------------------
+
+export function LaserRenderer({ source = 'player' }) {
+
+    const getLaserData = SOURCE_GETTERS[source]
+
+    const laserRefs = useRef(Array.from({ length: MAX_BEAMS }, () => createRef()))
 
     const geometry = useMemo(() => {
         const geo = new THREE.PlaneGeometry(1, 1)
@@ -35,9 +94,6 @@ export function LaserRenderer() {
                 uGlow: { value: new THREE.Color('#ffffff') },
                 uHalo: { value: new THREE.Color('#ffffff') },
                 uLength: { value: 1 },
-                uJagged: { value: 0 },
-                uSeed: { value: 0 },
-                uThicknessRatio: { value: 0.1 },
             },
 
             vertexShader: /* glsl */`
@@ -57,35 +113,6 @@ uniform vec3 uCore;
 uniform vec3 uGlow;
 uniform vec3 uHalo;
 uniform float uLength;
-uniform float uJagged;
-uniform float uSeed;
-uniform float uThicknessRatio;
-
-float hash1(vec2 p){
-    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
-float boltPath(float y, float seed){
-float startFade = smoothstep(0.0, 0.06, y);
-
-    float coarseCount = 7.0;
-    float coarsePos = y * coarseCount;
-    float coarseIndex = floor(coarsePos);
-    float coarseFrac = fract(coarsePos);
-    float ca = (hash1(vec2(coarseIndex, seed * 47.0)) - 0.5) * 0.30;
-    float cb = (hash1(vec2(coarseIndex + 1.0, seed * 47.0)) - 0.5) * 0.30;
-    float coarse = mix(ca, cb, coarseFrac);
-
-    float fineCount = 40.0;
-    float finePos = y * fineCount;
-    float fineIndex = floor(finePos);
-    float fineFrac = fract(finePos);
-    float fa = (hash1(vec2(fineIndex, seed * 91.0 + 17.0)) - 0.5) * 0.09;
-    float fb = (hash1(vec2(fineIndex + 1.0, seed * 91.0 + 17.0)) - 0.5) * 0.09;
-    float fine = mix(fa, fb, fineFrac);
-
-    return (coarse + fine) * startFade;
-}
 
 void main(){
 
@@ -93,51 +120,10 @@ void main(){
     float y = uv.y;
     float x = uv.x - 0.5;
 
-    float core;
-    float glow;
-    float halo;
-
-    if (uJagged > 0.5) {
-
-        float coreThresh = uThicknessRatio * 0.4;
-        float glowK = 0.70 / max(uThicknessRatio, 0.001);
-        float haloK = glowK * 0.5;
-        float mainPath = boltPath(y, uSeed);
-        float wMain = abs(x - mainPath);
-
-        core = 1.0 - smoothstep(0.0, coreThresh, wMain);
-        glow = exp(-wMain * glowK);
-        halo = exp(-wMain * haloK);
-
-        for (int f = 0; f < 3; f++) {
-
-            float fi = float(f);
-            float fSeed = uSeed * (11.0 + fi * 6.3) + fi * 3.7;
-            float forkStart = 0.10 + hash1(vec2(fSeed, 1.0)) * 0.55;
-            float forkLen = 0.18 + hash1(vec2(fSeed, 11.0)) * 0.30;
-            float forkDir = (hash1(vec2(fSeed, 22.0)) - 0.5) * 2.0;
-            float t = clamp((y - forkStart) / max(forkLen, 0.001), 0.0, 1.0);
-            float forkPath = mainPath + forkDir * t * 0.5;
-
-            float mask = step(forkStart, y) * (1.0 - smoothstep(forkStart + forkLen, forkStart + forkLen + 0.05, y));
-            float taper = 1.0 - t;
-
-            float wF = abs(x - forkPath);
-            float forkCoreThresh = mix(coreThresh * 0.3, coreThresh, taper);
-
-            float coreF = (1.0 - smoothstep(0.0, forkCoreThresh, wF)) * mask * taper;
-            float glowF = exp(-wF * glowK) * mask * taper;
-
-            core = clamp(core + coreF, 0.0, 1.0);
-            glow = clamp(glow + glowF, 0.0, 1.0);
-        }
-
-    } else {
-        float w = abs(x) * 2.0;
-        core = 1.0 - smoothstep(0.0, 0.10, w);
-        glow = exp(-w * 4.0);
-        halo = exp(-w * 1.6);
-    }
+    float w = abs(x) * 2.0;
+    float core = 1.0 - smoothstep(0.0, 0.10, w);
+    float glow = exp(-w * 4.0);
+    float halo = exp(-w * 1.6);
 
     float scroll = fract(vUv.y * 6.0 - uTime * 3.0);
     float streak = smoothstep(0.0, 0.5, scroll) * smoothstep(1.0, 0.5, scroll);
@@ -155,34 +141,20 @@ void main(){
         }))
     ), [])
 
-    useFrame((state, delta) => {
+    useFrame((state) => {
 
         const t = state.clock.elapsedTime
-        const weapon = getWeapon(gameState.currentWeapon)
-        const isBeamWeapon = weapon.category === "beam"
-        const active = isBeamWeapon && laserState.active && laserState.hits && laserState.hits.length > 0
-        const isJagged = !!weapon.jagged
+        const { active, originX, originY, weapon, hits } = getLaserData()
 
         for (let slot = 0; slot < MAX_BEAMS; slot++) {
 
-            const mesh = beamRefs.current[slot].current
+            const mesh = laserRefs.current[slot].current
             if (!mesh) continue
 
             const material = materials[slot]
             material.uniforms.uTime.value = t
-            material.uniforms.uJagged.value = isJagged ? 1 : 0
 
-            if (isJagged) {
-                const js = jagState.current[slot]
-                js.timer -= delta
-                if (js.timer <= 0) {
-                    js.seed = Math.random()
-                    js.timer = 0.04 + Math.random() * 0.03
-                }
-                material.uniforms.uSeed.value = js.seed
-            }
-
-            const hitData = active ? laserState.hits[slot] : null
+            const hitData = active ? hits[slot] : null
             const visible = !!hitData && hitData.hitT > 0.01
 
             mesh.visible = visible
@@ -193,16 +165,9 @@ void main(){
             const length = hitData.hitT
 
             const angle = Math.atan2(dirY, dirX) - Math.PI / 2
+            const width = weapon.beamWidth * 5.0
 
-            let width
-            if (isJagged) {
-                width = Math.max(length * 0.30, weapon.beamWidth * 10)
-                material.uniforms.uThicknessRatio.value = weapon.beamWidth / width
-            } else {
-                width = weapon.beamWidth * 5.0
-            }
-
-            mesh.position.set(laserState.originX, laserState.originY, 0.02)
+            mesh.position.set(originX, originY, 0.02)
             mesh.rotation.set(0, 0, angle)
             mesh.scale.set(width, length, 1)
 
@@ -216,7 +181,7 @@ void main(){
 
     return (
         <>
-            {beamRefs.current.map((ref, i) => (
+            {laserRefs.current.map((ref, i) => (
                 <mesh
                     key={i}
                     ref={ref}

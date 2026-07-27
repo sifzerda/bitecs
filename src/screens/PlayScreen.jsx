@@ -24,8 +24,6 @@ import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
 import { MissileRenderer } from '../renderers/MissileRenderer.jsx'
 
 import { ArcRenderer } from '../renderers/ArcRenderer.jsx'
-//import { IceRenderer } from '../renderers/IceRenderer.jsx'
-// import { AcidRenderer } from '../renderers/AcidRenderer.jsx'
 //import { GrenadeRenderer } from '../renderers/GrenadeRenderer.jsx'
 
 import { LaserRenderer } from '../renderers/LaserRenderer.jsx'
@@ -41,7 +39,6 @@ import { ExplosionRenderer } from '../renderers/ExplosionRenderer.jsx'
 import { ShockwaveRenderer } from '../renderers/ShockwaveRenderer.jsx'
 import { FireRenderer } from '../renderers/FireRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
-import { BossLaserRenderer } from '../renderers/BossLaserRenderer.jsx'
 
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
 import { GunMount } from '../renderers/GunMount.jsx'
@@ -110,7 +107,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <PlayerRenderer />
 
-
                     <DeflectRenderer />
                     <GunMount />
 
@@ -161,14 +157,14 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     {/*               <GrenadeRenderer />     */}
 
-                    <LaserRenderer />
-                    <ArcRenderer />
+                    <LaserRenderer source="player" />
+                    <LaserRenderer source="boss" />
+
+                    <ArcRenderer source="player" />                          {/* renderChainLinks defaults true */}
+                    <ArcRenderer source="boss" renderChainLinks={false} />    {/* avoid drawing the shared chain pool twice */}
 
                     <ThrowerRenderer />
                     <HazardRenderer />
-
-                    {/*        <IceRenderer />           */}
-                    {/*          <AcidRenderer />    */}
 
                     <SparkRenderer />
 
@@ -187,8 +183,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <FlashRenderer />
 
                     <BossRenderer />
-
-                    <BossLaserRenderer />
 
                     <GunRenderer />
 
