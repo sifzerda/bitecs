@@ -87,6 +87,44 @@ This project is incomplete and requires further development.
 - Position of bullet emission and gun flash currently set in spawn.js const MUZZLE_OFFSET = 0.4 
 export const GUN_GAP = 0.45 // distance between twin guns
 
+
+### Make a new gun:
+
+1.  Add the weapon definition
+```bash
+src/weapons/config/weapons.js
+{
+    name: "railgun",
+    category: "bullet",
+    damage: 40, maxBullets: 64, hitRadius: 0.4, fireRate: 0.6,
+    speed: 30, lifetime: 1.5, projectileCount: 1, spreadAngle: 0,
+    color: "#e8f0ff", glowColor: "#8899ff", haloColor: "#4455cc",
+},
+```
+2. Add gun's visual mount config
+```bash
+src/weapons/config/gunConfigs.js
+{
+    id: '11_railgun', name: 'Railgun', weaponId: WEAPON_BY_NAME.railgun.id,
+    overrides: { /* frame/barrel/muzzle/coreGlow tweaks */ },
+},
+```
+3. And optionally: add a weaponAction entry for new weapon actions:
+
+```bash
+src/weapons/config/weaponActions.js
+```
+4. Optionally: add a new weapon effect on hit
+```bash
+src/weapons/weaponSystems/hitTraits.js
+```
+5. Optionally: add a new renderer and/or system if the projectiles look/act different from current
+6. Add gun to boss in bosses.js
+
+
+
+
+
 ## Tasks
 
 ~~- [ ] reduce gun related renderers: weaponmount, gunmount, gunrenderer, bossmount~~
