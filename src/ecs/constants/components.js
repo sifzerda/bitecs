@@ -31,9 +31,12 @@ export const BossAI = {
     moveTimer: new Float32Array(MAX),
     shootTimer: new Float32Array(MAX),
     weapon: new Uint8Array(MAX),
-    beamCycleTimer: new Float32Array(MAX),   
+    beamCycleTimer: new Float32Array(MAX),
     beamActive: new Uint8Array(MAX),
     targetRotation: new Float32Array(MAX),
+
+    burstRemaining: new Uint8Array(MAX),   // new
+    burstGapTimer: new Float32Array(MAX),  // new
 };
 
 export const BossType = {
@@ -58,7 +61,7 @@ export const Octopus = {
 
 export const Bullet = {
     type: new Uint8Array(MAX),
-    owner: new Uint8Array(MAX), 
+    owner: new Uint8Array(MAX),
     // render data cached at spawn time
     colorR: new Float32Array(MAX),
     colorG: new Float32Array(MAX),
@@ -77,11 +80,11 @@ export const HazardZone = {
     owner: new Uint8Array(MAX),
     target: new Int32Array(MAX),
     tickTimer: new Float32Array(MAX),
-    detonated: new Uint8Array(MAX),  
+    detonated: new Uint8Array(MAX),
 };
 
 export const StatusEffect = {
-    frozen: new Float32Array(MAX),  
+    frozen: new Float32Array(MAX),
 }
 
 export const PlayerTag = {};

@@ -43,7 +43,30 @@ export function bossAISystem() {
         BossAI.moveTimer[id] -= dt
 
         if (BossAI.moveTimer[id] <= 0) {
-            BossAI.targetRotation[id] = Math.random() * Math.PI * 2 - Math.PI
+
+            const weapon = getWeapon(BossAI.weapon[id])
+            const ai = getAction(weapon).ai
+            const preferredRange = weapon.aiPreferredRange ?? ai.preferredRange ?? 10
+
+            if (hasPlayer) {
+                const dx = Position.x[pid] - Position.x[id]
+                const dy = Position.y[pid] - Position.y[id]
+                const dist = Math.hypot(dx, dy) || 1
+                const toPlayerAngle = Math.atan2(dy, dx)
+
+                // if too far, bias movement toward the player; too close, bias away;
+                // roughly in-band, wander more freely with a wider random spread
+                const rangeError = dist - preferredRange
+                const bias = Math.abs(rangeError) > 2
+                    ? (rangeError > 0 ? toPlayerAngle : toPlayerAngle + Math.PI)
+                    : Math.random() * Math.PI * 2 - Math.PI
+
+                const spread = Math.abs(rangeError) > 2 ? 0.6 : Math.PI * 2 // tight bias vs free wander
+                BossAI.targetRotation[id] = bias + (Math.random() - 0.5) * spread
+            } else {
+                BossAI.targetRotation[id] = Math.random() * Math.PI * 2 - Math.PI
+            }
+
             BossAI.moveTimer[id] = MOVE_INTERVAL_MIN + Math.random() * (MOVE_INTERVAL_MAX - MOVE_INTERVAL_MIN)
         }
 
@@ -81,16 +104,56 @@ export function bossAISystem() {
         if (BossAI.shootTimer[id] <= 0 && hasPlayer) {
 
             const weapon = getWeapon(BossAI.weapon[id])
+            const ai = getAction(weapon).ai
 
-            const dx = Position.x[pid] - Position.x[id]
-            const dy = Position.y[pid] - Position.y[id]
-            const rot = -Math.atan2(dx, dy)
+            let aimX = Position.x[pid]
+            let aimY = Position.y[pid]
+
+            if (ai.leadTarget && weapon.speed) {
+                // simple linear lead: project player position forward by roughly
+                // the time it'll take this weapon's bullet to cross the gap
+                const dx0 = Position.x[pid] - Position.x[id]
+                const dy0 = Position.y[pid] - Position.y[id]
+                const dist = Math.hypot(dx0, dy0)
+                const travelTime = dist / weapon.speed
+
+                aimX += Velocity.x[pid] * travelTime
+                aimY += Velocity.y[pid] * travelTime
+            }
+
+            const dx = aimX - Position.x[id]
+            const dy = aimY - Position.y[id]
+            let rot = -Math.atan2(dx, dy)
+
+            // aim jitter — small random aim error so bosses aren't laser-precise
+            const jitter = weapon.aiSpreadJitter ?? ai.spreadJitter ?? 0
+            if (jitter > 0) rot += (Math.random() - 0.5) * 2 * jitter
 
             if (!getAction(weapon).continuous) {
-                spawnBullet(Position.x[id], Position.y[id], rot, weapon.id, BULLET_OWNER.ENEMY)
-                BossAI.shootTimer[id] = weapon.fireRate ?? SHOOT_INTERVAL
-            } else {
-                BossAI.shootTimer[id] = 0.2
+
+                const burstCount = weapon.aiBurstCount ?? ai.burstCount ?? 1
+                const burstGap = weapon.aiBurstGap ?? ai.burstGap ?? 0.08
+
+                if (BossAI.burstRemaining[id] === 0) {
+                    // starting a fresh burst
+                    BossAI.burstRemaining[id] = burstCount
+                }
+
+                BossAI.burstGapTimer[id] -= dt
+
+                if (BossAI.burstGapTimer[id] <= 0) {
+                    spawnBullet(Position.x[id], Position.y[id], rot, weapon.id, BULLET_OWNER.ENEMY)
+                    BossAI.burstRemaining[id]--
+                    BossAI.burstGapTimer[id] = burstGap
+                }
+
+                if (BossAI.burstRemaining[id] > 0) {
+                    // still mid-burst — recheck soon rather than waiting a full fireRate
+                    BossAI.shootTimer[id] = 0.01
+                } else {
+                    // burst finished — full cooldown before the next one starts
+                    BossAI.shootTimer[id] = weapon.fireRate ?? SHOOT_INTERVAL
+                }
             }
         }
     }

@@ -37,6 +37,8 @@ const RAW = [
         damage: 5, maxBullets: 128, hitRadius: 0.5, fireRate: 0.07,
         speed: 22, lifetime: 0.9, projectileCount: 1, spreadAngle: 0.05,
         color: "#c9e8ff", glowColor: "#5599ff", haloColor: "#3366ff",
+
+        aiBurstCount: 4, aiBurstGap: 0.09,
     },
     {
         name: "cryocannon",
