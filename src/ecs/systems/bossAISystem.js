@@ -14,7 +14,7 @@ const DRAG = 0.99
 
 const MOVE_INTERVAL_MIN = 1.4
 const MOVE_INTERVAL_MAX = 2.6
-const SHOOT_INTERVAL = 1.4
+const SHOOT_INTERVAL = 1.4   // fallback only, for weapons missing fireRate
 
 function normalizeAngle(a) {
     while (a > Math.PI) a -= Math.PI * 2
@@ -74,11 +74,6 @@ export function bossAISystem() {
         Velocity.y[id] *= DRAG
 
         //----------------------------------
-        // Fire — only discrete-fire (non-continuous) categories spawn a
-        // bullet here. Continuous categories (beam/thrower) are driven
-        // every frame by bossLaserSystem / bossThrowerSystem instead —
-        // this reads the same action registry the player uses, so a
-        // boss and the player can never disagree about what a category does.
         //----------------------------------
 
         BossAI.shootTimer[id] -= dt
@@ -93,9 +88,10 @@ export function bossAISystem() {
 
             if (!getAction(weapon).continuous) {
                 spawnBullet(Position.x[id], Position.y[id], rot, weapon.id, BULLET_OWNER.ENEMY)
+                BossAI.shootTimer[id] = weapon.fireRate ?? DEFAULT_SHOOT_INTERVAL
+            } else {
+                BossAI.shootTimer[id] = 0.2
             }
-
-            BossAI.shootTimer[id] = SHOOT_INTERVAL
         }
     }
 }

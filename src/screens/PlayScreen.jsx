@@ -1,13 +1,15 @@
 // src/screens/PlayScreen.jsx
 
 import { useFrame, useThree } from '@react-three/fiber'
-import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
+import {
+    EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
     // ShockWave,
     // Glitch
 } from '@react-three/postprocessing';
 import { Canvas } from '@react-three/fiber'
 import { BlendFunction } from 'postprocessing'
-import { Environment,
+import {
+    Environment,
     //Trail -- effect to make moving things trail 
     //Float -- effect for floating power-ups
 } from '@react-three/drei'
@@ -152,7 +154,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <BulletRenderer />
                     <TrailRenderer />
                     <MissileRenderer />
-                    <GrenadeRenderer />     
+                    <GrenadeRenderer />
 
                     <LaserRenderer source="player" />
                     <LaserRenderer source="boss" />
@@ -160,7 +162,9 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <ArcRenderer source="player" />                          {/* renderChainLinks defaults true */}
                     <ArcRenderer source="boss" renderChainLinks={false} />    {/* avoid drawing the shared chain pool twice */}
 
-                    <ThrowerRenderer />
+                    <ThrowerRenderer source="player" />
+                    <ThrowerRenderer source="boss" />
+
                     <HazardRenderer />
 
                     <SparkRenderer />
