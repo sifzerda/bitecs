@@ -299,7 +299,12 @@ export function getGunTypeByWeaponId(weaponId) {
 }
 
 export function getGunTypeById(id) {
-    return GUN_TYPES.find(g => g.id === id) ?? GUN_TYPES[0]
+    const found = GUN_TYPES.find(g => g.id === id)
+    if (!found) {
+        console.warn(`getGunTypeById: no gun type with id "${id}" — falling back to ${GUN_TYPES[0].id}`)
+        return GUN_TYPES[0]
+    }
+    return found
 }
 
 if (import.meta.env?.DEV) {
