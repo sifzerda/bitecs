@@ -13,23 +13,17 @@ import {
     Lifetime,
     Velocity,
     Bullet,
-    StatusEffect,
     BULLET_OWNER
 } from "../constants/components.js"
 
 import { spawnHazard } from "../spawn.js"
 import { gameState } from "../../state/gameState.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
- 
-import { explodeAt, chainLightning } from "../weapons/weaponSystems/weaponEffects"
-import { releaseBulletEntity, activeBullets } from "../pools/bulletPool"
-import { activeAsteroids } from "../pools/asteroidPool"
-
+import { explodeAt } from "../weapons/weaponSystems/weaponEffects.js"
+import { releaseBulletEntity, activeBullets } from "../pools/bulletPool.js"
+import { activeAsteroids } from "../pools/asteroidPool.js"
 import { getWeapon } from "../weapons/config/weapons.js"
 import { resolveHit } from "../weapons/weaponSystems/hitTraits.js"
-
-import { emitEffect } from "../../fx/effects.js"
-import { EFFECT } from "../../fx/FXTypes.js"
 
 const PLAYER_HIT_RADIUS = 0.6
 const ASTEROID_RADIUS = 0.7
@@ -37,8 +31,6 @@ const BOSS_RADIUS = 2.0
 const DEFLECT_RADIUS = 4.0             // DEBUG: was 1.4 — huge catch radius so any nearby bullet deflects
 const DEFLECT_SPEED_MULT = 1.3
 const DEFLECT_FLASH_DURATION = 0.15    // keep in sync with BlockRenderer.jsx
-
-const bullets = activeBullets
 
 export function combatSystem() {
 
@@ -94,51 +86,13 @@ export function combatSystem() {
                 const asteroidHitDist = weapon.hitRadius + ASTEROID_RADIUS
                 if (dx * dx + dy * dy <= asteroidHitDist * asteroidHitDist) {
 
-                    if (weapon.explosive) {
-
-                        explodeAt(Position.x[bid], Position.y[bid], weapon, asteroids, bosses)
-
-                    } else if (weapon.leavesHazard) {
-
-                        if (weapon.damage > 0) Health.current[aid] -= weapon.damage
-                        spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], -1)
-
-                        if (Health.current[aid] <= 0) {
-                            killAsteroid(aid, Position.x[aid], Position.y[aid])
-                        }
-
-                    } else if (weapon.attachHazard) {
-
-                        spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], aid)
-
-                    } else if (weapon.freezeDuration) {
-
-                        Health.current[aid] -= weapon.damage
-                        StatusEffect.frozen[aid] = weapon.freezeDuration
-                        if (Health.current[aid] <= 0) killAsteroid(aid, Position.x[aid], Position.y[aid])
-
-                    } else if (weapon.chainCount) {
-
-                        Health.current[aid] -= weapon.damage
-                        if (Health.current[aid] <= 0) killAsteroid(aid, Position.x[aid], Position.y[aid])
-                        chainLightning(Position.x[aid], Position.y[aid], weapon, asteroids, aid)
-
-                    } else {
-
-                        Health.current[aid] -= weapon.damage
-
-                        emitEffect(EFFECT.SPARK_BURST, {
-                            type: EFFECT.SPARK_BURST,
-                            x: Position.x[bid],
-                            y: Position.y[bid],
-                            count: 20,
-                            speed: 8,
-                        })
-
-                        if (Health.current[aid] <= 0) {
-                            killAsteroid(aid, Position.x[aid], Position.y[aid])
-                        }
-                    }
+                    resolveHit({
+                        x: Position.x[bid], y: Position.y[bid],
+                        targetId: aid, weapon,
+                        owner: Bullet.owner[bid],
+                        kill: killAsteroid,
+                        asteroids, bosses,
+                    })
 
                     releaseBulletEntity(bid)
                     hit = true
@@ -149,6 +103,7 @@ export function combatSystem() {
             if (hit) continue
 
             // -------------------------
+            // Bosses
             // -------------------------
 
             for (let j = 0; j < bosses.length; j++) {
@@ -161,56 +116,14 @@ export function combatSystem() {
 
                 if (dx * dx + dy * dy <= bossRadius * bossRadius) {
 
-                    if (weapon.explosive) {
-
-                        explodeAt(Position.x[bid], Position.y[bid], weapon, asteroids, bosses)
-
-                    } else if (weapon.leavesHazard) {
-
-                        if (weapon.damage > 0) Health.current[bossId] -= weapon.damage
-                        spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], -1)
-
-                        if (Health.current[bossId] <= 0) {
-                            killBoss(bossId, Position.x[bossId], Position.y[bossId])
-                        }
-
-                    } else if (weapon.attachHazard) {
-
-                        // attach the DoT to the boss itself rather than an asteroid
-                        spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], bossId)
-
-                    } else if (weapon.freezeDuration) {
-
-                        Health.current[bossId] -= weapon.damage
-                        StatusEffect.frozen[bossId] = weapon.freezeDuration
-                        if (Health.current[bossId] <= 0) killBoss(bossId, Position.x[bossId], Position.y[bossId])
-
-                    } else if (weapon.chainCount) {
-
-                        Health.current[bossId] -= weapon.damage
-                        if (Health.current[bossId] <= 0) killBoss(bossId, Position.x[bossId], Position.y[bossId])
-                        // chains out from the boss into nearby asteroids —
-                        // bossId isn't in the asteroids list, so no exclude needed
-                        chainLightning(Position.x[bossId], Position.y[bossId], weapon, asteroids, -1)
-
-                    } else {
-
-                        Health.current[bossId] -= weapon.damage
-
-                        emitEffect(EFFECT.SPARK_BURST, {
-                            type: EFFECT.SPARK_BURST,
-                            x: Position.x[bid],
-                            y: Position.y[bid],
-                            count: 26,
-                            speed: 10,
-                            big: true,
-                        })
-
-                        if (Health.current[bossId] <= 0) {
-                            killBoss(bossId, Position.x[bossId], Position.y[bossId])
-                        }
-
-                    }
+                    resolveHit({
+                        x: Position.x[bid], y: Position.y[bid],
+                        targetId: bossId, weapon,
+                        owner: Bullet.owner[bid],
+                        kill: killBoss,
+                        asteroids, bosses,
+                        big: true,
+                    })
 
                     releaseBulletEntity(bid)
                     break

@@ -1,13 +1,12 @@
 // src/ecs/systems/playerControlSystem.js
 
-import { playerQuery, bossQuery } from "../constants/queries.js"
+import { playerQuery } from "../constants/queries.js"
 import { world } from "../constants/world.js"
 import { Position, Velocity, Rotation, BULLET_OWNER } from "../constants/components.js"
-import { spawnBullet, spawnPlayerBullet, spawnHazard } from "../spawn.js"
+import { spawnPlayerBullet } from "../spawn.js"
 import { input } from "./input.js"
 import { gameState } from "../../state/gameState.js"
 import { getWeapon } from "../weapons/config/weapons.js"
-import { explodeAt } from "../weapons/weaponSystems/weaponEffects.js"
 import { getAction } from "../weapons/config/weaponActions.js"
 
 import { emitEffect } from "../../fx/effects.js"
@@ -18,58 +17,13 @@ const THRUST = 28
 const BRAKE = 18
 const MAX_SPEED = 24
 const DRAG = 0.995
-const FIRE_RATE = 0.15
 
-const BOOST_THRUST = 90       // 
+const BOOST_THRUST = 90
 const BOOST_MAX_SPEED = 40
 export const BOOST_DURATION = 0.35
 export const BOOST_COOLDOWN = 2.0
 
 const DEFLECT_BUFFER = 0.6
-const MUZZLE_OFFSET = 0.9
-
-// helper to position twin muzzle flashes
-
-function emitTwinFlash(pid, weapon) {
-
-    const rot = Rotation[pid]
-
-    // gunCfg.offsetX == gun side offset, offsetY == gun forward offset,
-    // in the ship's local frame — same convention WeaponMount uses to
-    // place the twin GunRenderer instances, so the flash always sits
-    // exactly where the visible barrels are, even if mount tuning changes.
-    const gunType = getGunTypeByWeaponId(weapon.id)
-    const { offsetX: sideOffset, offsetY: forwardOffset } = gunType.config.mount
-
-    const fwdX = Math.sin(-rot)
-    const fwdY = Math.cos(-rot)
-    const perpX = Math.cos(-rot)
-    const perpY = -Math.sin(-rot)
-
-    const baseX = Position.x[pid] + fwdX * forwardOffset
-    const baseY = Position.y[pid] + fwdY * forwardOffset
-
-    const angle = Math.atan2(fwdY, fwdX)
-    const size = 0.8 + (weapon.hitRadius ?? 0.5) * 0.6
-    const color = weapon.glowColor
-
-    emitEffect(EFFECT.FLASH, {
-        x: baseX + perpX * sideOffset,
-        y: baseY + perpY * sideOffset,
-        angle,
-        size,
-        color,
-    })
-
-    emitEffect(EFFECT.FLASH, {
-        x: baseX - perpX * sideOffset,
-        y: baseY - perpY * sideOffset,
-        angle,
-        size,
-        color,
-    })
-
-}
 
 export default function playerControlSystem(shootState) {
 
@@ -167,7 +121,6 @@ export default function playerControlSystem(shootState) {
     //----------------------------------
 
     const weapon = getWeapon(gameState.currentWeapon)
-    const action = getAction(weapon)
 
     if (!getAction(weapon).continuous) {
         shootState.timer -= dt

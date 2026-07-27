@@ -19,7 +19,7 @@ import {
     HazardZone,
     HazardTag,
     StatusEffect,
-     Octopus,
+    Octopus,
     OctopusTag,
 } from "./constants/components";
 import { BOSS_INDEX_BY_KEY, BOSSES } from "./constants/bosses";

@@ -83,9 +83,16 @@ This project is incomplete and requires further development.
 ## Config Options
 
 - boss order in bosses.js
-- 
+- weapon order in weapons.js
+- Position of bullet emission and gun flash currently set in spawn.js const MUZZLE_OFFSET = 0.4 
+export const GUN_GAP = 0.45 // distance between twin guns
 
 ## Tasks
+
+- [ ] reduce gun related renderers: weaponmount, gunmount, gunrenderer, bossmount
+- [ ] consolidate fx and renderers: debris, exhaust, explosion, fire, flash, shockwave, spark, trail
+
+- [ ] re-do/update pools
 
 Priority:
 - [x] gameloop difficulty scaling
@@ -124,13 +131,13 @@ some of these boss dropped weapons, some upgrades
 
  - [x] if add bosses, make one kind and swap out guns, probably after gun system
  - [ ] make one kind of boss behaviour and logic, and switch renderer (ship appearance) and gun type
- - [ ] also potentially later boss has satelites that orbit it and help, or shield etc
- - [ ] add in shockwave effect for explosive weapons
+ ~~- [ ] also potentially later boss has satelites that orbit it and help, or shield etc~~
+ - [x] add in shockwave effect for explosive weapons
 
  - [x] make boost exhaust a part of normal exhaust rendering i.e. if keyB pressed, 
  boost exhaust is rendered
 
- - [ ] Adapt missile and lasersystem for boss use: missiles dont target player and need to not hurt boss, and laser needs to be held down not fired (boss never fires it)
+ - [x] Adapt missile and lasersystem for boss use: missiles dont target player and need to not hurt boss, and laser needs to be held down not fired (boss never fires it)
 
 - [x] change boss renderer to make enemy ship/ufo
 
@@ -138,13 +145,13 @@ some of these boss dropped weapons, some upgrades
 - [ ] especially flamerenderer, acid spray, laser, arc, hazard,, spark
 - [x] add a leva menu to configure guns which can be applied to the ship and bosses
 
-- [ ] make each gun, it will look the same for boss as player
+- [x] make each gun, it will look the same for boss as player
 
 - [ ] 
 
  -  Verlet mesh, chain etc physics, or engine
 
- ## Move effects into GPU particle system API:
+ ~~## Move effects into GPU particle system API:~~
 
  - [x] sparks
  - [x] exhaust
@@ -154,16 +161,11 @@ some of these boss dropped weapons, some upgrades
  - [x] smoke 
 
  - [ ] bullets (?)
- - [ ] fire
+ - [x] fire
  - [x] flash (or glow)
 
 
 - [x] add pool for sparks, exhaust, etc
-
-- Position of bullet emission and gun flash currently set in spawn.js const MUZZLE_OFFSET = 0.4 
-export const GUN_GAP = 0.45 // distance between twin guns
-
-may need to be customized inside weapons.js for each gun
 
 - [x] trailrenderer needs to replace smoke in missile renderer
 
@@ -175,236 +177,10 @@ may need to be customized inside weapons.js for each gun
  - [ ] fridgey needs to shoot cryo
  - [ ] space dragon needs to shoot flamethrower
 
-
-
-- expose the typed arrays ( in emitters) directly to InstancedBufferAttribute
-
-
-- make more guns and bosses:
-- arc gun and boss
-- flamethrower boss
-- plasma gun (for starscream boss)
-
-
+- [x] expose the typed arrays ( in emitters) directly to InstancedBufferAttribute
 
 
 dragon/flamethrower boss SHAPES:
-
-player overrides: {
-  "general": {
-    "extrudeDepth": 0.03
-  },
-  "fuselage": {
-    "color": "#cfe8ff",
-    "tipY": 0.78,
-    "shoulderY": 0.5,
-    "shoulderWidth": 0.18,
-    "waistY": -0.26,
-    "waistWidth": 0.14,
-    "tailY": -0.55,
-    "tailWidth": 0.3,
-    "notchY": -0.37,
-    "emissive": "#1a3a5c",
-    "emissiveIntensity": 0.4
-  },
-  "cockpit": {
-    "color": "#0070ff",
-    "topY": 0.62,
-    "topWidth": 0.06,
-    "midY": 0.14,
-    "midWidth": 0.15,
-    "bottomY": 0.04,
-    "bottomWidth": 0.09
-  },
-  "wing": {
-    "color": "#cfe8ff",
-    "rootX": 0.2,
-    "rootY": 0.4,
-    "tipX": 0.79,
-    "tipY": -0.25,
-    "trailX": 0.76,
-    "trailY": -0.45,
-    "innerX": 0.14,
-    "innerY": -0.24,
-    "emissive": "#1a3a5c",
-    "emissiveIntensity": 0.4
-  },
-  "wingPanel": {
-    "color": "#dff1ff",
-    "inset": 0.08,
-    "emissive": "#1a3a5c",
-    "emissiveIntensity": 0
-  },
-  "wingtip": {
-    "color": "#00ff10",
-    "width": 0.04,
-    "height": 0.43,
-    "offsetX": 0.77,
-    "offsetY": -0.35,
-    "zOffset": 0.02
-  },
-  "horn": {
-    "enabled": false,
-    "color": "#ffe605",
-    "baseWidth": 0.09,
-    "length": 0.82,
-    "curveAmount": 0.18,
-    "offsetX": 0.13,
-    "offsetY": 0.07,
-    "sweepDeg": 25,
-    "tiltDeg": 8
-  },
-  "decal": {
-    "enabled": true,
-    "color": "#00ff10",
-    "width": 0.06,
-    "length": 0.65,
-    "offsetX": 0.3,
-    "offsetY": 0,
-    "tiltDeg": 0,
-    "zOffset": 0.041
-  },
-  "cockpitGlass": {
-    "enabled": true,
-    "inset": 0.08,
-    "zOffset": 0.05,
-    "color": "#ddfdff",
-    "metalness": 0,
-    "roughness": 0.015,
-    "transmission": 1,
-    "thickness": 0.75,
-    "ior": 1.52,
-    "clearcoat": 1,
-    "clearcoatRoughness": 0,
-    "envMapIntensity": 8,
-    "iridescence": 10,
-    "iridescenceIOR": 1.35,
-    "iridescenceThicknessMin": 180,
-    "iridescenceThicknessMax": 900,
-    "attenuationColor": "#006eff",
-    "attenuationDistance": 2.2
-  },
-  "engineIntake": {
-    "enabled": true,
-    "color": "#00b9ff",
-    "width": 0.09,
-    "height": 0.3,
-    "offsetX": 0.4,
-    "offsetY": -0.28
-  },
-  "hullVent": {
-    "enabled": true,
-    "color": "#2030ff",
-    "count": 8,
-    "width": 0.09,
-    "height": 0.03,
-    "spacing": 0.05,
-    "offsetX": 0.21,
-    "offsetY": -0.08
-  },
-  "racingStripe": {
-    "enabled": true,
-    "color": "#00ff10",
-    "width": 0.04,
-    "length": 0.94,
-    "offsetX": 0.3,
-    "offsetY": -0.14,
-    "tiltDeg": 0
-  },
-  "noseSpike": {
-    "enabled": true,
-    "color": "#00ff10",
-    "length": 0.26,
-    "width": 0.07,
-    "offsetY": -0.32,
-    "roundness": 0.94,
-    "zOffset": 0.04
-  },
-  "tailFin": {
-    "enabled": true,
-    "color": "#7cfff4",
-    "length": 0.25,
-    "width": 0.35,
-    "sweep": 0.5,
-    "offsetX": 0.14,
-    "offsetY": -0.33,
-    "splayDeg": 0,
-    "emissive": "#1a3a5c",
-    "emissiveIntensity": 0.4
-  },
-  "exhaustPort": {
-    "enabled": true,
-    "color": "#0070ff",
-    "width": 0.22,
-    "height": 0.14,
-    "offsetX": 0.01,
-    "offsetY": 0.15
-  },
-  "propeller": {
-    "enabled": false,
-    "bladeColor": "#5f5f5f",
-    "hubColor": "#000000",
-    "bladeCount": 3,
-    "bladeLength": 0.15,
-    "bladeWidth": 0.05,
-    "hubRadius": 0.03,
-    "offsetX": 0.24,
-    "offsetY": -1.96,
-    "zOffset": 0.3,
-    "spinSpeed": 6
-  },
-  "centerPropeller": {
-    "enabled": false,
-    "bladeColor": "#ffffff",
-    "hubColor": "#ff004d",
-    "bladeCount": 2,
-    "bladeLength": 0.33,
-    "bladeWidth": 0.4,
-    "hubRadius": 0.09,
-    "offsetY": 0.75,
-    "zOffset": 0.3,
-    "spinSpeed": 20
-  },
-  "tailBoom": {
-    "enabled": false,
-    "color": "#3a6bd5",
-    "length": 0.25,
-    "baseWidth": 0.17,
-    "tipWidth": 0.06,
-    "emissive": "#1a3a5c",
-    "emissiveIntensity": 0.4
-  },
-  "boomFin": {
-    "enabled": false,
-    "color": "#03ff00",
-    "length": 1,
-    "width": 0.17,
-    "sweep": 0.63,
-    "offsetX": 0.42,
-    "offsetY": 0.02,
-    "splayDeg": 0,
-    "emissive": "#1a3a5c",
-    "emissiveIntensity": 0.4
-  },
-  "landingGear": {
-    "enabled": false,
-    "legColor": "#000000",
-    "wheelColor": "#ff0000",
-    "legLength": 0.28,
-    "legWidth": 0.09,
-    "wheelRadius": 0.06,
-    "offsetX": 0,
-    "offsetY": 0.48,
-    "zOffset": 0.04
-  },
-  "hullTexture": {
-    "enabled": false,
-    "textureKey": "Light Wool",
-    "opacity": 1,
-    "repeatX": 1,
-    "repeatY": 1
-  }
-}
 
 //////////////////////
 

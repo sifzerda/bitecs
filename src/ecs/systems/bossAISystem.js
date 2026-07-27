@@ -4,10 +4,8 @@ import { world } from "../constants/world.js"
 import { bossAIQuery, playerQuery } from "../constants/queries.js"
 import { Position, Velocity, Rotation, BossAI, BULLET_OWNER } from "../constants/components.js"
 import { spawnBullet } from "../spawn.js"
-import { getWeapon } from "../weapons/config/weapons"
+import { getWeapon } from "../weapons/config/weapons.js"
 import { getAction } from "../weapons/config/weaponActions.js"
-
-// src/ecs/systems/bossAISystem.js
 
 const TURN_SPEED = 2.0
 const THRUST = 16
@@ -79,7 +77,7 @@ export function bossAISystem() {
         // Fire — only discrete-fire (non-continuous) categories spawn a
         // bullet here. Continuous categories (beam/thrower) are driven
         // every frame by bossLaserSystem / bossThrowerSystem instead —
-        // this is decided by the same registry the player uses, so a
+        // this reads the same action registry the player uses, so a
         // boss and the player can never disagree about what a category does.
         //----------------------------------
 
