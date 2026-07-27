@@ -1,15 +1,13 @@
 // src/screens/PlayScreen.jsx
 
 import { useFrame, useThree } from '@react-three/fiber'
-import {
-    EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
+import { EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
     // ShockWave,
     // Glitch
 } from '@react-three/postprocessing';
 import { Canvas } from '@react-three/fiber'
 import { BlendFunction } from 'postprocessing'
-import {
-    Environment,
+import { Environment,
     //Trail -- effect to make moving things trail 
     //Float -- effect for floating power-ups
 } from '@react-three/drei'
