@@ -4,7 +4,8 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Position, Velocity, Bullet } from '../ecs/constants/components.js'
-import { activeBullets, categorizedBullets, CATEGORY } from '../ecs/pools/bulletPool.js'
+import { WEAPONS } from '../ecs/weapons/config/weapons.js'
+import { activeBullets } from '../ecs/pools/bulletPool.js'
 
 const MAX_BULLETS = 512
 const BULLET_LENGTH = 0.9

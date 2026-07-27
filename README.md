@@ -87,7 +87,6 @@ This project is incomplete and requires further development.
 - Position of bullet emission and gun flash currently set in spawn.js const MUZZLE_OFFSET = 0.4 
 export const GUN_GAP = 0.45 // distance between twin guns
 
-
 ### Make a new gun:
 
 1.  Add the weapon definition
@@ -121,15 +120,10 @@ src/weapons/weaponSystems/hitTraits.js
 5. Optionally: add a new renderer and/or system if the projectiles look/act different from current
 6. Add gun to boss in bosses.js
 
-
-
-
-
 ## Tasks
 
 ~~- [ ] reduce gun related renderers: weaponmount, gunmount, gunrenderer, bossmount~~
 - [ ] consolidate fx and renderers: debris, exhaust, explosion, fire, flash, shockwave, spark, trail
-
 - [x] re-do/update pools
 
 Priority:
