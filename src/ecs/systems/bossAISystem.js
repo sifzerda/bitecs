@@ -88,7 +88,7 @@ export function bossAISystem() {
 
             if (!getAction(weapon).continuous) {
                 spawnBullet(Position.x[id], Position.y[id], rot, weapon.id, BULLET_OWNER.ENEMY)
-                BossAI.shootTimer[id] = weapon.fireRate ?? DEFAULT_SHOOT_INTERVAL
+                BossAI.shootTimer[id] = weapon.fireRate ?? SHOOT_INTERVAL
             } else {
                 BossAI.shootTimer[id] = 0.2
             }
