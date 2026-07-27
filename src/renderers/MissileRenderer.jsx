@@ -41,7 +41,8 @@ export function MissileRenderer() {
         for (let i = 0; i < bullets.length && idx < MAX_MISSILES; i++) {
 
             const eid = bullets[i]
-            if (Bullet.type[eid] !== 3) continue
+            const weapon = getWeapon(Bullet.type[eid])
+            if (!weapon.homing) continue
 
             const vx = Velocity.x[eid]
             const vy = Velocity.y[eid]

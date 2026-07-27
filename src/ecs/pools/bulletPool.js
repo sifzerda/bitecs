@@ -1,7 +1,5 @@
 // src/ecs/pools/bulletPool.js
 
-// src/ecs/pools/bulletPool.js
-
 import { createPool } from './createPool'
 import { Position, Velocity, Lifetime, Bullet, BulletTag } from '../constants/components'
 

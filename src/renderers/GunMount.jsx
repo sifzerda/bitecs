@@ -28,10 +28,6 @@ export function GunMount() {
         group.rotation.set(0, 0, Rotation[pid])
     })
 
-    // Normally the player's gun appearance tracks their current weapon.
-    // Setting gameState.gunSkinOverride to any GUN_TYPES id (including
-    // one pulled straight from a boss's config) swaps the visual only —
-    // functional weapon/damage is untouched, this is cosmetic.
     const gunType = gameState.gunSkinOverride
         ? getGunTypeById(gameState.gunSkinOverride)
         : getGunTypeByWeaponId(gameState.currentWeapon)

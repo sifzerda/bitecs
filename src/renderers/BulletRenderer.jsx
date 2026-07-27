@@ -140,8 +140,7 @@ void main(){
             const eid = activeBullets[i]
             const weapon = WEAPONS[Bullet.type[eid]]
 
-            if (!weapon)
-                continue
+             if (!weapon || weapon.homing) continue
 
             const p = count * 2
 

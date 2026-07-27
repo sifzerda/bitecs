@@ -12,7 +12,8 @@ const MAX_BOSSES = 4
 export function BossMount() {
     const groupRefs = useMemo(() => Array.from({ length: MAX_BOSSES }, () => BOSSES.map(() => createRef())), [])
 
-    useFrame(() => { const bosses = bossQuery()
+    useFrame(() => {
+        const bosses = bossQuery()
 
         for (let slot = 0; slot < MAX_BOSSES; slot++) {
             const eid = slot < bosses.length ? bosses[slot] : null
@@ -36,11 +37,10 @@ export function BossMount() {
     return (
         <>
             {groupRefs.map((slotRefs, slot) => BOSSES.map((bossCfg, t) => (
-                    <group key={`${slot}-${bossCfg.key}`} ref={slotRefs[t]} visible={false}>
-                        <WeaponMount gunCfg={bossCfg.gun} />
-                    </group>
-                ))
-            )}
+                <group key={`${slot}-${bossCfg.key}`} ref={slotRefs[t]} visible={false}>
+                    <WeaponMount gunCfg={bossCfg.gun} />
+                </group>
+            )))}
         </>
     )
 }
