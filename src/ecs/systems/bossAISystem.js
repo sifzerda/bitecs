@@ -17,7 +17,7 @@ const MOVE_INTERVAL_MAX = 2.6
 const SHOOT_INTERVAL = 1.4   // fallback only, for weapons missing fireRate
 
 function normalizeAngle(a) {
-    while (a > Math.PI) a -= Math.PI * 2
+    while (a > Math.PI) a -= Math.PI * 2 
     while (a < -Math.PI) a += Math.PI * 2
     return a
 }

@@ -17,6 +17,7 @@ export function bossLaserSystem() {
 
     if (bosses.length === 0 || players.length === 0) {
         bossLaserState.active = false
+        bossLaserState.beamCount = 0
         return
     }
 
@@ -25,6 +26,7 @@ export function bossLaserSystem() {
 
     if (weapon.category !== "beam") {
         bossLaserState.active = false
+        bossLaserState.beamCount = 0
         return
     }
 
@@ -46,6 +48,7 @@ export function bossLaserSystem() {
 
     if (!BossAI.beamActive[id]) {
         bossLaserState.active = false
+        bossLaserState.beamCount = 0
         return
     }
 
@@ -53,19 +56,55 @@ export function bossLaserSystem() {
     // Firing (unchanged from before)
     //----------------------------------
 
-    const pid = players[0]
-    const dx = Position.x[pid] - Position.x[id]
-    const dy = Position.y[pid] - Position.y[id]
-    const dist = Math.hypot(dx, dy)
+const pid = players[0]
 
-    bossLaserState.active = true
-    bossLaserState.originX = Position.x[id]
-    bossLaserState.originY = Position.y[id]
-    bossLaserState.hitX = Position.x[pid]
-    bossLaserState.hitY = Position.y[pid]
-    bossLaserState.hit = dist <= weapon.range
+const dx = Position.x[pid] - Position.x[id]
+const dy = Position.y[pid] - Position.y[id]
 
-    if (bossLaserState.hit) {
-        Health.current[pid] -= weapon.damagePerSecond * world.time.delta
-    }
+const dist = Math.hypot(dx, dy)
+
+bossLaserState.active = true
+bossLaserState.originX = Position.x[id]
+bossLaserState.originY = Position.y[id]
+
+bossLaserState.beamCount = 1
+
+if (dist <= weapon.range) {
+
+    const inv = 1 / Math.max(dist, 0.0001)
+
+    bossLaserState.dirX[0] = dx * inv
+    bossLaserState.dirY[0] = dy * inv
+
+    bossLaserState.hitT[0] = dist
+    bossLaserState.hitX[0] = Position.x[pid]
+    bossLaserState.hitY[0] = Position.y[pid]
+    bossLaserState.hit[0] = 1
+
+    // legacy fields
+    bossLaserState.hitLegacy = true
+    bossLaserState.hitXLegacy = Position.x[pid]
+    bossLaserState.hitYLegacy = Position.y[pid]
+    bossLaserState.length = dist
+
+    Health.current[pid] -= weapon.damagePerSecond * dt
+
+} else {
+
+    const inv = 1 / Math.max(dist, 0.0001)
+
+    bossLaserState.dirX[0] = dx * inv
+    bossLaserState.dirY[0] = dy * inv
+
+    bossLaserState.hitT[0] = weapon.range
+    bossLaserState.hitX[0] = Position.x[id] + bossLaserState.dirX[0] * weapon.range
+    bossLaserState.hitY[0] = Position.y[id] + bossLaserState.dirY[0] * weapon.range
+    bossLaserState.hit[0] = 0
+
+    // legacy fields
+    bossLaserState.hitLegacy = false
+    bossLaserState.hitXLegacy = bossLaserState.hitX[0]
+    bossLaserState.hitYLegacy = bossLaserState.hitY[0]
+    bossLaserState.length = weapon.range
+}
 }

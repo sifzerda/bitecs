@@ -70,6 +70,16 @@ export const Bullet = {
     active: new Uint8Array(MAX)
 }
 
+export const Arc = {
+    active: new Uint8Array(MAX),
+    life: new Float32Array(MAX),
+    maxLife: new Float32Array(MAX),
+    colorR: new Float32Array(MAX),
+    colorG: new Float32Array(MAX),
+    colorB: new Float32Array(MAX),
+    pointCount: new Uint8Array(MAX),
+}
+
 export const BULLET_OWNER = {
     PLAYER: 0,
     ENEMY: 1
@@ -97,3 +107,12 @@ export const TentacleTag = {};
 export const TentacleBossTag = {};
 export const OctopusTag = {};
 
+export const ARC_MAX_POINTS = 32
+
+export const ArcPointsX = []
+export const ArcPointsY = []
+
+for (let i = 0; i < MAX; i++) {
+    ArcPointsX[i] = new Float32Array(ARC_MAX_POINTS)
+    ArcPointsY[i] = new Float32Array(ARC_MAX_POINTS)
+}

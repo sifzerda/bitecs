@@ -6,6 +6,7 @@ import { Position, Velocity, Bullet, BULLET_OWNER } from "../../constants/compon
 import { getWeapon, WEAPON_BY_NAME } from "../config/weapons.js"
 import { activeBullets } from "../../pools/bulletPool.js"
 import { activeAsteroids } from "../../pools/asteroidPool.js"
+import { findNearestAsteroid } from "../../constants/spatialGrid.js"
 
 export function missileSystem() {
 
@@ -28,18 +29,11 @@ export function missileSystem() {
         // -------------------------
 
         let targetId = -1
+        let bestDistSq = Infinity
 
         if (Bullet.owner[id] === BULLET_OWNER.PLAYER) {
 
-            let bestDistSq = Infinity
-
-            for (let j = 0; j < asteroids.length; j++) {
-                const aid = asteroids[j]
-                const dx = Position.x[aid] - Position.x[id]
-                const dy = Position.y[aid] - Position.y[id]
-                const distSq = dx * dx + dy * dy
-                if (distSq < bestDistSq) { bestDistSq = distSq; targetId = aid }
-            }
+            targetId = findNearestAsteroid(Position.x[id], Position.y[id])
 
             for (let j = 0; j < bosses.length; j++) {
                 const bid = bosses[j]

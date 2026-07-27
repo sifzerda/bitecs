@@ -13,41 +13,60 @@ import { BossAI } from '../ecs/constants/components.js'
 const MAX_BEAMS = 3 // covers prism's 3 simultaneous beams
 
 // -------------------------
+// Source getters
+// Both return the SAME shape: { active, originX, originY, weapon, beams }
+// where beams = [{ dirX, dirY, hitT }, ...]
+// -------------------------
 
 function getPlayerLaserData() {
+
     const weapon = getWeapon(gameState.currentWeapon)
-    const active = weapon.category === "beam" && !weapon.jagged
-        && laserState.active && laserState.hits?.length > 0
+    const active = weapon.category === "beam" && !weapon.jagged && laserState.active && laserState.beamCount > 0
+    const beams = []
+
+    if (active) {
+        for (let i = 0; i < laserState.beamCount; i++) {
+            beams.push({dirX: laserState.dirX[i], dirY: laserState.dirY[i], hitT: laserState.hitT[i]})
+        }
+    }
+
     return {
         active,
         originX: laserState.originX,
         originY: laserState.originY,
         weapon,
-        hits: active ? laserState.hits : [],
+        beams,
     }
 }
 
 function getBossLaserData() {
+
     const bosses = bossAIQuery()
-    if (bosses.length === 0 || !bossLaserState.active || !bossLaserState.hit) {
-        return { active: false, originX: 0, originY: 0, weapon: null, hits: [] }
+
+    if (bosses.length === 0 || !bossLaserState.active || bossLaserState.beamCount === 0) {
+        return { active: false, originX: 0, originY: 0, weapon: null, beams: [] }
     }
 
     const weapon = getWeapon(BossAI.weapon[bosses[0]])
-    if (weapon.jagged) return { active: false, originX: 0, originY: 0, weapon: null, hits: [] }
 
-    const dx = bossLaserState.hitX - bossLaserState.originX
-    const dy = bossLaserState.hitY - bossLaserState.originY
-    const hitT = Math.hypot(dx, dy)
+    if (!weapon || weapon.jagged) {
+        return { active: false, originX: 0, originY: 0, weapon: null, beams: [] }
+    }
 
-    if (hitT < 0.01) return { active: false, originX: 0, originY: 0, weapon: null, hits: [] }
+    const beams = []
+
+    for (let i = 0; i < bossLaserState.beamCount; i++) {
+        if (bossLaserState.hitT[i] > 0.01) {
+            beams.push({dirX: bossLaserState.dirX[i], dirY: bossLaserState.dirY[i], hitT: bossLaserState.hitT[i]})
+        }
+    }
 
     return {
-        active: true,
+        active: beams.length > 0,
         originX: bossLaserState.originX,
         originY: bossLaserState.originY,
         weapon,
-        hits: [{ dirX: dx / hitT, dirY: dy / hitT, hitT }],
+        beams,
     }
 }
 
@@ -177,7 +196,8 @@ void main(){
     useFrame((state) => {
 
         const t = state.clock.elapsedTime
-        const { active, originX, originY, weapon, hits } = getLaserData()
+
+        const { active, originX, originY, weapon, beams } = getLaserData()
 
         for (let slot = 0; slot < MAX_BEAMS; slot++) {
 
@@ -187,18 +207,17 @@ void main(){
             const material = materials[slot]
             material.uniforms.uTime.value = t
 
-            const hitData = active ? hits[slot] : null
-            const visible = !!hitData && hitData.hitT > 0.01
+            const beam = active ? beams[slot] : undefined
+            const visible = !!beam && beam.hitT > 0.01
 
             mesh.visible = visible
+
             if (!visible) continue
 
-            const dirX = hitData.dirX
-            const dirY = hitData.dirY
-            const length = hitData.hitT
+            const { dirX, dirY, hitT: length } = beam
 
             const angle = Math.atan2(dirY, dirX) - Math.PI / 2
-            const width = weapon.beamWidth * 5.0
+            const width = weapon.beamWidth * 5
 
             mesh.position.set(originX, originY, 0.02)
             mesh.rotation.set(0, 0, angle)
@@ -210,7 +229,7 @@ void main(){
             material.uniforms.uHalo.value.set(weapon.haloColor)
 
             material.uniforms.uRainbow.value = weapon.rainbow ? 1 : 0
-            material.uniforms.uSurgeSpeed.value = weapon.surgeSpeed ?? 2.0
+            material.uniforms.uSurgeSpeed.value = weapon.surgeSpeed ?? 2
             material.uniforms.uSurgeIntensity.value = weapon.surgeIntensity ?? 0.6
         }
 

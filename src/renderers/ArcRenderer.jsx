@@ -1,15 +1,12 @@
 // src/renderers/ArcRenderer.jsx
-// Everything visually belonging to jagged beam weapons (arcgun): the
-// primary jagged bolt from origin to target, and the chain-lightning
-// segments jumping to secondary targets. LaserRenderer explicitly excludes
-// any weapon.jagged weapon, so ownership never overlaps.
 
 import { useMemo, useRef, createRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { laserState } from '../ecs/weapons/weaponState/laserState.js'
 import { bossLaserState } from '../ecs/weapons/weaponState/bossLaserState.js'
-import { arcState } from '../ecs/weapons/weaponState/arcState.js'
+import { activeArcs } from "../ecs/pools/arcPool.js"
+import { Arc, ArcPointsX, ArcPointsY } from "../ecs/constants/components.js"
 import { gameState } from '../state/gameState.js'
 import { getWeapon } from '../ecs/weapons/config/weapons.js'
 import { bossAIQuery } from '../ecs/constants/queries.js'
@@ -19,9 +16,6 @@ const MAX_BEAMS = 3       // headroom for a future multi-bolt jagged weapon
 const MAX_ARCS = 24
 const MAX_POINTS_PER_ARC = 64
 
-// -------------------------
-// Primary-bolt source adapters — mirror LaserRenderer's, but only report
-// active for weapon.jagged weapons.
 // -------------------------
 
 function getPlayerArcData() {
@@ -285,40 +279,55 @@ void main(){
 
         if (!renderChainLinks) return
 
-        const arcs = arcState.arcs
+        const arcs = activeArcs
 
         for (let i = 0; i < MAX_ARCS; i++) {
 
             const line = chainLines[i]
-            const arc = arcs[i]
 
-            if (!arc) {
+            if (i >= arcs.length) {
                 line.visible = false
                 continue
             }
 
+            const id = arcs[i]
+
             line.visible = true
 
-            const pts = arc.points
-            const count = Math.min(pts.length, MAX_POINTS_PER_ARC)
+            const count = Math.min(
+                Arc.pointCount[id],
+                MAX_POINTS_PER_ARC
+            )
 
-            const posAttr = line.geometry.getAttribute('position')
+            const posAttr = line.geometry.getAttribute("position")
             const arr = posAttr.array
 
+            const xs = ArcPointsX[id]
+            const ys = ArcPointsY[id]
+
             for (let p = 0; p < count; p++) {
-                arr[p * 3] = pts[p].x
-                arr[p * 3 + 1] = pts[p].y
-                arr[p * 3 + 2] = 0.03
+
+                const base = p * 3
+
+                arr[base] = xs[p]
+                arr[base + 1] = ys[p]
+                arr[base + 2] = 0.03
             }
 
             posAttr.needsUpdate = true
             line.geometry.setDrawRange(0, count)
             line.geometry.computeBoundingSphere()
 
-            const lifeT = Math.max(0, arc.life / arc.maxLife)
-            const flicker = 0.8 + Math.random() * 0.2
-            line.material.opacity = lifeT * flicker
-            line.material.color.set(arc.color)
+            const lifeT = Arc.life[id] / Arc.maxLife[id]
+
+            line.material.opacity =
+                lifeT * (0.8 + Math.random() * 0.2)
+
+            line.material.color.setRGB(
+                Arc.colorR[id],
+                Arc.colorG[id],
+                Arc.colorB[id]
+            )
         }
     })
 

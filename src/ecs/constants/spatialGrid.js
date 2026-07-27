@@ -19,18 +19,21 @@ INSERT ENTITY
 --------------------------------------------------
 */
 
-export function insertIntoSpatialGrid(entity) {
+export function insertIntoSpatialGrid(id) {
 
-  const cellX = Math.floor(entity.x / CELL_SIZE);
-  const cellY = Math.floor(entity.y / CELL_SIZE);
-  const key = `${cellX},${cellY}`;
-  let bucket = grid.get(key);
+  const cellX = Math.floor(Position.x[id] / CELL_SIZE)
+  const cellY = Math.floor(Position.y[id] / CELL_SIZE)
+
+  const key = `${cellX},${cellY}`
+
+  let bucket = grid.get(key)
 
   if (!bucket) {
-    bucket = [];
-    grid.set(key, bucket);
+    bucket = []
+    grid.set(key, bucket)
   }
-  bucket.push(entity);
+
+  bucket.push(id);
 }
 
 /*
@@ -62,23 +65,30 @@ FIND NEAREST ASTEROID
 */
 
 export function findNearestAsteroid(x, y) {
-  const nearby = getNearbyAsteroids(x, y);
-  let best = null;
-  let bestDist = Infinity;
 
-  for (const asteroid of nearby) {
+  const nearby = getNearbyAsteroids(x, y)
 
-    const dx = asteroid.x - x;
-    const dy = asteroid.y - y;
-    const d2 = dx * dx + dy * dy;
+  let bestId = -1
+  let bestDistSq = Infinity
 
-    if (d2 < bestDist) {
-      bestDist = d2;
-      best = asteroid;
+  for (let i = 0; i < nearby.length; i++) {
+
+    const id = nearby[i]
+
+    const dx = Position.x[id] - x
+    const dy = Position.y[id] - y
+
+    const distSq = dx * dx + dy * dy
+
+    if (distSq < bestDistSq) {
+      bestDistSq = distSq
+      bestId = id
     }
   }
-  return best;
+
+  return bestId
 }
+
 
 
 

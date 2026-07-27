@@ -1,25 +1,73 @@
 // src/ecs/weapons/weaponState/arcState.js
 
-// Transient jagged-lightning segments pushed by chain-lightning effects
-// (laserSystem's arc gun beam, weaponEffects' chainLightning). Each entry
-// is a short-lived polyline that fades out over `life`.
+import {
+    Arc,
+    ArcPointsX,
+    ArcPointsY,
+    ARC_MAX_POINTS,
+} from "../../constants/components.js"
 
-export const arcState = {
-    arcs: [], // { points: [{x,y}...], life, maxLife, color }
-}
+import {
+    acquireArcEntity,
+    releaseArcEntity,
+    activeArcs,
+} from "../../pools/arcPool.js"
 
 const DEFAULT_COLOR = "#1F51FF"
-const JITTER_SEGMENTS = 5     // how many sub-segments each consecutive pair is split into
-const JITTER_AMOUNT = 0.12    // max perpendicular offset per subdivision, in world units
 
-// points: array of {x,y} anchor points the chain passes through (in order)
-// duration: seconds this arc stays visible before being removed
-// color: optional hex string override
+const JITTER_SEGMENTS = 5
+const JITTER_AMOUNT = 0.12
+
+// --------------------------------------------------
+// Colour conversion
+// --------------------------------------------------
+
+const colorCache = new Map()
+
+function getRGB(hex) {
+
+    let cached = colorCache.get(hex)
+
+    if (cached)
+        return cached
+
+    cached = {
+        r: parseInt(hex.slice(1, 3), 16) / 255,
+        g: parseInt(hex.slice(3, 5), 16) / 255,
+        b: parseInt(hex.slice(5, 7), 16) / 255,
+    }
+
+    colorCache.set(hex, cached)
+
+    return cached
+}
+
+// --------------------------------------------------
+
 export function pushArc(points, duration = 0.12, color = DEFAULT_COLOR) {
 
-    if (!points || points.length < 2) return
+    if (!points || points.length < 2)
+        return
 
-    const jagged = [points[0]]
+    const id = acquireArcEntity()
+
+    if (id === -1)
+        return
+
+    Arc.life[id] = duration
+    Arc.maxLife[id] = duration
+
+    const rgb = getRGB(color)
+
+    Arc.colorR[id] = rgb.r
+    Arc.colorG[id] = rgb.g
+    Arc.colorB[id] = rgb.b
+
+    let point = 0
+
+    ArcPointsX[id][point] = points[0].x
+    ArcPointsY[id][point] = points[0].y
+    point++
 
     for (let i = 0; i < points.length - 1; i++) {
 
@@ -28,39 +76,52 @@ export function pushArc(points, duration = 0.12, color = DEFAULT_COLOR) {
 
         const dx = b.x - a.x
         const dy = b.y - a.y
+
         const len = Math.hypot(dx, dy) || 1
 
-        // perpendicular unit vector
         const px = -dy / len
         const py = dx / len
 
         for (let s = 1; s <= JITTER_SEGMENTS; s++) {
 
+            if (point >= ARC_MAX_POINTS)
+                break
+
             const t = s / JITTER_SEGMENTS
+
             const baseX = a.x + dx * t
             const baseY = a.y + dy * t
 
-            // no jitter on the final anchor point of the whole chain, so the
-            // last segment still terminates exactly on the target
-            const isLastPoint = (i === points.length - 2) && (s === JITTER_SEGMENTS)
-            const jitter = isLastPoint ? 0 : (Math.random() - 0.5) * 2 * JITTER_AMOUNT
+            const isLast =
+                i === points.length - 2 &&
+                s === JITTER_SEGMENTS
 
-            jagged.push({ x: baseX + px * jitter, y: baseY + py * jitter })
+            const jitter = isLast
+                ? 0
+                : (Math.random() - 0.5) * 2 * JITTER_AMOUNT
+
+            ArcPointsX[id][point] = baseX + px * jitter
+            ArcPointsY[id][point] = baseY + py * jitter
+
+            point++
         }
     }
 
-    arcState.arcs.push({ points: jagged, life: duration, maxLife: duration, color })
+    Arc.pointCount[id] = point
 }
 
-// called once per frame from gameLoop — ages out and removes expired arcs
+// --------------------------------------------------
+
 export function updateArcs(dt) {
 
-    for (let i = arcState.arcs.length - 1; i >= 0; i--) {
+    for (let i = activeArcs.length - 1; i >= 0; i--) {
 
-        arcState.arcs[i].life -= dt
+        const id = activeArcs[i]
 
-        if (arcState.arcs[i].life <= 0) {
-            arcState.arcs.splice(i, 1)
+        Arc.life[id] -= dt
+
+        if (Arc.life[id] <= 0) {
+            releaseArcEntity(id)
         }
     }
 }
