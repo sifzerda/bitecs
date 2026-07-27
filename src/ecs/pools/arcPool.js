@@ -1,21 +1,13 @@
 // src/ecs/pools/arcPool.js
 
 import { createPool } from "./createPool"
-import {
-    Arc,
-    ArcPointsX,
-    ArcPointsY
-} from "../constants/components"
+import { Arc, ArcPointsX, ArcPointsY } from "../constants/components"
 
 const pool = createPool({
 
-    size:256,
-
-    components:[
-        Arc
-    ],
-
-    activeField:[Arc,"active"],
+    size: 256,
+    components: [ Arc ],
+    activeField: [ Arc, "active" ],
 
     resetFields(id){
 
