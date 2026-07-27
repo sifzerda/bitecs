@@ -7,7 +7,7 @@ import * as THREE from 'three'
 import { world } from '../ecs/constants/world.js'
 import { hazardQuery } from '../ecs/constants/queries.js'
 import { Position, HazardZone, Lifetime } from '../ecs/constants/components.js'
-import { getWeapon } from '../ecs/constants/weapons.js'
+import { getWeapon } from '../ecs/weapons/config/weapons.js'
 
 const MAX_HAZARDS = 32   // generous pool — bump if you ever expect more on screen at once
 

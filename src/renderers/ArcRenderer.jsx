@@ -5,7 +5,8 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { arcState } from '../state/arcState.js'
+import { arcState } from '../ecs/weapons/weaponState/arcState.js'
+import { getWeapon } from '../ecs/weapons/config/weapons.js'
 
 const MAX_ARCS = 24
 const MAX_POINTS_PER_ARC = 64 // generous headroom over JITTER_SEGMENTS * chainCount

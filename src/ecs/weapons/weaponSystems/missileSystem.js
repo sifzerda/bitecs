@@ -1,11 +1,11 @@
-// src/ecs/systems/missileSystem.js
+// src/ecs/weapons/weaponSystems/missileSystem.js
 
-import { world } from "../constants/world.js"
-import { bossQuery, playerQuery } from "../constants/queries.js"
-import { Position, Velocity, Bullet, BULLET_OWNER } from "../constants/components.js"
-import { getWeapon } from "../constants/weapons.js"
-import { activeBullets } from "../pools/bulletPool"
-import { activeAsteroids } from "../pools/asteroidPool"
+import { world } from "../../constants/world.js"
+import { bossQuery, playerQuery } from "../../constants/queries.js"
+import { Position, Velocity, Bullet, BULLET_OWNER } from "../../constants/components.js"
+import { getWeapon, WEAPON_BY_NAME } from "../config/weapons.js"
+import { activeBullets } from "../../pools/bulletPool.js"
+import { activeAsteroids } from "../../pools/asteroidPool.js"
 
 export function missileSystem() {
 
@@ -14,12 +14,14 @@ export function missileSystem() {
     const asteroids = activeAsteroids
     const bosses = bossQuery()
     const players = playerQuery()
-    const weapon = getWeapon(3)
 
     for (let i = 0; i < bullets.length; i++) {
 
         const id = bullets[i]
-        if (Bullet.type[id] !== 3) continue
+        const weapon = getWeapon(Bullet.type[id])
+
+        // any weapon flagged homing gets steered here — not just missilegun by number
+        if (!weapon.homing) continue
 
         // -------------------------
         // Find nearest target
@@ -36,10 +38,7 @@ export function missileSystem() {
                 const dx = Position.x[aid] - Position.x[id]
                 const dy = Position.y[aid] - Position.y[id]
                 const distSq = dx * dx + dy * dy
-                if (distSq < bestDistSq) {
-                    bestDistSq = distSq
-                    targetId = aid
-                }
+                if (distSq < bestDistSq) { bestDistSq = distSq; targetId = aid }
             }
 
             for (let j = 0; j < bosses.length; j++) {
@@ -47,18 +46,14 @@ export function missileSystem() {
                 const dx = Position.x[bid] - Position.x[id]
                 const dy = Position.y[bid] - Position.y[id]
                 const distSq = dx * dx + dy * dy
-                if (distSq < bestDistSq) {
-                    bestDistSq = distSq
-                    targetId = bid
-                }
+                if (distSq < bestDistSq) { bestDistSq = distSq; targetId = bid }
             }
 
         } else if (players.length > 0) {
-            // enemy-owned missiles only ever home on the player
             targetId = players[0]
         }
 
-        if (targetId === -1) continue   // nothing to home in on, keeps flying straight
+        if (targetId === -1) continue
 
         // -------------------------
         // Steer velocity toward target, preserving current speed
@@ -74,7 +69,7 @@ export function missileSystem() {
         const targetAngle = Math.atan2(dy, dx)
 
         let diff = targetAngle - curAngle
-        while (diff > Math.PI) diff -= Math.PI * 2      // normalize so it always turns the short way
+        while (diff > Math.PI) diff -= Math.PI * 2
         while (diff < -Math.PI) diff += Math.PI * 2
 
         const maxTurn = weapon.turnRate * dt

@@ -5,9 +5,9 @@
 import { useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { throwerState } from '../state/throwerState.js'
+import { throwerState } from '../ecs/weapons/weaponState/throwerState.js'
 import { gameState } from '../state/gameState.js'
-import { getWeapon } from '../ecs/constants/weapons.js'
+import { getWeapon } from '../ecs/weapons/config/weapons.js'
 
 const PARTICLE_SIZE = 64 // 64x64 = 4,096 particles — plenty for a flame stream
 

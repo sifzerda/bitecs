@@ -1,11 +1,13 @@
 // src/ecs/systems/bossAISystem.js
 
 import { world } from "../constants/world.js"
-import { bossAIQuery, playerQuery, bossQuery } from "../constants/queries.js"
+import { bossAIQuery, playerQuery } from "../constants/queries.js"
 import { Position, Velocity, Rotation, BossAI, BULLET_OWNER } from "../constants/components.js"
-import { spawnBullet, spawnHazard } from "../spawn.js"
-import { getWeapon } from "../constants/weapons.js"
-import { explodeAt } from "./weaponEffects.js"
+import { spawnBullet } from "../spawn.js"
+import { getWeapon } from "../weapons/config/weapons"
+import { getAction } from "../weapons/config/weaponActions.js"
+
+// src/ecs/systems/bossAISystem.js
 
 const TURN_SPEED = 2.0
 const THRUST = 16
@@ -37,6 +39,8 @@ export function bossAISystem() {
         const id = bosses[i]
 
         //----------------------------------
+        // Wander
+        //----------------------------------
 
         BossAI.moveTimer[id] -= dt
 
@@ -44,8 +48,6 @@ export function bossAISystem() {
             BossAI.targetRotation[id] = Math.random() * Math.PI * 2 - Math.PI
             BossAI.moveTimer[id] = MOVE_INTERVAL_MIN + Math.random() * (MOVE_INTERVAL_MAX - MOVE_INTERVAL_MIN)
         }
-
-        //----------------------------------
 
         const diff = normalizeAngle(BossAI.targetRotation[id] - Rotation[id])
         const maxStep = TURN_SPEED * dt
@@ -57,11 +59,11 @@ export function bossAISystem() {
         }
 
         //----------------------------------
+        // Thrust / speed clamp / drag
+        //----------------------------------
 
         Velocity.x[id] += Math.sin(-Rotation[id]) * THRUST * dt
         Velocity.y[id] += Math.cos(-Rotation[id]) * THRUST * dt
-
-        //----------------------------------
 
         const speed = Math.hypot(Velocity.x[id], Velocity.y[id])
         if (speed > MAX_SPEED) {
@@ -74,6 +76,12 @@ export function bossAISystem() {
         Velocity.y[id] *= DRAG
 
         //----------------------------------
+        // Fire — only discrete-fire (non-continuous) categories spawn a
+        // bullet here. Continuous categories (beam/thrower) are driven
+        // every frame by bossLaserSystem / bossThrowerSystem instead —
+        // this is decided by the same registry the player uses, so a
+        // boss and the player can never disagree about what a category does.
+        //----------------------------------
 
         BossAI.shootTimer[id] -= dt
 
@@ -85,15 +93,8 @@ export function bossAISystem() {
             const dy = Position.y[pid] - Position.y[id]
             const rot = -Math.atan2(dx, dy)
 
-            switch (weapon.category) {
-
-                case "beam":
-                case "thrower":
-                    break
-
-                default:
-                    spawnBullet(Position.x[id], Position.y[id], rot, weapon.id, BULLET_OWNER.ENEMY)
-                    break
+            if (!getAction(weapon).continuous) {
+                spawnBullet(Position.x[id], Position.y[id], rot, weapon.id, BULLET_OWNER.ENEMY)
             }
 
             BossAI.shootTimer[id] = SHOOT_INTERVAL

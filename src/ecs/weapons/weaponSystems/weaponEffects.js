@@ -1,13 +1,13 @@
-// src/ecs/systems/weaponEffects.js
+// src/ecs/weapons/weaponSystems/weaponEffects.js
 
-import { Position, Health } from "../constants/components.js"
-import { spawnHazard, spawnBullet } from "../spawn.js"
-import { killAsteroid, killBoss } from "./entityDeath.js"
-import { getWeapon } from "../constants/weapons.js"
-import { pushArc } from "../../state/arcState.js"
+import { Position, Health } from "../../constants/components.js"
+import { spawnHazard, spawnBullet } from "../../spawn.js"
+import { killAsteroid, killBoss } from "../../systems/entityDeath.js"
+import { getWeapon } from "../config/weapons.js"
+import { pushArc } from "../weaponState/arcState.js"
 
-import { emitEffect } from "../../fx/effects.js"
-import { EFFECT } from "../../fx/FXTypes.js"
+import { emitEffect } from "../../../fx/effects.js"
+import { EFFECT } from "../../../fx/FXTypes.js"
 
 // -------------------------
 // Grenade launcher / any AOE explosive weapon

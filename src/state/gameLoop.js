@@ -4,24 +4,23 @@ import playerControlSystem from "../ecs/systems/playerControlSystem"
 import { movementSystem } from "../ecs/systems/movement"
 import { boundsSystem } from "../ecs/systems/bounds"
 import { combatSystem } from "../ecs/systems/combat"
-
 import { waveSystem } from "../ecs/systems/waveSystem"
-import { laserSystem } from "../ecs/systems/laserSystem"
-import { throwerSystem } from "../ecs/systems/throwerSystem.js"
-import { hazardSystem } from "../ecs/systems/hazardSystem"
-import { updateArcs } from "../state/arcState.js"
+import { trailSystem } from "../ecs/systems/trailSystem"
+
+import { laserSystem } from "../ecs/weapons/weaponSystems/laserSystem"
+import { missileSystem } from "../ecs/weapons/weaponSystems/missileSystem"
+import { throwerSystem } from "../ecs/weapons/weaponSystems/throwerSystem"
+import { hazardSystem } from "../ecs/weapons/weaponSystems/hazardSystem"
+import { updateArcs } from "../ecs/weapons/weaponState/arcState"
 
 import { bossAISystem } from "../ecs/systems/bossAISystem"
-import { bossLaserSystem } from "../ecs/systems/bossLaserSystem.js"
-import { bossThrowerSystem } from "../ecs/systems/bossThrowerSystem.js"
-
-import { missileSystem } from "../ecs/systems/missileSystem"
-import { trailSystem } from "../ecs/systems/trailSystem"
+import { bossLaserSystem } from "../ecs/weapons/weaponSystems/bossLaserSystem"
+import { bossThrowerSystem } from "../ecs/weapons/weaponSystems/bossThrowerSystem"
 // fx
 import { updateSparkEmitter } from "../fx/gpu/SparkEmitter"
-import { exhaustEmitter } from "../fx/gpu/exhaustEmitter.js"
-import { updateFireEmitter } from "../fx/gpu/FireEmitter.js"
-import { updateEffects } from "../fx/index.js"
+import { exhaustEmitter } from "../fx/gpu/exhaustEmitter"
+import { updateFireEmitter } from "../fx/gpu/FireEmitter"
+import { updateEffects } from "../fx/index"
 
 //import { tentacleSystem } from "../ecs/systems/tentacleSystem"
 //import { clearSpatialGrid, insertIntoSpatialGrid } from '../ecs/constants/spatialGrid.js'
@@ -36,11 +35,8 @@ export function gameLoop(shootState, dt) {
     //    tentacleSystem(dt)
 
     missileSystem()
-
     movementSystem()
-
     exhaustEmitter()
-
     boundsSystem()
     waveSystem()
 

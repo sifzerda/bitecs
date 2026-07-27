@@ -1,19 +1,19 @@
-// src/ecs/systems/laserSystem.js
+// src/ecs/weapons/weaponSystems/laserSystem.js
 
-import { world } from "../constants/world.js"
-import { playerQuery, bossQuery } from "../constants/queries.js"
-import { Position, Rotation, Health } from "../constants/components.js"
-import { input } from "./input.js"
-import { gameState } from "../../state/gameState.js"
-import { getWeapon } from "../constants/weapons.js"
-import { laserState } from "../../state/laserState.js"
+import { world } from "../../constants/world.js"
+import { playerQuery, bossQuery } from "../../constants/queries.js"
+import { Position, Rotation, Health } from "../../constants/components.js"
+import { input } from "../../systems/input.js"
+import { gameState } from "../../../state/gameState.js"
+import { getWeapon } from "../config/weapons.js"
+import { laserState } from "../weaponState/laserState.js"
  
-import { killAsteroid, killBoss } from "./entityDeath.js"
-import { activeAsteroids } from "../pools/asteroidPool"
-import { pushArc } from "../../state/arcState.js"
+import { killAsteroid, killBoss } from "../../systems/entityDeath.js"
+import { activeAsteroids } from "../../pools/asteroidPool.js"
+import { pushArc } from "../weaponState/arcState.js"
 
-import { emitEffect } from "../../fx/effects.js"
-import { EFFECT } from "../../fx/FXTypes.js"
+import { emitEffect } from "../../../fx/effects.js"
+import { EFFECT } from "../../../fx/FXTypes.js"
 
 const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0

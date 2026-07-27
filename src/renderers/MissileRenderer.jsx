@@ -5,7 +5,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { activeBullets } from '../ecs/pools/bulletPool.js'
 import { Position, Velocity, Bullet } from '../ecs/constants/components.js'
-import { getWeapon } from '../ecs/constants/weapons.js'
+import { getWeapon } from '../ecs/weapons/config/weapons.js'
 
 const MAX_MISSILES = 32
 

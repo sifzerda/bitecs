@@ -1,4 +1,4 @@
-//src/state/arcState.js
+// src/ecs/weapons/weaponState/arcState.js
 
 // Transient jagged-lightning segments pushed by chain-lightning effects
 // (laserSystem's arc gun beam, weaponEffects' chainLightning). Each entry

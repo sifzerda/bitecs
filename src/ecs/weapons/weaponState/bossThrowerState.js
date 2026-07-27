@@ -1,4 +1,4 @@
-// src/state/bossThrowerState.js
+// src/ecs/weapons/weaponState/bossThrowerState.js
 
 export const bossThrowerState = {
     active: false,

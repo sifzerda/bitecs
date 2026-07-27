@@ -23,11 +23,12 @@ import {
     OctopusTag,
 } from "./constants/components";
 import { BOSS_INDEX_BY_KEY, BOSSES } from "./constants/bosses";
-import { getGunTypeById } from "./constants/gunConfigs";
 import { gameState } from "../state/gameState";
-import { getWeapon } from "./constants/weapons";
 import { acquireBulletEntity } from "./pools/bulletPool"
 import { acquireAsteroidEntity } from './pools/asteroidPool'
+
+import { getGunTypeById } from "./weapons/config/gunConfigs";
+import { getWeapon } from "./weapons/config/weapons";
  
 // ============= helpers ============//
 function setPosition(id, x, y) {

@@ -1,7 +1,7 @@
 // src/ecs/systems/input.js
 
 import { gameState } from "../../state/gameState.js"
-import { WEAPONS } from "../constants/weapons.js"
+import { WEAPONS } from "../weapons/config/weapons.js"
 
 export const input = {
 

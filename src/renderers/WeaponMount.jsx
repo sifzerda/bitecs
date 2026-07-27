@@ -1,7 +1,7 @@
 // src/renderers/WeaponMount.jsx
 
 import { GunRenderer } from './GunRenderer.jsx'
-import { getGunTypeById } from '../ecs/constants/gunConfigs.js'
+import { getGunTypeById } from '../ecs/weapons/config/gunConfigs.js'
 
 const GUN_DIRECTION = Math.PI / 2
 

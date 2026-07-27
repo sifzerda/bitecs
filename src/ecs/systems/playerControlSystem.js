@@ -6,8 +6,9 @@ import { Position, Velocity, Rotation, BULLET_OWNER } from "../constants/compone
 import { spawnBullet, spawnPlayerBullet, spawnHazard } from "../spawn.js"
 import { input } from "./input.js"
 import { gameState } from "../../state/gameState.js"
-import { getWeapon } from "../constants/weapons.js"
-import { explodeAt } from "./weaponEffects.js"
+import { getWeapon } from "../weapons/config/weapons.js"
+import { explodeAt } from "../weapons/weaponSystems/weaponEffects.js"
+import { getAction } from "../weapons/config/weaponActions.js"
 
 import { emitEffect } from "../../fx/effects.js"
 import { EFFECT } from "../../fx/FXTypes.js"
@@ -166,13 +167,9 @@ export default function playerControlSystem(shootState) {
     //----------------------------------
 
     const weapon = getWeapon(gameState.currentWeapon)
+    const action = getAction(weapon)
 
-    if (weapon.category === "beam") {
-        // beam weapons are handled entirely by laserSystem — no discrete spawn/cooldown here
-    } else if (weapon.category === "thrower") {
-        // handled entirely by throwerSystem
-
-    } else {
+    if (!getAction(weapon).continuous) {
         shootState.timer -= dt
         if (input.fire && shootState.timer <= 0) {
 

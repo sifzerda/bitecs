@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useControls, button } from 'leva'
-import { WEAPONS } from '../ecs/constants/weapons.js'
+import { WEAPONS } from '../ecs/weapons/config/weapons.js'
 import { BOSSES } from '../ecs/constants/bosses.js'
 import { gameState } from '../state/gameState.js'
 import { spawnBoss, spawnOctopus } from '../ecs/spawn.js'

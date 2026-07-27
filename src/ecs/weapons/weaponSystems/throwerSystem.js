@@ -1,18 +1,18 @@
-//src/ecs/systems/throwerSystem.js
+// src/ecs/weapons/weaponSystems/throwerSystem.js
 
-import { world } from "../constants/world.js"
-import { playerQuery, bossQuery } from "../constants/queries.js"
-import { Position, Rotation, Health, StatusEffect } from "../constants/components.js"
-import { input } from "./input.js"
-import { gameState } from "../../state/gameState.js"
-import { getWeapon } from "../constants/weapons.js"
-import { throwerState } from "../../state/throwerState.js"
-import { spawnHazard } from "../spawn.js"
-import { killAsteroid, killBoss } from "./entityDeath.js"
-import { activeAsteroids } from "../pools/asteroidPool.js"
+import { world } from "../../constants/world.js"
+import { playerQuery, bossQuery } from "../../constants/queries.js"
+import { Position, Rotation, Health, StatusEffect } from "../../constants/components.js"
+import { input } from "../../systems/input.js"
+import { gameState } from "../../../state/gameState.js"
+import { getWeapon } from "../config/weapons.js"
+import { throwerState } from "../weaponState/throwerState.js"
+import { spawnHazard } from "../../spawn.js"
+import { killAsteroid, killBoss } from "../../systems/entityDeath.js"
+import { activeAsteroids } from "../../pools/asteroidPool.js"
 
-import { emitEffect } from "../../fx/effects.js"
-import { EFFECT } from "../../fx/FXTypes.js"
+import { emitEffect } from "../../../fx/effects.js"
+import { EFFECT } from "../../../fx/FXTypes.js"
 
 const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0

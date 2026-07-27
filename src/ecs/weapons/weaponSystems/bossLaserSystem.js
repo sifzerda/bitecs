@@ -1,10 +1,10 @@
-// src/ecs/systems/bossLaserSystem.js
+// src/ecs/weapons/weaponSystems/bossLaserSystem.js
 
-import { world } from "../constants/world.js"
-import { bossAIQuery, playerQuery } from "../constants/queries.js"
-import { Position, BossAI, Health } from "../constants/components.js"
-import { getWeapon } from "../constants/weapons.js"
-import { bossLaserState } from "../../state/bossLaserState.js"
+import { world } from "../../constants/world.js"
+import { bossAIQuery, playerQuery } from "../../constants/queries.js"
+import { Position, BossAI, Health } from "../../constants/components.js"
+import { getWeapon } from "../config/weapons.js"
+import { bossLaserState } from "../weaponState/bossLaserState.js"
 
 const BEAM_ON_DURATION = 3.0
 const BEAM_OFF_DURATION = 6.0

@@ -3,10 +3,10 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { bossLaserState } from '../state/bossLaserState.js'
+import { bossLaserState } from '../ecs/weapons/weaponState/bossLaserState.js'
 import { bossAIQuery } from '../ecs/constants/queries.js'
 import { BossAI } from '../ecs/constants/components.js'
-import { getWeapon } from '../ecs/constants/weapons.js'
+import { getWeapon } from '../ecs/weapons/config/weapons.js'
 
 const CORE_WIDTH_MULT = 1
 const GLOW_WIDTH_MULT = 2.6

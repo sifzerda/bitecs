@@ -1,4 +1,4 @@
-//src/state/bossLaserState.js
+// src/ecs/weapons/weaponState/bossLaserState.js
 
 export const bossLaserState = {
     active: false,

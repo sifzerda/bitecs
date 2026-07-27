@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { DEFAULT_GUN_CONFIG } from '../ecs/constants/gunConfigs.js'
+import { DEFAULT_GUN_CONFIG } from '../ecs/weapons/config/gunConfigs.js'
 
 // ============================================================
 

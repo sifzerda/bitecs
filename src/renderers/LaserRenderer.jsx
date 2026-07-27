@@ -4,9 +4,9 @@ import { useMemo, useRef } from 'react'
 import { createRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { laserState } from '../state/laserState.js'
+import { laserState } from '../ecs/weapons/weaponState/laserState.js'
 import { gameState } from '../state/gameState.js'
-import { getWeapon } from '../ecs/constants/weapons.js'
+import { getWeapon } from '../ecs/weapons/config/weapons.js'
 
 const MAX_BEAMS = 3
 export function LaserRenderer() {

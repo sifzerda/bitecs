@@ -1,10 +1,10 @@
-//src/ecs/systems/bossThrowerSystem.js
+// src/ecs/weapons/weaponSystems/bossThrowerSystem.js
 
-import { world } from "../constants/world.js"
-import { bossAIQuery, playerQuery } from "../constants/queries.js"
-import { Position, BossAI, Health, StatusEffect } from "../constants/components.js"
-import { getWeapon } from "../constants/weapons.js"
-import { bossThrowerState } from "../../state/bossThrowerState.js"
+import { world } from "../../constants/world.js"
+import { bossAIQuery, playerQuery } from "../../constants/queries.js"
+import { Position, BossAI, Health, StatusEffect } from "../../constants/components.js"
+import { getWeapon } from "../config/weapons.js"
+import { bossThrowerState } from "../weaponState/bossThrowerState.js"
 
 export function bossThrowerSystem() {
 

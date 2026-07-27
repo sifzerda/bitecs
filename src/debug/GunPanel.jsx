@@ -3,7 +3,7 @@
 import { useMemo, useEffect } from 'react'
 import { useSyncExternalStore } from 'react'
 import { useControls, button } from 'leva'
-import { GUN_TYPES, DEFAULT_GUN_CONFIG } from '../ecs/constants/gunConfigs.js'
+import { GUN_TYPES, DEFAULT_GUN_CONFIG } from '../ecs/weapons/config/gunConfigs.js'
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
 
 import { setPreviewGunConfigOverride, subscribePreviewBossSelection, getPreviewBossSelection } from "./debugState.js"

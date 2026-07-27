@@ -5,7 +5,7 @@ import { useFrame } from '@react-three/fiber'
 import { playerQuery } from '../ecs/constants/queries.js'
 import { Position, Rotation } from '../ecs/constants/components.js'
 import { gameState } from '../state/gameState.js'
-import { getGunTypeByWeaponId, getGunTypeById } from '../ecs/constants/gunConfigs.js'
+import { getGunTypeByWeaponId, getGunTypeById } from '../ecs/weapons/config/gunConfigs.js'
 import { WeaponMount } from './WeaponMount.jsx'
 
 export function GunMount() {

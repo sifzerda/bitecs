@@ -1,7 +1,7 @@
 // src/ecs/systems/trailSystem.js
 
 import { Position, Velocity, Bullet } from "../constants/components.js"
-import { WEAPONS } from "../constants/weapons.js"
+import { WEAPONS } from "../weapons/config/weapons.js"
 import { activeBullets } from "../pools/bulletPool.js"
 
 import { emitEffect } from "../../fx/effects.js"

@@ -20,10 +20,13 @@ import {
 import { spawnHazard } from "../spawn.js"
 import { gameState } from "../../state/gameState.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
-import { getWeapon } from "../constants/weapons.js"
-import { explodeAt, chainLightning } from "./weaponEffects.js"
+ 
+import { explodeAt, chainLightning } from "../weapons/weaponSystems/weaponEffects"
 import { releaseBulletEntity, activeBullets } from "../pools/bulletPool"
 import { activeAsteroids } from "../pools/asteroidPool"
+
+import { getWeapon } from "../weapons/config/weapons.js"
+import { resolveHit } from "../weapons/weaponSystems/hitTraits.js"
 
 import { emitEffect } from "../../fx/effects.js"
 import { EFFECT } from "../../fx/FXTypes.js"

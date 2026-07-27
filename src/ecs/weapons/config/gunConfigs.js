@@ -1,4 +1,7 @@
-// src/ecs/constants/gunConfigs.js
+// src/ecs/weapons/config/gunConfigs.js
+
+import { WEAPON_BY_NAME } from "./weapons.js"
+
 function deepMerge(base, overrides) {
     const out = { ...base }
     for (const key in overrides) {
@@ -92,13 +95,10 @@ export const DEFAULT_GUN_CONFIG = {
 
 const RAW_TYPES = [
 
-    {
-        id: '00_raygun', name: 'Ray Gun', weaponId: 0,
-
-    },
+    { id: '00_raygun', name: 'Ray Gun', weaponId: WEAPON_BY_NAME.raygun.id },
     // shotgun
     {
-        id: '01_shotgun', name: 'Shotgun', weaponId: 1,
+        id: '01_shotgun', name: 'Shotgun', weaponId: WEAPON_BY_NAME.shotgun.id,
         overrides: {
             frame: { color: '#ff3355', length: 0.45, height: 0.20 },
             barrel: { color: '#3a6bd5', length: 0.27, width: 0.15, offsetX: 0.54, offsetY: 0 },
@@ -112,7 +112,7 @@ const RAW_TYPES = [
 
     // machinegun
     {
-        id: '02_machinegun', name: 'Machine Gun', weaponId: 2,
+        id: '02_machinegun', name: 'Machine Gun', weaponId: WEAPON_BY_NAME.machinegun.id,
         overrides: {
             frame: { color: '#00444e', length: 0.9, height: 0.14 },
             barrel: { color: '#000000', length: 0.2, width: 0.037, offsetX: 0.7, offsetY: 0 },
@@ -126,7 +126,7 @@ const RAW_TYPES = [
 
     // cryogun
     {
-        id: '03_cryogun', name: 'Cryo Gun', weaponId: 3,
+        id: '03_cryogun', name: 'Cryo Gun', weaponId: WEAPON_BY_NAME.cryocannon.id,
         overrides: {
             frame: { color: '#c8d8e0', length: 0.89, height: 0.27, taper: 0.35, offsetX: -0.12 },
             slide: {
@@ -168,7 +168,7 @@ const RAW_TYPES = [
 
     // grenade launcher
     {
-        id: '04_grenadelauncher', name: 'Grenade Launcher', weaponId: 4,
+        id: '04_grenadelauncher', name: 'Grenade Launcher', weaponId: WEAPON_BY_NAME.grenadegun.id,
         overrides: {
             frame: { color: '#5a88eb', length: 0.9, height: 0.45 },
             barrel: { color: '#0049ff', length: 0.4, width: 0.3, offsetX: 1, offsetY: 0 },
@@ -183,7 +183,7 @@ const RAW_TYPES = [
 
     // acidthrower
     {
-        id: '05_acidthrower', name: 'Acidthrower', weaponId: 5,
+        id: '05_acidthrower', name: 'Acidthrower', weaponId: WEAPON_BY_NAME.acidsprayer.id,
         overrides: {
             frame: { color: '#98D6F5', length: 0.89, height: 0.27, taper: 0.35, offsetX: -0.12 },
             slide: {
@@ -225,7 +225,7 @@ const RAW_TYPES = [
 
     // homing missile
     {
-        id: '06_missilelauncher', name: 'Missile Launcher', weaponId: 6,
+        id: '06_missilelauncher', name: 'Missile Launcher', weaponId: WEAPON_BY_NAME.missilegun.id,
         overrides: {
             frame: { color: '#cfe8ff', length: 0.9, height: 0.34 },
             barrel: { color: '#ff3355', length: 0.15, width: 0.25, offsetX: 0.9, offsetY: 0 },
@@ -239,7 +239,7 @@ const RAW_TYPES = [
 
     // flamethrower
     {
-        id: '07_flamethrower', name: 'Flamethrower', weaponId: 7,
+        id: '07_flamethrower', name: 'Flamethrower', weaponId: WEAPON_BY_NAME.flamethrower.id,
         overrides: {
             frame: { color: '#000000', length: 0.74, height: 0.235 },
             barrel: { color: '#ff3355', length: 0.6, width: 0.055, offsetX: 0.92, offsetY: 0 },
@@ -252,7 +252,7 @@ const RAW_TYPES = [
     },
 
     {
-        id: '08_lasergun', name: 'Laser Gun', weaponId: 8,
+        id: '08_lasergun', name: 'Laser Gun', weaponId: WEAPON_BY_NAME.lasergun.id,
         overrides: {
             frame: { height: 0.18 },
             barrel: { length: 0.22, width: 0.08, color: '#3a3a4a' },
@@ -263,7 +263,7 @@ const RAW_TYPES = [
     },
 
     {
-        id: '09_arcgun', name: 'Arc Lightning Gun', weaponId: 9,
+        id: '09_arcgun', name: 'Arc Lightning Gun', weaponId: WEAPON_BY_NAME.arcgun.id,
         overrides: {
             frame: { color: '#8a3a2a', height: 0.17 },
             barrel: { length: 0.3, width: 0.07, color: '#2a1a14' },
@@ -274,7 +274,7 @@ const RAW_TYPES = [
     },
 
     {
-        id: '10_plasmagun', name: 'Plasma Laser Gun', weaponId: 10,
+        id: '10_plasmagun', name: 'Plasma Laser Gun', weaponId: WEAPON_BY_NAME.plasmabeam.id,
         overrides: {
             frame: { length: 0.9, height: 0.16 },
             barrel: { length: 0.38, width: 0.045, color: '#3a3550' },
@@ -284,7 +284,7 @@ const RAW_TYPES = [
             sight: { color: '#ff6bff' },
         },
     },
-    
+
 ]
 
 export const GUN_TYPES = RAW_TYPES.map(({ id, name, weaponId, overrides }) => ({
@@ -300,4 +300,12 @@ export function getGunTypeByWeaponId(weaponId) {
 
 export function getGunTypeById(id) {
     return GUN_TYPES.find(g => g.id === id) ?? GUN_TYPES[0]
+}
+
+if (import.meta.env?.DEV) {
+    const seen = new Set()
+    for (const g of GUN_TYPES) {
+        if (seen.has(g.weaponId)) console.warn(`${g.id}: weaponId ${g.weaponId} already claimed by another gun`)
+        seen.add(g.weaponId)
+    }
 }

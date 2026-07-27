@@ -1,16 +1,16 @@
-// src/ecs/systems/hazardSystem.js
+// src/ecs/weapons/weaponSystems/hazardSystem.js
 
 import { removeEntity, hasComponent } from "bitecs"
-import { world } from "../constants/world.js"
-import { hazardQuery, bossQuery } from "../constants/queries.js"
-import { Position, Health, HazardZone, Lifetime } from "../constants/components.js"
-import { getWeapon } from "../constants/weapons.js"
+import { world } from "../../constants/world.js"
+import { hazardQuery, bossQuery } from "../../constants/queries.js"
+import { Position, Health, HazardZone, Lifetime } from "../../constants/components.js"
+import { getWeapon } from "../config/weapons.js"
 
-import { killAsteroid, killBoss } from "./entityDeath.js"
-import { activeAsteroids } from "../pools/asteroidPool"
+import { killAsteroid, killBoss } from "../../systems/entityDeath.js"
+import { activeAsteroids } from "../../pools/asteroidPool.js"
 
-import { emitEffect } from "../../fx/effects.js"
-import { EFFECT } from "../../fx/FXTypes.js"
+import { emitEffect } from "../../../fx/effects.js"
+import { EFFECT } from "../../../fx/FXTypes.js"
 
 export function hazardSystem() {
 
