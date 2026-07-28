@@ -1,71 +1,51 @@
 // src/fx/effectPool.js
 
-export function createTypedEffectPool(
-    capacity,
-    scalarFields = [],
-    vec3Fields = []
-) {
+export function createTypedEffectPool(capacity, scalarFields = [], vec3Fields = []) {
 
     const pool = {
 
         capacity,
 
-        // ==========================================================
-        // Simulation data
-        // ==========================================================
-
+        // simulation
         alive: new Uint8Array(capacity),
-
         x: new Float32Array(capacity),
         y: new Float32Array(capacity),
-
         vx: new Float32Array(capacity),
         vy: new Float32Array(capacity),
-
         life: new Float32Array(capacity),
         maxLife: new Float32Array(capacity),
 
         cursor: 0,
 
-        // ==========================================================
-        // GPU instance data
-        // ==========================================================
+        // active tracking
+        activeIds: new Int32Array(capacity),
+        activeIndex: new Int32Array(capacity),
+        activeCount: 0,
 
-        // xyz
+        // gpu data
+
         instancePosition: new Float32Array(capacity * 3),
-        // rgb
         instanceColor: new Float32Array(capacity * 3),
-        // scalar
         instanceScale: new Float32Array(capacity),
         instanceRotation: new Float32Array(capacity),
         instanceAlpha: new Float32Array(capacity),
-        
         instanceStretch: new Float32Array(capacity),
 
-        // lets renderers know something changed
         dirty: true
 
     }
 
-    // ----------------------------------------------------------
-    // Extra scalar attributes
-    // ----------------------------------------------------------
-
+    // extra scalar attributes
     for (const name of scalarFields) {
         pool[name] = new Float32Array(capacity)
     }
 
-    // ----------------------------------------------------------
-    // Extra vec3 attributes
-    // ----------------------------------------------------------
-
+    // extra vec3 attributes
     for (const name of vec3Fields) {
         pool[name] = new Float32Array(capacity * 3)
     }
 
-    // ==========================================================
-    // Allocate
-    // ==========================================================
+    // allocate
 
     pool.allocate = () => {
 
@@ -73,12 +53,16 @@ export function createTypedEffectPool(
 
             const id = (pool.cursor + i) % capacity
 
+
             if (!pool.alive[id]) {
 
                 pool.alive[id] = 1
                 pool.cursor = (id + 1) % capacity
 
-                // reset GPU attributes
+                const index = pool.activeCount
+                pool.activeIds[index] = id
+                pool.activeIndex[id] = index
+                pool.activeCount++
 
                 const p = id * 3
 
@@ -93,22 +77,19 @@ export function createTypedEffectPool(
                 pool.instanceScale[id] = 1
                 pool.instanceRotation[id] = 0
                 pool.instanceAlpha[id] = 1
+                pool.instanceStretch[id] = 0
 
                 pool.dirty = true
 
                 return id
-
             }
-
         }
 
         return -1
 
     }
 
-    // ==========================================================
-    // Kill
-    // ==========================================================
+    // swap-remove kill
 
     pool.kill = (id) => {
 
@@ -117,30 +98,37 @@ export function createTypedEffectPool(
 
         pool.alive[id] = 0
 
-        const p = id * 3
+        const index = pool.activeIndex[id]
+        const lastIndex = pool.activeCount - 1
 
-        pool.instanceScale[id] = 0
-        pool.instanceAlpha[id] = 0
+        if (index !== lastIndex) {
+
+            const moved = pool.activeIds[lastIndex]
+
+            pool.activeIds[index] = moved
+            pool.activeIndex[moved] = index
+        }
+
+        pool.activeCount--
+
+        const p = id * 3
 
         pool.instancePosition[p] = 0
         pool.instancePosition[p + 1] = 0
         pool.instancePosition[p + 2] = 0
 
+        pool.instanceScale[id] = 0
+        pool.instanceAlpha[id] = 0
+
         pool.dirty = true
-
     }
-
-    // ==========================================================
-    // Clear
-    // ==========================================================
 
     pool.clear = () => {
 
         pool.alive.fill(0)
-
+        pool.activeCount = 0
         pool.instancePosition.fill(0)
         pool.instanceColor.fill(0)
-
         pool.instanceScale.fill(0)
         pool.instanceRotation.fill(0)
         pool.instanceAlpha.fill(0)

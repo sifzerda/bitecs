@@ -21,7 +21,6 @@ varying vec3 vNormal;
 varying float vAge;
 varying float vSeed;
 
-// classic 3D simplex-ish noise (cheap, good enough for silhouette breakup)
 vec3 mod289(vec3 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
 vec4 mod289(vec4 x){ return x - floor(x * (1.0/289.0)) * 289.0; }
 vec4 permute(vec4 x){ return mod289(((x*34.0)+1.0)*x); }
@@ -100,7 +99,6 @@ void main() {
     vSeed = aSeed;
     vNormal = normalize(normalMatrix * normal);
 
-    // lumpy, licking-flame silhouette that settles as the fireball ages
     float n = fbm(normal * 2.5 + aSeed * 12.0);
     float bulge = n * 0.4 * (1.0 - aAge * 0.6);
     vec3 displaced = position * (1.0 + bulge);
@@ -130,12 +128,9 @@ vec3 fireRamp(float t) {
 
 void main() {
     float fresnel = pow(1.0 - abs(vNormal.z), 1.6);
-
     vec3 color = fireRamp(vAge) * (1.0 + fresnel * 0.6);
-
     float coreBoost = smoothstep(0.25, 0.0, vAge) * 0.8;
     color += vec3(1.0, 0.9, 0.6) * coreBoost;
-
     float alpha = (1.0 - vAge * 0.85) * (0.55 + fresnel * 0.45);
     alpha *= smoothstep(1.0, 0.8, vAge);
 
@@ -146,28 +141,19 @@ void main() {
 export function ExplosionRenderer() {
 
     const ref = useRef()
-
-    // local compacted-index buffers — GPU instance attributes are read by
-    // compacted instance index (0..count-1), not raw pool slot id, so these
-    // can't bind directly to explosionPool's raw-slot-indexed arrays
-    // (same fix as ShockwaveRenderer/FlashRenderer)
     const ageBuffer = useMemo(() => new Float32Array(MAX), [])
-    const seedBuffer = useMemo(() => {
-        const seeds = new Float32Array(MAX)
-        for (let i = 0; i < MAX; i++) seeds[i] = Math.random()
-        return seeds
+    const seedBuffer = useMemo(() => new Float32Array(MAX), [])
+
+    const geometry = useMemo(() => {
+
+        const geo = new THREE.SphereGeometry(1, 12, 10)
+
+        geo.setAttribute("aAge", new THREE.InstancedBufferAttribute(ageBuffer, 1))
+        geo.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seedBuffer, 1))
+
+        return geo
+
     }, [])
-
-    const geo = useMemo(() => {
-
-        const g = new THREE.SphereGeometry(1, 12, 10)
-
-        g.setAttribute("aAge", new THREE.InstancedBufferAttribute(ageBuffer, 1))
-        g.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seedBuffer, 1))
-
-        return g
-
-    }, [ageBuffer, seedBuffer])
 
     const material = useMemo(() => new THREE.ShaderMaterial({
         vertexShader: vertexShader,
@@ -181,35 +167,41 @@ export function ExplosionRenderer() {
 
         updateExplosionEmitter(dt)
 
-        const p = explosionPool
         const mesh = ref.current
         if (!mesh) return
 
+        const p = explosionPool
+
         let count = 0
 
-        for (let i = 0; i < p.capacity; i++) {
+        for (let n = 0; n < p.activeCount; n++) {
 
-            if (!p.alive[i])
-                continue
+            const i = p.activeIds[n]
 
-            const pos3 = i * 3
+            const pos = i * 3
 
             _pos.set(
-                p.instancePosition[pos3],
-                p.instancePosition[pos3 + 1],
-                p.instancePosition[pos3 + 2] + (count % 7) * 0.001
+                p.instancePosition[pos],
+                p.instancePosition[pos + 1],
+                p.instancePosition[pos + 2] + (count % 7) * 0.001
             )
 
             const s = p.instanceScale[i]
             _scale.set(s, s, s)
 
-            _axis.set(p.axis[pos3], p.axis[pos3 + 1], p.axis[pos3 + 2])
+            _axis.set(
+                p.axis[pos],
+                p.axis[pos + 1],
+                p.axis[pos + 2]
+            )
+
             _rot.setFromAxisAngle(_axis, p.rotAngle[i])
 
             _matrix.compose(_pos, _rot, _scale)
             mesh.setMatrixAt(count, _matrix)
 
             ageBuffer[count] = p.age[i]
+            seedBuffer[count] = p.seed[i]
 
             count++
 
@@ -217,16 +209,19 @@ export function ExplosionRenderer() {
 
         mesh.count = count
         mesh.instanceMatrix.needsUpdate = true
-        mesh.geometry.attributes.aAge.needsUpdate = true
+
+        if (p.dirty) {
+
+            geometry.attributes.aAge.needsUpdate = true
+            geometry.attributes.aSeed.needsUpdate = true
+
+            p.dirty = false
+        }
 
     })
 
     return (
-        <instancedMesh
-            ref={ref}
-            args={[geo, material, MAX]}
-            frustumCulled={false}
-        />
+        <instancedMesh ref={ref} args={[geometry, material, MAX]} frustumCulled={false} />
     )
 
 }

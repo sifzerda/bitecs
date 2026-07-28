@@ -27,107 +27,153 @@ void main() {
     vTint = aTint;
     vUv = uv;
 
-    vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
-    gl_Position = projectionMatrix * mvPosition;
+    gl_Position = projectionMatrix *
+                  modelViewMatrix *
+                  instanceMatrix *
+                  vec4(position,1.0);
+
 }
 `
 
-const fragmentShader = /* glsl */ 
-`
+const fragmentShader = /* glsl */ `
 varying float vAlpha;
 varying vec3 vTint;
 varying vec2 vUv;
 
-void main() {
+void main(){
 
-    vec2 p = (vUv - 0.5) * vec2(1.0, 1.65);
+    vec2 p = (vUv - 0.5) * vec2(1.0,1.65);
+
     float d = length(p);
 
-    float core = smoothstep(0.32, 0.0, d);
-    float glow = smoothstep(0.65, 0.05, d);
+    float core = smoothstep(0.32,0.0,d);
+    float glow = smoothstep(0.65,0.05,d);
 
-    vec3 white = vec3(1.0, 0.98, 0.92);
+    vec3 white = vec3(1.0,0.98,0.92);
     vec3 color = mix(vTint, white, core);
 
     float alpha = glow * vAlpha;
     alpha *= alpha;
 
-    if (alpha < 0.001) discard;
+    if(alpha < 0.001) discard;
 
-    gl_FragColor = vec4(color, alpha); 
+    gl_FragColor = vec4(color, alpha);
+
 }
 `
 
 export function FlashRenderer() {
 
-    const ref = useRef()
+    const meshRef = useRef()
 
-    // width/height ratio baked into the base geometry (was anisotropic
-    // per-instance scale before — instanceScale is a plain scalar in the
-    // pool, so the 1.6 / 0.9 aspect now lives here instead)
-    const geo = useMemo(() => new THREE.PlaneGeometry(1.6, 0.9), [])
-
-    // local compacted-index buffers — matrices are compacted (dead slots
-    // skipped) so per-instance attributes must be written at the same
-    // compacted index, not the raw pool slot id
     const tintBuffer = useMemo(() => new Float32Array(MAX * 3), [])
     const alphaBuffer = useMemo(() => new Float32Array(MAX), [])
 
-    const attrGeo = useMemo(() => {
-        geo.setAttribute("aTint", new THREE.InstancedBufferAttribute(tintBuffer, 3))
-        geo.setAttribute("aAlpha", new THREE.InstancedBufferAttribute(alphaBuffer, 1))
-        return geo
-    }, [geo, tintBuffer, alphaBuffer])
+    const geometry = useMemo(() => {
 
-const material = useMemo(() => new THREE.ShaderMaterial({
-    vertexShader,
-    fragmentShader,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-}), [])
+        const geo = new THREE.PlaneGeometry(1.6, 0.9)
+
+        const tint = new THREE.InstancedBufferAttribute(tintBuffer, 3)
+        const alpha = new THREE.InstancedBufferAttribute(alphaBuffer, 1)
+
+        tint.setUsage(THREE.DynamicDrawUsage)
+        alpha.setUsage(THREE.DynamicDrawUsage)
+
+        geo.setAttribute("aTint", tint)
+        geo.setAttribute("aAlpha", alpha)
+
+        return geo
+
+    }, [tintBuffer, alphaBuffer])
+
+    const material = useMemo(() => new THREE.ShaderMaterial({
+
+        vertexShader,
+        fragmentShader,
+
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        blending: THREE.AdditiveBlending,
+        toneMapped: false,
+
+    }), [])
 
     useFrame((_, dt) => {
 
         updateFlashEmitter(dt)
 
-        const p = flashPool
-        const mesh = ref.current
+        const mesh = meshRef.current
         if (!mesh) return
 
-        let count = 0
+        const p = flashPool
 
-        for (let i = 0; i < p.capacity; i++) {
+        const activeCount = p.activeCount
+        const activeIds = p.activeIds
 
-            if (!p.alive[i])
-                continue
+        const countChanged = mesh.count !== activeCount
 
-            const pos = i * 3
+        if (!p.dirty && !countChanged)
+            return
 
-            _pos.set(p.instancePosition[pos], p.instancePosition[pos + 1], p.instancePosition[pos + 2])
-            _scale.set(p.instanceScale[i], p.instanceScale[i], 1)
-            _rot.setFromAxisAngle(_zAxis, p.instanceRotation[i])
+        for (let n = 0; n < activeCount; n++) {
+
+            const id = activeIds[n]
+
+            const src3 = id * 3
+            const dst3 = n * 3
+
+            _pos.set(
+                p.instancePosition[src3],
+                p.instancePosition[src3 + 1],
+                p.instancePosition[src3 + 2]
+            )
+
+            const s = p.instanceScale[id]
+            _scale.set(s, s, 1)
+
+            _rot.setFromAxisAngle(_zAxis, p.instanceRotation[id])
+
             _matrix.compose(_pos, _rot, _scale)
-            mesh.setMatrixAt(count, _matrix)
+            mesh.setMatrixAt(n, _matrix)
 
-            tintBuffer[count * 3] = p.instanceColor[pos]
-            tintBuffer[count * 3 + 1] = p.instanceColor[pos + 1]
-            tintBuffer[count * 3 + 2] = p.instanceColor[pos + 2]
-            alphaBuffer[count] = p.instanceAlpha[i]
+            tintBuffer[dst3]     = p.instanceColor[src3]
+            tintBuffer[dst3 + 1] = p.instanceColor[src3 + 1]
+            tintBuffer[dst3 + 2] = p.instanceColor[src3 + 2]
 
-            count++
+            alphaBuffer[n] = p.instanceAlpha[id]
 
         }
 
-        mesh.count = count
+        mesh.count = activeCount
         mesh.instanceMatrix.needsUpdate = true
-        mesh.geometry.attributes.aTint.needsUpdate = true
-        mesh.geometry.attributes.aAlpha.needsUpdate = true
+
+        const tintAttr = geometry.attributes.aTint
+        const alphaAttr = geometry.attributes.aAlpha
+
+        if (tintAttr.clearUpdateRanges) {
+            tintAttr.clearUpdateRanges()
+            tintAttr.addUpdateRange(0, activeCount * 3)
+        }
+
+        if (alphaAttr.clearUpdateRanges) {
+            alphaAttr.clearUpdateRanges()
+            alphaAttr.addUpdateRange(0, activeCount)
+        }
+
+        tintAttr.needsUpdate = true
+        alphaAttr.needsUpdate = true
+
+        p.dirty = false
 
     })
 
     return (
-        <instancedMesh ref={ref} args={[attrGeo, material, MAX]} frustumCulled={false} />
+        <instancedMesh
+            ref={meshRef}
+            args={[geometry, material, MAX]}
+            frustumCulled={false}
+        />
     )
 
 }

@@ -6,21 +6,25 @@ import { createTypedEffectPool } from "../effectPool.js"
 
 const MAX_TRAIL = 400
 
-export const trailPool = createTypedEffectPool(
-    MAX_TRAIL, ["size", "spin", "alpha"], ["color"]
-)
+export const trailPool = createTypedEffectPool(MAX_TRAIL, ["size", "spin", "alpha"], ["color"])
 
-export function spawnTrailPuff({ x, y, size = 0.2, maxLife = 0.4, r = 0.5, g = 0.5, b = 0.5 }) {
+export function spawnTrailPuff({
+    x,
+    y,
+    size = 0.2,
+    maxLife = 0.4,
+    r = 0.5,
+    g = 0.5,
+    b = 0.5
+}) {
 
     const id = trailPool.allocate()
 
     if (id < 0)
         return
 
-    trailPool.x[id] = x
-    trailPool.y[id] = y
-
-    trailPool.size[id] = size
+    const p = trailPool
+    p.size[id] = size
 
     const c = id * 3
 
@@ -28,31 +32,54 @@ export function spawnTrailPuff({ x, y, size = 0.2, maxLife = 0.4, r = 0.5, g = 0
     trailPool.color[c + 1] = g
     trailPool.color[c + 2] = b
 
-    trailPool.alpha[id] = 1
+    p.alpha[id] = 1
+    p.spin[id] = Math.random() * Math.PI * 2
+    p.life[id] = maxLife
+    p.maxLife[id] = maxLife
 
-    trailPool.spin[id] = Math.random() * Math.PI * 2
-    trailPool.life[id] = maxLife
-    trailPool.maxLife[id] = maxLife
+    // GPU initial values
+    const pos = id * 3
+
+    p.instancePosition[pos] = x
+    p.instancePosition[pos + 1] = y
+    p.instancePosition[pos + 2] = -0.01
+
+    p.instanceScale[id] = size
+    p.instanceAlpha[id] = 1
+    p.instanceRotation[id] = p.spin[id]
+
+    p.dirty = true
 
 }
 
 export function updateTrailEmitter(dt) {
-
+    
     const p = trailPool
+    let n = 0
 
-    for (let i = 0; i < p.capacity; i++) {
+    while (n < p.activeCount) {
 
-        if (!p.alive[i])
-            continue
+        const i = p.activeIds[n]
+        let remaining = p.life[i] - dt
+        p.life[i] = remaining
 
-        p.life[i] -= dt
-        const t = Math.max(0, p.life[i] / p.maxLife[i])
-        p.alpha[i] = t * 0.75
+        // expired
 
-        if (p.life[i] <= 0) {
+        if (remaining <= 0) {
             p.alpha[i] = 0
+            p.instanceAlpha[i] = 0
             p.kill(i)
+            // swapped particle occupies this index
+            continue
         }
+
+        const fade = remaining / p.maxLife[i]
+
+        p.alpha[i] = fade * 0.75
+        p.instanceAlpha[i] = p.alpha[i]
+        n++
+
+        p.dirty = true
 
     }
 

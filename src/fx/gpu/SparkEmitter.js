@@ -60,10 +60,11 @@ export function updateSparkEmitter(dt) {
 
     const p = sparkPool
 
-    for (let i = 0; i < p.capacity; i++) {
+    let n = 0
 
-        if (!p.alive[i])
-            continue
+    while (n < p.activeCount) {
+
+        const i = p.activeIds[n]
 
         p.x[i] += p.vx[i] * dt
         p.y[i] += p.vy[i] * dt
@@ -71,19 +72,17 @@ export function updateSparkEmitter(dt) {
         p.vx[i] *= 0.985
         p.vy[i] *= 0.985
 
-        const speed = Math.sqrt( p.vx[i] * p.vx[i] + p.vy[i] * p.vy[i])
-
-        p.instanceRotation[i] = Math.atan2( p.vy[i], p.vx[i] )
-        p.instanceStretch[i] = Math.max(0.05, speed * 0.04)
-
         p.life[i] -= dt
 
         if (p.life[i] <= 0) {
-            p.instanceAlpha[i] = 0
-            p.instanceScale[i] = 0
             p.kill(i)
             continue
         }
+
+        const speed = Math.hypot(p.vx[i], p.vy[i])
+
+        p.instanceRotation[i] = Math.atan2(p.vy[i], p.vx[i])
+        p.instanceStretch[i] = Math.max(0.05, speed * 0.04)
 
         const pos = i * 3
         p.instancePosition[pos] = p.x[i]
@@ -94,23 +93,9 @@ export function updateSparkEmitter(dt) {
         p.instanceScale[i] = Math.max(0.001, p.size[i] * t)
         p.instanceAlpha[i] = t
 
-        // update heat
-
-        p.hot[i] = p.life[i] > p.maxLife[i] * 0.5 ? 1 : 0
-
-        const c = i * 3
-
-        if (p.hot[i]) {
-            p.instanceColor[c] = 1
-            p.instanceColor[c + 1] = 0.95
-            p.instanceColor[c + 2] = 0.7
-        }
-        else {
-            p.instanceColor[c] = 1
-            p.instanceColor[c + 1] = 0.35
-            p.instanceColor[c + 2] = 0.15
-        }
+        n++
         p.dirty = true
+
     }
 
 }

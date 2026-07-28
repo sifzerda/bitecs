@@ -7,46 +7,55 @@ import { trailPool, updateTrailEmitter } from "../fx/gpu/TrailEmitter.js"
 
 const MAX_TRAIL = 400
 
+// Reusable objects (no allocations per frame)
 const matrix = new THREE.Matrix4()
-const pos = new THREE.Vector3()
-const scaleVec = new THREE.Vector3()
-const scaleZero = new THREE.Vector3(0, 0, 0)
-const quat = new THREE.Quaternion()
-const euler = new THREE.Euler()
+const position = new THREE.Vector3()
+const scale = new THREE.Vector3()
+const quaternion = new THREE.Quaternion()
+const axis = new THREE.Vector3(0, 0, 1)
 
+let smokeTexture = null
 // -------------------------
 
-let _smokeTexture = null
 function getSmokeTexture() {
 
-    if (_smokeTexture) return _smokeTexture
+    if (smokeTexture) return smokeTexture
 
     const size = 128
-    const canvas = document.createElement('canvas')
+    const canvas = document.createElement("canvas")
     canvas.width = size
     canvas.height = size
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext("2d")
 
-    function blob(cx, cy, r, alpha) {
-        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r)
-        g.addColorStop(0, `rgba(255,255,255,${alpha})`)
-        g.addColorStop(0.55, `rgba(255,255,255,${alpha * 0.35})`)
-        g.addColorStop(1, 'rgba(255,255,255,0)')
-        ctx.fillStyle = g
+    function blob(x, y, radius, alpha) {
+
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius)
+
+        gradient.addColorStop(0, `rgba(255,255,255,${alpha})`)
+        gradient.addColorStop(0.5, `rgba(255,255,255,${alpha * 0.35})`)
+        gradient.addColorStop(1, "rgba(255,255,255,0)")
+
+        ctx.fillStyle = gradient
         ctx.fillRect(0, 0, size, size)
     }
 
-    ctx.globalCompositeOperation = 'lighter'
-    blob(size * 0.50, size * 0.50, size * 0.48, 0.9)
-    blob(size * 0.36, size * 0.42, size * 0.30, 0.5)
-    blob(size * 0.63, size * 0.56, size * 0.28, 0.5)
-    blob(size * 0.50, size * 0.66, size * 0.24, 0.4)
+    ctx.globalCompositeOperation = "lighter"
 
-    const texture = new THREE.CanvasTexture(canvas)
-    texture.needsUpdate = true
-    _smokeTexture = texture
-    return texture
+    blob(size * .5, size * .5, size * .48, .9)
+    blob(size * .36, size * .42, size * .3, .5)
+    blob(size * .63, size * .56, size * .28, .5)
+    blob(size * .5, size * .66, size * .24, .4)
+
+    smokeTexture = new THREE.CanvasTexture(canvas)
+    smokeTexture.minFilter = THREE.LinearFilter
+    smokeTexture.magFilter = THREE.LinearFilter
+    smokeTexture.needsUpdate = true
+    return smokeTexture
 }
+
+// ============================================================
+// Renderer
+// ============================================================
 
 export function TrailRenderer() {
 
@@ -55,21 +64,8 @@ export function TrailRenderer() {
 
         const geo = new THREE.PlaneGeometry(1, 1)
 
-        geo.setAttribute(
-            "puffColor",
-            new THREE.InstancedBufferAttribute(
-                trailPool.color,
-                3
-            )
-        )
-
-        geo.setAttribute(
-            "puffAlpha",
-            new THREE.InstancedBufferAttribute(
-                trailPool.alpha,
-                1
-            )
-        )
+        geo.setAttribute("puffColor", new THREE.InstancedBufferAttribute(trailPool.color, 3))
+        geo.setAttribute("puffAlpha", new THREE.InstancedBufferAttribute(trailPool.alpha, 1))
 
         return geo
 
@@ -81,41 +77,50 @@ export function TrailRenderer() {
             map: getSmokeTexture(),
             transparent: true,
             depthWrite: false,
+            depthTest: false,
             blending: THREE.AdditiveBlending,   // real alpha blend reads as smoke; swap to AdditiveBlending for a glowier energy-trail look
+            toneMapped: false,
         })
 
-        mat.onBeforeCompile = (shader) => {
+        mat.onBeforeCompile = shader => {
 
-            shader.vertexShader = shader.vertexShader
-                .replace(
-                    '#include <common>',
-                    `#include <common>
-                    attribute vec3 puffColor;
-                    attribute float puffAlpha;
-                    varying vec3 vPuffColor;
-                    varying float vPuffAlpha;`
-                )
-                .replace(
-                    '#include <begin_vertex>',
-                    `#include <begin_vertex>
-                    vPuffColor = puffColor;
-                    vPuffAlpha = puffAlpha;`
-                )
+            shader.vertexShader = shader.vertexShader.replace("#include <common>",
+                `
+#include <common>
 
-            shader.fragmentShader = shader.fragmentShader
-                .replace(
-                    '#include <common>',
-                    `#include <common>
-                    varying vec3 vPuffColor;
-                    varying float vPuffAlpha;`
-                )
-                .replace(
-                    '#include <map_fragment>',
-                    `#include <map_fragment>
-                    diffuseColor.rgb *= vPuffColor;
-                    diffuseColor.a *= vPuffAlpha;`
-                )
+attribute vec3 puffColor;
+attribute float puffAlpha;
 
+varying vec3 vPuffColor;
+varying float vPuffAlpha;
+`
+            )
+
+            shader.vertexShader = shader.vertexShader.replace("#include <begin_vertex>",
+                `
+#include <begin_vertex>
+
+vPuffColor = puffColor;
+vPuffAlpha = puffAlpha;
+`
+            )
+
+            shader.fragmentShader = shader.fragmentShader.replace("#include <common>",
+                `
+#include <common>
+
+varying vec3 vPuffColor;
+varying float vPuffAlpha;
+`
+            )
+            shader.fragmentShader = shader.fragmentShader.replace("#include <map_fragment>",
+                `
+#include <map_fragment>
+
+diffuseColor.rgb *= vPuffColor;
+diffuseColor.a *= vPuffAlpha;
+`
+            )
         }
 
         return mat
@@ -129,47 +134,47 @@ export function TrailRenderer() {
 
         updateTrailEmitter(dt)
 
-        const colorAttr = mesh.geometry.attributes.puffColor
-        const alphaAttr = mesh.geometry.attributes.puffAlpha
-
         const p = trailPool
+        const color = mesh.geometry.attributes.puffColor
+        const alpha = mesh.geometry.attributes.puffAlpha
 
-        for (let i = 0; i < MAX_TRAIL; i++) {
+        let visible = 0
 
-            if (!p.alive[i]) {
+        for (let n = 0; n < p.activeCount; n++) {
 
-                matrix.compose(pos.set(0, 0, 0), quat, scaleZero)
-                mesh.setMatrixAt(i, matrix)
+            const i = p.activeIds[n]
+            const life = p.life[i] / p.maxLife[i]
+            const grow = 1.6 - life
+            const size = p.size[i] * grow * 3.2
 
-                continue
-            }
+            position.set(p.x[i], p.y[i], -0.01)
+            quaternion.setFromAxisAngle(axis, p.spin[i])
 
-            const t = Math.max(0, p.life[i] / p.maxLife[i])
-            const grow = 1.6 - t
-            const s = p.size[i] * grow * 3.2
+            scale.set(size, size, size)
+            matrix.compose(position, quaternion, scale)
+            mesh.setMatrixAt(visible, matrix)
+            // pack attributes
 
-            euler.set(0, 0, p.spin[i])
-            quat.setFromEuler(euler)
-            pos.set(p.x[i], p.y[i], -0.01)
-            scaleVec.set(s, s, s)
-            matrix.compose(pos, quat, scaleVec)
-            mesh.setMatrixAt(i, matrix)
+            const src = i * 3
+            const dst = visible * 3
 
+            color.array[dst] = p.color[src]
+            color.array[dst + 1] = p.color[src + 1]
+            color.array[dst + 2] = p.color[src + 2]
+
+            alpha.array[visible] = p.alpha[i]
+
+            visible++
         }
 
+        mesh.count = visible
         mesh.instanceMatrix.needsUpdate = true
-        mesh.count = MAX_TRAIL
-        colorAttr.needsUpdate = true
-        alphaAttr.needsUpdate = true
-
+        color.needsUpdate = true
+        alpha.needsUpdate = true
     })
 
     return (
-        <instancedMesh
-            ref={meshRef}
-            args={[geometry, material, MAX_TRAIL]}
-            frustumCulled={false}
-        />
+        <instancedMesh ref={meshRef} args={[geometry, material, MAX_TRAIL]} frustumCulled={false} />
     )
 
 }

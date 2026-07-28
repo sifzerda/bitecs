@@ -5,18 +5,29 @@ import { createTypedEffectPool } from "../effectPool.js"
 
 const MAX_FLASHES = 64
 
-export const flashPool = createTypedEffectPool(MAX_FLASHES, ["angle", "size", "r", "g", "b", "seed"])
+export const flashPool = createTypedEffectPool(
+    MAX_FLASHES,
+    ["angle", "size", "r", "g", "b", "seed"]
+)
 
 const tmpColor = new THREE.Color()
 
-export function emitFlash({ x, y, angle = 0, size = 1, maxLife = 0.08, color = "#fff2b0" }) {
+export function emitFlash({
+    x,
+    y,
+    angle = 0,
+    size = 1,
+    maxLife = 0.08,
+    color = "#fff2b0",
+}) {
 
     const id = flashPool.allocate()
 
-    if (id < 0)
-        return
+    if (id < 0) return
 
     tmpColor.set(color)
+
+    const pos = id * 3
 
     flashPool.x[id] = x
     flashPool.y[id] = y
@@ -33,8 +44,7 @@ export function emitFlash({ x, y, angle = 0, size = 1, maxLife = 0.08, color = "
     flashPool.life[id] = maxLife
     flashPool.maxLife[id] = maxLife
 
-    // GPU-ready values — position/tint are static per flash, set once here
-    const pos = id * 3
+    // Static GPU data
     flashPool.instancePosition[pos] = x
     flashPool.instancePosition[pos + 1] = y
     flashPool.instancePosition[pos + 2] = 0.3
@@ -47,32 +57,59 @@ export function emitFlash({ x, y, angle = 0, size = 1, maxLife = 0.08, color = "
     flashPool.instanceScale[id] = size
     flashPool.instanceAlpha[id] = 1
 
+    flashPool.dirty = true
 }
 
 export function updateFlashEmitter(dt) {
 
     const p = flashPool
 
-    for (let i = 0; i < p.capacity; i++) {
+    const activeIds = p.activeIds
+    const activeCount = p.activeCount
 
-        if (!p.alive[i])
+    const life = p.life
+    const maxLife = p.maxLife
+
+    const size = p.size
+
+    const instanceScale = p.instanceScale
+    const instanceAlpha = p.instanceAlpha
+
+    let dirty = false
+
+    for (let n = 0; n < activeCount; n++) {
+
+        const id = activeIds[n]
+
+        const newLife = life[id] - dt
+        life[id] = newLife
+
+        if (newLife <= 0) {
+
+            instanceAlpha[id] = 0
+            p.kill(id)
+            dirty = true
             continue
 
-        p.life[i] -= dt
-
-        if (p.life[i] <= 0) {
-            p.kill(i)
-            continue
         }
 
-        const t = 1 - p.life[i] / p.maxLife[i]
-        const pop = 1 - t * 0.5
+        const t = 1 - newLife / maxLife[id]
 
-        p.instanceScale[i] = p.size[i] * pop
-        p.instanceAlpha[i] = 1 - t
+        const newScale = size[id] * (1 - t * 0.5)
+        const newAlpha = 1 - t
 
-        p.dirty = true
+        if (instanceScale[id] !== newScale) {
+            instanceScale[id] = newScale
+            dirty = true
+        }
+
+        if (instanceAlpha[id] !== newAlpha) {
+            instanceAlpha[id] = newAlpha
+            dirty = true
+        }
 
     }
+
+    p.dirty ||= dirty
 
 }

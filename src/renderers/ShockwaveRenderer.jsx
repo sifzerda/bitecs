@@ -8,9 +8,9 @@ import { shockwavePool, updateShockwaveEmitter } from "../fx/gpu/ShockwaveEmitte
 const MAX = shockwavePool.capacity
 
 const _matrix = new THREE.Matrix4()
-const _pos = new THREE.Vector3()
-const _scale = new THREE.Vector3()
-const _rot = new THREE.Quaternion()
+const _position = new THREE.Vector3()
+const _scale = new THREE.Vector3(1, 1, 1)
+const _rotation = new THREE.Quaternion()
 
 const vertexShader = /* glsl */ `
   attribute float instanceAlpha;
@@ -37,17 +37,13 @@ const fragmentShader = /* glsl */ `
 
 export function ShockwaveRenderer({ color = "#88ddff", baseOpacity = 0.3 }) {
 
-    const ref = useRef()
-
-    // local, compacted-index buffer — NOT a direct reference to the pool's
-    // raw (slot-id-indexed) array, since InstancedMesh instances are
-    // compacted (dead slots skipped) and must line up with setMatrixAt's count
+    const meshRef = useRef()
     const alphaBuffer = useMemo(() => new Float32Array(MAX), [])
 
-    const geo = useMemo(() => {
-        const g = new THREE.RingGeometry(0.8, 1, 32)
-        g.setAttribute("instanceAlpha", new THREE.InstancedBufferAttribute(alphaBuffer, 1))
-        return g
+    const geometry = useMemo(() => {
+        const geo = new THREE.RingGeometry(0.8, 1, 32)
+        geo.setAttribute("instanceAlpha", new THREE.InstancedBufferAttribute(alphaBuffer, 1))
+        return geo
     }, [])
 
     const material = useMemo(() => new THREE.ShaderMaterial({
@@ -59,44 +55,53 @@ export function ShockwaveRenderer({ color = "#88ddff", baseOpacity = 0.3 }) {
         fragmentShader,
         transparent: true,
         depthWrite: false,
+        blending: THREE.AdditiveBlending,
     }), [color, baseOpacity])
 
     useFrame((_, dt) => {
 
         updateShockwaveEmitter(dt)
 
+        const mesh = meshRef.current
+
+        if (!mesh)
+            return
+
         const p = shockwavePool
-        const mesh = ref.current
-        if (!mesh) return
 
         let count = 0
 
-        for (let i = 0; i < p.capacity; i++) {
+        for (let n = 0; n < p.activeCount; n++) {
+            const id = p.activeIds[n]
+            const pos = id * 3
+            _position.set(p.instancePosition[pos], p.instancePosition[pos + 1], p.instancePosition[pos + 2])
 
-            if (!p.alive[i])
-                continue
-
-            const pos = i * 3
-
-            _pos.set(p.instancePosition[pos], p.instancePosition[pos + 1], p.instancePosition[pos + 2])
-            _scale.set(p.instanceScale[i], p.instanceScale[i], 1)
-            _matrix.compose(_pos, _rot, _scale)
+            const radius = p.instanceScale[id]
+            _scale.set(radius, radius, 1)
+            _matrix.compose(_position, _rotation, _scale)
             mesh.setMatrixAt(count, _matrix)
 
-            alphaBuffer[count] = p.instanceAlpha[i]
-
+            alphaBuffer[count] = p.instanceAlpha[id]
             count++
-
         }
 
         mesh.count = count
-        mesh.instanceMatrix.needsUpdate = true
-        mesh.geometry.attributes.instanceAlpha.needsUpdate = true
+
+        if (count === 0)
+            return
+
+        if (p.dirty) {
+
+            mesh.instanceMatrix.needsUpdate = true
+            geometry.attributes.instanceAlpha.needsUpdate = true
+
+            p.dirty = false
+        }
 
     })
 
     return (
-        <instancedMesh ref={ref} args={[geo, material, MAX]} frustumCulled={false} />
+        <instancedMesh ref={meshRef} args={[geometry, material, MAX]} frustumCulled={false} />
     )
 
 }

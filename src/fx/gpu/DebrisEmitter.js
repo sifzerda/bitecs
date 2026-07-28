@@ -7,16 +7,8 @@ const DRAG = 0.985
 
 export const debrisPool = createTypedEffectPool(
     MAX_DEBRIS,
-    [
-        "spinSpeed",
-        "seedAngle",
-        "seed",
-        "age",
-    ],
-    [
-        "scale",  // non-uniform sx/sy/sz — instanceScale is scalar-only, doesn't fit
-        "axis",   // arbitrary rotation axis — instanceRotation is scalar-only, doesn't fit
-    ]
+    [ "spinSpeed", "seedAngle", "seed", "age" ],
+    [ "scale", "axis" ]
 )
 
 // integer attributes — static per id, no per-frame update needed, left as-is
@@ -98,10 +90,9 @@ export function updateDebrisEmitter(dt) {
     const p = debrisPool
     const drag = Math.pow(DRAG, dt * 60)
 
-    for (let i = 0; i < p.capacity; i++) {
+for (let n = 0; n < p.activeCount; n++) {
 
-        if (!p.alive[i])
-            continue
+    const i = p.activeIds[n]
 
         p.life[i] -= dt
 

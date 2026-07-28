@@ -52,10 +52,9 @@ export function updateExplosionEmitter(dt) {
 
     const p = explosionPool
 
-    for (let i = 0; i < p.capacity; i++) {
+for (let n = 0; n < p.activeCount; n++) {
 
-        if (!p.alive[i])
-            continue
+    const i = p.activeIds[n]
 
         p.life[i] -= dt
 
