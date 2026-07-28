@@ -1,4 +1,4 @@
-//src/renderers/BulletRenderer.jsx
+// src/renderers/BulletRenderer.jsx
 
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
@@ -10,22 +10,32 @@ import { activeBullets } from '../ecs/pools/bulletPool.js'
 const MAX_BULLETS = 512
 const BULLET_LENGTH = 0.9
 const BULLET_WIDTH = 0.18
+
 export function BulletRenderer() {
 
     const meshRef = useRef()
     const geometry = useMemo(() => {
-
         const geo = new THREE.InstancedBufferGeometry()
-        // base quad
         const plane = new THREE.PlaneGeometry(1, 1)
-        geo.setIndex(plane.index)
-        geo.setAttribute('position', plane.getAttribute('position'))
-        geo.setAttribute('uv', plane.getAttribute('uv'))
-        geo.setAttribute("instancePosition", new THREE.InstancedBufferAttribute(new Float32Array(MAX_BULLETS * 2), 2))
-        geo.setAttribute("instanceAngle", new THREE.InstancedBufferAttribute(new Float32Array(MAX_BULLETS), 1))
-        geo.setAttribute("instanceColor", new THREE.InstancedBufferAttribute(new Float32Array(MAX_BULLETS * 3), 3))
 
-        geo.instanceCount = MAX_BULLETS
+        geo.setIndex(plane.index)
+        geo.setAttribute("position", plane.getAttribute("position"))
+        geo.setAttribute("uv", plane.getAttribute("uv"))
+
+        const position = new THREE.InstancedBufferAttribute(new Float32Array(MAX_BULLETS * 2), 2)
+        const angle = new THREE.InstancedBufferAttribute(new Float32Array(MAX_BULLETS), 1)
+        const color = new THREE.InstancedBufferAttribute(new Float32Array(MAX_BULLETS * 3), 3)
+
+        position.setUsage(THREE.DynamicDrawUsage)
+        angle.setUsage(THREE.DynamicDrawUsage)
+        color.setUsage(THREE.DynamicDrawUsage)
+
+        geo.setAttribute("instancePosition", position)
+        geo.setAttribute("instanceAngle", angle)
+        geo.setAttribute("instanceColor", color)
+
+        geo.instanceCount = 0
+
         return geo
 
     }, [])
@@ -36,18 +46,16 @@ export function BulletRenderer() {
 
             transparent: true,
             depthWrite: false,
-            blending: THREE.AdditiveBlending,
-            side: THREE.FrontSide,
-            toneMapped: false,
             depthTest: false,
-            uniforms: { uTime: { value: 0 } },
+            blending: THREE.AdditiveBlending,
+            toneMapped: false,
 
-            vertexShader: /* glsl */
-                `
+            vertexShader:/* glsl */`
+
 attribute vec2 instancePosition;
 attribute float instanceAngle;
 attribute vec3 instanceColor;
- 
+
 varying vec2 vUv;
 varying vec3 vColor;
 
@@ -55,7 +63,6 @@ void main(){
 
     vUv = uv;
     vColor = instanceColor;
-
     vec3 local = position;
 
     local.x *= ${BULLET_LENGTH.toFixed(2)};
@@ -64,107 +71,101 @@ void main(){
     float c = cos(instanceAngle);
     float s = sin(instanceAngle);
 
-    vec2 rotated = vec2(local.x * c - local.y * s, local.x * s + local.y * c);
-    vec3 worldPos = vec3(instancePosition + rotated, 0.0);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(worldPos,1.0);
+    vec2 rotated = vec2(local.x*c - local.y*s, local.x*s + local.y*c);
+    vec3 world = vec3(instancePosition + rotated, 0.0);
+
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(world,1.0);
 }
+
 `,
 
-            fragmentShader: /* glsl */
-                `
+            fragmentShader:/* glsl */`
+
 precision highp float;
+
 varying vec2 vUv;
 varying vec3 vColor;
 
 void main(){
 
-    vec2 uv = vUv;
-
-    float x = uv.x;
-    float y = uv.y * 2.0 - 1.0;
+    float x = vUv.x;
+    float y = vUv.y * 2.0 - 1.0;
     float width = 1.0 - smoothstep(0.18, 0.35, abs(y));
     float head = smoothstep(0.0, 0.15, x);
     float tail = 1.0 - smoothstep(0.75, 1.0, x);
     float body = width * head * tail;
     float glow = exp(-abs(y)*5.5);
     float halo = exp(-abs(y)*2.2);
-    float alpha = body + glow*0.45 + halo*0.15;
+    float alpha = clamp(body + glow*0.45 + halo*0.15, 0.0, 1.0);
 
-    alpha = clamp(alpha,0.0,1.0);
-
-    vec3 core = clamp(vColor * 1.6, 0.0, 1.0);
-
-    vec3 color =
-          vColor * body * 1.15
-        + core * body * 0.35
-        + vColor * glow * 0.55
-        + vColor * halo * 0.12;
-
-    color = clamp(color, 0.0, 1.0);
+    vec3 core = clamp(vColor*1.6, 0.0, 1.0);
+    vec3 color = vColor * body * 1.15 + core   * body * 0.35 + vColor * glow * 0.55 + vColor * halo * 0.12;
 
     gl_FragColor = vec4(color, alpha);
 
 }
+
 `
-        });
+        }) }, [])
 
-    }, []);
+    const buffers = useMemo(() => ({
+        position: geometry.attributes.instancePosition,
+        angle: geometry.attributes.instanceAngle,
+        color: geometry.attributes.instanceColor
+    }), [geometry])
 
-    const arrays = useMemo(() => ({
+    // cache weapon lookups
+    const weaponCache = useMemo(() => new Array(64), [])
 
-        instancePosition: geometry.attributes.instancePosition.array,
-        instanceAngle: geometry.attributes.instanceAngle.array,
-        instanceColor: geometry.attributes.instanceColor.array,
+    useFrame(() => {
 
-    }), [geometry]);
-
-    useFrame((state) => {
-
-        material.uniforms.uTime.value = state.clock.elapsedTime
-
-        const { instancePosition, instanceAngle, instanceColor } = arrays
+        const pos = buffers.position.array
+        const ang = buffers.angle.array
+        const col = buffers.color.array
 
         let count = 0
 
-        for (let i = 0; i < activeBullets.length; i++) {
-
-            if (count >= MAX_BULLETS) break
+        for (let i = 0; i < activeBullets.length && count < MAX_BULLETS; i++) {
 
             const eid = activeBullets[i]
-            const weapon = WEAPONS[Bullet.type[eid]]
+            let weapon = weaponCache[Bullet.type[eid]]
 
-             if (!weapon || weapon.homing || weapon.explosive) continue
+            if (!weapon) {
+                weapon = WEAPONS[Bullet.type[eid]]
+                weaponCache[Bullet.type[eid]] = weapon
+            }
+
+            // skip special projectiles
+            if (!weapon || weapon.homing || weapon.explosive) {
+                continue
+            }
 
             const p = count * 2
 
-            instancePosition[p] = Position.x[eid]
-            instancePosition[p + 1] = Position.y[eid]
+            pos[p] = Position.x[eid]
+            pos[p + 1] = Position.y[eid]
 
-            instanceAngle[count] = Math.atan2(Velocity.y[eid], Velocity.x[eid])
+            ang[count] = Math.atan2(Velocity.y[eid], Velocity.x[eid])
 
             const c = count * 3
 
-            instanceColor[c] = Bullet.colorR[eid]
-            instanceColor[c + 1] = Bullet.colorG[eid]
-            instanceColor[c + 2] = Bullet.colorB[eid]
+            col[c] = Bullet.colorR[eid]
+            col[c + 1] = Bullet.colorG[eid]
+            col[c + 2] = Bullet.colorB[eid]
 
             count++
+
         }
 
         geometry.instanceCount = count
-
-        geometry.attributes.instancePosition.needsUpdate = true
-        geometry.attributes.instanceAngle.needsUpdate = true
-        geometry.attributes.instanceColor.needsUpdate = true
+        buffers.position.needsUpdate = true
+        buffers.angle.needsUpdate = true
+        buffers.color.needsUpdate = true
 
     })
 
     return (
-        <mesh
-            ref={meshRef}
-            geometry={geometry}
-            material={material}
-            frustumCulled={false}
-        />
-    );
+        <mesh ref={meshRef} geometry={geometry} material={material} frustumCulled={false} />
+    )
+
 }
