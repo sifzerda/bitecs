@@ -41,10 +41,7 @@ export function waveSystem() {
 
         const angle = Math.random() * Math.PI * 2
 
-        spawnAsteroid(
-            Math.cos(angle) * SPAWN_RADIUS,
-            Math.sin(angle) * SPAWN_RADIUS
-        )
+        spawnAsteroid(Math.cos(angle) * SPAWN_RADIUS, Math.sin(angle) * SPAWN_RADIUS)
     }
 }
 

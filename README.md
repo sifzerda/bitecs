@@ -120,6 +120,10 @@ src/weapons/weaponSystems/hitTraits.js
 5. Optionally: add a new renderer and/or system if the projectiles look/act different from current
 6. Add gun to boss in bosses.js
 
+### Game Over, 3 lives lost:
+
+Inside combat.js at end of file lives = 0
+
 ## Tasks
 
 OPTIMIZE RENDERERS:

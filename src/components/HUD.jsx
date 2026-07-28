@@ -18,20 +18,38 @@ export function HUD({ onPause, paused }) {
 
     useEffect(() => {
 
-        const id = setInterval(() => {
+        let frame
 
-            setHud({
-                score: gameState.score,
-                health: gameState.health,
-                lives: gameState.lives,
-                wave: gameState.wave,
-                asteroidsRemaining: gameState.asteroidsRemaining,
-                boostCooldown: gameState.boostCooldown
+        const update = () => {
+
+            setHud(prev => {
+
+                const next = {
+                    score: gameState.score,
+                    health: gameState.health,
+                    lives: gameState.lives,
+                    wave: gameState.wave,
+                    asteroidsRemaining: gameState.asteroidsRemaining,
+                    boostCooldown: gameState.boostCooldown,
+                    boostActive: gameState.boostActive,
+                    bossAlive: gameState.bossAlive,
+                }
+
+                for (const k in next)
+                    if (prev[k] !== next[k])
+                        return next
+
+                return prev
+
             })
 
-        }, 100)
+            frame = requestAnimationFrame(update)
 
-        return () => clearInterval(id)
+        }
+
+        update()
+
+        return () => cancelAnimationFrame(frame)
 
     }, [])
 
@@ -47,7 +65,7 @@ export function HUD({ onPause, paused }) {
         <div className="w-200 h-12 flex items-center justify-between px-4 bg-[#0a0a14] font-mono text-green-400 gap-3">
 
             <span className="text-sm tracking-widest uppercase">Asteroids</span>
-            <span className="text-[#ff4466] text-sm">{"❤︎ ".repeat(hud.lives).trim()}</span>
+            <span className="text-[#ff4466] text-sm">{"❤︎ ".repeat(Math.max(0, hud.lives)).trim()}</span>
 
             <div className="flex items-center gap-2 text-xs">
 
