@@ -233,9 +233,10 @@ export function laserSystem() {
         }
     }
 
-    laserState.hit = primaryHitId !== -1
-    laserState.hitX = primaryHitX
-    laserState.hitY = primaryHitY
+    laserState.hitLegacy = primaryHitId !== -1
+    laserState.hitXLegacy = primaryHitX
+    laserState.hitYLegacy = primaryHitY
+
     laserState.length = beamCount > 0
         ? laserState.hitT[0]
         : weapon.range

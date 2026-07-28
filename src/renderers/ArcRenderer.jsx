@@ -18,52 +18,101 @@ const MAX_POINTS_PER_ARC = 64
 
 // -------------------------
 
-function getPlayerArcData() {
-    const weapon = getWeapon(gameState.currentWeapon)
-    const active = weapon.category === "beam" && !!weapon.jagged
-        && laserState.active && laserState.hits?.length > 0
-    return {
-        active,
-        originX: laserState.originX,
-        originY: laserState.originY,
-        weapon,
-        hits: active ? laserState.hits : [],
-    }
-}
-
 function getBossArcData() {
+
     const bosses = bossAIQuery()
-    if (bosses.length === 0 || !bossLaserState.active || !bossLaserState.hit) {
-        return { active: false, originX: 0, originY: 0, weapon: null, hits: [] }
+
+    if (bosses.length === 0 || !bossLaserState.active || bossLaserState.beamCount === 0) {
+        return {
+            active: false,
+            originX: 0,
+            originY: 0,
+            weapon: null,
+            hits: [],
+        }
     }
 
     const weapon = getWeapon(BossAI.weapon[bosses[0]])
-    if (!weapon.jagged) return { active: false, originX: 0, originY: 0, weapon: null, hits: [] }
 
-    const dx = bossLaserState.hitX - bossLaserState.originX
-    const dy = bossLaserState.hitY - bossLaserState.originY
-    const hitT = Math.hypot(dx, dy)
+    if (!weapon.jagged) {
+        return {
+            active: false,
+            originX: 0,
+            originY: 0,
+            weapon: null,
+            hits: [],
+        }
+    }
 
-    if (hitT < 0.01) return { active: false, originX: 0, originY: 0, weapon: null, hits: [] }
+    const hits = []
+
+    for (let i = 0; i < bossLaserState.beamCount; i++) {
+
+        if (bossLaserState.hitT[i] <= 0.01)
+            continue
+
+        hits.push({
+            dirX: bossLaserState.dirX[i],
+            dirY: bossLaserState.dirY[i],
+            hitT: bossLaserState.hitT[i],
+        })
+    }
 
     return {
-        active: true,
+        active: hits.length > 0,
         originX: bossLaserState.originX,
         originY: bossLaserState.originY,
         weapon,
-        hits: [{ dirX: dx / hitT, dirY: dy / hitT, hitT }],
+        hits,
     }
-}
-
-const SOURCE_GETTERS = {
-    player: getPlayerArcData,
-    boss: getBossArcData,
 }
 
 export function ArcRenderer({ source = 'player', renderChainLinks = source === 'player' }) {
 
-    const getArcData = SOURCE_GETTERS[source]
+    const getArcData = source === "player"
+        ? getPlayerArcData
+        : getBossArcData
+    const weaponCache = useRef({ id: -1, weapon: null })
 
+    function getPlayerArcData() {
+
+        if (weaponCache.current.id !== gameState.currentWeapon) {
+            weaponCache.current.id = gameState.currentWeapon
+            weaponCache.current.weapon = getWeapon(gameState.currentWeapon)
+        }
+
+        const weapon = weaponCache.current.weapon
+
+        const active =
+            weapon.category === "beam" &&
+            !!weapon.jagged &&
+            laserState.active &&
+            laserState.beamCount > 0
+
+        const hits = []
+
+        if (active) {
+            for (let i = 0; i < laserState.beamCount; i++) {
+
+                if (laserState.hitT[i] <= 0.01)
+                    continue
+
+                hits.push({
+                    dirX: laserState.dirX[i],
+                    dirY: laserState.dirY[i],
+                    hitT: laserState.hitT[i],
+                })
+            }
+        }
+
+        return {
+            active,
+            originX: laserState.originX,
+            originY: laserState.originY,
+            weapon,
+            hits,
+        }
+    }
     // -------------------------
     // Primary jagged bolt — quad + jagged shader (moved from LaserRenderer)
     // -------------------------
@@ -198,9 +247,7 @@ void main(){
     ), [])
 
     // -------------------------
-    // Chain-lightning line pool — one shared arcState.arcs queue regardless
-    // of source, so only ONE mounted instance should render it (see
-    // `renderChainLinks` prop / PlayScreen usage below).
+    // Chain-lightning line pool 
     // -------------------------
 
     const chainLines = useMemo(() => {
@@ -208,7 +255,9 @@ void main(){
         for (let i = 0; i < MAX_ARCS; i++) {
             const geometry = new THREE.BufferGeometry()
             const positions = new Float32Array(MAX_POINTS_PER_ARC * 3)
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+            const attribute = new THREE.BufferAttribute(positions, 3)
+            attribute.setUsage(THREE.DynamicDrawUsage)
+            geometry.setAttribute("position", attribute)
             geometry.setDrawRange(0, 0)
 
             const material = new THREE.LineBasicMaterial({
@@ -223,6 +272,16 @@ void main(){
 
             const line = new THREE.Line(geometry, material)
             line.frustumCulled = false
+            line.userData.positionAttribute = attribute
+            line.userData.positions = positions
+            line.userData.drawCount = -1
+
+            line.userData.version = -1
+
+            line.userData.r = -1
+            line.userData.g = -1
+            line.userData.b = -1
+
             pool.push(line)
         }
         return pool
@@ -287,6 +346,7 @@ void main(){
 
             if (i >= arcs.length) {
                 line.visible = false
+                line.userData.version = -1
                 continue
             }
 
@@ -294,40 +354,42 @@ void main(){
 
             line.visible = true
 
-            const count = Math.min(
-                Arc.pointCount[id],
-                MAX_POINTS_PER_ARC
-            )
+            const count = Math.min(Arc.pointCount[id], MAX_POINTS_PER_ARC)
 
-            const posAttr = line.geometry.getAttribute("position")
-            const arr = posAttr.array
+            const posAttr = line.userData.positionAttribute
+            const arr = line.userData.positions
 
             const xs = ArcPointsX[id]
             const ys = ArcPointsY[id]
 
-            for (let p = 0; p < count; p++) {
+            if (line.userData.version !== Arc.version[id]) {
 
-                const base = p * 3
+                for (let p = 0; p < count; p++) {
 
-                arr[base] = xs[p]
-                arr[base + 1] = ys[p]
-                arr[base + 2] = 0.03
+                    const base = p * 3
+
+                    arr[base] = xs[p]
+                    arr[base + 1] = ys[p]
+                    arr[base + 2] = 0.03
+                }
+                posAttr.needsUpdate = true
+                line.userData.version = Arc.version[id]
             }
 
-            posAttr.needsUpdate = true
-            line.geometry.setDrawRange(0, count)
-            line.geometry.computeBoundingSphere()
+            if (line.userData.drawCount !== count) {
+                line.geometry.setDrawRange(0, count)
+                line.userData.drawCount = count
+            }
 
             const lifeT = Arc.life[id] / Arc.maxLife[id]
 
-            line.material.opacity =
-                lifeT * (0.8 + Math.random() * 0.2)
-
-            line.material.color.setRGB(
-                Arc.colorR[id],
-                Arc.colorG[id],
-                Arc.colorB[id]
-            )
+            line.material.opacity = lifeT * Arc.intensity[id]
+            if (line.userData.r !== Arc.colorR[id] || line.userData.g !== Arc.colorG[id] || line.userData.b !== Arc.colorB[id]) {
+                line.material.color.setRGB(Arc.colorR[id], Arc.colorG[id], Arc.colorB[id])
+                line.userData.r = Arc.colorR[id]
+                line.userData.g = Arc.colorG[id]
+                line.userData.b = Arc.colorB[id]
+            }
         }
     })
 

@@ -6,18 +6,18 @@ import { Arc, ArcPointsX, ArcPointsY } from "../constants/components"
 const pool = createPool({
 
     size: 256,
-    components: [ Arc ],
-    activeField: [ Arc, "active" ],
+    components: [Arc],
+    activeField: [Arc, "active"],
 
-    resetFields(id){
+    resetFields(id) {
 
-        Arc.life[id]=0
-        Arc.maxLife[id]=0
-        Arc.pointCount[id]=0
-
-        Arc.colorR[id]=0
-        Arc.colorG[id]=0
-        Arc.colorB[id]=0
+        Arc.life[id] = 0
+        Arc.maxLife[id] = 0
+        Arc.pointCount[id] = 0
+        Arc.version[id] = 0
+        Arc.colorR[id] = 0
+        Arc.colorG[id] = 0
+        Arc.colorB[id] = 0
 
         ArcPointsX[id].fill(0)
         ArcPointsY[id].fill(0)

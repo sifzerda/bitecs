@@ -108,6 +108,7 @@ export function pushArc(points, duration = 0.12, color = DEFAULT_COLOR) {
     }
 
     Arc.pointCount[id] = point
+    Arc.version[id] = 1
 }
 
 // --------------------------------------------------

@@ -10,12 +10,15 @@ export const laserState = {
 
     beamCount: 0,
 
-    dirX: new Float32Array(3),
-    dirY: new Float32Array(3),
-    hitT: new Float32Array(3),
-    hitX: new Float32Array(3),
-    hitY: new Float32Array(3),
-    hit: new Uint8Array(3),
+    dirX: new Float32Array(MAX_BEAMS),
+    dirY: new Float32Array(MAX_BEAMS),
+
+    hitT: new Float32Array(MAX_BEAMS),
+    hitX: new Float32Array(MAX_BEAMS),
+    hitY: new Float32Array(MAX_BEAMS),
+
+    hit: false,
+    hitActive: new Uint8Array(MAX_BEAMS),
 
     hitXCount: 0,
 

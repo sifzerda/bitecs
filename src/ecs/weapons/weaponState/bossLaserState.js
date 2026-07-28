@@ -8,14 +8,14 @@ export const bossLaserState = {
 
     beamCount: 0,
 
-    dirX: new Float32Array(3),
-    dirY: new Float32Array(3),
+    dirX: new Float32Array(16),
+    dirY: new Float32Array(16),
 
-    hitT: new Float32Array(3),
-    hitX: new Float32Array(3),
-    hitY: new Float32Array(3),
+    hitT: new Float32Array(16),
+    hitX: new Float32Array(16),
+    hitY: new Float32Array(16),
 
-    hit: new Uint8Array(3),
+    hit: new Uint8Array(16),
 
     // legacy
     hitLegacy: false,

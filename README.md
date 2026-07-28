@@ -122,6 +122,10 @@ src/weapons/weaponSystems/hitTraits.js
 
 ## Tasks
 
+
+OPTIMIZE RENDERERS:
+- [x] ArcRenderer
+
 ~~- [ ] reduce gun related renderers: weaponmount, gunmount, gunrenderer, bossmount~~
 - [ ] consolidate fx and renderers: debris, exhaust, explosion, fire, flash, shockwave, spark, trail
 - [x] re-do/update pools

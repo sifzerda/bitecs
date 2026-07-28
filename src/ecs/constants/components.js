@@ -78,6 +78,7 @@ export const Arc = {
     colorG: new Float32Array(MAX),
     colorB: new Float32Array(MAX),
     pointCount: new Uint8Array(MAX),
+    version: new Uint8Array(MAX),
 }
 
 export const BULLET_OWNER = {
