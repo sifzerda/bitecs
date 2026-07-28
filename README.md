@@ -488,3 +488,332 @@ player overrides: {
     "repeatY": 1
   }
 }
+
+
+
+
+
+LASER UFO BOSS
+
+randogun overrides: {
+  "general": {
+    "extrudeDepth": 0.03
+  },
+  "fuselage": {
+    "color": "#000000",
+    "tipY": 0.68,
+    "shoulderY": -0.43999999999999995,
+    "shoulderWidth": -0.51,
+    "waistY": -0.24,
+    "waistWidth": -0.245,
+    "tailY": -0.495,
+    "tailWidth": 0,
+    "notchY": 0,
+    "emissive": "#00ffec",
+    "emissiveIntensity": -2,
+    "metalness": 2,
+    "roughness": -2,
+    "clearcoat": 20,
+    "clearcoatRoughness": -2,
+    "iridescence": 20,
+    "iridescenceIOR": 0.8150000000000001,
+    "iridescenceThicknessMin": 164,
+    "iridescenceThicknessMax": 206,
+    "envMapIntensity": 3
+  },
+  "cockpit": {
+    "color": "#00fccd",
+    "topY": -0.41,
+    "topWidth": 0.11,
+    "midY": -0.36,
+    "midWidth": 0.16,
+    "bottomY": 0.27,
+    "bottomWidth": 0
+  },
+  "wing": {
+    "color": "#ff2e7c",
+    "rootX": 0,
+    "rootY": 0.615,
+    "tipX": 1,
+    "tipY": -0.3,
+    "trailX": 0.11,
+    "trailY": -1.2,
+    "innerX": 0.14,
+    "innerY": -0.24,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0.4,
+    "metalness": 0.2,
+    "roughness": 0.5,
+    "clearcoat": 0,
+    "clearcoatRoughness": 0.1,
+    "iridescence": 0,
+    "iridescenceIOR": 1.3,
+    "iridescenceThicknessMin": 100,
+    "iridescenceThicknessMax": 400,
+    "envMapIntensity": 1
+  },
+  "wingPanel": {
+    "color": "#000000",
+    "inset": 0.08,
+    "emissive": "#00ff2d",
+    "emissiveIntensity": 0,
+    "metalness": 2,
+    "roughness": -2,
+    "clearcoat": 20,
+    "clearcoatRoughness": -2,
+    "iridescence": 20,
+    "iridescenceIOR": 0.7150000000000001,
+    "iridescenceThicknessMin": 100,
+    "iridescenceThicknessMax": 72,
+    "envMapIntensity": 1
+  },
+  "wingtip": {
+    "color": "#d600ff",
+    "width": 0.635,
+    "height": 0.66,
+    "offsetX": 2,
+    "offsetY": -0.04,
+    "zOffset": 0.02
+  },
+  "horn": {
+    "enabled": true,
+    "color": "#16ff00",
+    "baseWidth": -0.59,
+    "length": 0.64,
+    "curveAmount": 0.105,
+    "offsetX": 0.13,
+    "offsetY": -0.08,
+    "sweepDeg": 35,
+    "tiltDeg": 8,
+    "sweepAmount": 35
+  },
+  "decal": {
+    "enabled": true,
+    "color": "#000e69",
+    "width": 0.6599999999999999,
+    "length": 0.65,
+    "offsetX": 0.35500000000000004,
+    "offsetY": 0,
+    "tiltDeg": 0,
+    "zOffset": 0.041
+  },
+  "cockpitGlass": {
+    "enabled": true,
+    "inset": 0.08,
+    "zOffset": 0.3,
+    "color": "#00ff23",
+    "metalness": 1,
+    "roughness": -2,
+    "transmission": 1,
+    "thickness": 0.72,
+    "ior": 1,
+    "clearcoat": 1,
+    "clearcoatRoughness": 0,
+    "envMapIntensity": 8,
+    "iridescence": 10,
+    "iridescenceIOR": 1.35,
+    "iridescenceThicknessMin": 180,
+    "iridescenceThicknessMax": 900,
+    "attenuationColor": "#ffffff",
+    "attenuationDistance": 2.2
+  },
+  "engineIntake": {
+    "enabled": true,
+    "color": "#00449d",
+    "width": 0.11,
+    "height": 0.675,
+    "offsetX": 0.255,
+    "offsetY": -0.36
+  },
+  "hullVent": {
+    "enabled": true,
+    "color": "#0066ff",
+    "count": 11,
+    "width": 0.615,
+    "height": -0.020000000000000018,
+    "spacing": -0.04999999999999999,
+    "offsetX": 0.39499999999999996,
+    "offsetY": -0.43500000000000005
+  },
+  "racingStripe": {
+    "enabled": true,
+    "color": "#d5ff2e",
+    "width": 0.04,
+    "length": 0.73,
+    "offsetX": 0.425,
+    "offsetY": -0.325,
+    "tiltDeg": 0
+  },
+  "noseSpike": {
+    "enabled": true,
+    "color": "#ff2d2d",
+    "length": 0.855,
+    "width": 1.3199999999999998,
+    "offsetY": -1.37,
+    "roundness": 0.09499999999999997,
+    "zOffset": -2
+  },
+  "tailFin": {
+    "enabled": true,
+    "color": "#ff2d2d",
+    "length": 2,
+    "width": -0.21999999999999997,
+    "sweep": 0,
+    "offsetX": 0.685,
+    "offsetY": 0.23,
+    "splayDeg": 0,
+    "emissive": "#1a3a5c",
+    "emissiveIntensity": 0.4,
+    "metalness": 0.2,
+    "roughness": 0.5,
+    "clearcoat": 0,
+    "clearcoatRoughness": 0.1,
+    "iridescence": 0,
+    "iridescenceIOR": 1.3,
+    "iridescenceThicknessMin": 100,
+    "iridescenceThicknessMax": 400,
+    "envMapIntensity": 1
+  },
+  "exhaustPort": {
+    "enabled": false,
+    "color": "#ff2d2d",
+    "width": 0.28,
+    "height": -0.21000000000000002,
+    "offsetX": 7,
+    "offsetY": 0.5
+  },
+  "propeller": {
+    "enabled": false,
+    "bladeColor": "#5f5f5f",
+    "hubColor": "#000000",
+    "bladeCount": 3,
+    "bladeLength": 0.15,
+    "bladeWidth": 0.05,
+    "hubRadius": 0.03,
+    "offsetX": 0.24,
+    "offsetY": -1.96,
+    "zOffset": 0.3,
+    "spinSpeed": 6
+  },
+  "centerPropeller": {
+    "enabled": false,
+    "bladeColor": "#ffffff",
+    "hubColor": "#ff004d",
+    "bladeCount": 2,
+    "bladeLength": 0.33,
+    "bladeWidth": 0.4,
+    "hubRadius": 0.09,
+    "offsetY": 0.75,
+    "zOffset": 0.3,
+    "spinSpeed": 20
+  },
+  "tailBoom": {
+    "enabled": true,
+    "color": "#3a6bd5",
+    "length": -0.08500000000000002,
+    "baseWidth": 0.17,
+    "tipWidth": 0.06,
+    "emissive": "#003876",
+    "emissiveIntensity": 0.4,
+    "metalness": 2,
+    "roughness": -2,
+    "clearcoat": 0,
+    "clearcoatRoughness": 0.1,
+    "iridescence": 0,
+    "iridescenceIOR": 1.3,
+    "iridescenceThicknessMin": 100,
+    "iridescenceThicknessMax": 400,
+    "envMapIntensity": 1
+  },
+  "boomFin": {
+    "enabled": true,
+    "color": "#1a3a5c",
+    "length": 2,
+    "width": 0.545,
+    "sweep": 0.675,
+    "offsetX": 0.72,
+    "offsetY": 0.47000000000000003,
+    "splayDeg": 0,
+    "emissive": "#00ff23",
+    "emissiveIntensity": 0.065,
+    "metalness": 0.655,
+    "roughness": -2,
+    "clearcoat": 0,
+    "clearcoatRoughness": 0.36,
+    "iridescence": 0,
+    "iridescenceIOR": 1.3,
+    "iridescenceThicknessMin": 164,
+    "iridescenceThicknessMax": 400,
+    "envMapIntensity": 1
+  },
+  "landingGear": {
+    "enabled": false,
+    "legColor": "#000000",
+    "wheelColor": "#ff0000",
+    "legLength": 0.28,
+    "legWidth": 0.09,
+    "wheelRadius": 0.06,
+    "offsetX": 0,
+    "offsetY": 0.48,
+    "zOffset": 0.04
+  },
+  "hullTexture": {
+    "enabled": false,
+    "textureKey": "Light Wool",
+    "opacity": 1,
+    "repeatX": 1,
+    "repeatY": 1
+  }
+}
+
+
+
+Lasergun :
+
+08_lasergun overrides: {
+  "frame": {
+    "color": "#000000",
+    "length": 1.0899999999999999,
+    "height": 0.125,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "barrel": {
+    "color": "#4d5580",
+    "length": 0.6,
+    "width": 0.06,
+    "offsetX": 0.98,
+    "offsetY": 0
+  },
+  "canister": {
+    "enabled": false,
+    "color": "#cfe8ff",
+    "length": 0.24,
+    "width": 0.2,
+    "offsetX": 0.6,
+    "offsetY": 0,
+    "transmission": 0
+  },
+  "muzzle": {
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "mountBracket": {
+    "color": "#000000",
+    "length": 0.21,
+    "width": 0.23
+  },
+  "mount": {
+    "offsetX": 0.45,
+    "offsetY": -0.05
+  },
+  "coreGlow": {
+    "color": "#00ff5e",
+    "intensity": 3,
+    "offsetX": 1.32,
+    "offsetY": 0.01
+  },
+  "accentStripe": {
+    "color": "#44ff88"
+  }
+}

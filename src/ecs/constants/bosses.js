@@ -500,34 +500,6 @@ export const BOSSES = [
         tailBoom: { enabled: false, color: '#cfe8ff', length: 0.44, baseWidth: 0.17, tipWidth: 0.02 },
     }),
 
-
-
-
-
-    withDefaults({
-        key: "randogun",
-        name: "rando",
-        gun: { typeId: '07_flamethrower', offsetX: 0.20, offsetY: -0.30, scale: 1.0 },
-        fuselage: { color: '#ddfdff', tipY: 0.68, shoulderY: 0.16, shoulderWidth: -0.73, waistY: -0.73, waistWidth: 0.13, tailY: -0.42, tailWidth: 0.0, notchY: -2.00 },
-        cockpit: { color: '#ffbf00', topY: 0.11, topWidth: 0.11, midY: 0.39, midWidth: 0.16, bottomY: 0.46, bottomWidth: 0.0 },
-        wing: { color: '#ff2d2d', rootX: 0.0, rootY: 0.57, tipX: 0.0, tipY: -1.50, trailX: 0.67, trailY: 0.63, innerX: 0.79, innerY: 0.04 },
-        wingPanel: { color: '#dfff00', inset: 0.08 },
-        wingtip: { color: '#003479', width: 0.11, height: 0.66, offsetX: 0.43, offsetY: -0.04, zOffset: 0.02 },
-        decal: { enabled: true, color: '#000000', width: 0.06, length: 0.65, offsetX: 0.34, offsetY: 0.00, tiltDeg: -11 },
-        cockpitGlass: { enabled: true, inset: 0.08, zOffset: 0.30, color: "#71f550", roughness: 0.15, thickness: 0.72, ior: 1.00, attenuationColor: "#ffffff" },
-        engineIntake: { enabled: true, color: '#00439a', width: 0.11, height: 0.63, offsetX: 0.18, offsetY: 0.39 },
-        hullVent: { enabled: true, color: '#dfff00', count: 1, width: 0.28, height: 0.29, spacing: 0.10, offsetX: 0.35, offsetY: 0.24 },
-        racingStripe: { enabled: true, color: '#ff2d2d', width: 0.04, length: 0.94, offsetX: 0.30, offsetY: -0.14, tiltDeg: -10 },
-        noseSpike: { enabled: true, color: '#ff2d2d', length: 0.37, width: 0.16, offsetY: -0.32, roundness: 0.94, zOffset: 0.04 },
-        tailFin: { enabled: true, color: '#3a6bd5', length: 1.00, width: 0.38, sweep: 0.00, offsetX: 0.24, offsetY: -0.22, splayDeg: 0 },
-        exhaustPort: { enabled: true, color: '#ff2d2d', width: 0.17, height: 0.46, offsetX: 0.0, offsetY: 0.50 },
-        propeller: { enabled: true, bladeColor: '#5f5f5f', hubColor: '#000000', bladeCount: 3, bladeLength: 0.15, bladeWidth: 0.05, hubRadius: 0.03, offsetX: 0.24, offsetY: -1.96, zOffset: 0.30, spinSpeed: 6 },
-        centerPropeller: { enabled: true, bladeColor: '#ffffff', hubColor: '#ff004d', bladeCount: 2, bladeLength: 0.33, bladeWidth: 0.40, hubRadius: 0.09, offsetY: 0.75, zOffset: 0.30, spinSpeed: 20.0 },
-        tailBoom: { enabled: true, color: '#3a6bd5', length: 0.25, baseWidth: 0.17, tipWidth: 0.06 },
-        boomFin: { enabled: true, color: '#03ff00', length: 1.00, width: 0.17, sweep: 0.63, offsetX: 0.42, offsetY: 0.02, splayDeg: 0 },
-        landingGear: { enabled: false },
-    }),
-
 withDefaults({
     key: "flamethrowergun",
     name: "X-10 Space Dragon",
@@ -734,35 +706,30 @@ withDefaults({
     },
 }),
 
-    /*
-
-        withDefaults({
+    withDefaults({
         key: "lasergun",
-        name: "Starscream", 
-       gun: { typeId: '08_lasergun', offsetX: 0.4, offsetY: -0.30, scale: 1.0 },    
-          fuselage: { color: '#cfffff', tipY: 0.78, shoulderY: 0.39, shoulderWidth: 0.18, waistY: -0.26, waistWidth: 0.15, tailY: -0.52, tailWidth: 0.12, notchY: -0.41 },      
-          cockpit: { color: '#e9ff00', topY: 0.62, topWidth: 0.06, midY: 0.11, midWidth: 0.18, bottomY: 0.0, bottomWidth: 0.09, zOffset: 0.05, },                    
-          wing: { color: '#ff3355', rootX: 0.17, rootY: 0.40, tipX: 0.79, tipY: -0.25, trailX: 0.76, trailY: -0.45, innerX: 0.14, innerY: -0.24 },      
-          wingPanel: { color: '#cfffff' }, 
-          wingtip: { color: '#ff3355', width: 0.05, height: 0.5, offsetX: 0.76, offsetY: -0.36, zOffset: 2.00 },         
-          decal: { enabled: true, color: '#ff3355', width: 0.10, length: 0.84, offsetX: -0.20, offsetY: 0.00, tiltDeg: 6, zOffset: 2.00 },   
-          cockpitGlass: { zOffset: 0.11, color: "#ddfdff", roughness: 0.01, iridescenceIOR: 1.62, iridescenceThicknessMin: 400, iridescenceThicknessMax: 750, attenuationColor: "#ffffff", zOffset: 0.055 },      
-          engineIntake: { enabled: true, color: '#ff3355', width: 0.09, height: 0.98, offsetX: 0.22, offsetY: 0.33 },      
-          hullVent: { enabled: false },         
-          racingStripe: { enabled: false },         
-          noseSpike: { color: '#0070ff', length: 0.67, width: 0.29, offsetY: -0.32, roundness: -0.06, zOffset: 0.04 },        
-          tailFin: { color: '#0070ff', length: 0.55, width: 0.31, sweep: 0.75, offsetX: 0.11, offsetY: -0.36 },        
-          exhaustPort: { enabled: false },         
-          propeller: { enabled: false },      
-          centerPropeller: { enabled: false },      
-          tailBoom: { enabled: true, color: '#0070ff', length: -0.50, baseWidth: 0.17, tipWidth: 0.06 },       
-          boomFin: { enabled: true, color: '#005cff', length: 1, width: 0.17, sweep: 0.63, offsetX: 0.49, offsetY: -0.02 },        
-        healthBar: { fgColor: "#44ff88" },      
-    }), 
-
-        */
-
-
+        name: "UFO",
+        gun: { typeId: '08_lasergun', offsetX: 0.50, offsetY: -0.30, scale: 1.0 },
+        fuselage: { color: '#1a3a5c', tipY: 0.68, shoulderY: -0.4, shoulderWidth: -0.51, waistY: -0.24, waistWidth: -0.24, tailY: -0.5, tailWidth: 0, notchY: 0 },
+        cockpit: { color: '#44ff88', topY: -0.41, topWidth: 0.11, midY: -0.36, midWidth: 0.16, bottomY: 0.27, bottomWidth: 0 },
+        wing: { color: '#3e3e3e', rootX: 0.0, rootY: 0.61, tipX: 1, tipY: -0.3, trailX: 0.11, trailY: -1.2, innerX: 0.14, innerY: -0.24 },
+        wingPanel: { color: '#000000', inset: 0.12,  },
+        wingtip: { color: '#d600ff', width: 0, height: 0 },
+        horn: { enabled: true, color: '#44ff88', baseWidth: -0.59, length: 0.64, curveAmount: 0.10, offsetX: -0.02, offsetY: -0.19, sweepAmount: 35, tiltDeg: 8 },
+        decal: { enabled: false },
+        cockpitGlass: { enabled: true, inset: 0.08, zOffset: 0.30, color: "#71f550", roughness: 0.15, thickness: 0.72, ior: 1.00, attenuationColor: "#ffffff" },
+        engineIntake: { enabled: true, color: '#3e3e3e', width: 0.18, height: 0.63, offsetX: 0.38, offsetY: -0.70 },
+        hullVent: { enabled: true, color: '#44ff88', count: 15, width: 0.47, height: 0.01, spacing: -0.05, offsetX: 0.36, offsetY: -0.40 },
+        racingStripe: { enabled: true, color: '#44ff88', width: 0.04, length: 1.01, offsetX: 0.30, offsetY: -0.25, tiltDeg: 0 },
+        noseSpike: { enabled: true, color: '#1a3a5c', length: 1.38, width: 0.24, offsetY: -1.75, roundness: 0.09, zOffset: -2 },
+        tailFin: { enabled: true, color: '#3e3e3e', length: 1.78, width: -0.23, sweep: 0.00, offsetX: 0.69, offsetY: -0.09, splayDeg: 0 },
+        exhaustPort: { enabled: false  },
+        propeller: { enabled: false },
+        centerPropeller: { enabled: false },
+        tailBoom: { enabled: true, color: '#1a3a5c', length: -0.09, baseWidth: 0.17, tipWidth: 0.06 },
+        boomFin: { enabled: true, color: '#1a3a5c', length: 1.8, width: 0.55, sweep: 0.67, offsetX: 0.72, offsetY: 0.47, splayDeg: 0, attenuationColor: "#648fbe" },
+        landingGear: { enabled: false },
+    }),
 
      /*
 

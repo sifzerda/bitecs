@@ -256,9 +256,9 @@ const RAW_TYPES = [
         overrides: {
             frame: { height: 0.18 },
             barrel: { length: 0.22, width: 0.08, color: '#3a3a4a' },
-            muzzle: { width: 0.11 },
-            coreGlow: { color: '#e0ff4d', intensity: 1.7, size: 0.13 },
-            accentStripe: { color: '#e0ff4d' },
+            muzzle: { color: '##44ff88', width: 0.11 },
+            coreGlow: { color: '#44ff88', intensity: 1.7, size: 0.13 },
+            accentStripe: { color: '#44ff88' },
         },
     },
 
