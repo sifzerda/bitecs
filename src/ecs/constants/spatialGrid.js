@@ -3,7 +3,6 @@
 import { Position } from "./components.js"
 
 const CELL_SIZE = 4
-
 const asteroidGrid = new Map()
 const bossGrid = new Map()
 
@@ -30,10 +29,7 @@ INSERT ASTEROID
 
 export function insertAsteroid(id) {
 
-    const key = cellKey(
-        Math.floor(Position.x[id] / CELL_SIZE),
-        Math.floor(Position.y[id] / CELL_SIZE)
-    )
+    const key = cellKey(Math.floor(Position.x[id] / CELL_SIZE), Math.floor(Position.y[id] / CELL_SIZE))
 
     let bucket = asteroidGrid.get(key)
 
@@ -53,10 +49,7 @@ INSERT BOSS
 
 export function insertBoss(id) {
 
-    const key = cellKey(
-        Math.floor(Position.x[id] / CELL_SIZE),
-        Math.floor(Position.y[id] / CELL_SIZE)
-    )
+    const key = cellKey(Math.floor(Position.x[id] / CELL_SIZE), Math.floor(Position.y[id] / CELL_SIZE))
 
     let bucket = bossGrid.get(key)
 
