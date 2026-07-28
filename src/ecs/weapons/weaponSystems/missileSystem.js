@@ -1,19 +1,16 @@
 // src/ecs/weapons/weaponSystems/missileSystem.js
 
 import { world } from "../../constants/world.js"
-import { bossQuery, playerQuery } from "../../constants/queries.js"
+import { playerQuery } from "../../constants/queries.js"
 import { Position, Velocity, Bullet, BULLET_OWNER } from "../../constants/components.js"
-import { getWeapon, WEAPON_BY_NAME } from "../config/weapons.js"
+import { getWeapon } from "../config/weapons.js"
 import { activeBullets } from "../../pools/bulletPool.js"
-import { activeAsteroids } from "../../pools/asteroidPool.js"
-import { findNearestAsteroid } from "../../constants/spatialGrid.js"
+import { findNearestAsteroid, findNearestBoss } from "../../constants/spatialGrid.js"
 
 export function missileSystem() {
 
     const dt = world.time.delta
     const bullets = activeBullets
-    const asteroids = activeAsteroids
-    const bosses = bossQuery()
     const players = playerQuery()
 
     for (let i = 0; i < bullets.length; i++) {
@@ -21,50 +18,66 @@ export function missileSystem() {
         const id = bullets[i]
         const weapon = getWeapon(Bullet.type[id])
 
-        // any weapon flagged homing gets steered here — not just missilegun by number
-        if (!weapon.homing) continue
-
-        // -------------------------
-        // Find nearest target
-        // -------------------------
+        if (!weapon.homing)
+            continue
 
         let targetId = -1
-        let bestDistSq = Infinity
 
         if (Bullet.owner[id] === BULLET_OWNER.PLAYER) {
 
-            targetId = findNearestAsteroid(Position.x[id], Position.y[id])
+            const asteroid = findNearestAsteroid(Position.x[id], Position.y[id])
+            const boss = findNearestBoss(Position.x[id], Position.y[id])
 
-            for (let j = 0; j < bosses.length; j++) {
-                const bid = bosses[j]
-                const dx = Position.x[bid] - Position.x[id]
-                const dy = Position.y[bid] - Position.y[id]
-                const distSq = dx * dx + dy * dy
-                if (distSq < bestDistSq) { bestDistSq = distSq; targetId = bid }
+            if (asteroid === -1) {
+                targetId = boss
+
+            } else if (boss === -1) {
+                targetId = asteroid
+                
+            } else {
+
+                const adx = Position.x[asteroid] - Position.x[id]
+                const ady = Position.y[asteroid] - Position.y[id]
+
+                const bdx = Position.x[boss] - Position.x[id]
+                const bdy = Position.y[boss] - Position.y[id]
+
+                const asteroidDistSq = adx * adx + ady * ady
+                const bossDistSq = bdx * bdx + bdy * bdy
+
+                targetId = asteroidDistSq < bossDistSq
+                    ? asteroid
+                    : boss
             }
 
         } else if (players.length > 0) {
+
             targetId = players[0]
+
         }
 
-        if (targetId === -1) continue
-
-        // -------------------------
-        // Steer velocity toward target, preserving current speed
-        // -------------------------
+        if (targetId === -1)
+            continue
 
         const speed = Math.hypot(Velocity.x[id], Velocity.y[id])
-        if (speed === 0) continue
+
+        if (speed === 0)
+            continue
 
         const curAngle = Math.atan2(Velocity.y[id], Velocity.x[id])
 
         const dx = Position.x[targetId] - Position.x[id]
         const dy = Position.y[targetId] - Position.y[id]
+
         const targetAngle = Math.atan2(dy, dx)
 
         let diff = targetAngle - curAngle
-        while (diff > Math.PI) diff -= Math.PI * 2
-        while (diff < -Math.PI) diff += Math.PI * 2
+
+        while (diff > Math.PI)
+            diff -= Math.PI * 2
+
+        while (diff < -Math.PI)
+            diff += Math.PI * 2
 
         const maxTurn = weapon.turnRate * dt
         const turn = Math.max(-maxTurn, Math.min(maxTurn, diff))

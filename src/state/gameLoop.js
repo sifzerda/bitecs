@@ -22,8 +22,16 @@ import { exhaustEmitter } from "../fx/gpu/exhaustEmitter"
 import { updateFireEmitter } from "../fx/gpu/FireEmitter"
 import { updateEffects } from "../fx/index"
 
+import {
+    clearSpatialGrids,
+    insertAsteroid,
+    insertBoss
+} from "../ecs/constants/spatialGrid"
+
+import { activeAsteroids } from "../ecs/pools/asteroidPool"
+import { bossQuery } from "../ecs/constants/queries"
+
 //import { tentacleSystem } from "../ecs/systems/tentacleSystem"
-//import { clearSpatialGrid, insertIntoSpatialGrid } from '../ecs/constants/spatialGrid.js'
 
 export function gameLoop(shootState, dt) {
 
@@ -40,12 +48,20 @@ export function gameLoop(shootState, dt) {
     boundsSystem()
     waveSystem()
 
-    // Rebuild spatial grid using final positions
-    //clearSpatialGrid();
+        // spatial grid------------//
+    clearSpatialGrids()
 
-    //for (const asteroid of asteroids) {
-    //  insertIntoSpatialGrid(asteroid);
-    //}
+    for (let i = 0; i < activeAsteroids.length; i++) {
+        insertAsteroid(activeAsteroids[i])
+    }
+
+    const bosses = bossQuery()
+
+    for (let i = 0; i < bosses.length; i++) {
+        insertBoss(bosses[i])
+    }
+
+    //-----------------------//
 
     hazardSystem()
     combatSystem()
@@ -62,3 +78,4 @@ export function gameLoop(shootState, dt) {
     updateFireEmitter(dt)
 
 }
+
