@@ -87,9 +87,9 @@ export default function playerControlSystem(shootState) {
     gameState.deflectBufferTime = Math.max(0, gameState.deflectBufferTime - dt)
     gameState.deflectFlashTimer = Math.max(0, gameState.deflectFlashTimer - dt)
 
-    if (input.deflectOn) {
+    if (input.deflect) {
         gameState.deflectBufferTime = DEFLECT_BUFFER
-        input.deflectOn = false
+        input.deflect = false
     }
 
     //----------------------------------
@@ -97,11 +97,7 @@ export default function playerControlSystem(shootState) {
     //----------------------------------
 
     const currentMaxSpeed = gameState.boostActive > 0 ? BOOST_MAX_SPEED : MAX_SPEED
-
-    const speed = Math.hypot(
-        Velocity.x[pid],
-        Velocity.y[pid]
-    )
+    const speed = Math.hypot(Velocity.x[pid], Velocity.y[pid])
 
     if (speed > currentMaxSpeed) {
         const scale = currentMaxSpeed / speed

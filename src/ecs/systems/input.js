@@ -107,6 +107,11 @@ export function initializeInput(onPause) {
             return
         }
 
+        if (action === "deflect") {
+            input.deflect = true
+            return
+        }
+
         const weaponIndex = weaponKeys[e.code]
 
         if (
@@ -150,7 +155,8 @@ export function initializeInput(onPause) {
     window.addEventListener("mousemove", mouseMove)
     window.addEventListener("wheel", wheel, wheelOptions)
     window.addEventListener("blur", clearInput)
-    document.addEventListener("visibilitychange", () => { if (document.hidden) { clearInput() }
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) { clearInput() }
 
     })
 

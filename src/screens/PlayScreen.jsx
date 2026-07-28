@@ -14,7 +14,7 @@ import {
     //Float -- effect for floating power-ups
 } from '@react-three/drei'
 import { useRef, useEffect } from 'react'
-import { HUD } from '../components/HUD.jsx'
+//import { HUD } from '../components/HUD.jsx'
 import { world } from '../ecs/constants/world.js'
 import { gameLoop } from '../state/gameLoop.js'
 
@@ -81,7 +81,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
     return (
         <div className="border-2 border-green-400 flex flex-col h-[calc(100vh-120px)]">
 
-            <HUD paused={paused} onPause={onPause} />
+       {/*       <HUD paused={paused} onPause={onPause} />     */}
 
 
             {/*        <GodPanel />   */}

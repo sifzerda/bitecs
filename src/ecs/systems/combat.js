@@ -30,7 +30,7 @@ const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
 const DEFLECT_RADIUS = 4.0             // DEBUG: was 1.4 — huge catch radius so any nearby bullet deflects
 const DEFLECT_SPEED_MULT = 1.3
-const DEFLECT_FLASH_DURATION = 0.15    // keep in sync with BlockRenderer.jsx
+const DEFLECT_FLASH_DURATION = 0.15    // keep in sync with DeflectRenderer.jsx
 
 export function combatSystem() {
 
