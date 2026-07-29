@@ -1,168 +1,175 @@
 // src/screens/SettingsScreen.jsx
 
-import { useState } from "react"
-import { gameState, SCREEN } from "../state/gameState"
-import FlightLayout2 from "../components/FlightLayout2"
+import { useState, useEffect, useCallback } from 'react';
+import FlightLayout2 from '../components/FlightLayout2.jsx';
 
-export function SettingsScreen() {
+export default function SettingsScreen({ onBack }) {
+  const [music, setMusic] = useState(80);
+  const [sfx, setSfx] = useState(100);
+  const [screenshake, setScreenshake] = useState(true);
+  const [bloom, setBloom] = useState(true);
+  const [fps, setFps] = useState(false);
 
-    const [music, setMusic] = useState(80)
-    const [sfx, setSfx] = useState(100)
-    const [screenshake, setScreenshake] = useState(true)
-    const [bloom, setBloom] = useState(true)
-    const [fps, setFps] = useState(false)
+  // 0 = BACK, 1 = SAVE
+  const [selected, setSelected] = useState(0);
 
-    return (
+  const handleBack = useCallback(() => {
+    onBack?.();
+  }, [onBack]);
 
-        <FlightLayout2 title="SETTINGS" footer="SECTOR CLEAR">
+  const handleSave = useCallback(() => {
+    // persist settings later (localStorage / gameState)
+    onBack?.();
+  }, [onBack]);
 
-            <div className="min-h-screen bg-black flex items-center justify-center p-8">
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelected((s) => (s - 1 + 2) % 2);
+      }
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelected((s) => (s + 1) % 2);
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        selected === 0 ? handleBack() : handleSave();
+      }
+      if (e.key === 'Escape' || e.key === 'Backspace') {
+        e.preventDefault();
+        handleBack();
+      }
+    };
 
-                <div className="w-full max-w-3xl rounded-xl border-2 border-cyan-500 bg-[#101820] p-8">
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selected, handleBack, handleSave]);
 
-                    <div className="space-y-8">
+  const btnClass = (active) => `
+    cursor-pointer relative w-56 py-3 uppercase tracking-[0.45em] text-sm border transition-all duration-200
+    ${
+      active
+        ? 'border-green-300 text-cyan-300 bg-cyan-500/10 shadow-[0_0_18px_rgba(0,255,255,0.35)]'
+        : 'border-[#39ff14]/40 text-[#39ff14]/70 bg-black/40'
+    }
+  `;
 
-                        {/* ---------------- AUDIO ---------------- */}
+  return (
+    <FlightLayout2 title="SETTINGS" footer="SECTOR CLEAR">
+      <div className="mx-auto inline-block text-left font-mono text-xs tracking-[0.2em] text-white/80 w-full max-w-md">
+        <div className="space-y-8">
+          {/* AUDIO */}
+          <section>
+            <div className="mb-3 text-[#39ff14]/60 tracking-[0.25em]">AUDIO</div>
 
-                        <section>
-
-                            <h2 className="text-xl text-cyan-300 mb-4">Audio</h2>
-
-                            <div className="space-y-6">
-
-                                <div>
-
-                                    <div className="flex justify-between mb-2">
-
-                                        <span>Music Volume</span>
-                                        <span>{music}%</span>
-
-                                    </div>
-
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        value={music}
-                                        onChange={e => setMusic(Number(e.target.value))}
-                                        className="w-full"
-                                    />
-
-                                </div>
-
-                                <div>
-
-                                    <div className="flex justify-between mb-2">
-
-                                        <span>SFX Volume</span>
-                                        <span>{sfx}%</span>
-
-                                    </div>
-
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        value={sfx}
-                                        onChange={e => setSfx(Number(e.target.value))}
-                                        className="w-full"
-                                    />
-
-                                </div>
-
-                            </div>
-
-                        </section>
-
-                        {/* ---------------- GRAPHICS ---------------- */}
-
-                        <section>
-
-                            <h2 className="text-xl text-cyan-300 mb-4">Graphics</h2>
-
-                            <div className="space-y-3">
-
-                                <label className="flex justify-between items-center">
-
-                                    <span>Bloom</span>
-
-                                    <input
-                                        type="checkbox"
-                                        checked={bloom}
-                                        onChange={() => setBloom(!bloom)}
-                                    />
-
-                                </label>
-
-                                <label className="flex justify-between items-center">
-
-                                    <span>Screen Shake</span>
-
-                                    <input
-                                        type="checkbox"
-                                        checked={screenshake}
-                                        onChange={() => setScreenshake(!screenshake)}
-                                    />
-
-                                </label>
-
-                            </div>
-
-                        </section>
-
-                        {/* ---------------- DEBUG ---------------- */}
-
-                        <section>
-
-                            <h2 className="text-xl text-cyan-300 mb-4">Debug</h2>
-
-                            <label className="flex justify-between items-center">
-
-                                <span>Show FPS</span>
-
-                                <input
-                                    type="checkbox"
-                                    checked={fps}
-                                    onChange={() => setFps(!fps)}
-                                />
-
-                            </label>
-
-                        </section>
-
-                    </div>
-
-                    {/* ---------------- BUTTONS ---------------- */}
-
-                    <div className="flex justify-end gap-4 mt-12">
-
-                        <button
-                            className="px-6 py-3 border border-gray-500 hover:bg-gray-700 transition"
-                            onClick={() => {
-                                gameState.screen = SCREEN.MENU
-                                notifyUIChanged()
-                            }}>BACK
-
-                        </button>
-
-                        <button
-                            className="px-6 py-3 border border-cyan-400 hover:bg-cyan-400 hover:text-black transition"
-                            onClick={() => {
-
-                                // Save settings here later
-
-                                gameState.screen = SCREEN.MENU
-                                notifyUIChanged()
-                            }}>SAVE
-                        </button>
-
-                    </div>
-
+            <div className="space-y-4">
+              <div>
+                <div className="mb-2 flex justify-between text-white/70">
+                  <span>Music volume</span>
+                  <span className="text-cyan-300/80">{music}%</span>
                 </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={music}
+                  onChange={(e) => setMusic(Number(e.target.value))}
+                  className="w-full accent-cyan-400"
+                />
+              </div>
 
+              <div>
+                <div className="mb-2 flex justify-between text-white/70">
+                  <span>SFX volume</span>
+                  <span className="text-cyan-300/80">{sfx}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={sfx}
+                  onChange={(e) => setSfx(Number(e.target.value))}
+                  className="w-full accent-cyan-400"
+                />
+              </div>
             </div>
-        </FlightLayout2>
+          </section>
 
-    )
+          {/* GRAPHICS */}
+          <section>
+            <div className="mb-3 text-[#39ff14]/60 tracking-[0.25em]">GRAPHICS</div>
 
+            <div className="space-y-3">
+              <label className="flex cursor-pointer items-center justify-between text-white/70">
+                <span>Bloom</span>
+                <input
+                  type="checkbox"
+                  checked={bloom}
+                  onChange={() => setBloom(!bloom)}
+                  className="h-4 w-4 accent-cyan-400"
+                />
+              </label>
+
+              <label className="flex cursor-pointer items-center justify-between text-white/70">
+                <span>Screen shake</span>
+                <input
+                  type="checkbox"
+                  checked={screenshake}
+                  onChange={() => setScreenshake(!screenshake)}
+                  className="h-4 w-4 accent-cyan-400"
+                />
+              </label>
+            </div>
+          </section>
+
+          {/* DEBUG */}
+          <section>
+            <div className="mb-3 text-[#39ff14]/60 tracking-[0.25em]">DEBUG</div>
+
+            <label className="flex cursor-pointer items-center justify-between text-white/70">
+              <span>Show FPS</span>
+              <input
+                type="checkbox"
+                checked={fps}
+                onChange={() => setFps(!fps)}
+                className="h-4 w-4 accent-cyan-400"
+              />
+            </label>
+          </section>
+        </div>
+
+        {/* ACTIONS */}
+        <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+          <button
+            type="button"
+            onClick={handleBack}
+            onMouseEnter={() => setSelected(0)}
+            className={btnClass(selected === 0)}
+          >
+            BACK
+            {selected === 0 && (
+              <span className="absolute -left-4 top-1/2 -translate-y-1/2 text-cyan-300 animate-pulse">
+                ▶
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSave}
+            onMouseEnter={() => setSelected(1)}
+            className={btnClass(selected === 1)}
+          >
+            SAVE
+            {selected === 1 && (
+              <span className="absolute -left-4 top-1/2 -translate-y-1/2 text-cyan-300 animate-pulse">
+                ▶
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+    </FlightLayout2>
+  );
 }

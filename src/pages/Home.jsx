@@ -4,15 +4,13 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 
 import BG from '../components/BG';
 import MenuScreen from '../screens/MenuScreen';
+import HowToPlayScreen from '../screens/HowToPlayScreen';
 import { PlayScreen } from '../screens/PlayScreen';
 import { StageCompleteScreen } from '../screens/StageCompleteScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import { GunsScreen } from '../screens/GunsScreen.jsx';
 import { GameOverScreen } from '../screens/GameOverScreen';
-
-// Uncomment if these files exist:
-// import HowToPlayScreen from '../screens/HowToPlayScreen';
-// import HighscoresScreen from '../screens/HighscoresScreen';
+import HighscoresScreen from '../screens/HighscoresScreen';
 
 import { gameState, SCREEN } from '../state/gameState.js';
 import { spawnPlayer } from '../ecs/spawn.js';
@@ -120,14 +118,14 @@ export default function Home() {
         />
       )}
 
-      {/* Enable when the screen components exist:
       {screen === 'howtoplay' && (
         <HowToPlayScreen onBack={() => go('menu')} />
       )}
+
       {screen === 'highscores' && (
         <HighscoresScreen onBack={() => go('menu')} />
       )}
-      */}
+
     </div>
   );
 }
