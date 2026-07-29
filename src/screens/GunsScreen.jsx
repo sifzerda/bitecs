@@ -1,4 +1,4 @@
-// src/screens/EquipScreen.jsx
+// src/screens/GunsScreen.jsx
 
 import { useState } from "react"
 
@@ -14,7 +14,7 @@ import {
     getGunTypeByWeaponId
 } from "../ecs/weapons/config/gunConfigs"
 
-export function EquipScreen() {
+export function GunsScreen() {
 
     const [selected, setSelected] = useState(
         gameState.currentWeapon
@@ -30,7 +30,7 @@ export function EquipScreen() {
             <div className="w-full max-w-7xl bg-[#101820] border-2 border-cyan-500 rounded-xl p-8">
 
                 <h1 className="text-5xl font-bold text-cyan-400 mb-8">
-                    ARMOURY
+                    GUNS
                 </h1>
 
                 <div className="grid grid-cols-[420px_1fr] gap-10">

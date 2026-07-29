@@ -4,7 +4,7 @@ export default function HUDBackground() {
   return (
     <>
       {/* glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(57,255,20,0.10),transparent_70%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(57,255,20,0.10),transparent_70%)]" />
       {/* texture */}
       <div className="pointer-events-none absolute inset-0 opacity-[0.35] mix-blend-screen bg-[url('/cream-pixels.png')] bg-repeat bg-size-[180px_180px]" />
       {/* scanlines */}

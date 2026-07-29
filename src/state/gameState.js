@@ -4,8 +4,11 @@
 export const SCREEN = {
     MENU: "menu",
     PLAY: "play",
+    PAUSE: "pause",
+    HOW_TO_PLAY: "how_to_play",
     SETTINGS: "settings",
-    ARMOURY: "armoury",
+    HIGHSCORES: "highscores",
+    GUNS: "GUNS",
     STAGE_COMPLETE: "stage_complete",
     GAME_OVER: "game_over"
 }

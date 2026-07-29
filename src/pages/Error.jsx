@@ -9,7 +9,7 @@ export default function ErrorPage() {
   console.error(error);
 
   const code = error.status || "ERR";
-   return (
+  return (
     <>
       <BG />
 

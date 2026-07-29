@@ -35,10 +35,10 @@ export function StageCompleteScreen() {
                     className="mt-8 border p-3"
                     onClick={() => {
 
-                        gameState.screen = SCREEN.ARMOURY
+                        gameState.screen = SCREEN.GUNS
 
                     }}>
-                    ARMOURY
+                    GUNS
                 </button>
 
             </div>
