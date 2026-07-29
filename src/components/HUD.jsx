@@ -86,10 +86,6 @@ export function HUD({ onPause, paused }) {
                 <span>{hud.health}</span>
             </div>
 
-
-
-
-
             <div className="flex items-center gap-2 text-xs">
 
                 <span>BOOST</span>
@@ -108,10 +104,6 @@ export function HUD({ onPause, paused }) {
                 </div>
 
             </div>
-
-
-
-
 
             <span className="text-xs text-yellow-300">SCORE {hud.score}</span>
             <div className="flex flex-col leading-none text-right">

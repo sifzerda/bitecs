@@ -1,19 +1,42 @@
 // src/state/gameState.js
 // sent to hud
 
+export const SCREEN = {
+    MENU: "menu",
+    PLAY: "play",
+    SETTINGS: "settings",
+    ARMOURY: "armoury",
+    STAGE_COMPLETE: "stage_complete",
+    GAME_OVER: "game_over"
+}
+
 export const gameState = {
 
+    // UI
+    screen: SCREEN.MENU,
+    // progression
+    stage: 1,
+    wave: 0,
+    // player
     score: 0,
     lives: 3,
+    health: 100,
+    // weapons
     currentWeapon: 0,
-    paused: false,
-    wave: 0,              // starts at 0, first asteroid wave becomes 1
-    asteroidsRemaining: 0,
-    
-    bossAlive: false,
-    bossDone: false,        // tracks whether this wave-cycle's boss already spawned
+    // unlocked weapons
+    unlockedWeapons: [0],  // starting weapon
+    // newly unlocked weapon after boss
+    pendingWeaponUnlock: null,
 
-    boostCooldown: 0,   // seconds remaining until boost can fire again
+    // boss
+    bossAlive: false,
+    bossDone: false,
+
+    asteroidsRemaining: 0,
+
+    paused: false,
+
+    boostCooldown: 0,
     boostActive: 0,
 
     deflectBufferTime: 0,
@@ -23,6 +46,6 @@ export const gameState = {
 
     gunSkinOverride: null
 
-//    tentaclesEnabled: false,
-//    octopusEnabled: true,
+    //    tentaclesEnabled: false,
+    //    octopusEnabled: true,
 }

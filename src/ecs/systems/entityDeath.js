@@ -45,18 +45,35 @@ export function killBoss(id, x, y) {
 
     const direction = smokeDirectionFor(id)
 
+    const weaponId = BossAI.weapon[id]
+
     removeEntity(world, id)
 
-    gameState.currentWeapon = BossAI.weapon[id]
     gameState.score += 1000
+
     gameState.bossAlive = false
     gameState.asteroidsRemaining = 0
+
+    // -------------------------
+    // Unlock weapon
+    // -------------------------
+
+    if (!gameState.unlockedWeapons.includes(weaponId)) {
+        gameState.unlockedWeapons.push(weaponId)
+    }
+
+    // Remember which weapon was earned
+    gameState.pendingUnlockWeapon = weaponId
+
+    // Pause gameplay and show Stage Complete
+    gameState.paused = true
+    gameState.screen = SCREEN.STAGE_COMPLETE
 
     emitEffect(EFFECT.EXPLOSION, { x, y, size: 5 })
     emitEffect(EFFECT.SHOCKWAVE, { x, y, radius: 2.5 })
     emitEffect(EFFECT.FIRE, { x, y, count: 60 })
     emitEffect(EFFECT.SPARK_BURST, { x, y, count: 90, speed: 16, big: true })
     emitEffect(EFFECT.SMOKE, { x, y, direction, count: 40 })
-    emitEffect(EFFECT.DEBRIS, { x, y, count: 24, speed: 14, size: 1.2, kind: "metal", maxLife: 2.2 })
-
+    emitEffect(EFFECT.DEBRIS, { x, y, count: 24, speed: 14, size: 1.2, kind: "metal", maxLife: 2.2
+    })
 }
