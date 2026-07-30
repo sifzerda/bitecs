@@ -17,6 +17,7 @@ import { useRef, useEffect } from 'react'
 //import { HUD } from '../components/HUD.jsx'
 import { world } from '../ecs/constants/world.js'
 import { gameLoop } from '../state/gameLoop.js'
+import MouseWorldTracker from '../ecs/systems/MouseWorldTracker.jsx'
 
 import { PlayerRenderer } from '../renderers/PlayerRenderer.jsx'
 import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
@@ -92,6 +93,8 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     camera={{ zoom: 60, position: [0, 0, 10], near: 0.1, far: 100 }}
                     gl={{ antialias: false, powerPreference: "high-performance" }}
                     dpr={[1, 2]}>
+
+                         <MouseWorldTracker />
 
                     <GameLoop keysRef={keysRef} paused={paused} />
 

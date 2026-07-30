@@ -1,6 +1,7 @@
 // src/screens/SettingsScreen.jsx
 
 import { useState, useEffect, useCallback } from 'react';
+import { settings, setControlScheme } from '../ecs/systems/settings.js';
 import FlightLayout2 from '../components/FlightLayout2.jsx';
 
 export default function SettingsScreen({ onBack }) {
@@ -9,9 +10,15 @@ export default function SettingsScreen({ onBack }) {
   const [screenshake, setScreenshake] = useState(true);
   const [bloom, setBloom] = useState(true);
   const [fps, setFps] = useState(false);
+  const [controlScheme, setControlSchemeState] = useState(settings.controlScheme);
 
   // 0 = BACK, 1 = SAVE
   const [selected, setSelected] = useState(0);
+
+  const selectControlScheme = useCallback((scheme) => {
+    setControlScheme(scheme);
+    setControlSchemeState(scheme);
+  }, []);
 
   const handleBack = useCallback(() => {
     onBack?.();
@@ -93,6 +100,33 @@ export default function SettingsScreen({ onBack }) {
                   className="w-full accent-cyan-400"
                 />
               </div>
+            </div>
+          </section>
+
+          {/* CONTROLS */}
+          <section>
+            <div className="mb-3 text-[#39ff14]/60 tracking-[0.25em]">CONTROLS</div>
+
+            <div className="space-y-3">
+              <label
+                className="flex cursor-pointer items-center justify-between text-white/70"
+                onClick={() => selectControlScheme('keyboard')}
+              >
+                <span>Keyboard only</span>
+                <span className="text-cyan-300/80 text-base leading-none">
+                  {controlScheme === 'keyboard' ? '☑' : '☐'}
+                </span>
+              </label>
+
+              <label
+                className="flex cursor-pointer items-center justify-between text-white/70"
+                onClick={() => selectControlScheme('keyboardMouse')}
+              >
+                <span>Mouse + keyboard</span>
+                <span className="text-cyan-300/80 text-base leading-none">
+                  {controlScheme === 'keyboardMouse' ? '☑' : '☐'}
+                </span>
+              </label>
             </div>
           </section>
 
