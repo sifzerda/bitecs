@@ -151,7 +151,7 @@ void main(){
     // VERY SLOW GALAXY ROTATION
     //------------------------------------
 
-    float angle=uTime*0.015;
+    float angle=uTime*0.0075;
 
     mat2 rot=
     mat2(
@@ -182,7 +182,7 @@ void main(){
     // a true Milky Way isn't uniformly bright end to end.
     float patchiness =
         0.6 +
-        0.4 * fbm(vec2(uv.x * 1.3, 1.5) + uTime * 0.04);
+        0.4 * fbm(vec2(uv.x * 1.3, 1.5) + uTime * 0.02);
 
     band *= patchiness;
 
@@ -194,8 +194,8 @@ void main(){
 
     vec2 warp=
     vec2(
-        fbm(p+vec2(uTime*0.06,0.0)),
-        fbm(p+vec2(7.2,-uTime*0.06))
+        fbm(p+vec2(uTime*0.03,0.0)),
+        fbm(p+vec2(7.2,-uTime*0.03))
     );
 
     p+=warp*0.35;
@@ -207,7 +207,7 @@ void main(){
     // starfield dust look like it's actually drifting over time.
     //------------------------------------
 
-    vec2 drift = vec2(uTime * 0.12, -uTime * 0.06);
+    vec2 drift = vec2(uTime * 0.06, -uTime * 0.03);
     vec2 pd = p + drift;
 
     //------------------------------------
