@@ -126,8 +126,8 @@ Inside combat.js at end of file lives = 0
 
 ## Tasks
 
-- [x] links at top ('about') not working (?)
-- [ ] fix the 'renderermanager.jsx'
+- [ ] optimize starfield renderer
+- [ ] bomb weapons lost trail
 
 OPTIMIZE RENDERERS:
 - [x] ArcRenderer
@@ -158,9 +158,9 @@ Post:
 - [ ] collision, damage, death
 - [ ] Enhance and Optimize Renderers
 - [ ] Enhance HUD vfx
-- [ ] Add game screens
+- [x] Add game screens
 - [ ] Score
-- [ ] settings, mouse control support/toggling
+- [x] settings, mouse control support/toggling
 - [x] modular ship parts for upgrade and modular gun parts for upgrade
 - [x] general game progression: n asteroid waves, then boss with new gun.
 Defeating boss drops/awards gun. Gun can be applied. N1 asteroid wave and next boss with new gun etc.
@@ -186,21 +186,13 @@ some of these boss dropped weapons, some upgrades
  - [ ] make one kind of boss behaviour and logic, and switch renderer (ship appearance) and gun type
  ~~- [ ] also potentially later boss has satelites that orbit it and help, or shield etc~~
  - [x] add in shockwave effect for explosive weapons
-
  - [x] make boost exhaust a part of normal exhaust rendering i.e. if keyB pressed, 
  boost exhaust is rendered
-
  - [x] Adapt missile and lasersystem for boss use: missiles dont target player and need to not hurt boss, and laser needs to be held down not fired (boss never fires it)
-
 - [x] change boss renderer to make enemy ship/ufo
-
-- [ ] see if other renderers can be modelled off exhaust renderers gpu shaders
-- [ ] especially flamerenderer, acid spray, laser, arc, hazard,, spark
 - [x] add a leva menu to configure guns which can be applied to the ship and bosses
-
 - [x] make each gun, it will look the same for boss as player
 
-- [ ] 
 
  -  Verlet mesh, chain etc physics, or engine
 
@@ -221,16 +213,6 @@ some of these boss dropped weapons, some upgrades
 - [x] add pool for sparks, exhaust, etc
 
 - [x] trailrenderer needs to replace smoke in missile renderer
-
-
-
-- [ ] missiler needs to shoot missiles,
- - [ ] war machine needs to shoot grenades
- - [ ] space tractor needs to shoot acid
- - [ ] fridgey needs to shoot cryo
- - [ ] space dragon needs to shoot flamethrower
-
-- [x] expose the typed arrays ( in emitters) directly to InstancedBufferAttribute
 
 
 dragon/flamethrower boss SHAPES:
