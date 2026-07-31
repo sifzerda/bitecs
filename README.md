@@ -126,7 +126,7 @@ Inside combat.js at end of file lives = 0
 
 ## Tasks
 
-- [ ] links at top ('about') not working (?)
+- [x] links at top ('about') not working (?)
 - [ ] fix the 'renderermanager.jsx'
 
 OPTIMIZE RENDERERS:
