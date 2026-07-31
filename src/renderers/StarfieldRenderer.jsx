@@ -40,6 +40,7 @@ uniform vec3 uColorBlue;
 uniform vec3 uColorCyan;
 uniform vec3 uColorGlow;
 uniform vec3 uColorRed;
+uniform vec3 uColorDeepRed;
 
 varying vec2 vUv;
 
@@ -177,6 +178,14 @@ void main(){
             )*8.0
         );
 
+    // Patchy brightness along the band's length, like real star clouds —
+    // a true Milky Way isn't uniformly bright end to end.
+    float patchiness =
+        0.6 +
+        0.4 * fbm(vec2(uv.x * 1.3, 1.5) + uTime * 0.01);
+
+    band *= patchiness;
+
     //------------------------------------
     // DOMAIN WARP
     //------------------------------------
@@ -192,17 +201,27 @@ void main(){
     p+=warp*0.35;
 
     //------------------------------------
+    // DUST DRIFT ANIMATION
+    // Slides the fine dust/nebula texture steadily across the frame,
+    // independent of the rotation/warp above — this is what makes the
+    // starfield dust look like it's actually drifting over time.
+    //------------------------------------
+
+    vec2 drift = vec2(uTime * 0.05, -uTime * 0.025);
+    vec2 pd = p + drift;
+
+    //------------------------------------
     // MULTI SCALE CLOUDS
     //------------------------------------
 
     float large=
-        fbm(p*0.35);
+        fbm(pd*0.35);
 
     float medium=
-        fbm(p*0.8);
+        fbm(pd*0.8);
 
     float fine=
-        fbm(p*2.5);
+        fbm(pd*2.5);
 
     float nebula=
         large*0.55+
@@ -217,20 +236,20 @@ void main(){
         smoothstep(
             0.30,
             0.72,
-            fbm(p*1.7+10.0)
+            fbm(pd*1.7+10.0)
         );
 
     band*=1.0-dust*0.65;
 
     //------------------------------------
-    // GALAXY CORE
+    // GALAXY CORE (kept tight and dimmer than before)
     //------------------------------------
 
-    float core=
+    float core =
         exp(
             -length(
-                uv*vec2(3.2,6.5)
-            )*3.0
+                uv * vec2(5.5,10.0)
+            ) * 5.5
         );
 
     //------------------------------------
@@ -254,16 +273,16 @@ void main(){
     color+=
         uColorGlow*
         core*
-        2.2;
+        0.45;
 
     //------------------------------------
-    // RED EMISSION
+    // RED EMISSION — bright glints scattered through the band
     //------------------------------------
 
     float emission=
         pow(
             max(
-                fbm(p*4.0+18.0),
+                fbm(pd*4.0+18.0),
                 0.0
             ),
             8.0
@@ -274,6 +293,23 @@ void main(){
         emission*
         band*
         0.12;
+
+    //------------------------------------
+    // DEEP RED NEBULA PATCHES — larger, darker red clouds that sit
+    // independently of the band, like H-alpha emission regions
+    //------------------------------------
+
+    float deepRedMask =
+        smoothstep(
+            0.50,
+            0.85,
+            fbm(pd*1.05 - 30.0)
+        );
+
+    color +=
+        uColorDeepRed *
+        deepRedMask *
+        0.4;
 
     //------------------------------------
     // VIGNETTE
@@ -324,6 +360,10 @@ uniforms:{
 
     uColorRed:{
         value:new THREE.Color("#ff6655")
+    },
+
+    uColorDeepRed:{
+        value:new THREE.Color("#5c0f14")
     }
 
 },
