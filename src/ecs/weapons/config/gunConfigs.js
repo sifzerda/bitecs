@@ -263,7 +263,7 @@ const RAW_TYPES = [
     },
 
     {
-        id: '09_arcgun', name: 'Arc Lightning Gun', weaponId: WEAPON_BY_NAME.arcgun.id,
+        id: '09_arcgun', name: 'RTL Gun', weaponId: WEAPON_BY_NAME.arcgun.id,
         overrides: {
             frame: { color: '#8a3a2a', height: 0.17 },
             barrel: { length: 0.3, width: 0.07, color: '#2a1a14' },
@@ -276,14 +276,24 @@ const RAW_TYPES = [
     {
         id: '10_plasmagun', name: 'Plasma Laser Gun', weaponId: WEAPON_BY_NAME.plasmabeam.id,
         overrides: {
-            frame: { length: 0.9, height: 0.16 },
-            barrel: { length: 0.38, width: 0.045, color: '#3a3550' },
-            muzzle: { width: 0.11 },
-            coreGlow: { color: '#ff6bff', intensity: 1.6 },
-            accentStripe: { color: '#ff6bff' },
-            sight: { color: '#ff6bff' },
+            frame: { length: 0.87, height: 0.19 },
+            barrel: { length: 0.60, width: 0.07, offsetX: 0.89, color: '#3a3550' },
+            canister: {
+                enabled: true, color: '#0079ff',
+                length: 1.0, width: 0.13,
+
+                    offsetX: 0.24, offsetY: 0,
+                
+                metalness: 0.1, roughness: 0,
+                transmission: 1, thickness: 0.2, ior: 1.4,
+                clearcoat: 1, clearcoatRoughness: 0.05,
+            },
+            muzzle: { width: 0.06, length: 0.5, color: '#cfe8ff', offsetX: -0.28 },
+            coreGlow: { color: '#0079ff', intensity: 1.0, offsetX: 1.4, size: 0.3 },
+            accentStripe: { color: '#cfe8ff' },
         },
     },
+
 
 ]
 

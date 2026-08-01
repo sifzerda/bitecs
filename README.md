@@ -220,6 +220,56 @@ dragon/flamethrower boss SHAPES:
 //////////////////////
 
 
+plasma gun 
+
+10_plasmagun overrides: {
+  "frame": {
+    "color": "#cfe8ff",
+    "length": 0.87,
+    "height": 0.19,
+    "offsetX": 0,
+    "offsetY": 0
+  },
+  "barrel": {
+    "color": "#0079ff",
+    "length": 0.6,
+    "width": 0.07,
+    "offsetX": 0.89,
+    "offsetY": 0
+  },
+  "canister": {
+    "enabled": true,
+    "color": "#0079ff",
+    "length": 1,
+    "width": 0.13,
+    "offsetX": 0.1,
+    "offsetY": 0.01,
+    "transmission": 1
+  },
+  "muzzle": {
+    "offsetX": -0.28,
+    "offsetY": 0
+  },
+  "mountBracket": {
+    "color": "#000000",
+    "length": 0.21,
+    "width": 0.23
+  },
+  "mount": {
+    "offsetX": 0.45,
+    "offsetY": -0.05
+  },
+  "coreGlow": {
+    "color": "#0079ff",
+    "intensity": 3,
+    "offsetX": 1.4,
+    "offsetY": 0
+  },
+  "accentStripe": {
+    "color": "#cfe8ff"
+  }
+}
+
 iridescence
 
 player overrides: {
@@ -820,3 +870,6 @@ Lasergun :
     "color": "#44ff88"
   }
 }
+
+
+
