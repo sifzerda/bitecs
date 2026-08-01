@@ -24,6 +24,10 @@ export function spawnTrailPuff({
         return
 
     const p = trailPool
+
+    p.x[id] = x
+    p.y[id] = y
+
     p.size[id] = size
 
     const c = id * 3
@@ -53,7 +57,7 @@ export function spawnTrailPuff({
 }
 
 export function updateTrailEmitter(dt) {
-    
+
     const p = trailPool
     let n = 0
 

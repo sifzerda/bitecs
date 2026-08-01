@@ -180,12 +180,6 @@ export function spawnAsteroid(x, y) {
 }
  
 // ============= Boss ============//
-// `bossKey` selects which entry of BOSSES (bosses.js) this boss looks
-// like — e.g. "shotgun", "machinegun", "boss5". The weapon it fires is
-// no longer a separate parameter: it's derived from that boss's own
-// mounted gun (bossCfg.gun.typeId), so visual appearance and functional
-// weapon can never drift apart. Defaults to "shotgun" so existing call
-// sites that don't pass a key keep working.
 export function spawnBoss(bossKey = "shotgun") {
  
     const id = addEntity(world)
