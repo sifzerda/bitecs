@@ -18,14 +18,8 @@ const nebulaVertexShader = /* glsl */`
 varying vec2 vUv;
 
 void main(){
-
     vUv = uv;
-
-    gl_Position =
-        projectionMatrix *
-        modelViewMatrix *
-        vec4(position,1.0);
-
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
 }
 `
 
@@ -50,13 +44,7 @@ vec3 permute(vec3 x){return mod289(((x*34.0)+1.0)*x);}
 
 float snoise(vec2 v){
 
-    const vec4 C=
-    vec4(
-        0.211324865405187,
-        0.366025403784439,
-       -0.577350269189626,
-        0.024390243902439
-    );
+    const vec4 C= vec4(0.21, 0.36, -0.57, 0.02);
 
     vec2 i=floor(v+dot(v,C.yy));
 
@@ -72,32 +60,9 @@ float snoise(vec2 v){
 
     i=mod289(i);
 
-    vec3 p=
-        permute(
-        permute(
-        i.y+
-        vec3(
-            0.0,
-            i1.y,
-            1.0
-        ))
-        +
-        i.x+
-        vec3(
-            0.0,
-            i1.x,
-            1.0
-        ));
+    vec3 p= permute(permute(i.y+ vec3(0.0, i1.y, 1.0)) + i.x+ vec3(0.0, i1.x, 1.0));
 
-    vec3 m=max(
-        0.5-
-        vec3(
-            dot(x0,x0),
-            dot(x12.xy,x12.xy),
-            dot(x12.zw,x12.zw)
-        ),
-        0.0
-    );
+    vec3 m=max(0.5- vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
 
     m*=m;
     m*=m;
@@ -110,9 +75,7 @@ float snoise(vec2 v){
 
     vec3 a0=x-ox;
 
-    m*=1.79284291400159-
-       0.85373472095314*
-       (a0*a0+h*h);
+    m*=1.8- 0.9* (a0*a0+h*h);
 
     vec3 g;
 
@@ -130,13 +93,9 @@ float fbm(vec2 p){
     float a=0.5;
 
     for(int i=0;i<7;i++){
-
         v+=a*snoise(p);
-
         p*=2.05;
-
         a*=0.55;
-
     }
 
     return v;
@@ -154,12 +113,7 @@ void main(){
     float angle=uTime*0.00375;
 
     mat2 rot=
-    mat2(
-        cos(angle),
-       -sin(angle),
-        sin(angle),
-        cos(angle)
-    );
+    mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
 
     uv=rot*uv;
 
@@ -167,22 +121,9 @@ void main(){
     // MILKY WAY BAND
     //------------------------------------
 
-    float curve=
-        sin(uv.x*1.1)*0.18;
-
-    float band=
-        exp(
-            -pow(
-                abs(uv.y+curve),
-                2.0
-            )*8.0
-        );
-
-    // Patchy brightness along the band's length, like real star clouds —
-    // a true Milky Way isn't uniformly bright end to end.
-    float patchiness =
-        0.6 +
-        0.4 * fbm(vec2(uv.x * 1.3, 1.5) + uTime * 0.01);
+    float curve= sin(uv.x*1.1)*0.18;
+    float band= exp(-pow(abs(uv.y+curve), 2.0) * 8.0);
+    float patchiness = 0.6 + 0.4 * fbm(vec2(uv.x * 1.3, 1.5) + uTime * 0.01);
 
     band *= patchiness;
 
@@ -192,19 +133,10 @@ void main(){
 
     vec2 p=uv*2.2;
 
-    vec2 warp=
-    vec2(
-        fbm(p+vec2(uTime*0.015,0.0)),
-        fbm(p+vec2(7.2,-uTime*0.015))
-    );
+    vec2 warp= vec2(fbm(p+vec2(uTime*0.015,0.0)), fbm(p+vec2(7.2,-uTime*0.015)));
 
     p+=warp*0.35;
 
-    //------------------------------------
-    // DUST DRIFT ANIMATION
-    // Slides the fine dust/nebula texture steadily across the frame,
-    // independent of the rotation/warp above — this is what makes the
-    // starfield dust look like it's actually drifting over time.
     //------------------------------------
 
     vec2 drift = vec2(uTime * 0.03, -uTime * 0.015);
@@ -214,43 +146,24 @@ void main(){
     // MULTI SCALE CLOUDS
     //------------------------------------
 
-    float large=
-        fbm(pd*0.35);
-
-    float medium=
-        fbm(pd*0.8);
-
-    float fine=
-        fbm(pd*2.5);
-
-    float nebula=
-        large*0.55+
-        medium*0.30+
-        fine*0.15;
+    float large= fbm(pd*0.35);
+    float medium= fbm(pd*0.8);
+    float fine= fbm(pd*2.5);
+    float nebula = large * 0.55 + medium * 0.30 + fine * 0.15;
 
     //------------------------------------
     // DUST LANES
     //------------------------------------
 
-    float dust=
-        smoothstep(
-            0.30,
-            0.72,
-            fbm(pd*1.7+10.0)
-        );
+    float dust= smoothstep(0.30, 0.72, fbm(pd*1.7+10.0));
 
-    band*=1.0-dust*0.65;
+    band*=1.0 - dust * 0.65;
 
     //------------------------------------
     // GALAXY CORE (kept tight and dimmer than before)
     //------------------------------------
 
-    float core =
-        exp(
-            -length(
-                uv * vec2(5.5,10.0)
-            ) * 5.5
-        );
+    float core = exp(-length(uv * vec2(5.5, 10.0)) * 5.5);
 
     //------------------------------------
     // COLOR
@@ -258,77 +171,40 @@ void main(){
 
     vec3 color=uColorDeep;
 
-    color=mix(
-        color,
-        uColorBlue,
-        band*0.7
-    );
+    color=mix(color, uColorBlue, band*0.7);
 
-    color=mix(
-        color,
-        uColorCyan,
-        nebula*band*0.8
-    );
+    color = mix(color, uColorCyan, nebula * band * 0.8);
 
-    color+=
-        uColorGlow*
-        core*
-        0.45;
+    color+= uColorGlow * core * 0.45;
 
     //------------------------------------
     // RED EMISSION — bright glints scattered through the band
     //------------------------------------
 
-    float emission=
-        pow(
-            max(
-                fbm(pd*4.0+18.0),
-                0.0
-            ),
-            8.0
-        );
+    float emission = pow(max(fbm(pd * 4.0 + 18.0), 0.0), 8.0);
 
-    color+=
-        uColorRed*
-        emission*
-        band*
-        0.12;
+    color+= uColorRed * emission * band * 0.12;
 
     //------------------------------------
     // DEEP RED NEBULA PATCHES — larger, darker red clouds that sit
     // independently of the band, like H-alpha emission regions
     //------------------------------------
 
-    float deepRedMask =
-        smoothstep(
-            0.50,
-            0.85,
-            fbm(pd*1.05 - 30.0)
-        );
+    float deepRedMask = smoothstep(0.50, 0.85, fbm(pd*1.05 - 30.0));
 
-    color +=
-        uColorDeepRed *
-        deepRedMask *
-        0.4;
+    color += uColorDeepRed * deepRedMask * 0.4;
 
     //------------------------------------
     // VIGNETTE
     //------------------------------------
 
-    float vignette=
-        smoothstep(
-            1.7,
-            0.45,
-            length(uv)
-        );
+    float vignette = smoothstep(1.7, 0.45, length(uv));
 
     color*=vignette;
 
-    gl_FragColor=
-        vec4(color,1.0);
+    gl_FragColor = vec4(color,1.0);
 
 }
-
 `;
 
 function NebulaBackground() {
@@ -336,46 +212,25 @@ function NebulaBackground() {
 
     const material = useMemo(() => {
         return new THREE.ShaderMaterial({
-            vertexShader: nebulaVertexShader,
-            fragmentShader: nebulaFragmentShader,
-uniforms:{
+            vertexShader: nebulaVertexShader, fragmentShader: nebulaFragmentShader,
+            uniforms: {
 
-    uTime:{value:0},
+                uTime: { value: 0 },
 
-    uColorDeep:{
-        value:new THREE.Color("#010309")
-    },
-
-    uColorBlue:{
-        value:new THREE.Color("#173d8d")
-    },
-
-    uColorCyan:{
-        value:new THREE.Color("#4ed8ff")
-    },
-
-    uColorGlow:{
-        value:new THREE.Color("#dff8ff")
-    },
-
-    uColorRed:{
-        value:new THREE.Color("#ff6655")
-    },
-
-    uColorDeepRed:{
-        value:new THREE.Color("#5c0f14")
-    }
-
-},
+                uColorDeep: { value: new THREE.Color("#010309") },
+                uColorBlue: { value: new THREE.Color("#173d8d") },
+                uColorCyan: { value: new THREE.Color("#4ed8ff") },
+                uColorGlow: { value: new THREE.Color("#dff8ff") },
+                uColorRed: { value: new THREE.Color("#ff6655") },
+                uColorDeepRed: { value: new THREE.Color("#5c0f14") }
+            },
             depthWrite: false,
         })
     }, [])
 
     useEffect(() => () => material.dispose(), [material])
 
-    useFrame((_, delta) => {
-        material.uniforms.uTime.value += delta
-    })
+    useFrame((_, delta) => { material.uniforms.uTime.value += delta })
 
     const width = viewport.width * PADDING * 1.6
     const height = viewport.height * PADDING * 1.6
@@ -408,14 +263,14 @@ function StarPoints() {
         const geometry = new THREE.BufferGeometry()
         geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3))
 
-const material = new THREE.PointsMaterial({
-    color: "#dffcff",
-    size: 0.18,
-    opacity: 0.95,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-})
+        const material = new THREE.PointsMaterial({
+            color: "#dffcff",
+            size: 0.18,
+            opacity: 0.95,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+        })
 
         return { geometry, material }
     }, [viewport.width, viewport.height])

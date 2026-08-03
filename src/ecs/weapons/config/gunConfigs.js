@@ -265,11 +265,11 @@ const RAW_TYPES = [
     {
         id: '09_arcgun', name: 'RTL Gun', weaponId: WEAPON_BY_NAME.arcgun.id,
         overrides: {
-            frame: { color: '#8a3a2a', height: 0.17 },
-            barrel: { length: 0.3, width: 0.07, color: '#2a1a14' },
-            muzzle: { width: 0.12, color: '#ff8a1a' },
-            coreGlow: { color: '#ff8a1a', intensity: 1.5 },
-            accentStripe: { color: '#ff5a1a' },
+            frame: { color: '#000000', height: 0.09, length: 1.20, offsetX: 0.28 },
+            barrel: { length: 0.6, width: 0.15, color: '#000000', offsetX: 0.05 },
+            muzzle: { width: 0.06, length: 0.5, color: '#000000', offsetX: -0.28 },
+            coreGlow: { color: '#005eff', intensity: 3, offsetX: 1.50 },
+            accentStripe: { color: '#005eff' },
         },
     },
 
