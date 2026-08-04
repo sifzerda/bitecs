@@ -104,20 +104,16 @@ export default function GunIcon({ config, animated = false, className = '' }) {
             )}
 
             {/* core glow — frontmost */}
-            {coreGlow.enabled && (() => {
-                const rawRadius = ((coreGlow.width ?? coreGlow.size) / 2) * SCALE
-                const r = Math.max(4, Math.sqrt(rawRadius) * 2.4)
-                return (
-                    <circle
-                        cx={CX + coreGlow.offsetX * SCALE}
-                        cy={CY - (coreGlow.offsetY ?? 0) * SCALE}
-                        r={r}
-                        fill={coreGlow.color}
-                        opacity={Math.min(coreGlow.intensity / 2, 0.9)}
-                        style={{ filter: `blur(3px)` }}
-                    />
-                )
-            })()}
+            {coreGlow.enabled && (
+                <circle
+                    cx={CX + coreGlow.offsetX * SCALE}
+                    cy={CY - (coreGlow.offsetY ?? 0) * SCALE}
+                    r={((coreGlow.width ?? coreGlow.size) / 2) * SCALE}
+                    fill={coreGlow.color}
+                    opacity={Math.min(coreGlow.intensity / 2, 0.9)}
+                    style={{ filter: `blur(3px)` }}
+                />
+            )}
 
             {/* optional firing loop, anchored to this gun's actual muzzle tip */}
             {animated && (

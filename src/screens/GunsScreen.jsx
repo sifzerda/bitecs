@@ -159,12 +159,6 @@ export function GunsScreen({ onBack }) {
                                     className="w-full h-full max-w-[70%] max-h-[70%] object-contain animate-gun-recoil"
                                 />
 
-                                {/* Muzzle flash */}
-                                <div className="absolute left-[62%] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-cyan-300 blur-[2px] animate-muzzle-flash" />
-
-                                {/* Bullet tracer */}
-                                <div className="absolute left-[64%] top-1/2 -translate-y-1/2 w-2 h-0.5 bg-cyan-300 shadow-[0_0_6px_2px_rgba(0,255,255,0.7)] animate-bullet-fire" />
-
                             </div>
 
                             <div className="mt-6">

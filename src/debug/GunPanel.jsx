@@ -3,8 +3,10 @@
 import { useMemo, useEffect } from 'react'
 import { useSyncExternalStore } from 'react'
 import { useControls, button } from 'leva'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { GUN_TYPES, DEFAULT_GUN_CONFIG } from '../ecs/weapons/config/gunConfigs.js'
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
+import GunIcon from '../components/GunIcon.jsx'
 
 import { setPreviewGunConfigOverride, subscribePreviewBossSelection, getPreviewBossSelection } from "./debugState.js"
 import { BOSSES } from "../ecs/constants/bosses.js"
@@ -13,6 +15,24 @@ const gunOptions = GUN_TYPES.reduce((acc, g) => {
     acc[g.name] = g.id
     return acc
 }, {})
+
+function downloadGunSvg(config, filename) {
+    const markup = renderToStaticMarkup(<GunIcon config={config} />)
+    const withNS = markup.includes('xmlns="http://www.w3.org/2000/svg"')
+        ? markup
+        : markup.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"')
+
+    const blob = new Blob([withNS], { type: 'image/svg+xml' })
+    const url = URL.createObjectURL(blob)
+
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+}
 
 const GUN_DIRECTION = Math.PI / 2
 function BossGunTuningPanel({ bossIndex }) {
@@ -105,6 +125,9 @@ function BossGunTuningPanel({ bossIndex }) {
                 accentStripe: { color: get('Boss Gun Tuning.accentColor') },
             }, null, 2))
         }),
+        'Download SVG': button(() => {
+            downloadGunSvg(liveCfgRef.current, `${gunTypeId}_tuned.svg`)
+        }),
     })
 
     const liveCfg = useMemo(() => ({
@@ -156,6 +179,12 @@ function BossGunTuningPanel({ bossIndex }) {
         accentStripe: { ...baseCfg.accentStripe, color: controls.accentColor },
     }), [baseCfg, controls])
 
+    // the 'Download SVG' button closure above is created once per useControls
+    // schema build, so it can't read fresh `liveCfg` state directly — stash
+    // it in a ref that always holds the latest value instead.
+    const liveCfgRef = useMemo(() => ({ current: liveCfg }), [])
+    liveCfgRef.current = liveCfg
+
     useEffect(() => {
         setPreviewGunConfigOverride(liveCfg)
     }, [liveCfg])
@@ -179,6 +208,11 @@ export function GunPanel() {
         selectedId: { options: gunOptions, value: GUN_TYPES[0].id, label: 'Gun Type' },
         gunPreviewScale: { value: 3, min: 0.5, max: 8, step: 0.1 },
         mirrored: { value: true, label: 'Show Twin Pair' },
+        'Download SVG': button((get) => {
+            const id = get('Gun Test.selectedId')
+            const cfg = GUN_TYPES.find(g => g.id === id)?.config ?? DEFAULT_GUN_CONFIG
+            downloadGunSvg(cfg, `${id}.svg`)
+        }),
     })
 
     const baseCfg = useMemo(() => GUN_TYPES.find(g => g.id === selectedId)?.config ?? DEFAULT_GUN_CONFIG,
