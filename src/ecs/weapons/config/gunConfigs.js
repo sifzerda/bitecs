@@ -19,72 +19,12 @@ function deepMerge(base, overrides) {
 // ============================================================
 
 export const DEFAULT_GUN_CONFIG = {
-
-    general: { extrudeDepth: 0.025 },
-
-    frame: {
-        color: '#cfe8ff',
-        length: 0.60,
-        height: 0.13,
-        taper: 0.4,
-        offsetX: 0,
-        offsetY: 0,
-    },
-
-    slide: {
-        enabled: true, color: '#3a4650',
-        length: 0.5, height: 0.06, offsetX: 0.05, offsetY: 0.020,
-        metalness: 0.7, roughness: 0.25,
-    },
-
-    barrel: {
-        enabled: true,
-        color: '#cfe8ff', length: 0.24, width: 0.035,
-        offsetX: 0.70, offsetY: 0.0, metalness: 0.8, roughness: 0.3,
-    },
-
-    canister: {
-        enabled: false, color: '#cfe8ff',
-        length: 0.24, width: 0.20,
-        offsetX: 0.6, offsetY: 0,
-        metalness: 0.1, roughness: 0.1,
-        transmission: 0, thickness: 0.15, ior: 1.4,
-        clearcoat: 0, clearcoatRoughness: 0.05,
-    },
-
-    muzzle: {
-        enabled: true, color: 'cyan',
-        length: 0.09, width: 0.06, metalness: 0.4, roughness: 0.35,
-        offsetX: 0, offsetY: 0,
-    },
-
-    mountBracket: {
-        enabled: true, color: '#3a4650',
-        length: 0.21, width: 0.23,
-        offsetX: -0.42,
-        metalness: 0.5, roughness: 0.6,
-    },
-
-    sight: {
-        enabled: false, color: '#00ff88',
-        width: 0.03, height: 0.035, offsetX: 0.30,
-    },
-
-    accentStripe: {
-        enabled: true, color: '#00e5ff',
-        width: 0.09, length: 0.6, offsetY: 0.0,
-    },
-
-    coreGlow: {
-        enabled: true, color: '#00e5ff',
-        size: 0.3, offsetX: 0.88, offsetY: 0,
-        intensity: 1.0,
-    },
-
     mount: {
         offsetX: 0.45,
         offsetY: -0.05,
         scale: 0.9,
+        width: 1.4,
+        height: 0.45,
     },
 
 }
@@ -93,221 +33,98 @@ export const DEFAULT_GUN_CONFIG = {
 // 20 gun types
 // ============================================================
 
+
 const RAW_TYPES = [
-
-    { id: '00_raygun', name: 'Ray Gun', weaponId: WEAPON_BY_NAME.raygun.id },
-    // shotgun
     {
-        id: '01_shotgun', name: 'Shotgun', weaponId: WEAPON_BY_NAME.shotgun.id,
-        overrides: {
-            frame: { color: '#ff3355', length: 0.45, height: 0.20 },
-            barrel: { color: '#3a6bd5', length: 0.27, width: 0.15, offsetX: 0.54, offsetY: 0 },
-            muzzle: { color: '#ffe605', width: 0.13, length: 0.1, offsetX: -0.01, offsetY: 0 },
-            mountBracket: { color: '#4a5560', length: 0.2, width: 0.33 },
-            mount: { offsetX: 0.45, offsetY: -0.05 },
-            coreGlow: { color: '#ffe605', intensity: 0.8, offsetX: 0.74, offsetY: 0 },
-            accentStripe: { color: '#ffe605' },
-        },
+        id: "00_raygun",
+        name: "Ray Gun",
+        weaponId: WEAPON_BY_NAME.raygun.id,
+        svg: "/gun_svgs/00_raygun.svg",
+        overrides: { mount: { width: 1.1, height: 0.4, offsetX: 0.5, offsetY: 0.1 } },
     },
-
-    // machinegun
     {
-        id: '02_machinegun', name: 'Machine Gun', weaponId: WEAPON_BY_NAME.machinegun.id,
-        overrides: {
-            frame: { color: '#00444e', length: 0.9, height: 0.14 },
-            barrel: { color: '#000000', length: 0.2, width: 0.037, offsetX: 0.7, offsetY: 0 },
-            muzzle: { color: '#ff3355', offsetX: 0.1, offsetY: 0, width: 0.12 },
-            mountBracket: { color: '#ff3355', length: 0.08, width: 0.3 },
-            mount: { color: '#000000', offsetX: 0.55, offsetY: -0.21 },
-            coreGlow: { color: '#ff3355', intensity: 2, offsetX: 1, offsetY: 0 },
-            accentStripe: { color: '#00224e', width: 0.2, length: 0.5 },
-        },
+        id: "01_shotgun",
+        name: "Shotgun",
+        weaponId: WEAPON_BY_NAME.shotgun.id,
+        svg: "/gun_svgs/01_shotgun.svg",
+        overrides: { mount: { width: 1.6, height: 0.45, offsetX: 0.5, offsetY: -0.02, scale: 1.0 } },
     },
-
-    // cryogun
     {
-        id: '03_cryogun', name: 'Cryo Gun', weaponId: WEAPON_BY_NAME.cryocannon.id,
-        overrides: {
-            frame: { color: '#c8d8e0', length: 0.89, height: 0.27, taper: 0.35, offsetX: -0.12 },
-            slide: {
-                color: '#8fa8b8', length: 0.48, height: 0.06,
-                offsetX: 0.04, offsetY: 0.02,
-                metalness: 0.85, roughness: 0.15,
-            },
-            canister: {
-                enabled: true, color: '#a8ecfc',
-                length: 0.87, width: 0.44,
-                offsetX: 0.42, offsetY: 0,
-                metalness: 0.05, roughness: 0.03,
-                transmission: 1, thickness: 0.2, ior: 1.4,
-                clearcoat: 1, clearcoatRoughness: 0.05,
-            },
-            // starts right at the canister's front edge (0.5 + 0.6/2 = 0.8)
-            barrel: {
-                color: '#c8d8e0', length: 0.6, width: 0.05,
-                offsetX: 1.08, offsetY: 0,
-                metalness: 0.75, roughness: 0.2,
-            },
-            muzzle: {
-                color: '#eafcff', width: 0.065, length: 0.05,
-                offsetX: 0, offsetY: 0,
-                metalness: 0.3, roughness: 0.1,
-            },
-            mountBracket: { color: '#7c8f9c', length: 0.22, width: 0.24 },
-            sight: { enabled: false },
-            accentStripe: { color: '#0049ff', width: 0.07, length: 0.75 },
-            // sized and centered to match the canister's own footprint
-            coreGlow: {
-                color: '#aef6ff', intensity: 1.15,
-                offsetX: 0.45, offsetY: 0,
-                mist: true, width: 0.9, height: 0.7,
-            },
-            mount: { offsetX: 0.45, offsetY: -0.05, scale: 0.9 },
-        },
+        id: "02_machinegun",
+        name: "Machine Gun",
+        weaponId: WEAPON_BY_NAME.machinegun.id,
+        svg: "/gun_svgs/02_machinegun.svg",
+        overrides: { mount: { width: 1.5, height: 0.4, offsetX: 0.48, offsetY: -0.03, scale: 0.95 } },
     },
-
-    // grenade launcher
     {
-        id: '04_grenadelauncher', name: 'Grenade Launcher', weaponId: WEAPON_BY_NAME.grenadegun.id,
-        overrides: {
-            frame: { color: '#5a88eb', length: 0.9, height: 0.45 },
-            barrel: { color: '#0049ff', length: 0.4, width: 0.3, offsetX: 1, offsetY: 0 },
-            muzzle: { color: '#ff3355', width: 0.3, length: 0.2, offsetX: -0.1, offsetY: 0 },
-            slide: { color: '#0049ff', length: 0.5, height: 0.06, offsetX: 0.05, offsetY: 0.02 },
-            mountBracket: { color: '#3a4650', length: 0.4, width: 0.275 },
-            mount: { offsetX: 0.74, offsetY: -0.5 },
-            coreGlow: { color: '#ff8a1a', intensity: 1, size: 1, offsetX: 1.2, offsetY: 0 },
-            accentStripe: { color: '#00224e' },
-        },
+        id: "03_cryogun",
+        name: "Cryo Gun",
+        weaponId: WEAPON_BY_NAME.cryocannon.id,
+        svg: "/gun_svgs/03_cryogun.svg",
+        overrides: { mount: { width: 1.3, height: 0.5, offsetX: 0.42, offsetY: -0.04, scale: 0.9 } },
     },
-
-    // acidthrower
     {
-        id: '05_acidthrower', name: 'Acidthrower', weaponId: WEAPON_BY_NAME.acidsprayer.id,
-        overrides: {
-            frame: { color: '#98D6F5', length: 0.89, height: 0.27, taper: 0.35, offsetX: -0.12 },
-            slide: {
-                color: '#00FF40', length: 0.48, height: 0.06,
-                offsetX: 0.04, offsetY: 0.02,
-                metalness: 0.85, roughness: 0.15,
-            },
-            canister: {
-                enabled: true, color: '#98FB98',
-                length: 0.87, width: 0.44,
-                offsetX: 0.42, offsetY: 0,
-                metalness: 0.05, roughness: 0.03,
-                transmission: 1, thickness: 0.2, ior: 1.4,
-                clearcoat: 1, clearcoatRoughness: 0.05,
-            },
-            // starts right at the canister's front edge (0.5 + 0.6/2 = 0.8)
-            barrel: {
-                color: '#98D6F5', length: 0.6, width: 0.05,
-                offsetX: 1.08, offsetY: 0,
-                metalness: 0.75, roughness: 0.2,
-            },
-            muzzle: {
-                color: '#00FF7F', width: 0.065, length: 0.05,
-                offsetX: 0, offsetY: 0,
-                metalness: 0.3, roughness: 0.1,
-            },
-            mountBracket: { color: '#7c8f9c', length: 0.22, width: 0.24 },
-            sight: { enabled: false },
-            accentStripe: { color: '#0049ff', width: 0.07, length: 0.75 },
-            // sized and centered to match the canister's own footprint
-            coreGlow: {
-                color: '#00FF7F', intensity: 1.15,
-                offsetX: 0.45, offsetY: 0,
-                mist: true, width: 0.9, height: 0.7,
-            },
-            mount: { offsetX: 0.45, offsetY: -0.05, scale: 0.9 },
-        },
+        id: "04_grenadelauncher",
+        name: "Grenade Launcher",
+        weaponId: WEAPON_BY_NAME.grenadegun.id,
+        svg: "/gun_svgs/04_grenadelauncher.svg",
+        overrides: { mount: { width: 1.4, height: 0.55, offsetX: 0.45, offsetY: -0.02, scale: 1.0 } },
     },
-
-    // homing missile
     {
-        id: '06_missilelauncher', name: 'Missile Launcher', weaponId: WEAPON_BY_NAME.missilegun.id,
-        overrides: {
-            frame: { color: '#cfe8ff', length: 0.9, height: 0.34 },
-            barrel: { color: '#ff3355', length: 0.15, width: 0.25, offsetX: 0.9, offsetY: 0 },
-            muzzle: { offsetX: -0.06, offsetY: 0, length: 0.12, width: 0.3, color: '#3a4650', },
-            mountBracket: { color: '#3a4650', length: 0.34, width: 0.4 },
-            mount: { offsetX: 0.86, offsetY: -0.4 },
-            coreGlow: { color: '#ff8a1a', size: 1, intensity: 1, offsetX: 0.95, offsetY: 0 },
-            accentStripe: { color: '#ff3355', length: 0.6, offsetX: 0.6 },
-        },
+        id: "05_acidthrower",
+        name: "Acidthrower",
+        weaponId: WEAPON_BY_NAME.acidsprayer.id,
+        svg: "/gun_svgs/05_acidthrower.svg",
+        overrides: { mount: { width: 1.35, height: 0.5, offsetX: 0.43, offsetY: -0.03, scale: 0.9 } },
     },
-
-    // flamethrower
     {
-        id: '07_flamethrower', name: 'Flamethrower', weaponId: WEAPON_BY_NAME.flamethrower.id,
-        overrides: {
-            frame: { color: '#000000', length: 0.74, height: 0.235 },
-            barrel: { color: '#ff3355', length: 0.6, width: 0.055, offsetX: 0.92, offsetY: 0 },
-            muzzle: { offsetX: 0, offsetY: 0 },
-            mountBracket: { color: '#3a4650', length: 0.21, width: 0.23 },
-            mount: { offsetX: 0.45, offsetY: -0.21 },
-            coreGlow: { color: '#ff3355', intensity: 1, offsetX: 1.34, offsetY: 0 },
-            accentStripe: { color: '#ff3355' },
-        },
+        id: "06_missilelauncher",
+        name: "Missile Launcher",
+        weaponId: WEAPON_BY_NAME.missilegun.id,
+        svg: "/gun_svgs/06_missilelauncher.svg",
+        overrides: { mount: { width: 1.7, height: 0.6, offsetX: 0.55, offsetY: -0.01, scale: 1.05 } },
     },
-
     {
-        id: '08_lasergun', name: 'Laser Gun', weaponId: WEAPON_BY_NAME.lasergun.id,
-        overrides: {
-            frame: { length: 0.87, height: 0.19 },
-            barrel: { length: 0.60, width: 0.07, offsetX: 0.89, color: '#3a3a4a' },
-            canister: {
-                enabled: true, color: '#CFFF04',
-                length: 1.0, width: 0.13,
-                offsetX: 0.24, offsetY: 0,
-                metalness: 0.1, roughness: 0,
-                transmission: 1, thickness: 0.2, ior: 1.4,
-                clearcoat: 1, clearcoatRoughness: 0.05,
-            },
-            muzzle: { width: 0.06, length: 0.5, color: '#44ff88', offsetX: -0.28 },
-            coreGlow: { color: '#44ff88', intensity: 1.0, offsetX: 1.4, size: 0.3 },
-            accentStripe: { color: '#44ff88' },
-        },
+        id: "07_flamethrower",
+        name: "Flamethrower",
+        weaponId: WEAPON_BY_NAME.flamethrower.id,
+        svg: "/gun_svgs/07_flamethrower.svg",
+        overrides: { mount: { width: 1.5, height: 0.5, offsetX: 0.48, offsetY: -0.02, scale: 1.0 } },
     },
-
     {
-        id: '09_arcgun', name: 'RTL Gun', weaponId: WEAPON_BY_NAME.arcgun.id,
-        overrides: {
-            frame: { color: '#000000', height: 0.09, length: 1.20, offsetX: 0.28 },
-            barrel: { length: 0.6, width: 0.15, color: '#000000', offsetX: 0.05 },
-            muzzle: { width: 0.06, length: 0.5, color: '#000000', offsetX: -0.28 },
-            coreGlow: { color: '#005eff', intensity: 3, offsetX: 1.50 },
-            accentStripe: { color: '#005eff' },
-        },
+        id: "08_lasergun",
+        name: "Laser Gun",
+        weaponId: WEAPON_BY_NAME.lasergun.id,
+        svg: "/gun_svgs/08_lasergun.svg",
+        overrides: { mount: { width: 1.2, height: 0.35, offsetX: 0.4, offsetY: -0.05, scale: 0.85 } },
     },
-
     {
-        id: '10_plasmagun', name: 'Plasma Laser Gun', weaponId: WEAPON_BY_NAME.plasmabeam.id,
-        overrides: {
-            frame: { length: 0.87, height: 0.19 },
-            barrel: { length: 0.60, width: 0.07, offsetX: 0.89, color: '#3a3550' },
-            canister: {
-                enabled: true, color: '#FFD300',
-                length: 1.0, width: 0.13,
-
-                offsetX: 0.24, offsetY: 0,
-
-                metalness: 0.1, roughness: 0,
-                transmission: 1, thickness: 0.2, ior: 1.4,
-                clearcoat: 1, clearcoatRoughness: 0.05,
-            },
-            muzzle: { width: 0.06, length: 0.5, color: '#DC143C', offsetX: -0.28 },
-            coreGlow: { color: '#C71585', intensity: 1.0, offsetX: 1.4, size: 0.3 },
-            accentStripe: { color: '#005eff' },
-        },
+        id: "09_arcgun",
+        name: "RTL Gun",
+        weaponId: WEAPON_BY_NAME.arcgun.id,
+        svg: "/gun_svgs/09_arcgun.svg",
+        overrides: { mount: { width: 1.25, height: 0.4, offsetX: 0.4, offsetY: -0.04, scale: 0.85 } },
     },
-
+    {
+        id: "10_plasmagun",
+        name: "Plasma Gun",
+        weaponId: WEAPON_BY_NAME.plasmagun.id,
+        svg: "/gun_svgs/10_plasmagun.svg",
+        overrides: { mount: { width: 1.3, height: 0.45, offsetX: 0.42, offsetY: -0.03, scale: 0.9 } },
+    },
 ]
 
-export const GUN_TYPES = RAW_TYPES.map(({ id, name, weaponId, overrides }) => ({
+export const GUN_TYPES = RAW_TYPES.map(({
     id,
     name,
     weaponId,
+    svg,
+    overrides = {},
+}) => ({
+    id,
+    name,
+    weaponId,
+    svg,
     config: deepMerge(DEFAULT_GUN_CONFIG, overrides),
 }))
 

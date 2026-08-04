@@ -40,8 +40,8 @@ import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { ExplosionRenderer } from '../renderers/ExplosionRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
 
-import { GunRenderer } from '../renderers/GunRenderer.jsx'
 import { GunMount } from '../renderers/GunMount.jsx'
+import { BossMount } from '../renderers/BossMount.jsx'
 
 //import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
 //import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
@@ -51,9 +51,6 @@ import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 import { SmokeRenderer } from '../renderers/SmokeRenderer.jsx'
 import { TrailRenderer } from '../renderers/TrailRenderer.jsx'
 // debug
-import { GodPanel } from '../debug/GodPanel.jsx'
-import { GunPanel } from '../debug/GunPanel.jsx'
-import { BossBuilder } from '../debug/BossBuilder.jsx'
 
 import { updateEffects } from "../fx"
 
@@ -84,7 +81,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
               <HUD paused={paused} onPause={onPause} />  
 
 
-            {/*        <GodPanel />   */}
+            
             <div className="relative flex-1 px-4">
 
                 <Canvas
@@ -103,9 +100,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <StarfieldRenderer />
                     <Environment preset="sunset" />
-
-                    <GunPanel />
-                    <BossBuilder />
 
                     <PlayerRenderer />
 
@@ -184,9 +178,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <FlashRenderer />
 
                     <BossRenderer />
-
-                    <GunRenderer />
-
+                    <BossMount />
 
                     {/*         <TentacleRenderer />            */}
                     {/*             <OctopusRenderer />           */}

@@ -1,6 +1,6 @@
 // src/renderers/WeaponMount.jsx
 
-import { GunRenderer } from './GunRenderer.jsx'
+import { SVGGun } from './SVGGun.jsx'
 import { getGunTypeById } from '../ecs/weapons/config/gunConfigs.js'
 
 const GUN_DIRECTION = Math.PI / 2
@@ -13,11 +13,14 @@ export function WeaponMount({ gunCfg, configOverride = null }) {
     const zOffset = gunCfg.zOffset ?? 0.04
     const rotation = [0, 0, GUN_DIRECTION + (gunCfg.rotation ?? 0)]
     const scale = gunCfg.scale ?? resolvedConfig.mount.scale
+    const mount = resolvedConfig.mount
 
     if (gunCfg.mirrored === false) {
         return (
-            <GunRenderer
-                config={resolvedConfig}
+            <SVGGun
+                svg={gunType.svg}
+                width={mount.width}
+                height={mount.height}
                 position={[gunCfg.offsetX, gunCfg.offsetY, zOffset]}
                 rotation={rotation}
                 scale={scale}
@@ -27,14 +30,18 @@ export function WeaponMount({ gunCfg, configOverride = null }) {
 
     return (
         <>
-            <GunRenderer
-                config={resolvedConfig}
+            <SVGGun
+                svg={gunType.svg}
+                width={mount.width}
+                height={mount.height}
                 position={[-gunCfg.offsetX, gunCfg.offsetY, zOffset]}
                 rotation={rotation}
                 scale={scale}
             />
-            <GunRenderer
-                config={resolvedConfig}
+            <SVGGun
+                svg={gunType.svg}
+                width={mount.width}
+                height={mount.height}
                 position={[gunCfg.offsetX, gunCfg.offsetY, zOffset]}
                 rotation={rotation}
                 scale={scale}

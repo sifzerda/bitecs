@@ -100,7 +100,7 @@ const RAW = [
         color: "#fffbe8", glowColor: "#1F51FF", haloColor: "#0818A8",
     },
     {
-        name: "plasmabeam",
+        name: "plasmagun",
         category: "beam",
         range: 20, damagePerSecond: 22, beamWidth: 0.16, surgeSpeed: 2.2,
         tickSparkInterval: 0.08, rainbow: true, surgeIntensity: 0.6,  
