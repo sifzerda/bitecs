@@ -254,10 +254,18 @@ const RAW_TYPES = [
     {
         id: '08_lasergun', name: 'Laser Gun', weaponId: WEAPON_BY_NAME.lasergun.id,
         overrides: {
-            frame: { height: 0.18 },
-            barrel: { length: 0.22, width: 0.08, color: '#3a3a4a' },
-            muzzle: { color: '#44ff88', width: 0.11 },
-            coreGlow: { color: '#44ff88', intensity: 1.7, size: 0.13 },
+            frame: { length: 0.87, height: 0.19 },
+            barrel: { length: 0.60, width: 0.07, offsetX: 0.89, color: '#3a3a4a' },
+            canister: {
+                enabled: true, color: '#CFFF04',
+                length: 1.0, width: 0.13,
+                offsetX: 0.24, offsetY: 0,
+                metalness: 0.1, roughness: 0,
+                transmission: 1, thickness: 0.2, ior: 1.4,
+                clearcoat: 1, clearcoatRoughness: 0.05,
+            },
+            muzzle: { width: 0.06, length: 0.5, color: '#44ff88', offsetX: -0.28 },
+            coreGlow: { color: '#44ff88', intensity: 1.0, offsetX: 1.4, size: 0.3 },
             accentStripe: { color: '#44ff88' },
         },
     },
@@ -279,21 +287,20 @@ const RAW_TYPES = [
             frame: { length: 0.87, height: 0.19 },
             barrel: { length: 0.60, width: 0.07, offsetX: 0.89, color: '#3a3550' },
             canister: {
-                enabled: true, color: '#0079ff',
+                enabled: true, color: '#FFD300',
                 length: 1.0, width: 0.13,
 
-                    offsetX: 0.24, offsetY: 0,
-                
+                offsetX: 0.24, offsetY: 0,
+
                 metalness: 0.1, roughness: 0,
                 transmission: 1, thickness: 0.2, ior: 1.4,
                 clearcoat: 1, clearcoatRoughness: 0.05,
             },
-            muzzle: { width: 0.06, length: 0.5, color: '#cfe8ff', offsetX: -0.28 },
-            coreGlow: { color: '#0079ff', intensity: 1.0, offsetX: 1.4, size: 0.3 },
-            accentStripe: { color: '#cfe8ff' },
+            muzzle: { width: 0.06, length: 0.5, color: '#DC143C', offsetX: -0.28 },
+            coreGlow: { color: '#C71585', intensity: 1.0, offsetX: 1.4, size: 0.3 },
+            accentStripe: { color: '#005eff' },
         },
     },
-
 
 ]
 

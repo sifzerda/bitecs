@@ -102,7 +102,7 @@ export function GunsScreen({ onBack }) {
                                     >
                                         <div className="relative h-10 sm:h-12 mb-1 border border-white/10 bg-black/50 overflow-hidden">
                                             <img
-                                                src="/weapons/placeholder.png"
+                                                src={`/gun_svgs/${gun.id}.svg`}
                                                 alt={gun.name}
                                                 className={`w-full h-full object-contain p-1 ${unlocked ? "" : "brightness-0 opacity-70"}`}
                                             />
@@ -153,32 +153,17 @@ export function GunsScreen({ onBack }) {
                             {/* Weapon preview */}
                             <div className="w-full aspect-4/3 sm:aspect-video lg:aspect-auto lg:h-55 border border-white/10 bg-black/50 flex items-center justify-center overflow-hidden relative">
 
-                                <svg viewBox="0 0 300 160"
-                                    className="w-full h-full max-w-[70%] max-h-[70%]">
-                                    {/* Gun body */}
-                                    <g className="animate-gun-recoil">
-                                        <rect x="150" y="72" width="90" height="14" fill="#0e1a1f" stroke="#22d3ee" strokeWidth="1.5" />
-                                        <rect x="70" y="60" width="90" height="34" rx="3" fill="#0e1a1f" stroke="#22d3ee" strokeWidth="1.5" />
-                                        <rect x="80" y="94" width="20" height="40" rx="2" fill="#0e1a1f" stroke="#22d3ee" strokeWidth="1.5" />
-                                        <path d="M 105 94 Q 105 115 125 115" fill="none" stroke="#22d3ee" strokeWidth="1.5" />
-                                        <rect x="110" y="52" width="8" height="8" fill="#0e1a1f" stroke="#22d3ee" strokeWidth="1.5" />
-                                    </g>
+                                <img
+                                    src={`/gun_svgs/${selectedGun.id}.svg`}
+                                    alt={selectedGun.name}
+                                    className="w-full h-full max-w-[70%] max-h-[70%] object-contain animate-gun-recoil"
+                                />
 
-                                    {/* Muzzle flash */}
-                                    <g className="animate-muzzle-flash" style={{ transformOrigin: '242px 79px' }}>
-                                        <polygon points="242,79 262,72 254,79 262,86" fill="#67e8f9" />
-                                        <polygon points="242,79 258,66 250,79 258,92" fill="#a5f3fc" opacity="0.7" />
-                                        <circle cx="244" cy="79" r="5" fill="#e0fbff" />
-                                    </g>
+                                {/* Muzzle flash */}
+                                <div className="absolute left-[62%] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-cyan-300 blur-[2px] animate-muzzle-flash" />
 
-                                    {/* Bullet tracer */}
-                                    <rect
-                                        x="244" y="76.5" width="10" height="5" rx="2.5"
-                                        fill="#e0fbff"
-                                        className="animate-bullet-fire"
-                                        style={{ filter: 'drop-shadow(0 0 4px #22d3ee)' }}
-                                    />
-                                </svg>
+                                {/* Bullet tracer */}
+                                <div className="absolute left-[64%] top-1/2 -translate-y-1/2 w-2 h-0.5 bg-cyan-300 shadow-[0_0_6px_2px_rgba(0,255,255,0.7)] animate-bullet-fire" />
 
                             </div>
 
