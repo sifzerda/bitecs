@@ -126,6 +126,10 @@ Inside combat.js at end of file lives = 0
 
 ## Tasks
 
+- [ ] switch guns to the gun_svgs (remove glow and add it to be animated as currently is)
+- [ ] create svgs of ships and switch bosses and player with svgs
+ 
+
 - [ ] optimize starfield renderer
 - [ ] bomb weapons lost trail
 

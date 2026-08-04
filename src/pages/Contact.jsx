@@ -23,16 +23,9 @@ export default function Contact() {
 
         console.log("Captcha token:", captchaToken);
 
-        formData.append(
-            'access_key',
-            import.meta.env.VITE_WEB3FORMS_ACCESS_KEY
-        );
-
+        formData.append('access_key', import.meta.env.VITE_WEB3FORMS_ACCESS_KEY);
         // hCaptcha token
-        formData.append(
-            'h-captcha-response',
-            captchaToken
-        );
+        formData.append('h-captcha-response', captchaToken);
 
         const response = await fetch(
             'https://api.web3forms.com/submit',
