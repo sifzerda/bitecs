@@ -1,8 +1,8 @@
-// src/components/FlightLayout.jsx
+// src/components/FlightLayout2.jsx
 
 import { useEffect, useState } from 'react';
 
-export default function FlightLayout({ title, footer, children,
+export default function FlightLayout2({ title, footer, children,
   // layout controls
   size = 'md',
   scrollable = false,

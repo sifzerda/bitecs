@@ -1,20 +1,13 @@
 // src/screens/GunsScreen.jsx
 
-import { useState } from "react"
-
+import { useState, useEffect, useCallback } from "react"
 import { gameState, SCREEN } from "../state/gameState"
 import { notifyUIChanged } from "../state/uiState"
+import { WEAPONS, getWeapon } from "../ecs/weapons/config/weapons"
+import { getGunTypeByWeaponId } from "../ecs/weapons/config/gunConfigs"
+import FlightLayout2 from "../components/FlightLayout2.jsx"
 
-import {
-    WEAPONS,
-    getWeapon
-} from "../ecs/weapons/config/weapons"
-
-import {
-    getGunTypeByWeaponId
-} from "../ecs/weapons/config/gunConfigs"
-
-export function GunsScreen() {
+export function GunsScreen({ onBack }) {
 
     const [selected, setSelected] = useState(
         gameState.currentWeapon
@@ -23,206 +16,169 @@ export function GunsScreen() {
     const weapon = getWeapon(selected)
     const selectedGun = getGunTypeByWeaponId(selected)
 
+    const handleBack = useCallback(() => {
+        if (onBack) {
+            onBack()
+            return
+        }
+        gameState.screen = SCREEN.MENU
+        notifyUIChanged()
+    }, [onBack])
+
+    const handleEquip = useCallback(() => {
+        gameState.currentWeapon = selected
+        gameState.pendingUnlockWeapon = null
+        gameState.stage++
+        gameState.wave = 0
+        gameState.paused = false
+        gameState.screen = SCREEN.PLAY
+        notifyUIChanged()
+    }, [selected])
+
+    useEffect(() => {
+        const onKey = (e) => {
+            if (e.key === "Escape" || e.key === "Backspace") {
+                e.preventDefault()
+                handleBack()
+            }
+        }
+        window.addEventListener("keydown", onKey)
+        return () => {
+            window.removeEventListener("keydown", onKey)
+        }
+    }, [handleBack])
+
+    const btnClass = (active) => 
+        `cursor-pointer relative w-40 sm:w-56 py-3 uppercase tracking-[0.45em] text-sm border transition-all duration-200
+        ${
+            active
+                ? 'border-green-300 text-cyan-300 bg-cyan-500/10 shadow-[0_0_18px_rgba(0,255,255,0.35)]'
+                : 'border-[#39ff14]/40 text-[#39ff14]/70 bg-black/40'
+        }
+    `;
+
     return (
+        <FlightLayout2 title="GUNS" footer="ARMORY" size="2xl" centered={false}>
+            <div className="mx-auto font-mono text-xs tracking-[0.2em] text-white/80 w-full max-w-5xl">
 
-        <div className="min-h-screen bg-[#05080d] flex items-center justify-center p-8">
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,380px)_minmax(0,1fr)] gap-8 lg:gap-12">
 
-            <div className="w-full max-w-7xl bg-[#101820] border-2 border-cyan-500 rounded-xl p-8">
+                    {/* ================================================= */}
+                    {/* LEFT SIDE - WEAPON LIST */}
+                    {/* ================================================= */}
 
-                <h1 className="text-5xl font-bold text-cyan-400 mb-8">
-                    GUNS
-                </h1>
-
-                <div className="grid grid-cols-[420px_1fr] gap-10">
-
-                    {/* ===================================================== */}
-                    {/* LEFT SIDE */}
-                    {/* ===================================================== */}
-
-                    <div>
-
-                        <h2 className="text-lg text-cyan-300 mb-4">
-                            Weapons
-                        </h2>
+                    <section>
+                        <div className="mb-3 text-[#39ff14]/60 tracking-[0.25em]">WEAPONS</div>
 
                         <div className="grid grid-cols-2 gap-3">
-
                             {WEAPONS.map((w) => {
 
                                 const gun = getGunTypeByWeaponId(w.id)
-
                                 const unlocked = gameState.unlockedWeapons.includes(w.id)
                                 const isSelected = selected === w.id
                                 const isNew = gameState.pendingUnlockWeapon === w.id
 
                                 return (
-
                                     <button
                                         key={w.id}
                                         disabled={!unlocked}
                                         onClick={() => unlocked && setSelected(w.id)}
-                                        className={`
-                                            relative
-                                            h-24
-                                            rounded-lg
-                                            border
-                                            transition-all
-                                            text-left
-                                            p-3
-
+                                        className={`relative w-full min-w-0 border text-left p-2 sm:p-3 transition-all duration-200
                                             ${isSelected
-                                                ? "border-cyan-400 bg-cyan-950"
+                                                ? "border-green-300 text-cyan-300 bg-cyan-500/10 shadow-[0_0_18px_rgba(0,255,255,0.35)]"
                                                 : unlocked
-                                                    ? "border-cyan-800 bg-[#172534] hover:border-cyan-400"
-                                                    : "border-gray-800 bg-[#080808]"
+                                                    ? "border-[#39ff14]/40 text-[#39ff14]/70 bg-black/40 hover:border-cyan-300/70"
+                                                    : "border-white/10 bg-black/60"
                                             }
-
-                                            ${!unlocked && "cursor-not-allowed opacity-80"}
+                                            ${!unlocked ? "cursor-not-allowed opacity-60" : ""}
                                         `}
                                     >
-
-
-
-                                        <div className="relative h-16 mb-2 rounded overflow-hidden bg-[#081018] border border-cyan-900">
-
+                                        <div className="relative h-16 sm:h-20 mb-2 border border-white/10 bg-black/50 overflow-hidden">
                                             <img
                                                 src="/weapons/placeholder.png"
                                                 alt={gun.name}
-                                                className={`
-            w-full
-            h-full
-            object-contain
-            p-2
-            ${unlocked ? "" : "brightness-0 opacity-70"}
-        `}
+                                                className={`w-full h-full object-contain p-2 ${unlocked ? "" : "brightness-0 opacity-70"}`}
                                             />
-
                                             {!unlocked && (
                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-
-                                                    <span className="font-bold text-red-500 text-xs tracking-widest">
-                                                        LOCKED
-                                                    </span>
-
+                                                    <span className="font-bold text-red-400 text-[9px] sm:text-[10px] tracking-[0.3em]">LOCKED</span>
                                                 </div>
                                             )}
-
                                         </div>
 
                                         {unlocked && (
-
                                             <>
-
-                                                <div className="font-bold text-cyan-300">
+                                                <div className="text-cyan-300/90 text-[10px] sm:text-xs truncate tracking-[0.15em]">
                                                     {gun.name}
                                                 </div>
-
-                                                <div className="text-xs text-gray-400 mt-2">
-
+                                                <div className="text-white/40 mt-1 truncate text-[9px] sm:text-[10px] tracking-[0.15em]">
                                                     {w.category}
-
                                                 </div>
 
                                                 {isNew && (
-
-                                                    <div className="absolute top-2 right-2 text-yellow-400 text-xs font-bold">
-
+                                                    <div className="absolute top-1 right-1 text-yellow-300 text-[9px] font-bold tracking-[0.2em] animate-pulse">
                                                         NEW
-
                                                     </div>
-
                                                 )}
-
                                             </>
-
                                         )}
-
                                     </button>
-
                                 )
-
                             })}
-
                         </div>
+                    </section>
 
-                    </div>
+                    {/* ================================================= */}
+                    {/* RIGHT SIDE - WEAPON DETAILS */}
+                    {/* ================================================= */}
 
-                    {/* ===================================================== */}
-                    {/* RIGHT SIDE */}
-                    {/* ===================================================== */}
+                    <section className="flex flex-col min-w-0">
+                        <div className="mb-3 text-[#39ff14]/60 tracking-[0.25em]">DETAILS</div>
 
-                    <div className="flex flex-col">
-
-                        <div className="h-[420px] rounded-xl border border-cyan-600 bg-[#081018] flex items-center justify-center">
-
+                        <div className="w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-auto lg:h-[360px] border border-white/10 bg-black/50 flex items-center justify-center overflow-hidden">
                             <img
                                 src="/weapons/placeholder.png"
                                 alt={selectedGun.name}
-                                className="max-w-[90%] max-h-[90%] object-contain"
+                                className="w-full h-full max-w-[85%] max-h-[85%] object-contain"
                             />
-
                         </div>
 
                         <div className="mt-6">
-
-                            <h2 className="text-4xl font-bold text-cyan-300">
+                            <h2 className="text-xl sm:text-2xl text-cyan-300 tracking-[0.2em] break-words">
                                 {selectedGun.name}
                             </h2>
 
-                            <p className="mt-4 text-gray-300 leading-relaxed">
-                                <span className="text-cyan-400">Category:</span> {weapon.category}
-                            </p>
-
-                            <div className="mt-8 flex gap-4">
-
-                                <button
-                                    className="px-8 py-3 border-2 border-green-500 text-green-400 hover:bg-green-500 hover:text-black transition-colors"
-                                    onClick={() => {
-
-                                        gameState.currentWeapon = selected
-
-                                        gameState.pendingUnlockWeapon = null
-
-                                        gameState.stage++
-
-                                        gameState.wave = 0
-
-                                        gameState.paused = false
-
-                                        gameState.screen = SCREEN.PLAY
-                                        notifyUIChanged()
-                                    }}
-                                >
-
-                                    EQUIP
-
-                                </button>
-
-                                <button
-                                    className="px-8 py-3 border-2 border-gray-500 text-gray-300 hover:bg-gray-700 transition-colors"
-                                    onClick={() => {
-
-                                        gameState.screen = SCREEN.MENU
-                                        notifyUIChanged()
-                                    }}
-                                >
-
-                                    BACK
-
-                                </button>
-
+                            <div className="mt-4 flex justify-between text-white/70 max-w-xs">
+                                <span className="text-[#39ff14]/70">Category</span>
+                                <span className="text-cyan-300/80">{weapon.category}</span>
                             </div>
 
-                        </div>
+                            {/* ACTIONS */}
+                            <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row">
+                                <button
+                                    type="button"
+                                    onClick={handleEquip}
+                                    className={btnClass(true)}
+                                >
+                                    EQUIP
+                                    <span className="absolute -left-4 top-1/2 -translate-y-1/2 text-cyan-300 animate-pulse">
+                                        ▶
+                                    </span>
+                                </button>
 
-                    </div>
+                                <button
+                                    type="button"
+                                    onClick={handleBack}
+                                    className={btnClass(false)}
+                                >
+                                    BACK
+                                </button>
+                            </div>
+                        </div>
+                    </section>
 
                 </div>
-
             </div>
-
-        </div>
-
+        </FlightLayout2>
     )
-
 }

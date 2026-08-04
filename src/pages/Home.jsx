@@ -104,6 +104,7 @@ export default function Home() {
         <StageCompleteScreen
           onContinue={() => go('play')}
           onMenu={() => go('menu')}
+          onGuns={() => go('guns')}
         />
       )}
 
