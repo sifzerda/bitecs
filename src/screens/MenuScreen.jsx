@@ -6,7 +6,7 @@ import { gameState, SCREEN } from '../state/gameState';
 
 const ITEMS = [
   { label: 'START', screen: 'PLAY', action: 'onPlay' },
-  { label: 'EQUIPMENT', screen: 'GUNS', action: 'onGuns' },
+  { label: 'GUNS', screen: 'GUNS', action: 'onGuns' },
   { label: 'SETTINGS', screen: 'SETTINGS', action: 'onSettings' },
   { label: 'HOW TO PLAY', screen: 'HOW_TO_PLAY', action: 'onHowToPlay' },
   { label: 'HIGHSCORES', screen: 'HIGHSCORES', action: 'onHighscores' },

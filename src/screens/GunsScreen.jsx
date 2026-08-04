@@ -13,6 +13,9 @@ export function GunsScreen({ onBack }) {
         gameState.currentWeapon
     )
 
+    // 0 = EQUIP, 1 = BACK
+    const [navSelected, setNavSelected] = useState(0)
+
     const weapon = getWeapon(selected)
     const selectedGun = getGunTypeByWeaponId(selected)
 
@@ -41,24 +44,27 @@ export function GunsScreen({ onBack }) {
                 e.preventDefault()
                 handleBack()
             }
+            if (e.key === "Enter") {
+                e.preventDefault()
+                navSelected === 0 ? handleEquip() : handleBack()
+            }
         }
         window.addEventListener("keydown", onKey)
         return () => {
             window.removeEventListener("keydown", onKey)
         }
-    }, [handleBack])
+    }, [handleBack, handleEquip, navSelected])
 
-    const btnClass = (active) => 
-        `cursor-pointer relative w-40 sm:w-56 py-3 uppercase tracking-[0.45em] text-sm border transition-all duration-200
-        ${
-            active
-                ? 'border-green-300 text-cyan-300 bg-cyan-500/10 shadow-[0_0_18px_rgba(0,255,255,0.35)]'
-                : 'border-[#39ff14]/40 text-[#39ff14]/70 bg-black/40'
+    const btnClass = (active) => `
+        cursor-pointer relative w-40 sm:w-56 py-3 uppercase tracking-[0.45em] text-sm border transition-all duration-200
+        ${active
+            ? 'border-green-300 text-cyan-300 bg-cyan-500/10 shadow-[0_0_18px_rgba(0,255,255,0.35)]'
+            : 'border-[#39ff14]/40 text-[#39ff14]/70 bg-black/40'
         }
     `;
 
     return (
-        <FlightLayout2 title="GUNS" footer="ARMORY" size="2xl" centered={false}>
+        <FlightLayout2 title="GUNS" footer="ARMORY" size="xl" centered={false}>
             <div className="mx-auto font-mono text-xs tracking-[0.2em] text-white/80 w-full max-w-5xl">
 
                 <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,380px)_minmax(0,1fr)] gap-8 lg:gap-12">
@@ -70,7 +76,7 @@ export function GunsScreen({ onBack }) {
                     <section>
                         <div className="mb-3 text-[#39ff14]/60 tracking-[0.25em]">WEAPONS</div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                             {WEAPONS.map((w) => {
 
                                 const gun = getGunTypeByWeaponId(w.id)
@@ -83,7 +89,8 @@ export function GunsScreen({ onBack }) {
                                         key={w.id}
                                         disabled={!unlocked}
                                         onClick={() => unlocked && setSelected(w.id)}
-                                        className={`relative w-full min-w-0 border text-left p-2 sm:p-3 transition-all duration-200
+                                        onMouseEnter={() => unlocked && setSelected(w.id)}
+                                        className={`relative w-full min-w-0 border text-left p-1.5 transition-all duration-200
                                             ${isSelected
                                                 ? "border-green-300 text-cyan-300 bg-cyan-500/10 shadow-[0_0_18px_rgba(0,255,255,0.35)]"
                                                 : unlocked
@@ -93,32 +100,38 @@ export function GunsScreen({ onBack }) {
                                             ${!unlocked ? "cursor-not-allowed opacity-60" : ""}
                                         `}
                                     >
-                                        <div className="relative h-16 sm:h-20 mb-2 border border-white/10 bg-black/50 overflow-hidden">
+                                        <div className="relative h-10 sm:h-12 mb-1 border border-white/10 bg-black/50 overflow-hidden">
                                             <img
                                                 src="/weapons/placeholder.png"
                                                 alt={gun.name}
-                                                className={`w-full h-full object-contain p-2 ${unlocked ? "" : "brightness-0 opacity-70"}`}
+                                                className={`w-full h-full object-contain p-1 ${unlocked ? "" : "brightness-0 opacity-70"}`}
                                             />
                                             {!unlocked && (
                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                                                    <span className="font-bold text-red-400 text-[9px] sm:text-[10px] tracking-[0.3em]">LOCKED</span>
+                                                    <span className="font-bold text-red-400 text-[7px] tracking-[0.2em]">LOCKED</span>
                                                 </div>
                                             )}
                                         </div>
 
                                         {unlocked && (
                                             <>
-                                                <div className="text-cyan-300/90 text-[10px] sm:text-xs truncate tracking-[0.15em]">
+                                                <div className="text-cyan-300/90 text-[9px] truncate tracking-[0.1em]">
                                                     {gun.name}
                                                 </div>
-                                                <div className="text-white/40 mt-1 truncate text-[9px] sm:text-[10px] tracking-[0.15em]">
+                                                <div className="text-white/40 truncate text-[8px] tracking-[0.1em]">
                                                     {w.category}
                                                 </div>
 
                                                 {isNew && (
-                                                    <div className="absolute top-1 right-1 text-yellow-300 text-[9px] font-bold tracking-[0.2em] animate-pulse">
+                                                    <div className="absolute top-0.5 right-0.5 text-yellow-300 text-[7px] font-bold tracking-[0.1em] animate-pulse">
                                                         NEW
                                                     </div>
+                                                )}
+
+                                                {isSelected && (
+                                                    <span className="absolute -left-2.5 top-1/2 -translate-y-1/2 text-cyan-300 text-[10px] animate-pulse">
+                                                        ▶
+                                                    </span>
                                                 )}
                                             </>
                                         )}
@@ -135,45 +148,84 @@ export function GunsScreen({ onBack }) {
                     <section className="flex flex-col min-w-0">
                         <div className="mb-3 text-[#39ff14]/60 tracking-[0.25em]">DETAILS</div>
 
-                        <div className="w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-auto lg:h-[360px] border border-white/10 bg-black/50 flex items-center justify-center overflow-hidden">
-                            <img
-                                src="/weapons/placeholder.png"
-                                alt={selectedGun.name}
-                                className="w-full h-full max-w-[85%] max-h-[85%] object-contain"
-                            />
-                        </div>
+                        <div className="w-full max-w-md mx-auto">
 
-                        <div className="mt-6">
-                            <h2 className="text-xl sm:text-2xl text-cyan-300 tracking-[0.2em] break-words">
-                                {selectedGun.name}
-                            </h2>
+                            {/* Weapon preview */}
+                            <div className="w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-auto lg:h-[220px] border border-white/10 bg-black/50 flex items-center justify-center overflow-hidden relative">
 
-                            <div className="mt-4 flex justify-between text-white/70 max-w-xs">
-                                <span className="text-[#39ff14]/70">Category</span>
-                                <span className="text-cyan-300/80">{weapon.category}</span>
+                                <svg
+                                    viewBox="0 0 300 160"
+                                    className="w-full h-full max-w-[70%] max-h-[70%]"
+                                >
+                                    {/* Gun body */}
+                                    <g className="animate-gun-recoil">
+                                        <rect x="150" y="72" width="90" height="14" fill="#0e1a1f" stroke="#22d3ee" strokeWidth="1.5" />
+                                        <rect x="70" y="60" width="90" height="34" rx="3" fill="#0e1a1f" stroke="#22d3ee" strokeWidth="1.5" />
+                                        <rect x="80" y="94" width="20" height="40" rx="2" fill="#0e1a1f" stroke="#22d3ee" strokeWidth="1.5" />
+                                        <path d="M 105 94 Q 105 115 125 115" fill="none" stroke="#22d3ee" strokeWidth="1.5" />
+                                        <rect x="110" y="52" width="8" height="8" fill="#0e1a1f" stroke="#22d3ee" strokeWidth="1.5" />
+                                    </g>
+
+                                    {/* Muzzle flash */}
+                                    <g className="animate-muzzle-flash" style={{ transformOrigin: '242px 79px' }}>
+                                        <polygon points="242,79 262,72 254,79 262,86" fill="#67e8f9" />
+                                        <polygon points="242,79 258,66 250,79 258,92" fill="#a5f3fc" opacity="0.7" />
+                                        <circle cx="244" cy="79" r="5" fill="#e0fbff" />
+                                    </g>
+
+                                    {/* Bullet tracer */}
+                                    <rect
+                                        x="244" y="76.5" width="10" height="5" rx="2.5"
+                                        fill="#e0fbff"
+                                        className="animate-bullet-fire"
+                                        style={{ filter: 'drop-shadow(0 0 4px #22d3ee)' }}
+                                    />
+                                </svg>
+
                             </div>
 
-                            {/* ACTIONS */}
-                            <div className="mt-10 flex flex-col items-start gap-4 sm:flex-row">
-                                <button
-                                    type="button"
-                                    onClick={handleEquip}
-                                    className={btnClass(true)}
-                                >
-                                    EQUIP
-                                    <span className="absolute -left-4 top-1/2 -translate-y-1/2 text-cyan-300 animate-pulse">
-                                        ▶
-                                    </span>
-                                </button>
+                            <div className="mt-6">
+                                <h2 className="text-xl sm:text-2xl text-cyan-300 tracking-[0.2em] break-words">
+                                    {selectedGun.name}
+                                </h2>
 
-                                <button
-                                    type="button"
-                                    onClick={handleBack}
-                                    className={btnClass(false)}
-                                >
-                                    BACK
-                                </button>
+                                <div className="mt-4 flex justify-between text-white/70">
+                                    <span className="text-[#39ff14]/70">Category</span>
+                                    <span className="text-cyan-300/80">{weapon.category}</span>
+                                </div>
+
+                                {/* ACTIONS */}
+                                <div className="mt-10 flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={handleEquip}
+                                        onMouseEnter={() => setNavSelected(0)}
+                                        className={`flex-1 ${btnClass(navSelected === 0)}`}
+                                    >
+                                        EQUIP
+                                        {navSelected === 0 && (
+                                            <span className="absolute -left-4 top-1/2 -translate-y-1/2 text-cyan-300 animate-pulse">
+                                                ▶
+                                            </span>
+                                        )}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleBack}
+                                        onMouseEnter={() => setNavSelected(1)}
+                                        className={`flex-1 ${btnClass(navSelected === 1)}`}
+                                    >
+                                        BACK
+                                        {navSelected === 1 && (
+                                            <span className="absolute -left-4 top-1/2 -translate-y-1/2 text-cyan-300 animate-pulse">
+                                                ▶
+                                            </span>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
+
                         </div>
                     </section>
 
