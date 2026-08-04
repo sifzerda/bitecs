@@ -151,12 +151,10 @@ export function GunsScreen({ onBack }) {
                         <div className="w-full max-w-md mx-auto">
 
                             {/* Weapon preview */}
-                            <div className="w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-auto lg:h-[220px] border border-white/10 bg-black/50 flex items-center justify-center overflow-hidden relative">
+                            <div className="w-full aspect-4/3 sm:aspect-video lg:aspect-auto lg:h-55 border border-white/10 bg-black/50 flex items-center justify-center overflow-hidden relative">
 
-                                <svg
-                                    viewBox="0 0 300 160"
-                                    className="w-full h-full max-w-[70%] max-h-[70%]"
-                                >
+                                <svg viewBox="0 0 300 160"
+                                    className="w-full h-full max-w-[70%] max-h-[70%]">
                                     {/* Gun body */}
                                     <g className="animate-gun-recoil">
                                         <rect x="150" y="72" width="90" height="14" fill="#0e1a1f" stroke="#22d3ee" strokeWidth="1.5" />
