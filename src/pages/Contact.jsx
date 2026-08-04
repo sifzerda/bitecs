@@ -21,6 +21,8 @@ export default function Contact() {
 
         const formData = new FormData(e.target);
 
+        console.log("Captcha token:", captchaToken);
+
         formData.append(
             'access_key',
             import.meta.env.VITE_WEB3FORMS_ACCESS_KEY
@@ -42,13 +44,14 @@ export default function Contact() {
 
         const data = await response.json();
 
-        if (data.success) {
-            setStatus('MESSAGE TRANSMITTED');
-            e.target.reset();
-            setCaptchaToken('');
-        } else {
-            setStatus('TRANSMISSION FAILED');
-        }
+if (data.success) {
+    setStatus('MESSAGE TRANSMITTED');
+    e.target.reset();
+    setCaptchaToken('');
+} else {
+    console.error(data);
+    setStatus(data.message || 'TRANSMISSION FAILED');
+}
     }
 
     return (
