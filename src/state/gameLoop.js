@@ -19,14 +19,9 @@ import { bossThrowerSystem } from "../ecs/weapons/weaponSystems/bossThrowerSyste
 // fx
 import { updateSparkEmitter } from "../fx/gpu/SparkEmitter"
 import { exhaustEmitter } from "../fx/gpu/exhaustEmitter"
-import { updateFireEmitter } from "../fx/gpu/FireEmitter"
 import { updateEffects } from "../fx/index"
 
-import {
-    clearSpatialGrids,
-    insertAsteroid,
-    insertBoss
-} from "../ecs/constants/spatialGrid"
+import { clearSpatialGrids, insertAsteroid, insertBoss } from "../ecs/constants/spatialGrid"
 
 import { activeAsteroids } from "../ecs/pools/asteroidPool"
 import { bossQuery } from "../ecs/constants/queries"
@@ -68,14 +63,11 @@ export function gameLoop(shootState, dt) {
     laserSystem()
     throwerSystem()
 
-    // reads final post-movement bullet positions, same as combat/hazard above;
-    // pushes into the TRAIL effect queue that updateEffects() drains below
     trailSystem()
     updateArcs(dt)
 
     updateEffects()
     updateSparkEmitter(dt)
-    updateFireEmitter(dt)
 
 }
 

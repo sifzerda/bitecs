@@ -17,6 +17,7 @@ import { useRef, useEffect } from 'react'
 import { HUD } from '../components/HUD.jsx'
 import { world } from '../ecs/constants/world.js'
 import { gameLoop } from '../state/gameLoop.js'
+
 import MouseWorldTracker from '../ecs/systems/MouseWorldTracker.jsx'
 
 import { PlayerRenderer } from '../renderers/PlayerRenderer.jsx'
@@ -37,8 +38,6 @@ import { StarfieldRenderer } from '../renderers/StarfieldRenderer.jsx'
 import { FlashRenderer } from '../renderers/FlashRenderer.jsx'
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { ExplosionRenderer } from '../renderers/ExplosionRenderer.jsx'
-import { ShockwaveRenderer } from '../renderers/ShockwaveRenderer.jsx'
-import { FireRenderer } from '../renderers/FireRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
 
 import { GunRenderer } from '../renderers/GunRenderer.jsx'
@@ -182,8 +181,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <DebrisRenderer />
                     <ExplosionRenderer />
-                    <FireRenderer />
-                    <ShockwaveRenderer />
                     <FlashRenderer />
 
                     <BossRenderer />

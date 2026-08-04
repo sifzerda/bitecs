@@ -11,7 +11,4 @@ export const EFFECT = {
     FLASH: "flash",
     TRAIL: "trail",  // missile trail smoke
 
-    SHOCKWAVE: "shockwave",
-    FIRE: "fire",
-
 }
