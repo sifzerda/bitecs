@@ -41,7 +41,6 @@ import { ExplosionRenderer } from '../renderers/ExplosionRenderer.jsx'
 import { BossRenderer } from '../renderers/BossRenderer.jsx'
 
 import { GunMount } from '../renderers/GunMount.jsx'
-import { BossMount } from '../renderers/BossMount.jsx'
 
 //import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
 //import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
@@ -178,7 +177,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <FlashRenderer />
 
                     <BossRenderer />
-                    <BossMount />
 
                     {/*         <TentacleRenderer />            */}
                     {/*             <OctopusRenderer />           */}

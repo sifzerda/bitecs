@@ -23,11 +23,12 @@ export function BossMount() {
                 const group = groupRefs[slot][t].current
                 if (!group) continue
 
-                if (t === activeType) {
-                    group.visible = true
-                    group.position.set(Position.x[eid], Position.y[eid], 0)
-                    group.rotation.set(0, 0, Rotation[eid])
-                } else {
+if (t === activeType) {
+    group.visible = true
+    group.position.set(Position.x[eid], Position.y[eid], 0)
+    group.rotation.set(0, 0, Rotation[eid])
+    if (slot === 0) console.log('boss gun mount', bossCfg?.key, group.position.toArray())
+} else {
                     group.visible = false
                 }
             }

@@ -10,7 +10,7 @@ export function WeaponMount({ gunCfg, configOverride = null }) {
 
     const gunType = getGunTypeById(gunCfg.typeId)
     const resolvedConfig = configOverride ?? gunType.config
-    const zOffset = gunCfg.zOffset ?? 0.04
+    const zOffset = gunCfg.zOffset ?? 0.06
     const rotation = [0, 0, GUN_DIRECTION + (gunCfg.rotation ?? 0)]
     const scale = gunCfg.scale ?? resolvedConfig.mount.scale
     const mount = resolvedConfig.mount

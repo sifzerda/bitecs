@@ -1,5 +1,6 @@
 // src/renderers/SVGGun.jsx
 
+import { useEffect } from 'react'
 import { useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 
@@ -14,8 +15,25 @@ export function SVGGun({
 
     const texture = useTexture(svg)
 
-    texture.colorSpace = THREE.SRGBColorSpace
-    texture.anisotropy = 8
+        console.log('SVGGun render', svg, {
+        loaded: !!texture,
+        imgW: texture?.image?.width,
+        imgH: texture?.image?.height,
+        position,
+        scale,
+    })
+
+    // guard: only configure a given texture object once, ever — since it's
+    // shared (cached by URL) across every mesh that uses the same svg,
+    // repeatedly touching these props on an already-uploaded texture is
+    // what corrupts its GPU storage
+    useEffect(() => {
+        if (texture.__configured) return
+        texture.colorSpace = THREE.SRGBColorSpace
+        texture.anisotropy = 8
+        texture.needsUpdate = true
+        texture.__configured = true
+    }, [texture])
 
     return (
         <mesh

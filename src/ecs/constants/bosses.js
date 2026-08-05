@@ -12,7 +12,7 @@ const DEFAULT_PART_CONFIG = {
         offsetY: -0.05,
         scale: 0.9,
         rotation: 0,
-        zOffset: 0.04,
+        zOffset: 0.06,
         mirrored: true,
     },
 
@@ -436,7 +436,7 @@ export const BOSSES = [
     }),
 
     withDefaults({
-        key: "grenagegun",
+        key: "grenadegun",
         name: "War Machine",
         gun: { typeId: '04_grenadelauncher', offsetX: 0.8, offsetY: -0.6 },
         fuselage: { color: '#63a9eb', tipY: 2.00, shoulderY: 1.83, shoulderWidth: 0.15, waistY: -0.32, waistWidth: 0.17, tailY: -2.00, tailWidth: 0.16, notchY: -1.83 },

@@ -1,14 +1,12 @@
 // src/renderers/BossRenderer.jsx
 
-import { useMemo, useRef, createRef, useSyncExternalStore } from "react"
+import { useMemo, useRef, createRef } from "react"
 import { useFrame, useLoader } from "@react-three/fiber"
 import { useControls, folder } from "leva"
 import * as THREE from "three"
 import { bossQuery } from "../ecs/constants/queries.js"
 import { Position, Health, Rotation, BossType } from "../ecs/constants/components.js"
 import { BOSSES } from "../ecs/constants/bosses.js"
-import { subscribePreviewGunConfigOverride, getPreviewGunConfigOverride } from "../debug/debugState.js"
-import { WeaponMount } from "./WeaponMount.jsx"
 
 import lightWool from "../assets/light-wool.png"
 
@@ -298,7 +296,7 @@ function createHullMaterial(partCfg, hullTextureCfg, texture) {
         emissive: new THREE.Color(partCfg.emissive ?? '#000000'),
         emissiveIntensity: partCfg.emissiveIntensity ?? 0,
 
-                clearcoat: partCfg.clearcoat ?? 0,
+        clearcoat: partCfg.clearcoat ?? 0,
         clearcoatRoughness: partCfg.clearcoatRoughness ?? 0.1,
         iridescence: partCfg.iridescence ?? 0,
         iridescenceIOR: partCfg.iridescenceIOR ?? 1.3,
@@ -405,39 +403,29 @@ function MirroredPair({ geometry, position, color, metalness = 0.2, roughness = 
 
 // ============================================================
 
-export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, isPreviewSlot = false }) {
-    const { fuselage, cockpit, wing, wingPanel, wingtip, decal, cockpitGlass, engineIntake, hullVent, racingStripe, noseSpike, tailFin, exhaustPort, horn, propeller, tailBoom, boomFin, centerPropeller, landingGear, gun } = cfg
-
-    // Only the single debug preview slot ever reads the live-tuned gun
-    // config from GunPanel; every real spawned boss slot gets `null` here
-    // and WeaponMount falls back to the gun type's normal static config.
-    const previewGunConfigOverride = useSyncExternalStore(
-        subscribePreviewGunConfigOverride,
-        getPreviewGunConfigOverride,
-        getPreviewGunConfigOverride
-    )
-    const gunConfigOverride = isPreviewSlot ? previewGunConfigOverride : null
+export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false }) {
+    const { fuselage, cockpit, wing, wingPanel, wingtip, decal, cockpitGlass, engineIntake, hullVent, racingStripe, noseSpike, tailFin, exhaustPort, horn, propeller, tailBoom, boomFin, centerPropeller, landingGear } = cfg
 
     return (
         <group ref={groupRef} visible={false}>
 
             <MirroredPair
-    geometry={geo.wing}
-    position={[0, 0, 0]}
-    color={wing.color}
-    metalness={wing.metalness}
-    roughness={wing.roughness}
-    emissive={wing.emissive}
-    emissiveIntensity={wing.emissiveIntensity}
-    clearcoat={wing.clearcoat}
-    clearcoatRoughness={wing.clearcoatRoughness}
-    iridescence={wing.iridescence}
-    iridescenceIOR={wing.iridescenceIOR}
-    iridescenceThicknessRange={[wing.iridescenceThicknessMin, wing.iridescenceThicknessMax]}
-    envMapIntensity={wing.envMapIntensity}
-    flipX={false}
-    rotateY
-/>
+                geometry={geo.wing}
+                position={[0, 0, 0]}
+                color={wing.color}
+                metalness={wing.metalness}
+                roughness={wing.roughness}
+                emissive={wing.emissive}
+                emissiveIntensity={wing.emissiveIntensity}
+                clearcoat={wing.clearcoat}
+                clearcoatRoughness={wing.clearcoatRoughness}
+                iridescence={wing.iridescence}
+                iridescenceIOR={wing.iridescenceIOR}
+                iridescenceThicknessRange={[wing.iridescenceThicknessMin, wing.iridescenceThicknessMax]}
+                envMapIntensity={wing.envMapIntensity}
+                flipX={false}
+                rotateY
+            />
 
             {landingGear.enabled && (
                 <>
@@ -447,11 +435,11 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, i
             )}
 
             <MirroredPair geometry={geo.wingPanel} position={[0, 0, 0.01]} color={wingPanel.color} material={hullMaterials.wingPanel} clearcoat={wing.clearcoat}
-    clearcoatRoughness={wing.clearcoatRoughness}
-    iridescence={wing.iridescence}
-    iridescenceIOR={wing.iridescenceIOR}
-    iridescenceThicknessRange={[wing.iridescenceThicknessMin, wing.iridescenceThicknessMax]}
-    envMapIntensity={wing.envMapIntensity} flipX={false} rotateY />
+                clearcoatRoughness={wing.clearcoatRoughness}
+                iridescence={wing.iridescence}
+                iridescenceIOR={wing.iridescenceIOR}
+                iridescenceThicknessRange={[wing.iridescenceThicknessMin, wing.iridescenceThicknessMax]}
+                envMapIntensity={wing.envMapIntensity} flipX={false} rotateY />
             <MirroredPair geometry={geo.wingtip} position={[wingtip.offsetX, wingtip.offsetY, wingtip.zOffset]} color={wingtip.color} />
 
             {horn.enabled && (
@@ -465,63 +453,63 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, i
                 </>
             )}
 
-{tailFin.enabled && (
-    <MirroredPair
-        geometry={geo.tailFin}
-        position={[tailFin.offsetX, tailFin.offsetY, 0.025]}
-        color={tailFin.color}
-        metalness={tailFin.metalness}
-        roughness={tailFin.roughness}
-        emissive={tailFin.emissive}
-        emissiveIntensity={tailFin.emissiveIntensity}
-        clearcoat={tailFin.clearcoat}
-        clearcoatRoughness={tailFin.clearcoatRoughness}
-        iridescence={tailFin.iridescence}
-        iridescenceIOR={tailFin.iridescenceIOR}
-        iridescenceThicknessRange={[tailFin.iridescenceThicknessMin, tailFin.iridescenceThicknessMax]}
-        envMapIntensity={tailFin.envMapIntensity}
-        rotationZ={-geo.tailFinSplayRad}
-        rotateY
-        flipZAngle
-    />
-)}
-           {tailBoom.enabled && (
-    <Panel
-        geometry={geo.tailBoom}
-        position={[0, 0, 0.02]}
-        color={tailBoom.color}
-        metalness={tailBoom.metalness}
-        roughness={tailBoom.roughness}
-        emissive={tailBoom.emissive}
-        emissiveIntensity={tailBoom.emissiveIntensity}
-        clearcoat={tailBoom.clearcoat}
-        clearcoatRoughness={tailBoom.clearcoatRoughness}
-        iridescence={tailBoom.iridescence}
-        iridescenceIOR={tailBoom.iridescenceIOR}
-        iridescenceThicknessRange={[tailBoom.iridescenceThicknessMin, tailBoom.iridescenceThicknessMax]}
-        envMapIntensity={tailBoom.envMapIntensity}
-    />
-)}
-{tailBoom.enabled && boomFin.enabled && (
-    <MirroredPair
-        geometry={geo.boomFin}
-        position={[boomFin.offsetX, geo.boomFinY + boomFin.offsetY, 0.026]}
-        color={boomFin.color}
-        metalness={boomFin.metalness}
-        roughness={boomFin.roughness}
-        emissive={boomFin.emissive}
-        emissiveIntensity={boomFin.emissiveIntensity}
-        clearcoat={boomFin.clearcoat}
-        clearcoatRoughness={boomFin.clearcoatRoughness}
-        iridescence={boomFin.iridescence}
-        iridescenceIOR={boomFin.iridescenceIOR}
-        iridescenceThicknessRange={[boomFin.iridescenceThicknessMin, boomFin.iridescenceThicknessMax]}
-        envMapIntensity={boomFin.envMapIntensity}
-        rotationZ={-geo.boomFinSplayRad}
-        rotateY
-        flipZAngle
-    />
-)}
+            {tailFin.enabled && (
+                <MirroredPair
+                    geometry={geo.tailFin}
+                    position={[tailFin.offsetX, tailFin.offsetY, 0.025]}
+                    color={tailFin.color}
+                    metalness={tailFin.metalness}
+                    roughness={tailFin.roughness}
+                    emissive={tailFin.emissive}
+                    emissiveIntensity={tailFin.emissiveIntensity}
+                    clearcoat={tailFin.clearcoat}
+                    clearcoatRoughness={tailFin.clearcoatRoughness}
+                    iridescence={tailFin.iridescence}
+                    iridescenceIOR={tailFin.iridescenceIOR}
+                    iridescenceThicknessRange={[tailFin.iridescenceThicknessMin, tailFin.iridescenceThicknessMax]}
+                    envMapIntensity={tailFin.envMapIntensity}
+                    rotationZ={-geo.tailFinSplayRad}
+                    rotateY
+                    flipZAngle
+                />
+            )}
+            {tailBoom.enabled && (
+                <Panel
+                    geometry={geo.tailBoom}
+                    position={[0, 0, 0.02]}
+                    color={tailBoom.color}
+                    metalness={tailBoom.metalness}
+                    roughness={tailBoom.roughness}
+                    emissive={tailBoom.emissive}
+                    emissiveIntensity={tailBoom.emissiveIntensity}
+                    clearcoat={tailBoom.clearcoat}
+                    clearcoatRoughness={tailBoom.clearcoatRoughness}
+                    iridescence={tailBoom.iridescence}
+                    iridescenceIOR={tailBoom.iridescenceIOR}
+                    iridescenceThicknessRange={[tailBoom.iridescenceThicknessMin, tailBoom.iridescenceThicknessMax]}
+                    envMapIntensity={tailBoom.envMapIntensity}
+                />
+            )}
+            {tailBoom.enabled && boomFin.enabled && (
+                <MirroredPair
+                    geometry={geo.boomFin}
+                    position={[boomFin.offsetX, geo.boomFinY + boomFin.offsetY, 0.026]}
+                    color={boomFin.color}
+                    metalness={boomFin.metalness}
+                    roughness={boomFin.roughness}
+                    emissive={boomFin.emissive}
+                    emissiveIntensity={boomFin.emissiveIntensity}
+                    clearcoat={boomFin.clearcoat}
+                    clearcoatRoughness={boomFin.clearcoatRoughness}
+                    iridescence={boomFin.iridescence}
+                    iridescenceIOR={boomFin.iridescenceIOR}
+                    iridescenceThicknessRange={[boomFin.iridescenceThicknessMin, boomFin.iridescenceThicknessMax]}
+                    envMapIntensity={boomFin.envMapIntensity}
+                    rotationZ={-geo.boomFinSplayRad}
+                    rotateY
+                    flipZAngle
+                />
+            )}
 
             {exhaustPort.enabled && (
                 <Panel
@@ -643,9 +631,6 @@ export function BossShip({ groupRef, geo, cfg, hullMaterials, visible = false, i
                 />
             )}
 
-            {gun?.enabled && (
-                <WeaponMount gunCfg={gun} configOverride={gunConfigOverride} />
-            )}
         </group>
     )
 }
