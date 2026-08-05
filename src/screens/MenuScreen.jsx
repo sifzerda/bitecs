@@ -10,6 +10,8 @@ const ITEMS = [
   { label: 'SETTINGS', screen: 'SETTINGS', action: 'onSettings' },
   { label: 'HOW TO PLAY', screen: 'HOW_TO_PLAY', action: 'onHowToPlay' },
   { label: 'HIGHSCORES', screen: 'HIGHSCORES', action: 'onHighscores' },
+
+  { label: 'BOSS GALLERY', screen: 'BOSS_GALLERY', action: 'onBossGallery' },
 ];
 
 export default function MenuScreen({
@@ -18,6 +20,8 @@ export default function MenuScreen({
   onSettings,
   onHowToPlay,
   onHighscores,
+
+  onBossGallery,
 }) {
   const [selected, setSelected] = useState(0);
 
@@ -27,6 +31,8 @@ export default function MenuScreen({
     onSettings,
     onHowToPlay,
     onHighscores,
+    
+    onBossGallery,
   };
 
   const activate = useCallback(

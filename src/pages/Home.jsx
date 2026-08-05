@@ -12,6 +12,8 @@ import { GunsScreen } from '../screens/GunsScreen.jsx';
 import { GameOverScreen } from '../screens/GameOverScreen';
 import HighscoresScreen from '../screens/HighscoresScreen';
 
+import BossGallery from '../screens/BossGallery.jsx';
+
 import { gameState, SCREEN } from '../state/gameState.js';
 import { spawnPlayer } from '../ecs/spawn.js';
 import { initializeInput } from '../ecs/systems/input.js';
@@ -36,6 +38,8 @@ export default function Home() {
       howtoplay: SCREEN.HOW_TO_PLAY,
       guns: SCREEN.GUNS,
       stagecomplete: SCREEN.STAGE_COMPLETE,
+
+      bossgallery: SCREEN.BossGallery,
     };
     if (map[next]) gameState.screen = map[next];
     if (next === 'play') {
@@ -80,6 +84,8 @@ export default function Home() {
           onSettings={() => go('settings')}
           onHowToPlay={() => go('howtoplay')}
           onHighscores={() => go('highscores')}
+
+          onBossGallery={() => go('bossgallery')}
         />
       )}
 
@@ -117,6 +123,10 @@ export default function Home() {
           onBack={() => go('menu')}
           onPlay={() => go('play')}
         />
+      )}
+
+      {screen === 'bossgallery' && (
+        <BossGallery onBack={() => go('menu')} />
       )}
 
       {screen === 'howtoplay' && (

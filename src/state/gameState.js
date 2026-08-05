@@ -10,7 +10,9 @@ export const SCREEN = {
     HIGHSCORES: "highscores",
     GUNS: "GUNS",
     STAGE_COMPLETE: "stage_complete",
-    GAME_OVER: "game_over"
+    GAME_OVER: "game_over",
+    
+    BOSS_GALLERY: "boss_gallery"
 }
 
 export const gameState = {
