@@ -14,12 +14,7 @@ const MAX_BOSSES = 4
 export function GunMount() {
 
     const playerGroupRef = useRef()
-
-    // stable per-eid ref pool, independent of query array ordering
     const bossRefsByEid = useRef(new Map())
-
-    // { eid -> { type, x, y, rot } } — only changes identity when the
-    // *set* of active eids changes, not when the query reorders them
     const [activeBosses, setActiveBosses] = useState([])
 
     useFrame(() => {
@@ -39,7 +34,6 @@ export function GunMount() {
         const bosses = bossQuery()
         const currentEids = bosses.slice(0, MAX_BOSSES)
 
-        // update transforms every frame via direct refs (cheap, no re-render)
         for (const eid of currentEids) {
             const group = bossRefsByEid.current.get(eid)
             if (group?.current) {
