@@ -129,8 +129,8 @@ Inside combat.js at end of file lives = 0
 - [x] switch guns to the gun_svgs (remove glow and add it to be animated as currently is)
 - [ ] switch boss gun to svgs. boss gun currently not showing
 - [ ] create svgs of ships and switch bosses and player with svgs
- - [ ] create a shipgallery like gungallery but for ships
- - [ ] see if you can combine gunmout, weaponmount, boss mount, svggun, 
+ - [x] create a shipgallery like gungallery but for ships
+ - [x] see if you can combine gunmout, weaponmount, boss mount, svggun, 
 
 - [ ] optimize starfield renderer
 - [ ] bomb weapons lost trail
@@ -219,3 +219,5 @@ some of these boss dropped weapons, some upgrades
 - [x] add pool for sparks, exhaust, etc
 
 - [x] trailrenderer needs to replace smoke in missile renderer
+
+ 

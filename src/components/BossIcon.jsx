@@ -471,20 +471,26 @@ function Wingtip({ cfg, side = 1 }) {
     )
 }
 
-function Stripe({ cfg, part }) {
+// Mirrors offsetX and flips tiltDeg per side, matching MirroredPair's
+// flipZAngle behavior in the 3D renderer (BossRenderer.jsx renders
+// both racingStripe and decal via MirroredPair, so the icon has to
+// draw both sides too — see the two calls per part in BossIcon below).
+function Stripe({ cfg, part, side = 1 }) {
     if (!part?.enabled) return null
 
     const width = part.width
     const length = part.length
+    const offsetX = part.offsetX * side
+    const tilt = (part.tiltDeg ?? 0) * side
 
     return (
         <rect
-            x={part.offsetX - width / 2}
+            x={offsetX - width / 2}
             y={-(part.offsetY + length / 2)}
             width={width}
             height={length}
             rx={width * 0.25}
-            transform={`rotate(${-(part.tiltDeg ?? 0)} ${part.offsetX} ${-part.offsetY})`}
+            transform={`rotate(${-tilt} ${offsetX} ${-part.offsetY})`}
             style={{
                 fill: part.color,
             }}
@@ -492,6 +498,11 @@ function Stripe({ cfg, part }) {
     )
 }
 
+// NOTE: render this AFTER <CockpitGlass/> in BossIcon's return. Previously
+// it rendered before the glass, and the glass's near-opaque animated fill
+// covered the wide base of the spike, leaving only a near-invisible sliver
+// of the tapering tip poking out above it (this is why the default "Player"
+// entry appeared to have no nose spike at all).
 function NoseSpike({ cfg }) {
     const p = cfg.noseSpike
 
@@ -559,12 +570,6 @@ function EngineIntake({ cfg, side = 1 }) {
         y + p.offsetY,
     ])
 
-    if (side === -1) {
-        points.forEach(point => {
-            point[0] = -point[0]
-        })
-    }
-
     return (
         <polygon
             points={polygonPoints(points)}
@@ -614,6 +619,11 @@ function HullVents({ cfg, side = 1 }) {
     )
 }
 
+// FIX: previously used `p.startY ?? 0`, but tailBoom configs never set
+// startY — the 3D renderer injects `startY: fuselage.tailY` when building
+// geometry (see buildBossAssets in BossRenderer.jsx). The icon skipped
+// that step entirely, so the boom always started at y=0 instead of at
+// the fuselage's actual tail.
 function TailBoom({ cfg }) {
     const p = cfg.tailBoom
 
@@ -622,7 +632,7 @@ function TailBoom({ cfg }) {
     const halfBase = p.baseWidth / 2
     const halfTip = p.tipWidth / 2
 
-    const startY = p.startY ?? 0
+    const startY = cfg.fuselage.tailY
     const endY = startY - p.length
 
     return (
@@ -640,6 +650,13 @@ function TailBoom({ cfg }) {
     )
 }
 
+// FIX: previously positioned using only `p.offsetY`, ignoring the tail
+// boom entirely. The 3D renderer computes
+// `boomFinY = fuselage.tailY - tailBoom.length` and adds offsetY on top
+// (see `geo.boomFinY` in BossRenderer.jsx). Without that, the fin landed
+// near the ship's center — and since BoomFin paints *before* Fuselage,
+// the opaque fuselage polygon painted right over it, making it invisible
+// (Rambo's `tailBoom.length: 1.38` made this especially obvious).
 function BoomFin({ cfg, side = 1 }) {
     const p = cfg.boomFin
 
@@ -647,6 +664,7 @@ function BoomFin({ cfg, side = 1 }) {
 
     const halfW = p.width / 2
     const halfL = p.length / 2
+    const boomFinY = cfg.fuselage.tailY - cfg.tailBoom.length + p.offsetY
 
     const points = [
         [0, halfL],
@@ -656,7 +674,7 @@ function BoomFin({ cfg, side = 1 }) {
         [-halfW * 0.2, -halfL],
     ].map(([x, y]) => [
         x * side + p.offsetX * side,
-        y + p.offsetY,
+        y + boomFinY,
     ])
 
     return (
@@ -688,13 +706,6 @@ function PropellerIcon({
 
     const [x, y] = position
 
-    /*
-     * The actual Three.js propeller rotates around its hub.
-     * SVG does the same using a <g> transform.
-     *
-     * We use a very small duration for high spinSpeed values,
-     * matching the visual intent of the Three.js animation.
-     */
     const duration =
         Math.max(
             0.08,
@@ -783,10 +794,6 @@ export default function BossIcon({
 }) {
     if (!config) return null
 
-    /*
-     * The viewBox is deliberately generous because some bosses
-     * in bosses.js are dramatically larger than the default ship.
-     */
     return (
         <svg
             className={className}
@@ -834,65 +841,59 @@ export default function BossIcon({
                 {/* Cockpit */}
                 <Cockpit cfg={config} />
 
-                {/* Racing stripes */}
-                <Stripe
-                    cfg={config}
-                    part={config.racingStripe}
-                />
+                {/* Racing stripes — both sides, matching BossRenderer's MirroredPair */}
+                <Stripe cfg={config} part={config.racingStripe} side={1} />
+                <Stripe cfg={config} part={config.racingStripe} side={-1} />
 
-                {/* Decal */}
-                <Stripe
-                    cfg={config}
-                    part={config.decal}
-                />
+                {/* Decal — both sides, matching BossRenderer's MirroredPair */}
+                <Stripe cfg={config} part={config.decal} side={1} />
+                <Stripe cfg={config} part={config.decal} side={-1} />
 
-                {/* Nose */}
+                {/* Cockpit glass overlay — must render before NoseSpike, not after,
+                    or the glass paints over the spike's base (see NoseSpike note above) */}
+                <CockpitGlass cfg={config} />
+
+                {/* Nose — rendered last so it sits on top of the cockpit glass */}
                 <NoseSpike cfg={config} />
-
-                {/* Cockpit glass overlay */}
-<CockpitGlass cfg={config} />
 
             </g>
 
             {/* ========================================================= */}
-{/* ANIMATED PROPELLERS                                      */}
-{/* ========================================================= */}
+            {/* ANIMATED PROPELLERS                                      */}
+            {/* ========================================================= */}
 
-{config.propeller?.enabled && (
-    <>
-        {/* Right propeller */}
-        <PropellerIcon
-            config={config.propeller}
-            position={[
-                config.propeller.offsetX,
-                config.propeller.offsetY,
-            ]}
-            direction={1}
-        />
+            {config.propeller?.enabled && (
+                <>
+                    <PropellerIcon
+                        config={config.propeller}
+                        position={[
+                            config.propeller.offsetX,
+                            config.propeller.offsetY,
+                        ]}
+                        direction={1}
+                    />
 
-        {/* Left propeller — opposite rotation */}
-        <PropellerIcon
-            config={config.propeller}
-            position={[
-                -config.propeller.offsetX,
-                config.propeller.offsetY,
-            ]}
-            direction={-1}
-        />
-    </>
-)}
+                    <PropellerIcon
+                        config={config.propeller}
+                        position={[
+                            -config.propeller.offsetX,
+                            config.propeller.offsetY,
+                        ]}
+                        direction={-1}
+                    />
+                </>
+            )}
 
-{config.centerPropeller?.enabled && (
-    <PropellerIcon
-        config={config.centerPropeller}
-        position={[
-            0,
-            config.centerPropeller.offsetY,
-        ]}
-        direction={1}
-    />
-)}
-
+            {config.centerPropeller?.enabled && (
+                <PropellerIcon
+                    config={config.centerPropeller}
+                    position={[
+                        0,
+                        config.centerPropeller.offsetY,
+                    ]}
+                    direction={1}
+                />
+            )}
 
         </svg>
     )

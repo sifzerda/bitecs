@@ -184,7 +184,7 @@ export default function FlightLayout2({ title, footer, children,
           <div className={`relative z-10 flex flex-col gap-5
               ${centered ? 'items-center text-center' : ''}
               ${scrollable
-              ? 'max-h-[55vh] overflow-y-auto pr-2'
+              ? 'max-h-[70vh] overflow-y-auto pr-2'
               : ''}`}>
             {children}
           </div>
