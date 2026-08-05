@@ -439,14 +439,12 @@ export default function HowToPlayScreen({ onBack }) {
                    <div className="mb-2 text-green-400 text-md tracking-[0.3em]">OTHER</div>
                   <div className="space-y-2">
 
-
                     {/* BLOCK */}
                     <div className="flex items-center gap-3">
                       <div className={keyClass('b')}>B</div>
                       <span className="text-md text-white/90">Block</span>
 
                     </div>
-
 
                     {/* PAUSE */}
                     <div className="flex items-center gap-3">
