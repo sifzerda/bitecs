@@ -29,7 +29,7 @@ import { acquireAsteroidEntity } from './pools/asteroidPool'
 
 import { getGunTypeById } from "./weapons/config/gunConfigs";
 import { getWeapon } from "./weapons/config/weapons";
- 
+
 // ============= helpers ============//
 function setPosition(id, x, y) {
     addComponent(world, id, Position)
@@ -41,85 +41,85 @@ function setHealth(id, hp) {
     Health.current[id] = hp
     Health.max[id] = hp
 }
- 
+
 // ============= Player Ship ============//
 export function spawnPlayer(x, y) {
- 
+
     const id = addEntity(world)
- 
+
     setPosition(id, x, y)
     addComponent(world, id, Velocity)
     addComponent(world, id, Rotation)
     addComponent(world, id, PlayerTag)
     setHealth(id, 100)
- 
+
     return id
 }
- 
+
 // ============= Bullets ============//
- 
-const MUZZLE_OFFSET = 0.4 
+
+const MUZZLE_OFFSET = 0.4
 export const GUN_GAP = 0.45 // distance between twin guns
 
 export function spawnBullet(x, y, rot, weaponId = 0, owner, gapOffset = 0) {
- 
+
     //const bullet = acquireBullet();
- 
+
     const weapon = getWeapon(weaponId)
     if (weapon.category === "beam" || weapon.category === "thrower") return []
- 
+
     // forward direction (ship facing)
     const fwdX = Math.sin(-rot)
     const fwdY = Math.cos(-rot)
- 
+
     // perpendicular direction (for left/right gun offset)
     const perpX = Math.cos(-rot)
     const perpY = -Math.sin(-rot)
- 
+
     // push spawn point forward from ship center to the nose, then out to the gun
     const originX = x + fwdX * MUZZLE_OFFSET + perpX * gapOffset
     const originY = y + fwdY * MUZZLE_OFFSET + perpY * gapOffset
- 
+
     const count = weapon.projectileCount
     const spread = weapon.spreadAngle
- 
+
     const ids = []
- 
+
     for (let i = 0; i < count; i++) {
- 
+
         const offset = count > 1
             ? -spread / 2 + (spread / (count - 1)) * i
             : 0
- 
+
         const shotRot = rot + offset
         const id = acquireBulletEntity()
- 
+
         if (id === -1)
             continue
- 
+
         Position.x[id] = originX
         Position.y[id] = originY
- 
+
         Velocity.x[id] = Math.sin(-shotRot) * weapon.speed
         Velocity.y[id] = Math.cos(-shotRot) * weapon.speed
- 
+
         Lifetime.remaining[id] = weapon.lifetime
         Bullet.type[id] = weapon.id
         Bullet.owner[id] = owner
- 
+
         const color = new THREE.Color(weapon.glowColor ?? weapon.color)
         color.offsetHSL(0, 0.30, 0.00)
- 
+
         Bullet.colorR[id] = color.r
         Bullet.colorG[id] = color.g
         Bullet.colorB[id] = color.b
- 
+
         ids.push(id)
     }
- 
+
     return { ids, originX, originY }
 }
- 
+
 // convenience wrapper: fires both guns for weapons that should be twin-mounted
 export function spawnPlayerBullet(x, y, rot, weaponId = 0, owner) {
     const left = spawnBullet(x, y, rot, weaponId, owner, GUN_GAP)
@@ -132,58 +132,58 @@ export function spawnPlayerBullet(x, y, rot, weaponId = 0, owner) {
         ],
     }
 }
- 
+
 // ============= Hazards (clouds, puddles, attached DoT) ============//
- 
+
 export function spawnHazard(x, y, weaponId, owner, targetId = -1) {
- 
+
     const weapon = getWeapon(weaponId)
     const id = addEntity(world)
- 
+
     addComponent(world, id, Position)
     addComponent(world, id, HazardZone)
     addComponent(world, id, HazardTag)
     addComponent(world, id, Lifetime)
- 
+
     Position.x[id] = x
     Position.y[id] = y
- 
+
     HazardZone.weaponType[id] = weapon.id
     HazardZone.owner[id] = owner
     HazardZone.target[id] = targetId
     HazardZone.tickTimer[id] = 0   // tick immediately on first frame so it doesn't feel delayed
- 
+
     Lifetime.remaining[id] = weapon.hazardDuration ?? 3.0
- 
+
     return id
 }
- 
+
 
 // ============= Asteroids ============//
- 
+
 export function spawnAsteroid(x, y) {
     const id = acquireAsteroidEntity()
     if (id === -1) return -1
- 
+
     Position.x[id] = x
     Position.y[id] = y
- 
+
     Velocity.x[id] = (Math.random() - 0.5) * 2
     Velocity.y[id] = (Math.random() - 0.5) * 2
- 
+
     Health.current[id] = 20
     Health.max[id] = 20
- 
+
     StatusEffect.frozen[id] = 0
- 
+
     return id
 }
- 
+
 // ============= Boss ============//
 export function spawnBoss(bossKey = "shotgun") {
- 
+
     const id = addEntity(world)
- 
+
     addComponent(world, id, Position)
     addComponent(world, id, Velocity)
     addComponent(world, id, Rotation)
@@ -192,56 +192,58 @@ export function spawnBoss(bossKey = "shotgun") {
     addComponent(world, id, BossAI)
     addComponent(world, id, BossType)
     addComponent(world, id, StatusEffect)
- 
+
     Position.x[id] = 0
     Position.y[id] = 0
- 
+
     Velocity.x[id] = 0
     Velocity.y[id] = 0
+
     Rotation[id] = 0
- 
+
     Health.current[id] = 300
     Health.max[id] = 300
- 
+
     StatusEffect.frozen[id] = 0
- 
+
     BossAI.moveTimer[id] = 0
     BossAI.shootTimer[id] = 1
- 
+
     const bossIndex = BOSS_INDEX_BY_KEY[bossKey] ?? 0
     const bossCfg = BOSSES[bossIndex]
- 
-    // Weapon fired = weapon belonging to whatever gun this boss visually
-    // carries. Falls back to weapon 0 if the boss has no gun mounted.
-    const gunType = bossCfg.gun?.enabled ? getGunTypeById(bossCfg.gun.typeId) : null
-    BossAI.weapon[id] = gunType ? gunType.weaponId : 0
- 
+
+    const gunType = bossCfg.gun
+        ? getGunTypeById(bossCfg.gun.typeId)
+        : null
+
+    BossAI.weapon[id] = gunType?.weaponId ?? 0
+
     BossAI.beamCycleTimer[id] = 3.0
     BossAI.beamActive[id] = 1
     BossAI.targetRotation[id] = 0
- 
+
     BossType.typeIndex[id] = bossIndex
- 
+
     gameState.bossAlive = true
- 
+
     return id
 }
- 
+
 // ============= Octopus ============//
 export function spawnOctopus(x = 0, y = 0) {
- 
+
     const id = addEntity(world)
- 
+
     addComponent(world, id, Position)
     addComponent(world, id, Velocity)
     addComponent(world, id, Octopus)
     addComponent(world, id, OctopusTag)
- 
+
     Position.x[id] = x
     Position.y[id] = y
- 
+
     Velocity.x[id] = 0
     Velocity.y[id] = 0
- 
+
     return id
 }

@@ -14,13 +14,16 @@ const BOSS_ROSTER = BOSSES.filter((b) => b.key !== "player")
 export function waveSystem() {
 
     // still enemies alive → do nothing
-    if (gameState.asteroidsRemaining > 0 || gameState.bossAlive)
+    if (gameState.asteroidsRemaining > 0 || gameState.bossAlive) {
         return
+    }
+
     // -------------------------
     if (gameState.wave > 0 && gameState.wave % 3 === 0 && !gameState.bossDone) {
 
         const bossNumber = gameState.wave / 3
-        const bossKey = BOSS_ROSTER[(bossNumber - 1) % BOSS_ROSTER.length].key
+        const bossIndex = (bossNumber - 1) % BOSS_ROSTER.length
+        const bossKey = BOSS_ROSTER[bossIndex].key
 
         spawnBoss(bossKey)
 
@@ -30,17 +33,18 @@ export function waveSystem() {
         return
     }
 
-    // -------------------------
-    gameState.wave++
+    /* ========================================================
+    NEXT ASTEROID WAVE
+    ======================================================== */
+
+    gameState.wave += 1
     gameState.bossDone = false
 
     const count = 4 + gameState.wave * 2
     gameState.asteroidsRemaining = count
 
     for (let i = 0; i < count; i++) {
-
         const angle = Math.random() * Math.PI * 2
-
         spawnAsteroid(Math.cos(angle) * SPAWN_RADIUS, Math.sin(angle) * SPAWN_RADIUS)
     }
 }

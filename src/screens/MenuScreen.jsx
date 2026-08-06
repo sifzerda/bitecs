@@ -2,16 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import FlightLayout2 from '../components/FlightLayout2.jsx';
-import { gameState, SCREEN } from '../state/gameState';
 
 const ITEMS = [
-  { label: 'START', screen: 'PLAY', action: 'onPlay' },
-  { label: 'GUNS', screen: 'GUNS', action: 'onGuns' },
-  { label: 'SETTINGS', screen: 'SETTINGS', action: 'onSettings' },
-  { label: 'HOW TO PLAY', screen: 'HOW_TO_PLAY', action: 'onHowToPlay' },
-  { label: 'HIGHSCORES', screen: 'HIGHSCORES', action: 'onHighscores' },
-
-  { label: 'BOSS GALLERY', screen: 'BOSS_GALLERY', action: 'onBossGallery' },
+  { label: 'START', action: 'onPlay' },
+  { label: 'GUNS', action: 'onGuns' },
+  { label: 'SETTINGS', action: 'onSettings' },
+  { label: 'HOW TO PLAY', action: 'onHowToPlay' },
+  { label: 'HIGHSCORES', action: 'onHighscores' },
 ];
 
 export default function MenuScreen({
@@ -20,8 +17,6 @@ export default function MenuScreen({
   onSettings,
   onHowToPlay,
   onHighscores,
-
-  onBossGallery,
 }) {
   const [selected, setSelected] = useState(0);
 
@@ -31,17 +26,12 @@ export default function MenuScreen({
     onSettings,
     onHowToPlay,
     onHighscores,
-    
-    onBossGallery,
   };
 
   const activate = useCallback(
     (index) => {
       const item = ITEMS[index];
       if (!item) return;
-      if (SCREEN[item.screen] !== undefined) {
-        gameState.screen = SCREEN[item.screen];
-      }
       handlers[item.action]?.();
     },
     [handlers]

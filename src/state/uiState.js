@@ -4,7 +4,10 @@ import { useSyncExternalStore } from "react"
 
 const listeners = new Set()
 
+let version = 0
+
 export function notifyUIChanged() {
+    version++
     listeners.forEach(listener => listener())
 }
 
@@ -14,7 +17,7 @@ function subscribe(listener) {
 }
 
 function snapshot() {
-    return 0
+    return version
 }
 
 export function useUIState() {

@@ -1,8 +1,29 @@
 //src/screens/GameOverScreen.jsx
 
-import { gameState, SCREEN } from "../state/gameState"
+import { gameState, resetRun, SCREEN } from "../state/gameState"
+import { notifyUIChanged } from "../state/uiState"
 
-export function GameOverScreen() {
+export function GameOverScreen({ onRestart, onMenu }) {
+
+    const handleRestart = () => {
+        resetRun()
+        if (onRestart) {
+            onRestart()
+            return
+        }
+        gameState.screen = SCREEN.PLAY
+        notifyUIChanged()
+    }
+
+    const handleMenu = () => {
+        resetRun()
+        if (onMenu) {
+            onMenu()
+            return
+        }
+        gameState.screen = SCREEN.MENU
+        notifyUIChanged()
+    }
 
     return (
 
@@ -18,16 +39,21 @@ export function GameOverScreen() {
                     Score: {gameState.score}
                 </div>
 
-                <button
-                    className="mt-6 border p-3"
-                    onClick={() => {
+                <div className="mt-6 flex gap-3">
+                    <button
+                        className="border p-3"
+                        onClick={handleRestart}
+                    >
+                        RESTART
+                    </button>
 
-                        gameState.lives = 3
-                        gameState.screen = SCREEN.MENU
-                        notifyUIChanged()
-                    }}>
-                    MAIN MENU
-                </button>
+                    <button
+                        className="border p-3"
+                        onClick={handleMenu}
+                    >
+                        MAIN MENU
+                    </button>
+                </div>
 
             </div>
 

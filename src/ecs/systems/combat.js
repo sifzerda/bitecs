@@ -18,6 +18,7 @@ import {
 
 import { spawnHazard } from "../spawn.js"
 import { gameState, SCREEN } from "../../state/gameState.js"
+import { notifyUIChanged } from "../../state/uiState.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { explodeAt } from "../weapons/weaponSystems/weaponEffects.js"
 import { releaseBulletEntity, activeBullets } from "../pools/bulletPool.js"
@@ -195,6 +196,7 @@ export function combatSystem() {
 
                     if (gameState.lives <= 0) {
                         gameState.screen = SCREEN.GAME_OVER
+                        notifyUIChanged()
                         return
                     }
                     Health.current[pid] = Health.max[pid]

@@ -1,13 +1,13 @@
 // src/screens/GunsScreen.jsx
 
 import { useState, useEffect, useCallback } from "react"
-import { gameState, SCREEN } from "../state/gameState"
+import { gameState, advanceStage, SCREEN } from "../state/gameState"
 import { notifyUIChanged } from "../state/uiState"
 import { WEAPONS, getWeapon } from "../ecs/weapons/config/weapons"
 import { getGunTypeByWeaponId } from "../ecs/weapons/config/gunConfigs"
 import FlightLayout2 from "../components/FlightLayout2.jsx"
 
-export function GunsScreen({ onBack }) {
+export function GunsScreen({ onBack, onPlay }) {
 
     const [selected, setSelected] = useState(
         gameState.currentWeapon
@@ -30,13 +30,17 @@ export function GunsScreen({ onBack }) {
 
     const handleEquip = useCallback(() => {
         gameState.currentWeapon = selected
-        gameState.pendingUnlockWeapon = null
-        gameState.stage++
-        gameState.wave = 0
-        gameState.paused = false
+        advanceStage()
+
+        if (onPlay) {
+            onPlay()
+            return
+        }
+
+        // fallback if no onPlay prop was supplied
         gameState.screen = SCREEN.PLAY
         notifyUIChanged()
-    }, [selected])
+    }, [selected, onPlay])
 
     useEffect(() => {
         const onKey = (e) => {

@@ -1,6 +1,6 @@
 //src/screens/StageCompleteScreen.jsx
 
-import { gameState, SCREEN } from "../state/gameState"
+import { gameState } from "../state/gameState"
 import { getWeapon } from "../ecs/weapons/config/weapons"
 
 export function StageCompleteScreen({ onGuns }) {

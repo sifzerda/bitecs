@@ -20,7 +20,7 @@ import { gameLoop } from '../state/gameLoop.js'
 
 import MouseWorldTracker from '../ecs/systems/MouseWorldTracker.jsx'
 
-import { PlayerRenderer } from '../renderers/PlayerRenderer.jsx'
+import { PlayerRenderer, BossRenderer } from '../renderers/ShipRenderer.jsx'
 import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
 import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
 import { MissileRenderer } from '../renderers/MissileRenderer.jsx'
@@ -38,7 +38,6 @@ import { StarfieldRenderer } from '../renderers/StarfieldRenderer.jsx'
 import { FlashRenderer } from '../renderers/FlashRenderer.jsx'
 import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
 import { ExplosionRenderer } from '../renderers/ExplosionRenderer.jsx'
-import { BossRenderer } from '../renderers/BossRenderer.jsx'
 
 import { GunMount } from '../renderers/GunMount.jsx'
 
@@ -63,10 +62,7 @@ export function GameLoop({ keysRef, paused }) {
         world.time.delta = Math.min(delta, 0.05)
         world.time.elapsed += world.time.delta
 
-        gameLoop(
-            shootState.current,
-            world.time.delta
-        )
+        gameLoop(shootState.current, world.time.delta)
 
     })
 
@@ -77,10 +73,10 @@ export function PlayScreen({ keysRef, paused, onPause }) {
     return (
         <div className="border-2 border-green-400 flex flex-col h-[calc(100vh-120px)]">
 
-              <HUD paused={paused} onPause={onPause} />  
+            <HUD paused={paused} onPause={onPause} />
 
 
-            
+
             <div className="relative flex-1 px-4">
 
                 <Canvas
@@ -89,7 +85,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     gl={{ antialias: false, powerPreference: "high-performance" }}
                     dpr={[1, 2]}>
 
-                         <MouseWorldTracker />
+                    <MouseWorldTracker />
 
                     <GameLoop keysRef={keysRef} paused={paused} />
 
@@ -111,33 +107,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     {/* Bosses */}
                     <ExhaustRenderer
                         slot={1}
-                        size={5}
-                        nozzleOffset={-0.8}
-                        engineGap={0.35}
-                        hotCore="#ff8a1a"
-                        fireColor="#ff5a12"
-                    />
-
-                    <ExhaustRenderer
-                        slot={2}
-                        size={5}
-                        nozzleOffset={-0.8}
-                        engineGap={0.35}
-                        hotCore="#ff8a1a"
-                        fireColor="#ff5a12"
-                    />
-
-                    <ExhaustRenderer
-                        slot={3}
-                        size={5}
-                        nozzleOffset={-0.8}
-                        engineGap={0.35}
-                        hotCore="#ff8a1a"
-                        fireColor="#ff5a12"
-                    />
-
-                    <ExhaustRenderer
-                        slot={4}
                         size={5}
                         nozzleOffset={-0.8}
                         engineGap={0.35}

@@ -1,6 +1,6 @@
 // src/pages/Home.jsx
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 
 import BG from '../components/BG';
 import MenuScreen from '../screens/MenuScreen';
@@ -12,23 +12,28 @@ import { GunsScreen } from '../screens/GunsScreen.jsx';
 import { GameOverScreen } from '../screens/GameOverScreen';
 import HighscoresScreen from '../screens/HighscoresScreen';
 
-import BossGallery from '../screens/BossGallery.jsx';
-
-import { gameState, SCREEN } from '../state/gameState.js';
+import { gameState, resetRun, SCREEN } from '../state/gameState.js';
+import { useUIState, notifyUIChanged } from '../state/uiState.js';
 import { spawnPlayer } from '../ecs/spawn.js';
 import { initializeInput } from '../ecs/systems/input.js';
 import { initializeBulletPool } from '../ecs/pools/bulletPool.js';
 import { initializeAsteroidPool } from '../ecs/pools/asteroidPool.js';
 
+const SCREEN_TO_KEY = Object.fromEntries(
+  Object.entries(SCREEN).map(([, value]) => [value, value])
+);
+
 export default function Home() {
-  const [screen, setScreen] = useState('menu');
-  const [paused, setPaused] = useState(false);
+  // re-renders whenever any screen calls notifyUIChanged()
+  useUIState();
+
+  const screen = gameState.screen;
+  const paused = gameState.paused;
+
   const keysRef = useRef({});
   const poolsReady = useRef(false);
 
   const go = useCallback((next) => {
-    setScreen(next);
-    // keep shared gameState in sync for systems that still read it
     const map = {
       menu: SCREEN.MENU,
       play: SCREEN.PLAY,
@@ -38,22 +43,30 @@ export default function Home() {
       howtoplay: SCREEN.HOW_TO_PLAY,
       guns: SCREEN.GUNS,
       stagecomplete: SCREEN.STAGE_COMPLETE,
-
-      bossgallery: SCREEN.BossGallery,
     };
-    if (map[next]) gameState.screen = map[next];
+
+    gameState.screen = map[next] ?? next;
     if (next === 'play') {
       gameState.paused = false;
-      setPaused(false);
     }
+    notifyUIChanged();
   }, []);
 
+  const startNewGame = useCallback(() => {
+    resetRun();
+    go('play');
+  }, [go]);
+
+  const backToMenuFresh = useCallback(() => {
+    resetRun();
+    go('menu');
+  }, [go]);
+
   const togglePause = useCallback(() => {
-    if (screen !== 'play') return;
-    const next = !gameState.paused;
-    gameState.paused = next;
-    setPaused(next);
-  }, [screen]);
+    if (gameState.screen !== SCREEN.PLAY) return;
+    gameState.paused = !gameState.paused;
+    notifyUIChanged();
+  }, []);
 
   // one-time ECS / input setup
   useEffect(() => {
@@ -65,31 +78,29 @@ export default function Home() {
     initializeInput(togglePause);
   }, [togglePause]);
 
-  // spawn / reset when entering play
+  // spawn when entering play
   useEffect(() => {
-    if (screen !== 'play') return;
+    if (screen !== SCREEN.PLAY) return;
     spawnPlayer(0, 0);
     gameState.paused = false;
-    setPaused(false);
+    notifyUIChanged();
   }, [screen]);
 
   return (
     <div className="w-screen h-screen overflow-hidden bg-black relative">
       <BG />
 
-      {screen === 'menu' && (
+      {screen === SCREEN.MENU && (
         <MenuScreen
-          onPlay={() => go('play')}
+          onPlay={startNewGame}
           onGuns={() => go('guns')}
           onSettings={() => go('settings')}
           onHowToPlay={() => go('howtoplay')}
           onHighscores={() => go('highscores')}
-
-          onBossGallery={() => go('bossgallery')}
         />
       )}
 
-      {screen === 'play' && (
+      {screen === SCREEN.PLAY && (
         <PlayScreen
           keysRef={keysRef}
           paused={paused}
@@ -99,41 +110,37 @@ export default function Home() {
         />
       )}
 
-      {screen === 'gameover' && (
+      {screen === SCREEN.GAME_OVER && (
         <GameOverScreen
-          onRestart={() => go('play')}
-          onMenu={() => go('menu')}
+          onRestart={startNewGame}
+          onMenu={backToMenuFresh}
         />
       )}
 
-      {screen === 'stagecomplete' && (
+      {screen === SCREEN.STAGE_COMPLETE && (
         <StageCompleteScreen
           onContinue={() => go('play')}
-          onMenu={() => go('menu')}
+          onMenu={backToMenuFresh}
           onGuns={() => go('guns')}
         />
       )}
 
-      {screen === 'settings' && (
+      {screen === SCREEN.SETTINGS && (
         <SettingsScreen onBack={() => go('menu')} />
       )}
 
-      {screen === 'guns' && (
+      {screen === SCREEN.GUNS && (
         <GunsScreen
           onBack={() => go('menu')}
           onPlay={() => go('play')}
         />
       )}
 
-      {screen === 'bossgallery' && (
-        <BossGallery onBack={() => go('menu')} />
-      )}
-
-      {screen === 'howtoplay' && (
+      {screen === SCREEN.HOW_TO_PLAY && (
         <HowToPlayScreen onBack={() => go('menu')} />
       )}
 
-      {screen === 'highscores' && (
+      {screen === SCREEN.HIGHSCORES && (
         <HighscoresScreen onBack={() => go('menu')} />
       )}
 

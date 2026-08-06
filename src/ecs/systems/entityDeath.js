@@ -2,7 +2,8 @@
 
 import { removeEntity } from "bitecs"
 import { world } from "../constants/world.js"
-import { gameState } from "../../state/gameState.js"
+import { gameState, SCREEN } from "../../state/gameState.js"
+import { notifyUIChanged } from "../../state/uiState.js"
 import { BossAI, Velocity } from "../constants/components.js"
 import { releaseAsteroidEntity } from "../pools/asteroidPool"
 
@@ -64,6 +65,7 @@ export function killBoss(id, x, y) {
     // Pause gameplay and show Stage Complete
     gameState.paused = true
     gameState.screen = SCREEN.STAGE_COMPLETE
+    notifyUIChanged()
 
     emitEffect(EFFECT.EXPLOSION, { x, y, size: 5 })
     emitEffect(EFFECT.SPARK_BURST, { x, y, count: 90, speed: 16, big: true })
