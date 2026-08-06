@@ -127,10 +127,10 @@ Inside combat.js at end of file lives = 0
 ## Tasks
 
 - [x] switch guns to the gun_svgs (remove glow and add it to be animated as currently is)
-- [ ] switch boss gun to svgs. boss gun currently not showing
+- [x] switch boss gun to svgs. boss gun currently not showing
 - [ ] create svgs of ships and switch bosses and player with svgs
- - [x] create a shipgallery like gungallery but for ships
- - [x] see if you can combine gunmout, weaponmount, boss mount, svggun, 
+- [x] create a shipgallery like gungallery but for ships
+- [x] see if you can combine gunmout, weaponmount, boss mount, svggun, 
 
 - [ ] optimize starfield renderer
 - [ ] bomb weapons lost trail
@@ -171,20 +171,7 @@ Post:
 - [x] general game progression: n asteroid waves, then boss with new gun.
 Defeating boss drops/awards gun. Gun can be applied. N1 asteroid wave and next boss with new gun etc.
 
-//////
-
-Shot gun - space cowboy
-Machine gun - Military ship
-Charge gun - 
-acid sprayer - insectoid boss
-flamethrower - 
-homing missiles - 
-laser - 
-plasma gun - 
-
-Arc gun electric - 
-prism beam - 
-cryo cannon - 
+////// 
 
 some of these boss dropped weapons, some upgrades 
 
