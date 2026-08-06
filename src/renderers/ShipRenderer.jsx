@@ -1,8 +1,9 @@
 // src/renderers/ShipRenderer.jsx
 
-import { useRef, useState } from 'react'
-import { Html } from '@react-three/drei'
+import { useRef, useState, useEffect } from 'react'
+import { useTexture } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
+import * as THREE from 'three'
 
 import { world } from '../ecs/constants/world.js'
 import { playerQuery, bossQuery } from '../ecs/constants/queries.js'
@@ -12,6 +13,7 @@ import {
     BossType,
 } from '../ecs/constants/components.js'
 import { BOSSES } from '../ecs/constants/bosses.js'
+import { RENDER_ORDER } from './WeaponMount.jsx'
 
 /* ============================================================
    ASSETS
@@ -31,7 +33,7 @@ const BOSS_SVG_BY_KEY = {
     cryogun: '/ship_svgs/03_cryogunboss.svg',
     grenadegun: '/ship_svgs/04_grenadelauncherboss.svg',
     acidthrowergun: '/ship_svgs/05_acidthrowerboss.svg',
-    missilegun: '/ship_svgs/06_missilelaunchergunboss.svg',
+    missilegun: '/ship_svgs/06_missilelauncherboss.svg',
     flamethrowergun: '/ship_svgs/07_flamethrowerboss.svg',
     lasergun: '/ship_svgs/08_lasergunboss.svg',
     arcgun: '/ship_svgs/09_arcgunboss.svg',
@@ -44,40 +46,40 @@ const FALLBACK_BOSS_SVG = BOSS_SVG_BY_KEY.shotgun
    SIZE
    ============================================================ */
 
-const PLAYER_SIZE = 220
-const BOSS_SIZE = 220
+const PX_TO_WORLD = 1 / 35
+const PLAYER_SIZE = 220 * PX_TO_WORLD
+const BOSS_SIZE = 220 * PX_TO_WORLD
 
 /* ============================================================
    SHARED SVG ELEMENT
    ============================================================ */
 
+// WebGL mesh, not <Html> — see WeaponMount.jsx for why. Ship and gun now
+// render through the same pipeline, so Three.js's renderOrder gives a
+// real, deterministic draw order instead of relying on DOM/CSS stacking
+// (which kept flipping as ships moved and rotated).
 function ShipImage({ src, size }) {
+    const texture = useTexture(src)
+
+    useEffect(() => {
+        if (texture.__configured) return
+        texture.colorSpace = THREE.SRGBColorSpace
+        texture.anisotropy = 8
+        texture.needsUpdate = true
+        texture.__configured = true
+    }, [texture])
+
     return (
-        <Html
-            transform
-            center
-            sprite={false}
-            style={{
-                pointerEvents: 'none',
-                width: `${size}px`,
-                height: `${size}px`,
-                overflow: 'visible',
-            }}
-        >
-            <img
-                src={src}
-                alt=""
-                draggable={false}
-                style={{
-                    display: 'block',
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    pointerEvents: 'none',
-                    userSelect: 'none',
-                }}
+        <mesh renderOrder={RENDER_ORDER.ship}>
+            <planeGeometry args={[size, size]} />
+            <meshBasicMaterial
+                map={texture}
+                transparent
+                alphaTest={0.05}
+                side={THREE.DoubleSide}
+                toneMapped={false}
             />
-        </Html>
+        </mesh>
     )
 }
 
@@ -88,12 +90,6 @@ function ShipImage({ src, size }) {
 export function PlayerRenderer() {
     const groupRef = useRef(null)
 
-    // Mirrors the same "don't mount the DOM node until real data exists"
-    // guard used in BossRenderer below — drei's <Html> is a DOM portal,
-    // not a normal mesh, so toggling the parent group's `visible` alone
-    // isn't reliable for hiding it. Harmless here in practice (the
-    // player usually exists immediately), but kept consistent so a
-    // stray static ship can never flash at the origin before spawn.
     const [hasPlayer, setHasPlayer] = useState(false)
     const hasPlayerRef = useRef(false)
 
@@ -175,17 +171,6 @@ function getBossSvgSrc(eid) {
 export function BossRenderer() {
     const groupRef = useRef(null)
 
-    // hasBoss gates whether <ShipImage>'s <Html> DOM node is mounted
-    // at all. Previously the component always rendered <ShipImage>,
-    // relying on `group.visible = false` to hide it — but drei's Html
-    // portals a real DOM <img> outside the Three.js scene graph, and
-    // does not reliably respect the parent Object3D's `visible` flag.
-    // That meant the image existed and sat at the default transform
-    // (world origin, BOSS_SVGS[0]'s src) from the moment this component
-    // mounted — appearing as a "frozen boss" from wave 1 / game start,
-    // long before any real boss entity existed. It would only start
-    // moving once a genuine boss spawned and useFrame began driving
-    // that same stray DOM node's position/rotation for real.
     const [hasBoss, setHasBoss] = useState(false)
     const hasBossRef = useRef(false)
 

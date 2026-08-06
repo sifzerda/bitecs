@@ -1,6 +1,6 @@
 // src/renderers/GunMount.jsx
 
-import { useMemo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { playerQuery, bossQuery } from '../ecs/constants/queries.js'
 import { Position, Rotation, BossType } from '../ecs/constants/components.js'
@@ -38,7 +38,11 @@ export function GunMount() {
             const group = bossRefsByEid.current.get(eid)
             if (group?.current) {
                 group.current.visible = true
-                group.current.position.set(Position.x[eid], Position.y[eid], 0)
+                // z should still roughly track the ship's z (see
+                // ShipRenderer.jsx) for sane depth values even though actual
+                // stacking is now controlled by renderOrder/depthTest, not by
+                // this z comparison — see WeaponMount.jsx's RENDER_ORDER.
+                group.current.position.set(Position.x[eid], Position.y[eid], 0.15)
                 group.current.rotation.set(0, 0, Rotation[eid])
             }
         }
@@ -51,6 +55,13 @@ export function GunMount() {
         if (prevIds !== nextIds) {
             const next = currentEids.map(eid => ({ eid, type: BossType.typeIndex[eid] }))
             setActiveBosses(next)
+
+            // prune ref entries for bosses that are no longer active, so
+            // stale refs don't accumulate across a long play session
+            const nextEidSet = new Set(currentEids)
+            for (const staleEid of bossRefsByEid.current.keys()) {
+                if (!nextEidSet.has(staleEid)) bossRefsByEid.current.delete(staleEid)
+            }
         }
     })
 
@@ -76,7 +87,6 @@ export function GunMount() {
 
             {activeBosses.map(({ eid, type }) => {
                 const bossCfg = BOSSES[type]
-                console.log('boss gun mount', bossCfg?.key, bossCfg?.gun)
                 if (!bossRefsByEid.current.has(eid)) {
                     bossRefsByEid.current.set(eid, { current: null })
                 }
