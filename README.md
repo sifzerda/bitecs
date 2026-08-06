@@ -126,6 +126,8 @@ Inside combat.js at end of file lives = 0
 
 ## Tasks
 
+- [ ] fix gun rendering for bosses
+
 - [x] switch guns to the gun_svgs (remove glow and add it to be animated as currently is)
 - [x] switch boss gun to svgs. boss gun currently not showing
 - [ ] create svgs of ships and switch bosses and player with svgs
@@ -186,7 +188,6 @@ some of these boss dropped weapons, some upgrades
 - [x] add a leva menu to configure guns which can be applied to the ship and bosses
 - [x] make each gun, it will look the same for boss as player
 
-
  -  Verlet mesh, chain etc physics, or engine
 
  ~~## Move effects into GPU particle system API:~~
@@ -206,5 +207,6 @@ some of these boss dropped weapons, some upgrades
 - [x] add pool for sparks, exhaust, etc
 
 - [x] trailrenderer needs to replace smoke in missile renderer
+
 
  
