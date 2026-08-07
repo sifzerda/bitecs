@@ -122,8 +122,7 @@ function SVGGun({
             position={position}
             rotation={rotation}
             scale={3 * scale}
-            renderOrder={RENDER_ORDER.gun}
-        >
+            renderOrder={RENDER_ORDER.gun}>
             <planeGeometry args={[width, height]} />
             <meshBasicMaterial
                 map={texture}
