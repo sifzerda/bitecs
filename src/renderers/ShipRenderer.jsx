@@ -21,12 +21,6 @@ import { RENDER_ORDER } from './WeaponMount.jsx'
 
 const PLAYER_SVG = '/ship_svgs/00_player.svg'
 
-// Keyed by boss.key (from bosses.js) rather than raw array index —
-// BOSSES itself contains a "player" entry at index 0, so BossType's
-// typeIndex (which comes straight from BOSS_INDEX_BY_KEY, an index
-// into the FULL BOSSES array) does not line up 1:1 with this
-// boss-only list. Looking up by key sidesteps that mismatch entirely
-// and stays correct even if bosses.js is reordered later.
 const BOSS_SVG_BY_KEY = {
     shotgun: '/ship_svgs/01_shotgunboss.svg',
     machinegun: '/ship_svgs/02_machinegunboss.svg',
@@ -54,10 +48,6 @@ const BOSS_SIZE = 220 * PX_TO_WORLD
    SHARED SVG ELEMENT
    ============================================================ */
 
-// WebGL mesh, not <Html> — see WeaponMount.jsx for why. Ship and gun now
-// render through the same pipeline, so Three.js's renderOrder gives a
-// real, deterministic draw order instead of relying on DOM/CSS stacking
-// (which kept flipping as ships moved and rotated).
 function ShipImage({ src, size }) {
     const texture = useTexture(src)
 

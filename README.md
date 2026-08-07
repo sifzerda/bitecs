@@ -126,7 +126,12 @@ Inside combat.js at end of file lives = 0
 
 ## Tasks
 
-- [ ] fix gun rendering for bosses
+- [ ] config bullet/missile/beam emission point for bosses and player
+- [ ] config exhaust emission point for player and bosses
+
+- [ ] add irridescent cockpit glass, plus moving propellers, plus gun core glow flashing animation
+
+- [x] fix gun rendering for bosses
 
 - [x] switch guns to the gun_svgs (remove glow and add it to be animated as currently is)
 - [x] switch boss gun to svgs. boss gun currently not showing
