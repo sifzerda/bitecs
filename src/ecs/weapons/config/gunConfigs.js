@@ -61,7 +61,8 @@ const RAW_TYPES = [
         svg: "/gun_svgs/01_shotgun.svg",
         overrides: {
             mount: { width: 1.4, height: 0.6, offsetX: 0.5, offsetY: 0.18 },
-            coreGlow: { color: '#ffe605', intensity: 0.8, offsetX: 0.74, offsetY: 0 },
+            coreGlow: { color: '#ffe605', intensity: 0.8, offsetX: 0, offsetY: 0.6 },
+            coreGlow: { color: '#ffe605', intensity: 0.8, offsetX: 0, offsetY: 0.6 },
         },
     },
     {
@@ -71,7 +72,8 @@ const RAW_TYPES = [
         svg: "/gun_svgs/02_machinegun.svg",
         overrides: {
             mount: { width: 1.5, height: 0.6, offsetX: 0.48, offsetY: -0.03 },
-            coreGlow: { color: '#ff3355', intensity: 2, offsetX: 1, offsetY: 0 },
+            coreGlow: { color: '#ff3355', intensity: 0.2, offsetX: 0, offsetY: 1 },
+            coreGlow: { color: '#ff3355', size: 0.1, intensity: 0.2, offsetX: 0, offsetY: 1 },
         },
     },
     {
@@ -81,8 +83,6 @@ const RAW_TYPES = [
         svg: "/gun_svgs/03_cryogun.svg",
         overrides: {
             mount: { width: 1.5, height: 0.6, offsetX: 0.8, offsetY: -0.1 },
-            // canister-style elongated "mist" glow rather than a small
-            // circular pulse — see mist handling in WeaponMount.jsx
             coreGlow: {
                 color: '#aef6ff', intensity: 1.15,
                 offsetX: 0.45, offsetY: 0,
