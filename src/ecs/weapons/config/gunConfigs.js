@@ -51,7 +51,6 @@ const RAW_TYPES = [
         overrides: {
             mount: { width: 1.4, height: 0.6, offsetX: 0.5, offsetY: 0.1 },
             coreGlow: { color: '#ffe605', size: 0.5, intensity: 1, offsetX: 0, offsetY: 0.8 },
-            coreGlow: { color: '#ffe605', size: 0.5, intensity: 1, offsetX: 0, offsetY: 0.8 },
         },
     },
     {
@@ -62,7 +61,6 @@ const RAW_TYPES = [
         overrides: {
             mount: { width: 1.4, height: 0.6, offsetX: 0.5, offsetY: 0.18 },
             coreGlow: { color: '#ffe605', intensity: 0.8, offsetX: 0, offsetY: 0.6 },
-            coreGlow: { color: '#ffe605', intensity: 0.8, offsetX: 0, offsetY: 0.6 },
         },
     },
     {
@@ -72,7 +70,6 @@ const RAW_TYPES = [
         svg: "/gun_svgs/02_machinegun.svg",
         overrides: {
             mount: { width: 1.5, height: 0.6, offsetX: 0.48, offsetY: -0.03 },
-            coreGlow: { color: '#ff3355', intensity: 0.2, offsetX: 0, offsetY: 1 },
             coreGlow: { color: '#ff3355', size: 0.1, intensity: 0.2, offsetX: 0, offsetY: 1 },
         },
     },
@@ -83,11 +80,7 @@ const RAW_TYPES = [
         svg: "/gun_svgs/03_cryogun.svg",
         overrides: {
             mount: { width: 1.5, height: 0.6, offsetX: 0.8, offsetY: -0.1 },
-            coreGlow: {
-                color: '#aef6ff', intensity: 1.15,
-                offsetX: 0.45, offsetY: 0,
-                mist: true, width: 0.9, height: 0.7,
-            },
+            coreGlow: { color: '#aef6ff', intensity: 0.6, offsetX: 0, offsetY: 0.2, mist: true, width: 0.6, height: 1.5 },
         },
     },
     {
@@ -97,7 +90,7 @@ const RAW_TYPES = [
         svg: "/gun_svgs/04_grenadelauncher.svg",
         overrides: {
             mount: { width: 1.4, height: 0.5, offsetX: 0.8, offsetY: -0.4 },
-            coreGlow: { color: '#ff8a1a', intensity: 1, size: 1, offsetX: 1.2, offsetY: 0 },
+            coreGlow: { color: '#ff3355', intensity: 0.3, size: 0.3, offsetX: 0, offsetY: 1.2 },
         },
     },
     {
@@ -107,11 +100,7 @@ const RAW_TYPES = [
         svg: "/gun_svgs/05_acidthrower.svg",
         overrides: {
             mount: { width: 1.35, height: 0.5, offsetX: 0.9, offsetY: 0 },
-            coreGlow: {
-                color: '#00FF7F', intensity: 1.15,
-                offsetX: 0.45, offsetY: 0,
-                mist: true, width: 0.9, height: 0.7,
-            },
+            coreGlow: { color: '#00FF7F', intensity: 0.6, offsetX: 0, offsetY: 0.2, mist: true, width: 0.5, height: 1.4 },
         },
     },
     {
@@ -121,7 +110,7 @@ const RAW_TYPES = [
         svg: "/gun_svgs/06_missilelauncher.svg",
         overrides: {
             mount: { width: 1.4, height: 0.6, offsetX: 0.8, offsetY: -0.01 },
-            coreGlow: { color: '#ff8a1a', size: 1, intensity: 1, offsetX: 0.95, offsetY: 0 },
+            coreGlow: { color: '#FF5F1F', size: 0.4, intensity: 0.5, offsetX: 0, offsetY: 0.9 },
         },
     },
     {
@@ -131,7 +120,7 @@ const RAW_TYPES = [
         svg: "/gun_svgs/07_flamethrower.svg",
         overrides: {
             mount: { width: 1.3, height: 0.5, offsetX: 0.5, offsetY: 0.05 },
-            coreGlow: { color: '#ff3355', intensity: 1, offsetX: 1.34, offsetY: 0 },
+            coreGlow: { color: '#ff3355', size: 0.1, intensity: 0.5, offsetX: 0, offsetY: 1.2 },
         },
     },
     {
@@ -141,7 +130,7 @@ const RAW_TYPES = [
         svg: "/gun_svgs/08_lasergun.svg",
         overrides: {
             mount: { width: 1.4, height: 0.5, offsetX: 0.8, offsetY: -0.3 },
-            coreGlow: { color: '#44ff88', intensity: 1.0, offsetX: 1.4, size: 0.3 },
+            coreGlow: { color: '#39FF14', size: 0.1, intensity: 0.2, offsetX: 0, offsetY: 1.45 },
         },
     },
     {
@@ -151,7 +140,7 @@ const RAW_TYPES = [
         svg: "/gun_svgs/09_arcgun.svg",
         overrides: {
             mount: { width: 1.1, height: 0.4, offsetX: 0.4, offsetY: -0.04 },
-            coreGlow: { color: '#005eff', intensity: 3, offsetX: 1.50, offsetY: 0 },
+            coreGlow: { color: '#005eff', size: 0.1, intensity: 0.5, offsetX: 0, offsetY: 1.2 },
         },
     },
     {
@@ -161,7 +150,7 @@ const RAW_TYPES = [
         svg: "/gun_svgs/10_plasmagun.svg",
         overrides: {
             mount: { width: 1.3, height: 0.5, offsetX: 0.6, offsetY: -0.3 },
-            coreGlow: { color: '#C71585', intensity: 1.0, offsetX: 1.4, size: 0.3 },
+            coreGlow: { color: '#005eff', size: 0.2, intensity: 1.0, offsetX: 0, offsetY: 1.3 },
         },
     },
 ]
