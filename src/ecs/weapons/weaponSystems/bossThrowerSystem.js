@@ -1,8 +1,9 @@
 // src/ecs/weapons/weaponSystems/bossThrowerSystem.js
 
 import { world } from "../../constants/world.js"
+import { getEmissionPoint, getBossEmissionConfig } from '../../constants/emission.js'
 import { bossAIQuery, playerQuery } from "../../constants/queries.js"
-import { Position, BossAI, Health, StatusEffect } from "../../constants/components.js"
+import { Position, Rotation, BossAI, Health, StatusEffect } from "../../constants/components.js"
 import { getWeapon } from "../config/weapons.js"
 import { bossThrowerState } from "../weaponState/bossThrowerState.js"
 
@@ -31,9 +32,23 @@ export function bossThrowerSystem() {
     const dist = Math.hypot(dx, dy)
     const inRange = dist <= weapon.range
 
+    const emission = getBossEmissionConfig(
+        id,
+        'thrower'
+    )
+
+    const point = getEmissionPoint(
+        Position.x[id],
+        Position.y[id],
+        Rotation[id],
+        emission
+    )
+
     bossThrowerState.active = inRange
-    bossThrowerState.originX = Position.x[id]
-    bossThrowerState.originY = Position.y[id]
+
+    bossThrowerState.originX = point.x
+    bossThrowerState.originY = point.y
+
     bossThrowerState.range = weapon.range
     bossThrowerState.length = weapon.range
     bossThrowerState.coneAngle = weapon.coneAngle ?? 0.5

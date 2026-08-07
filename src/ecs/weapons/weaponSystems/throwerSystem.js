@@ -1,8 +1,10 @@
 // src/ecs/weapons/weaponSystems/throwerSystem.js
 
 import { world } from "../../constants/world.js"
+import { getEmissionPoint, PLAYER_CONFIG } from '../../constants/emission.js'
 import { playerQuery, bossQuery } from "../../constants/queries.js"
 import { Position, Rotation, Health, StatusEffect } from "../../constants/components.js"
+
 import { input } from "../../systems/input.js"
 import { gameState } from "../../../state/gameState.js"
 import { getWeapon } from "../config/weapons.js"
@@ -58,9 +60,18 @@ export function throwerSystem() {
 
     const pid = players[0]
 
+    const point = getEmissionPoint(
+        Position.x[player],
+        Position.y[player],
+        Rotation[player],
+        PLAYER_CONFIG.emission.thrower
+    )
+
     throwerState.active = true
-    throwerState.originX = Position.x[pid]
-    throwerState.originY = Position.y[pid]
+
+    throwerState.originX = point.x
+    throwerState.originY = point.y
+
     throwerState.dirX = Math.sin(-Rotation[pid])
     throwerState.dirY = Math.cos(-Rotation[pid])
     throwerState.coneAngle = weapon.coneAngle ?? 0.5
@@ -75,7 +86,7 @@ export function throwerSystem() {
     for (let i = 0; i < asteroids.length; i++) {
         const aid = asteroids[i]
         if (!inCone(throwerState.originX, throwerState.originY, throwerState.dirX, throwerState.dirY,
-                    throwerState.coneAngle, weapon.range, Position.x[aid], Position.y[aid], ASTEROID_RADIUS)) continue
+            throwerState.coneAngle, weapon.range, Position.x[aid], Position.y[aid], ASTEROID_RADIUS)) continue
 
         hitIds.push(aid)
         Health.current[aid] -= dps * dt
@@ -87,7 +98,7 @@ export function throwerSystem() {
     for (let i = 0; i < bosses.length; i++) {
         const bossId = bosses[i]
         if (!inCone(throwerState.originX, throwerState.originY, throwerState.dirX, throwerState.dirY,
-                    throwerState.coneAngle, weapon.range, Position.x[bossId], Position.y[bossId], BOSS_RADIUS)) continue
+            throwerState.coneAngle, weapon.range, Position.x[bossId], Position.y[bossId], BOSS_RADIUS)) continue
 
         hitIds.push(bossId)
         Health.current[bossId] -= dps * dt

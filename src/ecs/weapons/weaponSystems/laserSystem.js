@@ -3,6 +3,8 @@
 import { world } from "../../constants/world.js"
 import { playerQuery, bossQuery } from "../../constants/queries.js"
 import { Position, Rotation, Health } from "../../constants/components.js"
+import { getEmissionPoint, PLAYER_CONFIG } from '../../constants/emission.js'
+
 import { input } from "../../systems/input.js"
 import { gameState } from "../../../state/gameState.js"
 import { getWeapon } from "../config/weapons.js"
@@ -106,9 +108,16 @@ export function laserSystem() {
 
     const pid = players[0]
 
+    const point = getEmissionPoint(
+        Position.x[player],
+        Position.y[player],
+        Rotation[player],
+        PLAYER_CONFIG.emission.beam
+    )
+
     laserState.active = true
-    laserState.originX = Position.x[pid]
-    laserState.originY = Position.y[pid]
+    laserState.originX = point.x
+    laserState.originY = point.y
 
     const baseDirX = Math.sin(-Rotation[pid])
     const baseDirY = Math.cos(-Rotation[pid])

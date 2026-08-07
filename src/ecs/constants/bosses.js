@@ -36,6 +36,36 @@ export const BOSSES = [
             { mountKey: 'right', offsetX: -0.08, offsetY: -0.653, radius: 0.05, bladeCount: 3, bladeColor: '#2A3439', hubColor: '#000000', spinSpeed: 6, direction: -1, hubScale: 0.7 },
             { mountKey: 'main', offsetX: 0, offsetY: -0.09, radius: 0.2, bladeCount: 4, bladeColor: '#2A3439', hubColor: '#000000', spinSpeed: 4, direction: 1, hubScale: 0.5 },
         ],
+
+        emission: {
+
+            // Where exhaust particles originate
+            exhaust: {
+                offsetX: 0,
+                offsetY: -0.65,
+                engineGap: 0.15,
+                nozzleOffset: 0,
+            },
+
+            // Bullet + missile muzzle
+            projectile: {
+                offsetX: 0,
+                offsetY: 0.65,
+            },
+
+            // Beam origin
+            beam: {
+                offsetX: 0,
+                offsetY: 0.65,
+            },
+
+            // Flamethrower / acid / cryo origin
+            thrower: {
+                offsetX: 0,
+                offsetY: 0.65,
+            },
+        },
+
     },
 
     {
@@ -81,11 +111,11 @@ export const BOSSES = [
             {
                 mountKey: 'nose',
                 offsetX: 0,
-                offsetY: 0.3,    
+                offsetY: 0.3,
                 radius: 0.07,
                 bladeColor: '#FFFFFF',
                 spinSpeed: 22,
-                sideways: false,    
+                sideways: false,
             },
         ],
     },

@@ -1,8 +1,9 @@
 // src/ecs/weapons/weaponSystems/bossLaserSystem.js
 
 import { world } from "../../constants/world.js"
+import { getEmissionPoint, getBossEmissionConfig } from '../../constants/emission.js'
 import { bossAIQuery, playerQuery } from "../../constants/queries.js"
-import { Position, BossAI, Health } from "../../constants/components.js"
+import { Position, Rotation, BossAI, Health } from "../../constants/components.js"
 import { getWeapon } from "../config/weapons.js"
 import { bossLaserState } from "../weaponState/bossLaserState.js"
 
@@ -63,9 +64,13 @@ export function bossLaserSystem() {
 
     const dist = Math.hypot(dx, dy)
 
+    const emission = getBossEmissionConfig(id, 'beam')
+    const point = getEmissionPoint(Position.x[id], Position.y[id], Rotation[id], emission)
+
     bossLaserState.active = true
-    bossLaserState.originX = Position.x[id]
-    bossLaserState.originY = Position.y[id]
+
+    bossLaserState.originX = point.x
+    bossLaserState.originY = point.y
 
     bossLaserState.beamCount = 1
 

@@ -30,6 +30,8 @@ import { acquireAsteroidEntity } from './pools/asteroidPool'
 import { getGunTypeById } from "./weapons/config/gunConfigs";
 import { getWeapon } from "./weapons/config/weapons";
 
+import { getBossEmissionConfig, PLAYER_CONFIG } from "./constants/emission.js"
+
 // ============= helpers ============//
 function setPosition(id, x, y) {
     addComponent(world, id, Position)
@@ -58,7 +60,7 @@ export function spawnPlayer(x, y) {
 
 // ============= Bullets ============//
 
-const MUZZLE_OFFSET = 0.4
+//const MUZZLE_OFFSET = 0.4
 export const GUN_GAP = 0.45 // distance between twin guns
 
 export function spawnBullet(x, y, rot, weaponId = 0, owner, gapOffset = 0) {
@@ -66,7 +68,16 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner, gapOffset = 0) {
     //const bullet = acquireBullet();
 
     const weapon = getWeapon(weaponId)
-    if (weapon.category === "beam" || weapon.category === "thrower") return []
+    if (weapon.category === "beam" || weapon.category === "thrower")
+        return {
+            ids: [],
+            originX: x,
+            originY: y,
+        }
+
+    const emission = owner !== undefined && BossTag?.[owner]
+        ? getBossEmissionConfig(owner, 'projectile')
+        : PLAYER_CONFIG.emission.projectile
 
     // forward direction (ship facing)
     const fwdX = Math.sin(-rot)
@@ -76,9 +87,19 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner, gapOffset = 0) {
     const perpX = Math.cos(-rot)
     const perpY = -Math.sin(-rot)
 
+    const forwardOffset = emission.offsetY ?? 0
+    const sideOffset = (emission.offsetX ?? 0) + gapOffset
+
     // push spawn point forward from ship center to the nose, then out to the gun
-    const originX = x + fwdX * MUZZLE_OFFSET + perpX * gapOffset
-    const originY = y + fwdY * MUZZLE_OFFSET + perpY * gapOffset
+    const originX =
+        x +
+        fwdX * forwardOffset +
+        perpX * sideOffset
+
+    const originY =
+        y +
+        fwdY * forwardOffset +
+        perpY * sideOffset
 
     const count = weapon.projectileCount
     const spread = weapon.spreadAngle
