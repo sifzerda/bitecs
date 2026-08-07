@@ -126,10 +126,13 @@ Inside combat.js at end of file lives = 0
 
 ## Tasks
 
-- [ ] config bullet/missile/beam emission point for bosses and player
-- [ ] config exhaust emission point for player and bosses
+PLAYER EMISSION POINTS CONFIG IN emission.js, 
+BOSS EMISSION CONFIG IN bosses.js
 
-- [ ] add irridescent cockpit glass, plus moving propellers, plus gun core glow flashing animation
+- [x] config bullet/missile/beam emission point for bosses and player
+- [x] config exhaust emission point for player and bosses
+
+- [x] add irridescent cockpit glass, plus moving propellers, plus gun core glow flashing animation
 
 - [x] fix gun rendering for bosses
 

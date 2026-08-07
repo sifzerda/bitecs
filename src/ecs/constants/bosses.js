@@ -18,6 +18,18 @@ export const BOSSES = [
             lensColor: '#CCCCFF',
         },
         propellers: [],
+
+        emission: {
+            // Where exhaust particles originate
+            exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
+            // Bullet + missile muzzle
+            projectile: { offsetX: 0, offsetY: 0.65, },
+            // Beam origin
+            beam: { offsetX: 0, offsetY: 0.65, },
+            // Flamethrower / acid / cryo origin
+            thrower: { offsetX: 0, offsetY: 0.65, },
+        },
+
     },
 
     {
@@ -38,32 +50,14 @@ export const BOSSES = [
         ],
 
         emission: {
-
             // Where exhaust particles originate
-            exhaust: {
-                offsetX: 0,
-                offsetY: -0.65,
-                engineGap: 0.15,
-                nozzleOffset: 0,
-            },
-
+            exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
             // Bullet + missile muzzle
-            projectile: {
-                offsetX: 0,
-                offsetY: 0.65,
-            },
-
+            projectile: { offsetX: 0, offsetY: 0.65, },
             // Beam origin
-            beam: {
-                offsetX: 0,
-                offsetY: 0.65,
-            },
-
+            beam: { offsetX: 0, offsetY: 0.65, },
             // Flamethrower / acid / cryo origin
-            thrower: {
-                offsetX: 0,
-                offsetY: 0.65,
-            },
+            thrower: { offsetX: 0, offsetY: 0.65, },
         },
 
     },
@@ -80,6 +74,18 @@ export const BOSSES = [
             lensColor: '#8ecbff',
         },
         propellers: [],
+
+        emission: {
+            // Where exhaust particles originate
+            exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
+            // Bullet + missile muzzle
+            projectile: { offsetX: 0, offsetY: 0.65, },
+            // Beam origin
+            beam: { offsetX: 0, offsetY: 0.65, },
+            // Flamethrower / acid / cryo origin
+            thrower: { offsetX: 0, offsetY: 0.65, },
+        },
+
     },
 
     {
@@ -94,6 +100,18 @@ export const BOSSES = [
             lensColor: '#5aa9ff',
         },
         propellers: [],
+
+        emission: {
+            // Where exhaust particles originate
+            exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
+            // Bullet + missile muzzle
+            projectile: { offsetX: 0, offsetY: 0.65, },
+            // Beam origin
+            beam: { offsetX: 0, offsetY: 0.65, },
+            // Flamethrower / acid / cryo origin
+            thrower: { offsetX: 0, offsetY: 0.65, },
+        },
+
     },
 
     {
@@ -118,6 +136,18 @@ export const BOSSES = [
                 sideways: false,
             },
         ],
+
+        emission: {
+            // Where exhaust particles originate
+            exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
+            // Bullet + missile muzzle
+            projectile: { offsetX: 0, offsetY: 0.65, },
+            // Beam origin
+            beam: { offsetX: 0, offsetY: 0.65, },
+            // Flamethrower / acid / cryo origin
+            thrower: { offsetX: 0, offsetY: 0.65, },
+        },
+
     },
 
     {
@@ -132,6 +162,18 @@ export const BOSSES = [
             lensColor: '#ff8a5a',
         },
         propellers: [],
+
+        emission: {
+            // Where exhaust particles originate
+            exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
+            // Bullet + missile muzzle
+            projectile: { offsetX: 0, offsetY: 0.65, },
+            // Beam origin
+            beam: { offsetX: 0, offsetY: 0.65, },
+            // Flamethrower / acid / cryo origin
+            thrower: { offsetX: 0, offsetY: 0.65, },
+        },
+
     },
 
     {
@@ -146,6 +188,18 @@ export const BOSSES = [
             lensColor: '#ff3355',
         },
         propellers: [],
+
+        emission: {
+            // Where exhaust particles originate
+            exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
+            // Bullet + missile muzzle
+            projectile: { offsetX: 0, offsetY: 0.65, },
+            // Beam origin
+            beam: { offsetX: 0, offsetY: 0.65, },
+            // Flamethrower / acid / cryo origin
+            thrower: { offsetX: 0, offsetY: 0.65, },
+        },
+
     },
 
     {
@@ -160,6 +214,18 @@ export const BOSSES = [
             lensColor: '#44ff88',
         },
         propellers: [],
+
+        emission: {
+            // Where exhaust particles originate
+            exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
+            // Bullet + missile muzzle
+            projectile: { offsetX: 0, offsetY: 0.65, },
+            // Beam origin
+            beam: { offsetX: 0, offsetY: 0.65, },
+            // Flamethrower / acid / cryo origin
+            thrower: { offsetX: 0, offsetY: 0.65, },
+        },
+
     },
 
     {
@@ -174,6 +240,18 @@ export const BOSSES = [
             lensColor: '#005eff',
         },
         propellers: [],
+
+        emission: {
+            // Where exhaust particles originate
+            exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
+            // Bullet + missile muzzle
+            projectile: { offsetX: 0, offsetY: 0.65, },
+            // Beam origin
+            beam: { offsetX: 0, offsetY: 0.65, },
+            // Flamethrower / acid / cryo origin
+            thrower: { offsetX: 0, offsetY: 0.65, },
+        },
+
     },
 
     {
@@ -188,6 +266,18 @@ export const BOSSES = [
             lensColor: '#e9ff5a',
         },
         propellers: [],
+
+        emission: {
+            // Where exhaust particles originate
+            exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
+            // Bullet + missile muzzle
+            projectile: { offsetX: 0, offsetY: 0.65, },
+            // Beam origin
+            beam: { offsetX: 0, offsetY: 0.65, },
+            // Flamethrower / acid / cryo origin
+            thrower: { offsetX: 0, offsetY: 0.65, },
+        },
+
     },
 
 ]
