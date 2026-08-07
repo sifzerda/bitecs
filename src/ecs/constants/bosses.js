@@ -9,15 +9,13 @@ export const BOSSES = [
     {
         key: "shotgun",
         name: "Space Cowboy",
-        gun: {
-            typeId: "01_shotgun",
-        },
+        gun: { typeId: "01_shotgun" },
         cockpitGlass: {
             offsetX: 0,
-            offsetY: 0.28,
-            width: 0.34,
-            height: 0.42,
-            lensColor: '#ff5577',
+            offsetY: 0.06,
+            width: 0.06,
+            height: 0.1,
+            lensColor: '#CCCCFF',
         },
         propellers: [],
     },
@@ -25,66 +23,30 @@ export const BOSSES = [
     {
         key: "machinegun",
         name: "Rambo The Space Copter",
-        gun: {
-            typeId: "02_machinegun",
-        },
+        gun: { typeId: "02_machinegun" },
         cockpitGlass: {
             offsetX: 0,
-            offsetY: 0.30,
-            width: 0.10,
-            height: 0.10,
-            lensColor: '#7cffb0',
+            offsetY: 0.15,
+            width: 0.09,
+            height: 0.13,
+            lensColor: '#4169E1',
         },
-        // Helicopter-flavored boss — two wing-mounted rotors + one main
-        // rotor up top, matching the "Space Copter" theme.
         propellers: [
-            {
-                mountKey: 'left',
-                offsetX: -0.45,
-                offsetY: -0.55,
-                radius: 0.22,
-                bladeCount: 3,
-                bladeColor: '#454B1B',
-                hubColor: '#111111',
-                spinSpeed: 14,
-                direction: 1,
-            },
-            {
-                mountKey: 'right',
-                offsetX: 0.45,
-                offsetY: -0.55,
-                radius: 0.22,
-                bladeCount: 3,
-                bladeColor: '#454B1B',
-                hubColor: '#111111',
-                spinSpeed: 14,
-                direction: -1,
-            },
-            {
-                mountKey: 'main-rotor',
-                offsetX: 0,
-                offsetY: 0.65,
-                radius: 0.34,
-                bladeCount: 4,
-                bladeColor: '#454B1B',
-                hubColor: '#000000',
-                spinSpeed: 9,
-                direction: 1,
-            },
+            { mountKey: 'left', offsetX: 0.08, offsetY: -0.653, radius: 0.03, bladeCount: 3, bladeColor: '#2A3439', hubColor: '#000000', spinSpeed: 6, direction: 1, hubScale: 0.5 },
+            { mountKey: 'right', offsetX: -0.08, offsetY: -0.653, radius: 0.03, bladeCount: 3, bladeColor: '#2A3439', hubColor: '#000000', spinSpeed: 6, direction: -1, hubScale: 0.5 },
+            { mountKey: 'main', offsetX: 0, offsetY: -0.09, radius: 0.2, bladeCount: 4, bladeColor: '#2A3439', hubColor: '#000000', spinSpeed: 4, direction: 1, hubScale: 0.5 },
         ],
     },
 
     {
         key: "cryogun",
         name: "The Flying Refrigerator",
-        gun: {
-            typeId: "03_cryogun",
-        },
+        gun: { typeId: "03_cryogun" },
         cockpitGlass: {
             offsetX: 0,
-            offsetY: 0.25,
-            width: 0.36,
-            height: 0.44,
+            offsetY: 0.14,
+            width: 0.11,
+            height: 0.1,
             lensColor: '#8ecbff',
         },
         propellers: [],
@@ -93,14 +55,12 @@ export const BOSSES = [
     {
         key: "grenadegun",
         name: "War Machine",
-        gun: {
-            typeId: "04_grenadelauncher",
-        },
+        gun: { typeId: "04_grenadelauncher" },
         cockpitGlass: {
             offsetX: 0,
-            offsetY: 0.30,
-            width: 0.30,
-            height: 0.38,
+            offsetY: 0.55,
+            width: 0.06,
+            height: 0.13,
             lensColor: '#5aa9ff',
         },
         propellers: [],
@@ -109,40 +69,36 @@ export const BOSSES = [
     {
         key: "acidthrowergun",
         name: "Space Tractor",
-        gun: {
-            typeId: "05_acidthrower",
-        },
+        gun: { typeId: "05_acidthrower" },
         cockpitGlass: {
             offsetX: 0,
-            offsetY: 0.26,
-            width: 0.32,
-            height: 0.40,
-            lensColor: '#c6ff4d',
+            offsetY: 0.1,
+            width: 0.05,
+            height: 0.06,
+            lensColor: '#5aa9ff',
         },
         propellers: [
-    {
-        mountKey: 'nose',
-        offsetX: 0,
-        offsetY: 0.42,      // toward the ship's nose (positive = forward, per our y-flip convention)
-        radius: 0.16,
-        bladeColor: '#dfff00',
-        spinSpeed: 22,
-        sideways: true,     // nose-mounted — renders as a blur streak, not a blade fan
-    },
-],
+            {
+                mountKey: 'nose',
+                offsetX: 0,
+                offsetY: 0.3,    
+                radius: 0.07,
+                bladeColor: '#FFFFFF',
+                spinSpeed: 22,
+                sideways: false,    
+            },
+        ],
     },
 
     {
         key: "missilegun",
         name: "Rogue Mars Missiler",
-        gun: {
-            typeId: "06_missilelauncher",
-        },
+        gun: { typeId: "06_missilelauncher" },
         cockpitGlass: {
             offsetX: 0,
-            offsetY: 0.32,
-            width: 0.30,
-            height: 0.38,
+            offsetY: 0.1,
+            width: 0.06,
+            height: 0.09,
             lensColor: '#ff8a5a',
         },
         propellers: [],
@@ -151,15 +107,13 @@ export const BOSSES = [
     {
         key: "flamethrowergun",
         name: "X-10 Space Dragon",
-        gun: {
-            typeId: "07_flamethrower",
-        },
+        gun: { typeId: "07_flamethrower" },
         cockpitGlass: {
             offsetX: 0,
-            offsetY: 0.28,
-            width: 0.32,
-            height: 0.40,
-            lensColor: '#ff5a1a',
+            offsetY: 0.04,
+            width: 0.07,
+            height: 0.13,
+            lensColor: '#ff3355',
         },
         propellers: [],
     },
@@ -167,14 +121,12 @@ export const BOSSES = [
     {
         key: "lasergun",
         name: "UFO",
-        gun: {
-            typeId: "08_lasergun",
-        },
+        gun: { typeId: "08_lasergun" },
         cockpitGlass: {
             offsetX: 0,
             offsetY: -0.05,
-            width: 0.40,
-            height: 0.34,
+            width: 0.13,
+            height: 0.14,
             lensColor: '#44ff88',
         },
         propellers: [],
@@ -183,15 +135,13 @@ export const BOSSES = [
     {
         key: "arcgun",
         name: "Electric SpaceProbe",
-        gun: {
-            typeId: "09_arcgun",
-        },
+        gun: { typeId: "09_arcgun" },
         cockpitGlass: {
             offsetX: 0,
-            offsetY: -0.10,
-            width: 0.34,
-            height: 0.36,
-            lensColor: '#7fe0ff',
+            offsetY: -0.03,
+            width: 0.06,
+            height: 0.1,
+            lensColor: '#005eff',
         },
         propellers: [],
     },
@@ -199,14 +149,12 @@ export const BOSSES = [
     {
         key: "plasmagun",
         name: "Starscream",
-        gun: {
-            typeId: "10_plasmagun",
-        },
+        gun: { typeId: "10_plasmagun" },
         cockpitGlass: {
             offsetX: 0,
-            offsetY: 0.20,
-            width: 0.32,
-            height: 0.40,
+            offsetY: 0.05,
+            width: 0.08,
+            height: 0.10,
             lensColor: '#e9ff5a',
         },
         propellers: [],

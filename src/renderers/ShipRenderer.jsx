@@ -92,29 +92,285 @@ const GLASS_VERTEX_SHADER = /* glsl */ `
 const GLASS_FRAGMENT_SHADER = /* glsl */ `
     uniform float uTime;
     uniform vec3 uLensColor;
+
     varying vec2 vUv;
 
     void main() {
+
+        // ---------------------------------------------------------
+        // COCKPIT GLASS SHAPE
+        // ---------------------------------------------------------
+
         vec2 c = vUv - 0.5;
-        float dist = length(c) * 2.0;
 
-        float mask = smoothstep(1.0, 0.35, dist);
-        if (mask <= 0.001) discard;
+        // Slightly elongated oval
+        float dist = length(vec2(c.x * 1.05, c.y * 1.12));
 
-        float rim = pow(clamp(dist, 0.0, 1.0), 2.0);
+        float glassMask = smoothstep(0.52, 0.43, dist);
 
-        float hueShift = 0.5 + 0.5 * sin(uTime * 0.6 + dist * 3.0 + c.x * 2.0);
-        vec3 shiftA = vec3(0.10, 0.85, 0.65); // teal
-        vec3 shiftB = vec3(0.55, 0.15, 1.00); // violet
-        vec3 iridescent = mix(shiftA, shiftB, hueShift);
+        if (glassMask <= 0.001)
+            discard;
 
-        vec3 color = mix(uLensColor, iridescent, 0.35 + 0.35 * rim);
 
-        float streak = smoothstep(0.06, 0.0, abs(c.x + c.y - sin(uTime * 1.3) * 0.6));
-        color += streak * 0.5;
+        // ---------------------------------------------------------
+        // FAKE CURVED SURFACE NORMAL
+        // Gives the flat plane a glass-like Fresnel response
+        // ---------------------------------------------------------
 
-        float alpha = mask * 0.82;
-        gl_FragColor = vec4(color, alpha);
+        vec2 normalXY = c * 2.0;
+
+        float radial = dot(normalXY, normalXY);
+
+        float normalZ = sqrt(
+            max(0.001, 1.0 - min(radial, 0.96))
+        );
+
+        vec3 normal = normalize(
+            vec3(normalXY.x, normalXY.y, normalZ)
+        );
+
+        vec3 viewDir = vec3(0.0, 0.0, 1.0);
+
+        float fresnel = pow(
+            1.0 - max(dot(normal, viewDir), 0.0),
+            3.2
+        );
+
+        fresnel = smoothstep(0.05, 0.95, fresnel);
+
+
+        // ---------------------------------------------------------
+        // IRIDESCENT COATING
+        // ---------------------------------------------------------
+
+        float angle =
+            atan(c.y, c.x);
+
+        float rainbow =
+            sin(
+                dist * 10.0
+                - uTime * 0.35
+                + angle * 1.8
+            );
+
+        rainbow = rainbow * 0.5 + 0.5;
+
+
+        vec3 cyan = vec3(
+            0.00,
+            0.95,
+            1.00
+        );
+
+        vec3 blue = vec3(
+            0.05,
+            0.30,
+            1.00
+        );
+
+        vec3 violet = vec3(
+            0.45,
+            0.08,
+            1.00
+        );
+
+        vec3 magenta = vec3(
+            1.00,
+            0.08,
+            0.65
+        );
+
+
+        vec3 iridescent;
+
+        if (rainbow < 0.33) {
+
+            iridescent = mix(
+                cyan,
+                blue,
+                rainbow / 0.33
+            );
+
+        } else if (rainbow < 0.66) {
+
+            iridescent = mix(
+                blue,
+                violet,
+                (rainbow - 0.33) / 0.33
+            );
+
+        } else {
+
+            iridescent = mix(
+                violet,
+                magenta,
+                (rainbow - 0.66) / 0.34
+            );
+        }
+
+
+        // ---------------------------------------------------------
+        // EDGE COATING
+        // ---------------------------------------------------------
+
+        float edgeColorStrength =
+            0.25 + fresnel * 0.95;
+
+        vec3 edgeColor =
+            mix(
+                uLensColor,
+                iridescent,
+                edgeColorStrength
+            );
+
+
+        // ---------------------------------------------------------
+        // MOVING SPECULAR REFLECTION
+        // ---------------------------------------------------------
+
+        float reflectionAngle =
+            c.x * 2.4
+            + c.y * 1.15
+            + sin(uTime * 0.55) * 1.5;
+
+
+        float reflectionBand =
+            exp(
+                -pow(
+                    reflectionAngle * 3.0,
+                    2.0
+                )
+            );
+
+
+        // Thin secondary reflection
+        float reflectionBand2 =
+            exp(
+                -pow(
+                    (
+                        c.x * 3.0
+                        - c.y * 1.4
+                        - sin(uTime * 0.8) * 1.8
+                    ) * 5.0,
+                    2.0
+                )
+            );
+
+
+        // ---------------------------------------------------------
+        // BROAD GLASS HIGHLIGHT
+        // ---------------------------------------------------------
+
+        float broadHighlight =
+            smoothstep(
+                0.55,
+                0.0,
+                abs(
+                    c.x
+                    + c.y * 0.65
+                    + sin(uTime * 0.35) * 0.25
+                )
+            );
+
+        broadHighlight *= 0.18;
+
+
+        // ---------------------------------------------------------
+        // CENTRAL GLASS TINT
+        // Keep the cockpit visible underneath
+        // ---------------------------------------------------------
+
+        vec3 baseGlass =
+            mix(
+                uLensColor * 0.12,
+                vec3(0.015, 0.08, 0.13),
+                0.72
+            );
+
+
+        // Slight blue atmospheric tint
+        baseGlass += vec3(
+            0.00,
+            0.025,
+            0.045
+        );
+
+
+        // ---------------------------------------------------------
+        // COMBINE REFLECTIONS
+        // ---------------------------------------------------------
+
+        vec3 color = baseGlass;
+
+        // Iridescent coating mostly toward the edges
+        color = mix(
+            color,
+            edgeColor,
+            fresnel * 0.72
+        );
+
+        // Main reflected streak
+        color +=
+            iridescent
+            * reflectionBand
+            * 0.65;
+
+        // Secondary sharp reflection
+        color +=
+            vec3(0.65, 0.90, 1.0)
+            * reflectionBand2
+            * 0.42;
+
+        // Soft white/cyan reflection
+        color +=
+            vec3(0.55, 0.95, 1.0)
+            * broadHighlight;
+
+
+        // ---------------------------------------------------------
+        // THIN EDGE LIGHT
+        // ---------------------------------------------------------
+
+        float rim =
+            smoothstep(
+                0.34,
+                0.50,
+                dist
+            );
+
+        color +=
+            iridescent
+            * rim
+            * 0.75;
+
+
+        // ---------------------------------------------------------
+        // GLASS DEPTH / TRANSPARENCY
+        // ---------------------------------------------------------
+
+        float centerTransparency =
+            0.34;
+
+        float edgeOpacity =
+            fresnel * 0.52;
+
+        float reflectionOpacity =
+            reflectionBand * 0.20
+            + reflectionBand2 * 0.14;
+
+        float alpha =
+            glassMask
+            * (
+                centerTransparency
+                + edgeOpacity
+                + reflectionOpacity
+            );
+
+        alpha = clamp(alpha, 0.0, 0.82);
+
+
+        gl_FragColor =
+            vec4(color, alpha);
     }
 `
 
@@ -156,6 +412,8 @@ function CockpitGlassOverlay({ cfg, shipSize }) {
                 uniforms={uniforms.current}
                 transparent
                 depthTest={false}
+                depthWrite={false}
+                blending={THREE.AdditiveBlending}
                 side={THREE.DoubleSide}
                 toneMapped={false}
             />
@@ -168,10 +426,10 @@ function CockpitGlassOverlay({ cfg, shipSize }) {
    ============================================================
 */
 
-function buildPropellerBladeShape(radius, bladeWidth) {
+function buildPropellerBladeShape(radius, bladeWidth, hubScale = 1) {
     const shape = new THREE.Shape()
-    const hubR = radius * 0.18
-    const halfW = bladeWidth / 2
+    const hubR = radius * 0.18 * hubScale
+    const halfW = bladeWidth / 3.5
 
     shape.moveTo(-halfW * 0.4, hubR)
     shape.quadraticCurveTo(-halfW, hubR + radius * 0.35, -halfW * 0.55, hubR + radius * 0.85)
@@ -182,9 +440,9 @@ function buildPropellerBladeShape(radius, bladeWidth) {
     return shape
 }
 
-function buildHubShape(radius) {
+function buildHubShape(radius, hubScale = 1) {
     const shape = new THREE.Shape()
-    shape.absarc(0, 0, radius * 0.18, 0, Math.PI * 2, false)
+    shape.absarc(0, 0, radius * 0.18 * hubScale, 0, Math.PI * 2, false)
     return shape
 }
 
@@ -196,18 +454,19 @@ function PropellerFan({ mount, shipSize }) {
     const bladeColor = mount.bladeColor ?? '#5f5f5f'
     const hubColor = mount.hubColor ?? '#111111'
     const spinSpeed = (mount.spinSpeed ?? 10) * (mount.direction ?? 1)
+    const hubScale = mount.hubScale ?? 1
 
     const worldRadius = radius * shipSize
     const offsetX = (mount.offsetX ?? 0) * (shipSize / 2)
     const offsetY = (mount.offsetY ?? 0) * (shipSize / 2)
 
     const bladeGeometry = useMemo(
-        () => new THREE.ShapeGeometry(buildPropellerBladeShape(worldRadius, worldRadius * 0.32)),
-        [worldRadius]
+        () => new THREE.ShapeGeometry(buildPropellerBladeShape(worldRadius, worldRadius * 0.32, hubScale)),
+        [worldRadius, hubScale]
     )
     const hubGeometry = useMemo(
-        () => new THREE.ShapeGeometry(buildHubShape(worldRadius)),
-        [worldRadius]
+        () => new THREE.ShapeGeometry(buildHubShape(worldRadius, hubScale)),
+        [worldRadius, hubScale]
     )
 
     const bladeAngles = useMemo(
@@ -266,16 +525,12 @@ const PROP_BLUR_FRAGMENT_SHADER = /* glsl */ `
     void main() {
         vec2 c = vUv - 0.5;
 
-        // narrow vertical ellipse — the foreshortened silhouette of a
-        // disc spinning on an axis pointing toward/away from the viewer
         float d = length(vec2(c.x * 3.4, c.y * 1.05));
         float mask = smoothstep(1.0, 0.55, d);
         if (mask <= 0.001) discard;
 
-        // fast flicker reads as motion-blur rather than a static shape
         float flicker = 0.55 + 0.45 * sin(uTime * uSpeed * 6.0);
 
-        // bright hub at the mount point
         float hub = smoothstep(0.20, 0.0, length(c));
 
         vec3 color = uColor + hub * 0.6;

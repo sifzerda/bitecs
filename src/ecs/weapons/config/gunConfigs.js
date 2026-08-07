@@ -69,7 +69,7 @@ const RAW_TYPES = [
         weaponId: WEAPON_BY_NAME.machinegun.id,
         svg: "/gun_svgs/02_machinegun.svg",
         overrides: {
-            mount: { width: 1.5, height: 0.6, offsetX: 0.48, offsetY: -0.03 },
+            mount: { width: 1.5, height: 0.6, offsetX: 0.48, offsetY: 0.13 },
             coreGlow: { color: '#ff3355', size: 0.1, intensity: 0.2, offsetX: 0, offsetY: 1 },
         },
     },
