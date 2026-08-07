@@ -49,8 +49,20 @@ const RAW_TYPES = [
         weaponId: WEAPON_BY_NAME.raygun.id,
         svg: "/gun_svgs/00_raygun.svg",
         overrides: {
-            mount: { width: 1.4, height: 0.6, offsetX: 0.5, offsetY: 0.1 },
-            coreGlow: { color: '#00e5ff', size: 0.1, intensity: 0.8, offsetX: 0, offsetY: 0.8 },
+            mount: {
+                width: 1.4,
+                height: 0.6,
+                offsetX: 0.5,
+                offsetY: 0.1,
+            },
+
+            coreGlow: {
+                color: '#00e5ff',
+                size: 0.1,
+                intensity: 0.8,
+                offsetX: 0,
+                offsetY: 0.8,
+            },
         },
     },
     {

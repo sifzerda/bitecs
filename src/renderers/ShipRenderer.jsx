@@ -34,9 +34,17 @@ const FALLBACK_BOSS_SVG = BOSS_SVG_BY_KEY.shotgun
 const PLAYER_COCKPIT_GLASS_CFG = {
     offsetX: 0,
     offsetY: 0.137,
-    width: 0.05,
-    height: 0.09,
+
+    // Overall canopy size
+    width: 0.065,
+    height: 0.10,
+
+    // Glass
     lensColor: '#00eaff',
+
+    // Structural canopy frame
+    frameColor: '#07131c',
+    edgeThickness: 0.075,
 }
 
 /* ============================================================
@@ -92,319 +100,569 @@ const GLASS_VERTEX_SHADER = /* glsl */ `
 const GLASS_FRAGMENT_SHADER = /* glsl */ `
     uniform float uTime;
     uniform vec3 uLensColor;
+    uniform vec3 uFrameColor;
+    uniform float uEdgeThickness;
 
     varying vec2 vUv;
 
+
+    // ============================================================
+    // DISTANCE TO LINE SEGMENT
+    // ============================================================
+
+    float sdSegment(vec2 p, vec2 a, vec2 b) {
+
+        vec2 pa = p - a;
+        vec2 ba = b - a;
+
+        float h =
+            clamp(
+                dot(pa, ba) / dot(ba, ba),
+                0.0,
+                1.0
+            );
+
+        return length(pa - ba * h);
+    }
+
+
+    // ============================================================
+    // DISTANCE TO CONVEX CANOPY EDGES
+    //
+    // Shape:
+    //
+    //              ┌────────┐
+    //             /          \\
+    //            /            \\
+    //           /              \\
+    //          │                │
+    //          │                │
+    //          │                │
+    //           \\              /
+    //            \\            /
+    //             └──────────┘
+    //
+    // ============================================================
+
+    float canopyOutside(vec2 p) {
+
+        // --------------------------------------------------------
+        // OUTER CANOPY VERTICES
+        // --------------------------------------------------------
+
+        vec2 topLeft =
+            vec2(-0.28, 1.00);
+
+        vec2 topRight =
+            vec2(0.28, 1.00);
+
+        vec2 upperRight =
+            vec2(0.48, 0.50);
+
+        vec2 lowerRight =
+            vec2(0.40, -0.82);
+
+        vec2 bottomRight =
+            vec2(0.25, -1.00);
+
+        vec2 bottomLeft =
+            vec2(-0.25, -1.00);
+
+        vec2 lowerLeft =
+            vec2(-0.40, -0.82);
+
+        vec2 upperLeft =
+            vec2(-0.48, 0.50);
+
+
+        // --------------------------------------------------------
+        // CONVEX POLYGON HALF PLANES
+        // --------------------------------------------------------
+
+        float e0 =
+            cross(
+                vec3(topRight - topLeft, 0.0),
+                vec3(p - topLeft, 0.0)
+            ).z;
+
+        float e1 =
+            cross(
+                vec3(upperRight - topRight, 0.0),
+                vec3(p - topRight, 0.0)
+            ).z;
+
+        float e2 =
+            cross(
+                vec3(lowerRight - upperRight, 0.0),
+                vec3(p - upperRight, 0.0)
+            ).z;
+
+        float e3 =
+            cross(
+                vec3(bottomRight - lowerRight, 0.0),
+                vec3(p - lowerRight, 0.0)
+            ).z;
+
+        float e4 =
+            cross(
+                vec3(bottomLeft - bottomRight, 0.0),
+                vec3(p - bottomRight, 0.0)
+            ).z;
+
+        float e5 =
+            cross(
+                vec3(lowerLeft - bottomLeft, 0.0),
+                vec3(p - bottomLeft, 0.0)
+            ).z;
+
+        float e6 =
+            cross(
+                vec3(upperLeft - lowerLeft, 0.0),
+                vec3(p - lowerLeft, 0.0)
+            ).z;
+
+        float e7 =
+            cross(
+                vec3(topLeft - upperLeft, 0.0),
+                vec3(p - upperLeft, 0.0)
+            ).z;
+
+
+        // Shape is clockwise, so interior is negative
+        float outside =
+            max(
+                max(e0, e1),
+                max(
+                    max(e2, e3),
+                    max(
+                        max(e4, e5),
+                        max(e6, e7)
+                    )
+                )
+            );
+
+        return outside;
+    }
+
+
+    // ============================================================
+    // MAIN
+    // ============================================================
+
     void main() {
 
-        // ---------------------------------------------------------
-        // COCKPIT GLASS SHAPE
-        // ---------------------------------------------------------
+        // --------------------------------------------------------
+        // UV → CANOPY SPACE
+        // --------------------------------------------------------
 
-        vec2 c = vUv - 0.5;
+        vec2 p = vUv - 0.5;
 
-        // Slightly elongated oval
-        float dist = length(vec2(c.x * 1.05, c.y * 1.12));
+        // Preserve canopy proportions
+        p.x *= 2.0;
 
-        float glassMask = smoothstep(0.52, 0.43, dist);
 
-        if (glassMask <= 0.001)
+        // --------------------------------------------------------
+        // OUTER SHAPE
+        // --------------------------------------------------------
+
+        float outside =
+            canopyOutside(p);
+
+        float insideMask =
+            1.0 -
+            smoothstep(
+                0.0,
+                0.018,
+                outside
+            );
+
+        if (insideMask <= 0.001)
             discard;
 
 
-        // ---------------------------------------------------------
-        // FAKE CURVED SURFACE NORMAL
-        // Gives the flat plane a glass-like Fresnel response
-        // ---------------------------------------------------------
+        // --------------------------------------------------------
+        // PANEL VERTICES
+        // --------------------------------------------------------
 
-        vec2 normalXY = c * 2.0;
+        vec2 topLeft =
+            vec2(-0.28, 1.00);
 
-        float radial = dot(normalXY, normalXY);
+        vec2 topRight =
+            vec2(0.28, 1.00);
 
-        float normalZ = sqrt(
-            max(0.001, 1.0 - min(radial, 0.96))
-        );
+        vec2 upperRight =
+            vec2(0.48, 0.50);
 
-        vec3 normal = normalize(
-            vec3(normalXY.x, normalXY.y, normalZ)
-        );
+        vec2 lowerRight =
+            vec2(0.40, -0.82);
 
-        vec3 viewDir = vec3(0.0, 0.0, 1.0);
+        vec2 bottomRight =
+            vec2(0.25, -1.00);
 
-        float fresnel = pow(
-            1.0 - max(dot(normal, viewDir), 0.0),
-            3.2
-        );
+        vec2 bottomLeft =
+            vec2(-0.25, -1.00);
 
-        fresnel = smoothstep(0.05, 0.95, fresnel);
+        vec2 lowerLeft =
+            vec2(-0.40, -0.82);
+
+        vec2 upperLeft =
+            vec2(-0.48, 0.50);
 
 
-        // ---------------------------------------------------------
-        // IRIDESCENT COATING
-        // ---------------------------------------------------------
+        // --------------------------------------------------------
+        // PANEL DIVIDERS
+        // --------------------------------------------------------
 
-        float angle =
-            atan(c.y, c.x);
+        // Top panel / main cockpit boundary
+        vec2 topPanelLeft =
+            vec2(-0.28, 0.50);
 
-        float rainbow =
-            sin(
-                dist * 10.0
-                - uTime * 0.35
-                + angle * 1.8
+        vec2 topPanelRight =
+            vec2(0.28, 0.50);
+
+
+        // Left central panel boundary
+        vec2 centerLeftBottom =
+            vec2(-0.25, -0.82);
+
+        // Right central panel boundary
+        vec2 centerRightBottom =
+            vec2(0.25, -0.82);
+
+
+        // Bottom panel boundary
+        vec2 bottomPanelLeft =
+            vec2(-0.25, -0.82);
+
+        vec2 bottomPanelRight =
+            vec2(0.25, -0.82);
+
+
+        // --------------------------------------------------------
+        // FRAME DISTANCES
+        // --------------------------------------------------------
+
+        // Outer frame
+        float frameTop =
+            sdSegment(
+                p,
+                topLeft,
+                topRight
             );
+
+        float frameUpperRight =
+            sdSegment(
+                p,
+                topRight,
+                upperRight
+            );
+
+        float frameRight =
+            sdSegment(
+                p,
+                upperRight,
+                lowerRight
+            );
+
+        float frameBottomRight =
+            sdSegment(
+                p,
+                lowerRight,
+                bottomRight
+            );
+
+        float frameBottom =
+            sdSegment(
+                p,
+                bottomRight,
+                bottomLeft
+            );
+
+        float frameBottomLeft =
+            sdSegment(
+                p,
+                bottomLeft,
+                lowerLeft
+            );
+
+        float frameLeft =
+            sdSegment(
+                p,
+                lowerLeft,
+                upperLeft
+            );
+
+        float frameUpperLeft =
+            sdSegment(
+                p,
+                upperLeft,
+                topLeft
+            );
+
+
+        // --------------------------------------------------------
+        // INTERNAL PANEL FRAMES
+        // --------------------------------------------------------
+
+        // Horizontal line below top panel
+        float dividerTop =
+            sdSegment(
+                p,
+                topPanelLeft,
+                topPanelRight
+            );
+
+
+        // Left vertical-ish structural frame
+        float dividerLeft =
+            sdSegment(
+                p,
+                topPanelLeft,
+                centerLeftBottom
+            );
+
+
+        // Right vertical-ish structural frame
+        float dividerRight =
+            sdSegment(
+                p,
+                topPanelRight,
+                centerRightBottom
+            );
+
+
+        // Bottom panel top edge
+        float dividerBottom =
+            sdSegment(
+                p,
+                bottomPanelLeft,
+                bottomPanelRight
+            );
+
+
+        // --------------------------------------------------------
+        // FIND CLOSEST FRAME
+        // --------------------------------------------------------
+
+        float frameDistance =
+            min(
+                min(
+                    min(frameTop, frameUpperRight),
+                    min(frameRight, frameBottomRight)
+                ),
+                min(
+                    min(
+                        min(frameBottom, frameBottomLeft),
+                        min(frameLeft, frameUpperLeft)
+                    ),
+                    min(
+                        min(dividerTop, dividerLeft),
+                        min(dividerRight, dividerBottom)
+                    )
+                )
+            );
+
+
+        // --------------------------------------------------------
+        // FRAME MASK
+        // --------------------------------------------------------
+
+        float frameMask =
+            1.0 -
+            smoothstep(
+                0.0,
+                uEdgeThickness,
+                frameDistance
+            );
+
+
+        // --------------------------------------------------------
+        // FAKE CURVED GLASS NORMAL
+        // --------------------------------------------------------
+
+        vec2 normalXY =
+            p * 1.55;
+
+        float radial =
+            dot(normalXY, normalXY);
+
+        float normalZ =
+            sqrt(
+                max(
+                    0.001,
+                    1.0 - min(radial, 0.90)
+                )
+            );
+
+        vec3 normal =
+            normalize(
+                vec3(
+                    normalXY.x,
+                    normalXY.y,
+                    normalZ
+                )
+            );
+
+        vec3 viewDir =
+            vec3(0.0, 0.0, 1.0);
+
+
+        // --------------------------------------------------------
+        // FRESNEL REFLECTION
+        // --------------------------------------------------------
+
+        float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 3.0);
+        fresnel = smoothstep(0.02, 0.95, fresnel);
+
+        // --------------------------------------------------------
+        // IRIDESCENT COATING
+        // --------------------------------------------------------
+
+        float angle = atan(p.y, p.x);
+        float rainbow = sin(p.x * 5.0 + p.y * 7.0 + angle * 1.5 - uTime * 0.35);
 
         rainbow = rainbow * 0.5 + 0.5;
 
-
-        vec3 cyan = vec3(
-            0.00,
-            0.95,
-            1.00
-        );
-
-        vec3 blue = vec3(
-            0.05,
-            0.30,
-            1.00
-        );
-
-        vec3 violet = vec3(
-            0.45,
-            0.08,
-            1.00
-        );
-
-        vec3 magenta = vec3(
-            1.00,
-            0.08,
-            0.65
-        );
-
+        vec3 cyan = vec3(0.00, 0.90, 1.00);
+        vec3 blue = vec3(0.04, 0.30, 1.00);
+        vec3 violet = vec3(0.45, 0.08, 1.00);
+        vec3 magenta = vec3(1.00, 0.06, 0.55);
 
         vec3 iridescent;
 
         if (rainbow < 0.33) {
 
-            iridescent = mix(
-                cyan,
-                blue,
-                rainbow / 0.33
-            );
+            iridescent = mix(cyan, blue, rainbow / 0.33);
 
         } else if (rainbow < 0.66) {
 
-            iridescent = mix(
-                blue,
-                violet,
-                (rainbow - 0.33) / 0.33
-            );
+            iridescent = mix(blue, violet, (rainbow - 0.33) / 0.33);
 
         } else {
-
-            iridescent = mix(
-                violet,
-                magenta,
-                (rainbow - 0.66) / 0.34
-            );
+            iridescent = mix(violet, magenta, (rainbow - 0.66) / 0.34);
         }
 
+        // --------------------------------------------------------
+        // DARK GLASS BASE
+        // --------------------------------------------------------
 
-        // ---------------------------------------------------------
-        // EDGE COATING
-        // ---------------------------------------------------------
+        vec3 glassColor = vec3(0.008, 0.035, 0.055);
+        glassColor = mix(glassColor, uLensColor * 0.35, 0.18);
 
-        float edgeColorStrength =
-            0.25 + fresnel * 0.95;
+        // --------------------------------------------------------
+        // FRESNEL IRIDESCENCE
+        // --------------------------------------------------------
 
-        vec3 edgeColor =
-            mix(
-                uLensColor,
-                iridescent,
-                edgeColorStrength
-            );
+        glassColor = mix(glassColor, iridescent, fresnel * 0.72);
 
+        // --------------------------------------------------------
+        // SWEEPING REFLECTION
+        // --------------------------------------------------------
 
-        // ---------------------------------------------------------
-        // MOVING SPECULAR REFLECTION
-        // ---------------------------------------------------------
+        float sweep = p.x * 1.1 + p.y * 0.70 - sin(uTime * 0.38) * 0.9;
+        float sweepBand = exp(-pow(sweep * 5.0, 2.0));
+        float sweepGlow = exp(-pow(sweep * 1.7, 2.0));
+        vec3 reflectionColor = vec3(0.65, 0.92, 1.00);
+        glassColor += reflectionColor * sweepBand * 0.95;
+        glassColor += reflectionColor * sweepGlow * 0.10;
 
-        float reflectionAngle =
-            c.x * 2.4
-            + c.y * 1.15
-            + sin(uTime * 0.55) * 1.5;
+        // --------------------------------------------------------
+        // SECONDARY RAINBOW REFLECTION
+        // --------------------------------------------------------
 
+        float secondary = p.x * 2.5 - p.y * 1.1 + sin(uTime * 0.55) * 1.3;
+        float secondaryBand = exp(-pow(secondary * 6.0, 2.0));
+        glassColor += iridescent * secondaryBand * 0.38;
 
-        float reflectionBand =
-            exp(
-                -pow(
-                    reflectionAngle * 3.0,
-                    2.0
-                )
-            );
+        // --------------------------------------------------------
+        // EDGE GLOW
+        // --------------------------------------------------------
 
+        float outerRim = smoothstep(0.065, 0.0, abs(outside));
+        glassColor += iridescent * outerRim * 0.35;
 
-        // Thin secondary reflection
-        float reflectionBand2 =
-            exp(
-                -pow(
-                    (
-                        c.x * 3.0
-                        - c.y * 1.4
-                        - sin(uTime * 0.8) * 1.8
-                    ) * 5.0,
-                    2.0
-                )
-            );
+        // --------------------------------------------------------
+        // FRAME
+        // --------------------------------------------------------
 
+        vec3 frame = uFrameColor;
+        frame += iridescent * fresnel * 0.12;
+        glassColor = mix(glassColor, frame, frameMask);
 
-        // ---------------------------------------------------------
-        // BROAD GLASS HIGHLIGHT
-        // ---------------------------------------------------------
+        // --------------------------------------------------------
+        // GLASS OPACITY
+        // --------------------------------------------------------
 
-        float broadHighlight =
-            smoothstep(
-                0.55,
-                0.0,
-                abs(
-                    c.x
-                    + c.y * 0.65
-                    + sin(uTime * 0.35) * 0.25
-                )
-            );
+        float glassAlpha = 0.38 + fresnel * 0.35 + sweepBand * 0.18;
+        float alpha = mix(glassAlpha, 0.96, frameMask);
+        alpha *= insideMask;
+        alpha = clamp(alpha, 0.0, 0.96);
 
-        broadHighlight *= 0.18;
-
-
-        // ---------------------------------------------------------
-        // CENTRAL GLASS TINT
-        // Keep the cockpit visible underneath
-        // ---------------------------------------------------------
-
-        vec3 baseGlass =
-            mix(
-                uLensColor * 0.12,
-                vec3(0.015, 0.08, 0.13),
-                0.72
-            );
-
-
-        // Slight blue atmospheric tint
-        baseGlass += vec3(
-            0.00,
-            0.025,
-            0.045
-        );
-
-
-        // ---------------------------------------------------------
-        // COMBINE REFLECTIONS
-        // ---------------------------------------------------------
-
-        vec3 color = baseGlass;
-
-        // Iridescent coating mostly toward the edges
-        color = mix(
-            color,
-            edgeColor,
-            fresnel * 0.72
-        );
-
-        // Main reflected streak
-        color +=
-            iridescent
-            * reflectionBand
-            * 0.65;
-
-        // Secondary sharp reflection
-        color +=
-            vec3(0.65, 0.90, 1.0)
-            * reflectionBand2
-            * 0.42;
-
-        // Soft white/cyan reflection
-        color +=
-            vec3(0.55, 0.95, 1.0)
-            * broadHighlight;
-
-
-        // ---------------------------------------------------------
-        // THIN EDGE LIGHT
-        // ---------------------------------------------------------
-
-        float rim =
-            smoothstep(
-                0.34,
-                0.50,
-                dist
-            );
-
-        color +=
-            iridescent
-            * rim
-            * 0.75;
-
-
-        // ---------------------------------------------------------
-        // GLASS DEPTH / TRANSPARENCY
-        // ---------------------------------------------------------
-
-        float centerTransparency =
-            0.34;
-
-        float edgeOpacity =
-            fresnel * 0.52;
-
-        float reflectionOpacity =
-            reflectionBand * 0.20
-            + reflectionBand2 * 0.14;
-
-        float alpha =
-            glassMask
-            * (
-                centerTransparency
-                + edgeOpacity
-                + reflectionOpacity
-            );
-
-        alpha = clamp(alpha, 0.0, 0.82);
-
-
-        gl_FragColor =
-            vec4(color, alpha);
+        gl_FragColor = vec4(glassColor, alpha);
     }
 `
 
 function CockpitGlassOverlay({ cfg, shipSize }) {
+
     const materialRef = useRef(null)
 
     const uniforms = useRef({
         uTime: { value: 0 },
-        uLensColor: { value: new THREE.Color(cfg?.lensColor ?? '#00eaff') },
+
+        uLensColor: {
+            value: new THREE.Color(cfg?.lensColor ?? '#00eaff')
+        },
+
+        uFrameColor: {
+            value: new THREE.Color(cfg?.frameColor ?? '#07131c')
+        },
+
+        uEdgeThickness: {
+            value: cfg?.edgeThickness ?? 0.075
+        }
     })
 
+
     useEffect(() => {
-        if (cfg?.lensColor) uniforms.current.uLensColor.value.set(cfg.lensColor)
-    }, [cfg?.lensColor])
+
+        if (cfg?.lensColor) {
+            uniforms.current.uLensColor.value.set(cfg.lensColor)
+        }
+
+        if (cfg?.frameColor) {
+            uniforms.current.uFrameColor.value.set(cfg.frameColor)
+        }
+
+        if (cfg?.edgeThickness !== undefined) {
+            uniforms.current.uEdgeThickness.value = cfg.edgeThickness
+        }
+
+    }, [cfg?.lensColor, cfg?.frameColor, cfg?.edgeThickness]
+    )
 
     useFrame((state) => {
+
         if (materialRef.current) {
             materialRef.current.uniforms.uTime.value = state.clock.elapsedTime
         }
     })
 
-    if (!cfg) return null
 
-    const width = (cfg.width ?? 0.32) * shipSize
-    const height = (cfg.height ?? 0.40) * shipSize
+    if (!cfg)
+        return null
+
+    const width = (cfg.width ?? 0.065) * shipSize
+    const height = (cfg.height ?? 0.10) * shipSize
     const offsetX = (cfg.offsetX ?? 0) * (shipSize / 2)
-    const offsetY = (cfg.offsetY ?? 0.28) * (shipSize / 2)
+    const offsetY = (cfg.offsetY ?? 0.137) * (shipSize / 2)
 
     return (
         <mesh
             position={[offsetX, offsetY, 0.005]}
-            renderOrder={RENDER_ORDER.cockpitGlass}
-        >
+            renderOrder={RENDER_ORDER.cockpitGlass}>
+
             <planeGeometry args={[width, height]} />
+
             <shaderMaterial
                 ref={materialRef}
                 vertexShader={GLASS_VERTEX_SHADER}
@@ -413,10 +671,10 @@ function CockpitGlassOverlay({ cfg, shipSize }) {
                 transparent
                 depthTest={false}
                 depthWrite={false}
-                blending={THREE.AdditiveBlending}
                 side={THREE.DoubleSide}
                 toneMapped={false}
             />
+
         </mesh>
     )
 }
@@ -480,32 +738,43 @@ function PropellerFan({ mount, shipSize }) {
         }
     })
 
-    return (
-        <group position={[offsetX, offsetY, 0.008]} renderOrder={RENDER_ORDER.propeller}>
-            <group ref={spinRef}>
-                {bladeAngles.map((angle, i) => (
-                    <mesh key={i} geometry={bladeGeometry} rotation={[0, 0, angle]}>
-                        <meshBasicMaterial
-                            color={bladeColor}
-                            side={THREE.DoubleSide}
-                            transparent
-                            depthTest={false}
-                            toneMapped={false}
-                        />
-                    </mesh>
-                ))}
-                <mesh geometry={hubGeometry}>
+return (
+    <group position={[offsetX, offsetY, 0.008]}>
+        <group ref={spinRef}>
+            {bladeAngles.map((angle, i) => (
+                <mesh
+                    key={i}
+                    geometry={bladeGeometry}
+                    rotation={[0, 0, angle]}
+                    renderOrder={RENDER_ORDER.propeller}
+                >
                     <meshBasicMaterial
-                        color={hubColor}
+                        color={bladeColor}
                         side={THREE.DoubleSide}
                         transparent
                         depthTest={false}
+                        depthWrite={false}
                         toneMapped={false}
                     />
                 </mesh>
-            </group>
+            ))}
+
+            <mesh
+                geometry={hubGeometry}
+                renderOrder={RENDER_ORDER.propeller}
+            >
+                <meshBasicMaterial
+                    color={hubColor}
+                    side={THREE.DoubleSide}
+                    transparent
+                    depthTest={false}
+                    depthWrite={false}
+                    toneMapped={false}
+                />
+            </mesh>
         </group>
-    )
+    </group>
+)
 }
 
 const PROP_BLUR_VERTEX_SHADER = /* glsl */ `
@@ -568,21 +837,26 @@ function PropellerBlur({ mount, shipSize }) {
     const width = worldRadius * 0.55
     const height = worldRadius * 2.3
 
-    return (
-        <mesh position={[offsetX, offsetY, 0.008]} renderOrder={RENDER_ORDER.propeller}>
-            <planeGeometry args={[width, height]} />
-            <shaderMaterial
-                ref={materialRef}
-                vertexShader={PROP_BLUR_VERTEX_SHADER}
-                fragmentShader={PROP_BLUR_FRAGMENT_SHADER}
-                uniforms={uniforms.current}
-                transparent
-                depthTest={false}
-                side={THREE.DoubleSide}
-                toneMapped={false}
-            />
-        </mesh>
-    )
+return (
+    <mesh
+        position={[offsetX, offsetY, 0.008]}
+        renderOrder={RENDER_ORDER.propeller}
+    >
+        <planeGeometry args={[width, height]} />
+
+        <shaderMaterial
+            ref={materialRef}
+            vertexShader={PROP_BLUR_VERTEX_SHADER}
+            fragmentShader={PROP_BLUR_FRAGMENT_SHADER}
+            uniforms={uniforms.current}
+            transparent
+            depthTest={false}
+            depthWrite={false}
+            side={THREE.DoubleSide}
+            toneMapped={false}
+        />
+    </mesh>
+)
 }
 
 function PropellerMount({ mount, shipSize }) {

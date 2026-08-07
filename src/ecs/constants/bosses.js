@@ -32,8 +32,8 @@ export const BOSSES = [
             lensColor: '#4169E1',
         },
         propellers: [
-            { mountKey: 'left', offsetX: 0.08, offsetY: -0.653, radius: 0.03, bladeCount: 3, bladeColor: '#2A3439', hubColor: '#000000', spinSpeed: 6, direction: 1, hubScale: 0.5 },
-            { mountKey: 'right', offsetX: -0.08, offsetY: -0.653, radius: 0.03, bladeCount: 3, bladeColor: '#2A3439', hubColor: '#000000', spinSpeed: 6, direction: -1, hubScale: 0.5 },
+            { mountKey: 'left', offsetX: 0.08, offsetY: -0.653, radius: 0.05, bladeCount: 3, bladeColor: '#2A3439', hubColor: '#000000', spinSpeed: 6, direction: 1, hubScale: 0.7 },
+            { mountKey: 'right', offsetX: -0.08, offsetY: -0.653, radius: 0.05, bladeCount: 3, bladeColor: '#2A3439', hubColor: '#000000', spinSpeed: 6, direction: -1, hubScale: 0.7 },
             { mountKey: 'main', offsetX: 0, offsetY: -0.09, radius: 0.2, bladeCount: 4, bladeColor: '#2A3439', hubColor: '#000000', spinSpeed: 4, direction: 1, hubScale: 0.5 },
         ],
     },

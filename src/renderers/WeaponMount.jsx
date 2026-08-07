@@ -12,11 +12,11 @@ const GUN_DIRECTION = Math.PI / 2
 
 export const RENDER_ORDER = {
     ship: 0,
-    shipDetail: 1,
-    cockpitGlass: 1.5,
-    gun: 2,
-    propeller: 2.5,
-    gunGlow: 3,
+    shipDetail: 10,
+    cockpitGlass: 20,
+    gun: 30,
+    gunGlow: 35,
+    propeller: 40,
 }
 
 // ------------------------------------------------------------
@@ -153,7 +153,7 @@ export function WeaponMount({ gunCfg, configOverride = null }) {
     const offsetX = gunCfg.offsetX ?? mount.offsetX ?? 0
     const offsetY = gunCfg.offsetY ?? mount.offsetY ?? 0
     const scale = gunCfg.scale ?? mount.scale ?? 1
-    const zOffset = gunCfg.zOffset ?? 0.06
+    const zOffset = gunCfg.zOffset ?? 0
     const rotation = [0, 0, GUN_DIRECTION + (gunCfg.rotation ?? 0)]
 
     const renderCore = (mirrorX) => core && (

@@ -76,15 +76,21 @@ export const DEFAULT_GUN_CONFIG = {
     },
 
     coreGlow: {
-        enabled: true, color: '#00e5ff',
-        size: 0.3, offsetX: 0.88, offsetY: 0,
-        intensity: 1.0,
+        enabled: true,
+        color: '#00e5ff',
+        size: 0.2,
+        offsetX: 0,
+        offsetY: 0.8,
+        intensity: 1,
     },
 
     mount: {
         offsetX: 0.45,
         offsetY: -0.05,
         scale: 0.9,
+        width: 1.4,
+        height: 0.45,
+        layer: 30,
     },
 
 }
