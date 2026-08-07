@@ -9,25 +9,16 @@ import { getGunTypeById } from '../ecs/weapons/config/gunConfigs.js'
 const GUN_DIRECTION = Math.PI / 2
 
 // ------------------------------------------------------------
-// Keep in sync with the ship's renderOrder values in ShipRenderer.jsx.
-// gunGlow sits above gun, which sits above shipDetail, which sits above
-// ship — all with depthTest disabled on the relevant layers, so stacking
-// is fully determined by this ordering rather than actual z/depth.
+
 export const RENDER_ORDER = {
     ship: 0,
     shipDetail: 1,
+    cockpitGlass: 1.5,
     gun: 2,
+    propeller: 2.5,
     gunGlow: 3,
 }
 
-// ------------------------------------------------------------
-// Procedural pulsing core glow — a small additive-blended disc rendered
-// with a custom shader (radial falloff + sine pulse), not a texture. This
-// replaces the pulse that used to come from an embedded SVG animation,
-// which was lost once the gun art got rasterized into a static WebGL
-// texture (useTexture bakes the SVG once — any <animate>/CSS keyframes
-// inside the SVG file itself no longer run). No extra asset needed since
-// it's generated entirely on the GPU.
 // ------------------------------------------------------------
 
 const GLOW_VERTEX_SHADER = /* glsl */ `
@@ -47,11 +38,6 @@ const GLOW_FRAGMENT_SHADER = /* glsl */ `
     varying vec2 vUv;
 
     void main() {
-        // vUv is 0..1 across the plane regardless of its actual width/height,
-        // so distance-from-center is already normalized per-axis — this is
-        // what lets the same shader do both a circular pulse (square plane)
-        // and an elongated "mist" glow (wide/short plane, see mist/width/
-        // height handling in GunCoreGlow below).
         vec2 centered = vUv - 0.5;
         float dist = length(centered) * 2.0;
         float pulse = mix(uMinIntensity, uMaxIntensity, 0.5 + 0.5 * sin(uTime * uSpeed));
@@ -61,13 +47,6 @@ const GLOW_FRAGMENT_SHADER = /* glsl */ `
     }
 `
 
-// Matches the original coreGlow config's fields:
-//   size            -> radius (circular glow, most guns)
-//   mist+width/height -> elongated glow (cryogun/acidthrower canisters)
-//   intensity       -> maxIntensity (minIntensity derived unless given)
-//   offsetX/offsetY -> same
-//   color           -> same
-//   enabled         -> same
 function GunCoreGlow({
     enabled = true,
     radius = 0.3,
@@ -82,9 +61,6 @@ function GunCoreGlow({
     maxIntensity = 1,
 }) {
     const materialRef = useRef(null)
-
-    // circular glow uses a square plane of size radius*2; mist glow uses an
-    // explicit width/height rectangle for the elongated canister look
     const planeWidth = mist ? (width ?? radius * 2) : radius * 2
     const planeHeight = mist ? (height ?? radius * 2) : radius * 2
     const resolvedMinIntensity = minIntensity ?? maxIntensity * 0.5
@@ -106,10 +82,7 @@ function GunCoreGlow({
     if (!enabled) return null
 
     return (
-        <mesh
-            position={[offsetX, offsetY, 0.01]}
-            renderOrder={RENDER_ORDER.gunGlow}
-        >
+        <mesh position={[offsetX, offsetY, 0.01]} renderOrder={RENDER_ORDER.gunGlow}>
             <planeGeometry args={[planeWidth, planeHeight]} />
             <shaderMaterial
                 ref={materialRef}
@@ -125,7 +98,14 @@ function GunCoreGlow({
     )
 }
 
-function SVGGun({ svg, width = 1, height = 1, position = [0, 0, 0], rotation = [0, 0, 0], scale = 1, core = null }) {
+function SVGGun({ 
+    svg, 
+    width = 1, 
+    height = 1, 
+    position = [0, 0, 0], 
+    rotation = [0, 0, 0], 
+    scale = 1, 
+    core = null }) {
 
     const texture = useTexture(svg)
 
@@ -153,10 +133,6 @@ function SVGGun({ svg, width = 1, height = 1, position = [0, 0, 0], rotation = [
                 toneMapped={false}
                 depthTest={false}
             />
-            {/* core is a sibling mesh, not a child in local pre-scale space,
-                so it isn't stretched by the gun's own `scale={3 * scale}` —
-                rendered separately below, positioned in world space via the
-                same parent group instead. See WeaponMount's return below. */}
         </mesh>
     )
 }
@@ -173,9 +149,6 @@ export function WeaponMount({ gunCfg, configOverride = null }) {
 
     const resolvedConfig = configOverride ?? gunType.config
     const mount = resolvedConfig.mount
-    // Reads the SAME coreGlow block shape used by the original config
-    // (enabled, color, size, offsetX/offsetY, intensity, and the mist/
-    // width/height variant for canister-style guns) — see gunConfigs.js.
     const core = resolvedConfig.coreGlow ?? null
 
     const offsetX = gunCfg.offsetX ?? mount.offsetX ?? 0
@@ -184,10 +157,6 @@ export function WeaponMount({ gunCfg, configOverride = null }) {
     const zOffset = gunCfg.zOffset ?? 0.06
     const rotation = [0, 0, GUN_DIRECTION + (gunCfg.rotation ?? 0)]
 
-    // Glow core offsets are given in the SAME local units as mount.offsetX/Y
-    // (i.e. relative to ship center, not relative to the gun's own scaled
-    // mesh), so it lines up correctly for both the left and right mirrored
-    // copies without being distorted by the gun mesh's own `scale`.
     const renderCore = (mirrorX) => core && (
         <GunCoreGlow
             enabled={core.enabled}

@@ -5,5 +5,5 @@
     <path d="M 263.1,100.9 L 277.1,104.5 L 277.1,115.5 L 263.1,119.1 Z" fill="#ffe605"></path>
     <polygon points="142.0,103.0 212.0,103.0 212.0,111.4 142.0,111.4" fill="#3a4650" opacity="0.95"></polygon>
     <polygon points="128.0,103.7 212.0,103.7 212.0,116.3 128.0,116.3" fill="#ffe605" opacity="0.85"></polygon>
-    <circle cx="273.6" cy="110" r="10.998181667894015" fill="#ffe605" opacity="0.4" style="filter:blur(3px)"></circle>
+    
 </svg>
