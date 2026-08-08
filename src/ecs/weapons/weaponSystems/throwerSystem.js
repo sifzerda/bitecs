@@ -60,12 +60,7 @@ export function throwerSystem() {
 
     const pid = players[0]
 
-    const point = getEmissionPoint(
-        Position.x[pid],
-        Position.y[pid],
-        Rotation[pid],
-        PLAYER_CONFIG.emission.thrower
-    )
+    const point = getEmissionPoint(Position.x[pid], Position.y[pid], Rotation[pid], PLAYER_CONFIG.emission.thrower)
 
     throwerState.active = true
 
@@ -108,9 +103,8 @@ export function throwerSystem() {
     }
 
     throwerState.hitIds = hitIds
-
     throwerState.sparkTimer -= dt
-
+    
     if (throwerState.sparkTimer <= 0) {
 
         for (const eid of hitIds) {
