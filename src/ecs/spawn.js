@@ -21,6 +21,8 @@ import {
     StatusEffect,
     Octopus,
     OctopusTag,
+
+    BULLET_OWNER
 } from "./constants/components";
 import { BOSS_INDEX_BY_KEY, BOSSES } from "./constants/bosses";
 import { gameState } from "../state/gameState";
@@ -63,7 +65,15 @@ export function spawnPlayer(x, y) {
 //const MUZZLE_OFFSET = 0.4
 export const GUN_GAP = 0.45 // distance between twin guns
 
-export function spawnBullet(x, y, rot, weaponId = 0, owner, gapOffset = 0) {
+export function spawnBullet(
+    x,
+    y,
+    rot,
+    weaponId = 0,
+    owner = BULLET_OWNER.ENEMY,
+    gapOffset = 0,
+    sourceId = -1
+) {
 
     //const bullet = acquireBullet();
 
@@ -75,9 +85,10 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner, gapOffset = 0) {
             originY: y,
         }
 
-    const emission = owner !== undefined && BossTag?.[owner]
-        ? getBossEmissionConfig(owner, 'projectile')
-        : PLAYER_CONFIG.emission.projectile
+    const emission =
+        sourceId !== -1 && BossTag?.[sourceId]
+            ? getBossEmissionConfig(sourceId, 'projectile')
+            : PLAYER_CONFIG.emission.projectile
 
     // forward direction (ship facing)
     const fwdX = Math.sin(-rot)
@@ -127,6 +138,7 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner, gapOffset = 0) {
         Lifetime.remaining[id] = weapon.lifetime
         Bullet.type[id] = weapon.id
         Bullet.owner[id] = owner
+        Bullet.source[id] = sourceId
 
         const color = new THREE.Color(weapon.glowColor ?? weapon.color)
         color.offsetHSL(0, 0.30, 0.00)
@@ -142,9 +154,78 @@ export function spawnBullet(x, y, rot, weaponId = 0, owner, gapOffset = 0) {
 }
 
 // convenience wrapper: fires both guns for weapons that should be twin-mounted
-export function spawnPlayerBullet(x, y, rot, weaponId = 0, owner) {
-    const left = spawnBullet(x, y, rot, weaponId, owner, GUN_GAP)
-    const right = spawnBullet(x, y, rot, weaponId, owner, -GUN_GAP)
+export function spawnPlayerBullet(
+    x,
+    y,
+    rot,
+    weaponId = 0,
+    owner = BULLET_OWNER.PLAYER,
+    sourceId = -1
+) {
+    const left = spawnBullet(
+        x,
+        y,
+        rot,
+        weaponId,
+        owner,
+        GUN_GAP,
+        sourceId
+    )
+
+    const right = spawnBullet(
+        x,
+        y,
+        rot,
+        weaponId,
+        owner,
+        -GUN_GAP,
+        sourceId
+    )
+
+    return {
+        ids: [...left.ids, ...right.ids],
+        origins: [
+            { x: left.originX, y: left.originY },
+            { x: right.originX, y: right.originY },
+        ],
+    }
+}
+
+// Convenience wrapper: bosses fire from twin gun positions
+export function spawnBossBullet(
+    x,
+    y,
+    rot,
+    weaponId = 0,
+    bossId
+) {
+    const emission = getBossEmissionConfig(
+        bossId,
+        'projectile'
+    )
+
+    const gap = emission.gunGap ?? GUN_GAP
+
+    const left = spawnBullet(
+        x,
+        y,
+        rot,
+        weaponId,
+        BULLET_OWNER.ENEMY,
+        gap,
+        bossId
+    )
+
+    const right = spawnBullet(
+        x,
+        y,
+        rot,
+        weaponId,
+        BULLET_OWNER.ENEMY,
+        -gap,
+        bossId
+    )
+
     return {
         ids: [...left.ids, ...right.ids],
         origins: [

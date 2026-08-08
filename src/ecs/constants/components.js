@@ -61,8 +61,17 @@ export const Octopus = {
 
 export const Bullet = {
     type: new Uint8Array(MAX),
+
+    // Faction:
+    // 0 = player
+    // 1 = enemy
     owner: new Uint8Array(MAX),
-    // render data cached at spawn time
+
+    // Actual ECS entity that fired this bullet.
+    // -1 means no specific source entity.
+    source: new Int32Array(MAX),
+
+    // Render data cached at spawn time
     colorR: new Float32Array(MAX),
     colorG: new Float32Array(MAX),
     colorB: new Float32Array(MAX),

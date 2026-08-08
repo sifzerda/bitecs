@@ -20,13 +20,9 @@ export const BOSSES = [
         propellers: [],
 
         emission: {
-            // Where exhaust particles originate
             exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
-            // Bullet + missile muzzle
-            projectile: { offsetX: 0, offsetY: 0.65, },
-            // Beam origin
+            projectile: { offsetX: 0, offsetY: 1.0, gunGap: 0.45 },
             beam: { offsetX: 0, offsetY: 0.65, },
-            // Flamethrower / acid / cryo origin
             thrower: { offsetX: 0, offsetY: 0.65, },
         },
 
@@ -53,7 +49,7 @@ export const BOSSES = [
             // Where exhaust particles originate
             exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
             // Bullet + missile muzzle
-            projectile: { offsetX: 0, offsetY: 0.65, },
+            projectile: { offsetX: 0, offsetY: 0.65, gunGap: 0.45 },
             // Beam origin
             beam: { offsetX: 0, offsetY: 0.65, },
             // Flamethrower / acid / cryo origin
@@ -79,7 +75,7 @@ export const BOSSES = [
             // Where exhaust particles originate
             exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
             // Bullet + missile muzzle
-            projectile: { offsetX: 0, offsetY: 0.65, },
+            projectile: { offsetX: 0, offsetY: 0.65, gunGap: 0.45 },
             // Beam origin
             beam: { offsetX: 0, offsetY: 0.65, },
             // Flamethrower / acid / cryo origin
@@ -105,7 +101,7 @@ export const BOSSES = [
             // Where exhaust particles originate
             exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
             // Bullet + missile muzzle
-            projectile: { offsetX: 0, offsetY: 0.65, },
+            projectile: { offsetX: 0, offsetY: 0.65, gunGap: 0.45 },
             // Beam origin
             beam: { offsetX: 0, offsetY: 0.65, },
             // Flamethrower / acid / cryo origin
@@ -141,7 +137,7 @@ export const BOSSES = [
             // Where exhaust particles originate
             exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
             // Bullet + missile muzzle
-            projectile: { offsetX: 0, offsetY: 0.65, },
+            projectile: { offsetX: 0, offsetY: 0.65, gunGap: 0.45 },
             // Beam origin
             beam: { offsetX: 0, offsetY: 0.65, },
             // Flamethrower / acid / cryo origin
@@ -167,7 +163,7 @@ export const BOSSES = [
             // Where exhaust particles originate
             exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
             // Bullet + missile muzzle
-            projectile: { offsetX: 0, offsetY: 0.65, },
+            projectile: { offsetX: 0, offsetY: 0.65, gunGap: 0.45 },
             // Beam origin
             beam: { offsetX: 0, offsetY: 0.65, },
             // Flamethrower / acid / cryo origin
@@ -193,7 +189,7 @@ export const BOSSES = [
             // Where exhaust particles originate
             exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
             // Bullet + missile muzzle
-            projectile: { offsetX: 0, offsetY: 0.65, },
+            projectile: { offsetX: 0, offsetY: 0.65, gunGap: 0.45 },
             // Beam origin
             beam: { offsetX: 0, offsetY: 0.65, },
             // Flamethrower / acid / cryo origin
@@ -219,7 +215,7 @@ export const BOSSES = [
             // Where exhaust particles originate
             exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
             // Bullet + missile muzzle
-            projectile: { offsetX: 0, offsetY: 0.65, },
+            projectile: { offsetX: 0, offsetY: 0.65, gunGap: 0.45 },
             // Beam origin
             beam: { offsetX: 0, offsetY: 0.65, },
             // Flamethrower / acid / cryo origin
@@ -245,7 +241,7 @@ export const BOSSES = [
             // Where exhaust particles originate
             exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
             // Bullet + missile muzzle
-            projectile: { offsetX: 0, offsetY: 0.65, },
+            projectile: { offsetX: 0, offsetY: 0.65, gunGap: 0.45 },
             // Beam origin
             beam: { offsetX: 0, offsetY: 0.65, },
             // Flamethrower / acid / cryo origin
@@ -271,7 +267,7 @@ export const BOSSES = [
             // Where exhaust particles originate
             exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
             // Bullet + missile muzzle
-            projectile: { offsetX: 0, offsetY: 0.65, },
+            projectile: { offsetX: 0, offsetY: 0.65, gunGap: 0.45 },
             // Beam origin
             beam: { offsetX: 0, offsetY: 0.65, },
             // Flamethrower / acid / cryo origin

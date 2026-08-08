@@ -3,7 +3,7 @@
 import { world } from "../constants/world.js"
 import { bossAIQuery, playerQuery } from "../constants/queries.js"
 import { Position, Velocity, Rotation, BossAI, BULLET_OWNER } from "../constants/components.js"
-import { spawnBullet } from "../spawn.js"
+import { spawnBossBullet } from "../spawn.js"
 import { getWeapon } from "../weapons/config/weapons.js"
 import { getAction } from "../weapons/config/weaponActions.js"
 
@@ -17,7 +17,7 @@ const MOVE_INTERVAL_MAX = 2.6
 const SHOOT_INTERVAL = 1.4   // fallback only, for weapons missing fireRate
 
 function normalizeAngle(a) {
-    while (a > Math.PI) a -= Math.PI * 2 
+    while (a > Math.PI) a -= Math.PI * 2
     while (a < -Math.PI) a += Math.PI * 2
     return a
 }
@@ -142,7 +142,13 @@ export function bossAISystem() {
                 BossAI.burstGapTimer[id] -= dt
 
                 if (BossAI.burstGapTimer[id] <= 0) {
-                    spawnBullet(Position.x[id], Position.y[id], rot, weapon.id, BULLET_OWNER.ENEMY)
+                    spawnBossBullet(
+                        Position.x[id],
+                        Position.y[id],
+                        rot,
+                        weapon.id,
+                        id
+                    )
                     BossAI.burstRemaining[id]--
                     BossAI.burstGapTimer[id] = burstGap
                 }

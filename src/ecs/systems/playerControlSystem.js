@@ -153,7 +153,14 @@ export default function playerControlSystem(shootState) {
             const angle = Math.atan2(Math.cos(-rot), Math.sin(-rot)) // same fwd dir bullets use
             const size = 0.8 + (weapon.hitRadius ?? 0.5) * 0.6
 
-            const { origins } = spawnPlayerBullet(Position.x[pid], Position.y[pid], rot, weapon.id, BULLET_OWNER.PLAYER)
+            const { origins } = spawnPlayerBullet(
+                Position.x[pid],
+                Position.y[pid],
+                rot,
+                weapon.id,
+                BULLET_OWNER.PLAYER,
+                pid
+            )
 
             for (const o of origins) {
                 emitEffect(EFFECT.FLASH, {
