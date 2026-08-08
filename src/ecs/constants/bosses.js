@@ -21,7 +21,7 @@ export const BOSSES = [
 
         emission: {
             exhaust: { offsetX: 0, offsetY: -0.65, engineGap: 0.15, nozzleOffset: 0, },
-            projectile: { offsetX: 0, offsetY: 1.0, gunGap: 0.45 },
+            projectile: { offsetX: 0, offsetY: 2.0, gunGap: 0.45 },
             beam: { offsetX: 0, offsetY: 0.65, },
             thrower: { offsetX: 0, offsetY: 0.65, },
         },

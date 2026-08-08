@@ -61,9 +61,9 @@ export function throwerSystem() {
     const pid = players[0]
 
     const point = getEmissionPoint(
-        Position.x[player],
-        Position.y[player],
-        Rotation[player],
+        Position.x[pid],
+        Position.y[pid],
+        Rotation[pid],
         PLAYER_CONFIG.emission.thrower
     )
 

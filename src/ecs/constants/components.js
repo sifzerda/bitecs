@@ -34,9 +34,28 @@ export const BossAI = {
     beamCycleTimer: new Float32Array(MAX),
     beamActive: new Uint8Array(MAX),
     targetRotation: new Float32Array(MAX),
-
-    burstRemaining: new Uint8Array(MAX),   // new
-    burstGapTimer: new Float32Array(MAX),  // new
+    burstRemaining: new Uint8Array(MAX),
+    burstGapTimer: new Float32Array(MAX),
+    // ---------------------------------------------------------
+    // Tactical combat AI
+    // ---------------------------------------------------------
+    // 0 = attack
+    // 1 = evade
+    // 2 = strafe
+    // 3 = reposition
+    state: new Uint8Array(MAX),
+    // How long current tactical decision lasts
+    stateTimer: new Float32Array(MAX),
+    // Desired movement direction
+    moveRotation: new Float32Array(MAX),
+    // Randomly chosen orbit direction
+    strafeDirection: new Float32Array(MAX),
+    // Random personality variation per maneuver
+    aggression: new Float32Array(MAX),
+    // Time since last successful shot
+    attackTimer: new Float32Array(MAX),
+    // Prevents instant repeated state switching
+    decisionCooldown: new Float32Array(MAX),
 };
 
 export const BossType = {
@@ -61,17 +80,8 @@ export const Octopus = {
 
 export const Bullet = {
     type: new Uint8Array(MAX),
-
-    // Faction:
-    // 0 = player
-    // 1 = enemy
     owner: new Uint8Array(MAX),
-
-    // Actual ECS entity that fired this bullet.
-    // -1 means no specific source entity.
     source: new Int32Array(MAX),
-
-    // Render data cached at spawn time
     colorR: new Float32Array(MAX),
     colorG: new Float32Array(MAX),
     colorB: new Float32Array(MAX),
