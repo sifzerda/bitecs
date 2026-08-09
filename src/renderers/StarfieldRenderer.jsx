@@ -21,13 +21,7 @@ const BRIGHT_STAR_COUNT = 55
 
 // Shooting stars are pooled rather than created dynamically.
 const MAX_SHOOTING_STARS = 24
-
-const STAR_TOTAL =
-    SMALL_STAR_COUNT +
-    MILKY_WAY_STAR_COUNT +
-    CLUSTER_STAR_COUNT +
-    DUST_LAYER_COUNT
-
+const STAR_TOTAL = SMALL_STAR_COUNT + MILKY_WAY_STAR_COUNT + CLUSTER_STAR_COUNT + DUST_LAYER_COUNT
 const DPR_LIMIT = 1.5
 
 const COLORS = {
@@ -57,44 +51,20 @@ vec3 permute(vec3 x) {
 }
 
 float snoise(vec2 v) {
-    const vec4 C = vec4(
-        0.2113248654,
-        0.3660254038,
-        -0.5773502692,
-        0.0243902439
-    );
+    const vec4 C = vec4(0.21, 0.36, -0.57, 0.024);
 
     vec2 i = floor(v + dot(v, C.yy));
     vec2 x0 = v - i + dot(i, C.xx);
-
-    vec2 i1 =
-        (x0.x > x0.y)
-            ? vec2(1.0, 0.0)
-            : vec2(0.0, 1.0);
-
+    vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
     vec4 x12 = x0.xyxy + C.xxzz;
 
     x12.xy -= i1;
 
     i = mod289(i);
 
-    vec3 p = permute(
-        permute(
-            i.y + vec3(0.0, i1.y, 1.0)
-        )
-        +
-        i.x + vec3(0.0, i1.x, 1.0)
-    );
+    vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
 
-    vec3 m = max(
-        0.5 -
-        vec3(
-            dot(x0, x0),
-            dot(x12.xy, x12.xy),
-            dot(x12.zw, x12.zw)
-        ),
-        0.0
-    );
+    vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
 
     m *= m;
     m *= m;
@@ -119,7 +89,6 @@ float fbm(vec2 p) {
     float value = 0.0;
     float amplitude = 0.5;
 
-    // 4 instead of 6 octaves.
     for (int i = 0; i < 4; i++) {
         value += amplitude * snoise(p);
         p *= 2.03;
@@ -140,10 +109,7 @@ varying vec2 vUv;
 void main() {
     vUv = uv;
 
-    gl_Position =
-        projectionMatrix *
-        modelViewMatrix *
-        vec4(position, 1.0);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `
 
@@ -156,13 +122,7 @@ uniform vec3 uColorBottom;
 varying vec2 vUv;
 
 void main() {
-    vec3 color =
-        mix(
-            uColorBottom,
-            uColorTop,
-            smoothstep(0.0, 1.0, vUv.y)
-        );
-
+    vec3 color = mix(uColorBottom, uColorTop, smoothstep(0.0, 1.0, vUv.y));
     gl_FragColor = vec4(color, 1.0);
 }
 `
@@ -174,17 +134,10 @@ function SkyBase() {
         return new THREE.ShaderMaterial({
             vertexShader: skyVertexShader,
             fragmentShader: skyFragmentShader,
-
             uniforms: {
-                uColorTop: {
-                    value: new THREE.Color("#02020a"),
-                },
-
-                uColorBottom: {
-                    value: new THREE.Color("#0a0616"),
-                },
+                uColorTop: { value: new THREE.Color("#02020a") },
+                uColorBottom: { value: new THREE.Color("#0a0616") },
             },
-
             depthWrite: false,
             depthTest: false,
         })
@@ -198,11 +151,7 @@ function SkyBase() {
     const height = viewport.height * PADDING * 1.7
 
     return (
-        <mesh
-            position={[0, 0, FIELD_Z - 4]}
-            renderOrder={-10}
-            material={material}
-        >
+        <mesh position={[0, 0, FIELD_Z - 4]} renderOrder={-10} material={material}>
             <planeGeometry args={[width, height]} />
         </mesh>
     )
@@ -232,88 +181,25 @@ void main() {
 
     float angle = radians(-32.0);
 
-    mat2 rot = mat2(
-        cos(angle),
-        -sin(angle),
-        sin(angle),
-        cos(angle)
-    );
-
+    mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
     vec2 p = rot * uv;
 
-    // Main galactic band.
-    float band =
-        exp(
-            -pow(p.y, 2.0) * 7.0
-        );
+    float band = exp(-pow(p.y, 2.0) * 7.0);
+    float haze = 0.5 + 0.5 * fbm(p * 1.05 + vec2(uTime * 0.004, 0.0));
+    float wisps = smoothstep(0.18, 0.82, fbm(p * 1.8 - 10.0 + uTime * 0.002));
+    float colorNoise = 0.5 + 0.5 * fbm(p * 0.55 + uTime * 0.006);
 
-    // Cheap large-scale movement.
-    float haze =
-        0.5 +
-        0.5 *
-        fbm(
-            p * 1.05 +
-            vec2(uTime * 0.004, 0.0)
-        );
+    vec3 color = mix(uColorAmber, uColorPink, colorNoise);
 
-    // Smaller structure.
-    float wisps =
-        smoothstep(
-            0.18,
-            0.82,
-            fbm(
-                p * 1.8 -
-                10.0 +
-                uTime * 0.002
-            )
-        );
+    color = mix(color, uColorViolet, smoothstep(0.25, 0.75, haze));
+    color = mix(color, uColorCyan, smoothstep(0.55, 0.95, haze));
 
-    float colorNoise =
-        0.5 +
-        0.5 *
-        fbm(
-            p * 0.55 +
-            uTime * 0.006
-        );
-
-    vec3 color =
-        mix(
-            uColorAmber,
-            uColorPink,
-            colorNoise
-        );
-
-    color =
-        mix(
-            color,
-            uColorViolet,
-            smoothstep(0.25, 0.75, haze)
-        );
-
-    color =
-        mix(
-            color,
-            uColorCyan,
-            smoothstep(0.55, 0.95, haze)
-        );
-
-    float alpha =
-        band *
-        haze *
-        wisps *
-        0.28;
-
-    float vignette =
-        smoothstep(
-            1.65,
-            0.25,
-            length(uv)
-        );
+    float alpha = band * haze * wisps * 0.28;
+    float vignette = smoothstep(1.65, 0.25, length(uv));
 
     alpha *= vignette;
 
-    gl_FragColor =
-        vec4(color, alpha);
+    gl_FragColor = vec4(color, alpha);
 }
 `
 
@@ -327,22 +213,10 @@ function DustBand() {
 
             uniforms: {
                 uTime: { value: 0 },
-
-                uColorAmber: {
-                    value: new THREE.Color("#b0fcff"),
-                },
-
-                uColorPink: {
-                    value: new THREE.Color("#00e1ff"),
-                },
-
-                uColorViolet: {
-                    value: new THREE.Color("#0077ff"),
-                },
-
-                uColorCyan: {
-                    value: new THREE.Color("#0077ff"),
-                },
+                uColorAmber: { value: new THREE.Color("#b0fcff"), },
+                uColorPink: { value: new THREE.Color("#00e1ff"), },
+                uColorViolet: { value: new THREE.Color("#0077ff"), },
+                uColorCyan: { value: new THREE.Color("#0077ff"), },
             },
 
             transparent: true,
@@ -364,24 +238,13 @@ function DustBand() {
     const height = viewport.height * PADDING * 1.6
 
     return (
-        <mesh
-            position={[0, 0, FIELD_Z - 3]}
-            renderOrder={-9}
-            material={material}
-        >
+        <mesh position={[0, 0, FIELD_Z - 3]} renderOrder={-9} material={material}>
             <planeGeometry args={[width, height]} />
         </mesh>
     )
 }
 
 // ============================================================
-// COMBINED STAR SHADER
-//
-// ONE geometry contains:
-// 0 = normal stars
-// 1 = Milky Way stars
-// 2 = cluster stars
-// 3 = dust motes
 // ============================================================
 
 const starVertexShader = /* glsl */ `
@@ -408,44 +271,20 @@ void main() {
 
     vec3 pos = position;
 
-    // Dust only.
-    // Noise happens per vertex, not per fragment.
     if (aKind > 2.5) {
 
         float t = uTime * 0.025;
 
-        pos.x +=
-            snoise(
-                pos.xy * 0.08 +
-                aSeed * 19.0 +
-                t
-            ) * 0.45;
-
-        pos.y +=
-            snoise(
-                pos.xy * 0.08 +
-                aSeed * 31.0 -
-                t
-            ) * 0.45;
+        pos.x += snoise(pos.xy * 0.08 + aSeed * 19.0 + t) * 0.45;
+        pos.y += snoise(pos.xy * 0.08 + aSeed * 31.0 - t) * 0.45;
     }
 
-    vec4 mvPosition =
-        modelViewMatrix *
-        vec4(pos, 1.0);
+    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
 
-    gl_Position =
-        projectionMatrix *
-        mvPosition;
+    gl_Position = projectionMatrix * mvPosition;
 
-    float twinkle =
-        0.45 +
-        0.55 *
-        sin(
-            uTime * aSpeed +
-            aPhase
-        );
+    float twinkle = 0.45 + 0.55 * sin(uTime * aSpeed + aPhase);
 
-    // Different subtle brightness levels.
     if (aKind < 0.5) {
         vAlpha = twinkle * 0.8;
     }
@@ -456,23 +295,13 @@ void main() {
         vAlpha = twinkle * 0.85;
     }
     else {
-        vAlpha =
-            0.3 +
-            0.3 *
-            sin(
-                uTime * 0.25 +
-                aPhase
-            );
+        vAlpha = 0.3 + 0.3 * sin( uTime * 0.25 + aPhase);
     }
 
     vHue = aHue;
     vKind = aKind;
 
-    gl_PointSize =
-        aSize *
-        uBaseSize *
-        uPixelRatio *
-        (1.0 / max(-mvPosition.z, 0.001));
+    gl_PointSize = aSize * uBaseSize * uPixelRatio * (1.0 / max(-mvPosition.z, 0.001));
 }
 `
 
@@ -491,27 +320,13 @@ varying float vKind;
 
 void main() {
 
-    vec2 uv =
-        gl_PointCoord -
-        0.5;
+    vec2 uv = gl_PointCoord - 0.5;
 
-    float d =
-        length(uv) * 2.0;
+    float d = length(uv) * 2.0;
+    float glow = smoothstep(1.0, 0.0, d);
 
-    float glow =
-        smoothstep(
-            1.0,
-            0.0,
-            d
-        );
+    glow = pow(glow, 1.65);
 
-    glow =
-        pow(
-            glow,
-            1.65
-        );
-
-    // Dust is softer and dimmer.
     if (vKind > 2.5) {
         glow = pow(glow, 1.8);
     }
@@ -520,49 +335,25 @@ void main() {
 
     if (vHue < 0.25) {
 
-        color =
-            mix(
-                uColorWhite,
-                uColorCyan,
-                vHue / 0.25
-            );
+        color = mix(uColorWhite, uColorCyan, vHue / 0.25);
 
     }
     else if (vHue < 0.5) {
 
-        color =
-            mix(
-                uColorCyan,
-                uColorViolet,
-                (vHue - 0.25) / 0.25
-            );
+        color = mix(uColorCyan, uColorViolet, (vHue - 0.25) / 0.25);
 
     }
     else if (vHue < 0.75) {
 
-        color =
-            mix(
-                uColorViolet,
-                uColorPink,
-                (vHue - 0.5) / 0.25
-            );
+        color = mix(uColorViolet, uColorPink, (vHue - 0.5) / 0.25);
 
     }
     else {
 
-        color =
-            mix(
-                uColorPink,
-                uColorAmber,
-                (vHue - 0.75) / 0.25
-            );
+        color = mix(uColorPink, uColorAmber, (vHue - 0.75) / 0.25);
     }
 
-    gl_FragColor =
-        vec4(
-            color,
-            glow * vAlpha
-        );
+    gl_FragColor = vec4(color, glow * vAlpha);
 }
 `
 
@@ -583,8 +374,7 @@ function gaussianRandom() {
     }
 
     return (
-        Math.sqrt(-2 * Math.log(u)) *
-        Math.cos(2 * Math.PI * v)
+        Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
     )
 }
 
@@ -594,26 +384,13 @@ function gaussianRandom() {
 
 function generateStars(w, h) {
 
-    const positions =
-        new Float32Array(STAR_TOTAL * 3)
-
-    const phases =
-        new Float32Array(STAR_TOTAL)
-
-    const speeds =
-        new Float32Array(STAR_TOTAL)
-
-    const sizes =
-        new Float32Array(STAR_TOTAL)
-
-    const hues =
-        new Float32Array(STAR_TOTAL)
-
-    const kinds =
-        new Float32Array(STAR_TOTAL)
-
-    const seeds =
-        new Float32Array(STAR_TOTAL)
+    const positions = new Float32Array(STAR_TOTAL * 3)
+    const phases = new Float32Array(STAR_TOTAL)
+    const speeds = new Float32Array(STAR_TOTAL)
+    const sizes = new Float32Array(STAR_TOTAL)
+    const hues = new Float32Array(STAR_TOTAL)
+    const kinds = new Float32Array(STAR_TOTAL)
+    const seeds = new Float32Array(STAR_TOTAL)
 
     let index = 0
 
@@ -623,31 +400,14 @@ function generateStars(w, h) {
 
     for (let i = 0; i < SMALL_STAR_COUNT; i++) {
 
-        positions[index * 3] =
-            (Math.random() - 0.5) * w
+        positions[index * 3] = (Math.random() - 0.5) * w
+        positions[index * 3 + 1] = (Math.random() - 0.5) * h
+        positions[index * 3 + 2] = FIELD_Z
 
-        positions[index * 3 + 1] =
-            (Math.random() - 0.5) * h
-
-        positions[index * 3 + 2] =
-            FIELD_Z
-
-        phases[index] =
-            Math.random() * Math.PI * 2
-
-        speeds[index] =
-            0.6 + Math.random() * 2.2
-
-        sizes[index] =
-            0.9 +
-            Math.random() *
-            Math.random() *
-            2.1
-
-        hues[index] =
-            Math.random() < 0.35
-                ? Math.random()
-                : 0
+        phases[index] = Math.random() * Math.PI * 2
+        speeds[index] = 0.6 + Math.random() * 2.2
+        sizes[index] = 0.9 + Math.random() * Math.random() * 2.1
+        hues[index] = Math.random() < 0.35 ? Math.random() : 0
 
         kinds[index] = 0
         seeds[index] = Math.random()
@@ -659,102 +419,30 @@ function generateStars(w, h) {
     // MILKY WAY
     // --------------------------------------------------------
 
-    const angle =
-        THREE.MathUtils.degToRad(-32)
+    const angle = THREE.MathUtils.degToRad(-32)
 
-    const dir =
-        new THREE.Vector2(
-            Math.cos(angle),
-            Math.sin(angle)
-        )
+    const dir = new THREE.Vector2(Math.cos(angle), Math.sin(angle))
+    const normal = new THREE.Vector2(-dir.y, dir.x)
 
-    const normal =
-        new THREE.Vector2(
-            -dir.y,
-            dir.x
-        )
+    const trailLength = w * 1.5
 
-    const trailLength =
-        w * 1.5
-
-    for (
-        let i = 0;
-        i < MILKY_WAY_STAR_COUNT;
-        i++
-    ) {
+    for (let i = 0; i < MILKY_WAY_STAR_COUNT; i++) {
 
         const t = Math.random()
 
-        const wave =
-            Math.sin(
-                t * Math.PI * 2.2 + 1.3
-            ) * 0.55 +
-            Math.sin(
-                t * Math.PI * 5.3 + 4.1
-            ) * 0.22
+        const wave = Math.sin(t * Math.PI * 2.2 + 1.3) * 0.55 + Math.sin(t * Math.PI * 5.3 + 4.1) * 0.22
+        const taper = 0.25 + 0.75 * Math.sin(t * Math.PI)
+        const spread = (Math.random() - 0.5) * (Math.random() - 0.5) * 4.0
+        const along = (t - 0.5) * trailLength
+        const across = (wave + spread) * taper * h * 0.18
 
-        const taper =
-            0.25 +
-            0.75 *
-            Math.sin(
-                t * Math.PI
-            )
-
-        const spread =
-            (
-                Math.random() -
-                0.5
-            ) *
-            (
-                Math.random() -
-                0.5
-            ) *
-            4.0
-
-        const along =
-            (t - 0.5) *
-            trailLength
-
-        const across =
-            (wave + spread) *
-            taper *
-            h *
-            0.18
-
-        positions[index * 3] =
-            dir.x * along +
-            normal.x * across
-
-        positions[index * 3 + 1] =
-            dir.y * along +
-            normal.y * across
-
-        positions[index * 3 + 2] =
-            FIELD_Z -
-            0.4 +
-            Math.random() * 1.2
-
-        phases[index] =
-            Math.random() *
-            Math.PI *
-            2
-
-        speeds[index] =
-            0.5 +
-            Math.random() *
-            1.8
-
-        sizes[index] =
-            0.5 +
-            Math.random() *
-            Math.random() *
-            1.4
-
-        hues[index] =
-            Math.random() < 0.3
-                ? Math.random()
-                : 0
-
+        positions[index * 3] = dir.x * along + normal.x * across
+        positions[index * 3 + 1] = dir.y * along + normal.y * across
+        positions[index * 3 + 2] = FIELD_Z - 0.4 + Math.random() * 1.2
+        phases[index] = Math.random() * Math.PI * 2
+        speeds[index] = 0.5 + Math.random() * 1.8
+        sizes[index] = 0.5 + Math.random() * Math.random() * 1.4
+        hues[index] = Math.random() < 0.3 ? Math.random() : 0
         kinds[index] = 1
         seeds[index] = Math.random()
 
@@ -772,47 +460,19 @@ function generateStars(w, h) {
     for (let c = 0; c < CLUSTER_COUNT; c++) {
 
         centers.push({
-            x:
-                (Math.random() - 0.5) *
-                w *
-                0.85,
-
-            y:
-                (Math.random() - 0.5) *
-                h *
-                0.85,
-
-            radius:
-                0.18 +
-                Math.random() *
-                0.4,
-
-            weight:
-                0.6 +
-                Math.random() *
-                0.8,
+            x: (Math.random() - 0.5) * w * 0.85,
+            y: (Math.random() - 0.5) * h * 0.85,
+            radius: 0.18 + Math.random() * 0.4,
+            weight: 0.6 + Math.random() * 0.8,
         })
     }
 
-    const totalWeight =
-        centers.reduce(
-            (sum, c) =>
-                sum + c.weight,
-            0
-        )
+    const totalWeight = centers.reduce((sum, c) => sum + c.weight, 0)
 
-    for (
-        let i = 0;
-        i < CLUSTER_STAR_COUNT;
-        i++
-    ) {
+    for (let i = 0; i < CLUSTER_STAR_COUNT; i++) {
 
-        let r =
-            Math.random() *
-            totalWeight
-
-        let chosen =
-            centers[0]
+        let r = Math.random() * totalWeight
+        let chosen = centers[0]
 
         for (const center of centers) {
 
@@ -824,41 +484,14 @@ function generateStars(w, h) {
             r -= center.weight
         }
 
-        positions[index * 3] =
-            chosen.x +
-            gaussianRandom() *
-            chosen.radius
+        positions[index * 3] = chosen.x + gaussianRandom() * chosen.radius
+        positions[index * 3 + 1] = chosen.y + gaussianRandom() * chosen.radius
+        positions[index * 3 + 2] = FIELD_Z - 0.3 + Math.random()
 
-        positions[index * 3 + 1] =
-            chosen.y +
-            gaussianRandom() *
-            chosen.radius
-
-        positions[index * 3 + 2] =
-            FIELD_Z -
-            0.3 +
-            Math.random()
-
-        phases[index] =
-            Math.random() *
-            Math.PI *
-            2
-
-        speeds[index] =
-            0.6 +
-            Math.random() *
-            2.0
-
-        sizes[index] =
-            1.0 +
-            Math.random() *
-            Math.random() *
-            2.4
-
-        hues[index] =
-            Math.random() < 0.3
-                ? Math.random()
-                : 0
+        phases[index] = Math.random() * Math.PI * 2
+        speeds[index] = 0.6 + Math.random() * 2.0
+        sizes[index] = 1.0 + Math.random() * Math.random() * 2.4
+        hues[index] = Math.random() < 0.3 ? Math.random() : 0
 
         kinds[index] = 2
         seeds[index] = Math.random()
@@ -870,66 +503,24 @@ function generateStars(w, h) {
     // DUST
     // --------------------------------------------------------
 
-    const bandAngle =
-        THREE.MathUtils.degToRad(-32)
+    const bandAngle = THREE.MathUtils.degToRad(-32)
+    const dustDir = new THREE.Vector2(Math.cos(bandAngle), Math.sin(bandAngle))
+    const dustNormal = new THREE.Vector2(-dustDir.y, dustDir.x)
 
-    const dustDir =
-        new THREE.Vector2(
-            Math.cos(bandAngle),
-            Math.sin(bandAngle)
-        )
+    for (let i = 0; i < DUST_LAYER_COUNT; i++) {
 
-    const dustNormal =
-        new THREE.Vector2(
-            -dustDir.y,
-            dustDir.x
-        )
+        const along = (Math.random() - 0.5) * w * 1.3
+        const across = (Math.random() - 0.5) * (Math.random() - 0.5) * h * 1.4
 
-    for (
-        let i = 0;
-        i < DUST_LAYER_COUNT;
-        i++
-    ) {
+        positions[index * 3] = dustDir.x * along + dustNormal.x * across
+        positions[index * 3 + 1] = dustDir.y * along + dustNormal.y * across
+        positions[index * 3 + 2] = FIELD_Z - 1 + Math.random() * 2
 
-        const along =
-            (Math.random() - 0.5) *
-            w *
-            1.3
+        phases[index] = Math.random() * Math.PI * 2
+        speeds[index] = 0.5 + Math.random()
 
-        const across =
-            (Math.random() - 0.5) *
-            (Math.random() - 0.5) *
-            h *
-            1.4
-
-        positions[index * 3] =
-            dustDir.x * along +
-            dustNormal.x * across
-
-        positions[index * 3 + 1] =
-            dustDir.y * along +
-            dustNormal.y * across
-
-        positions[index * 3 + 2] =
-            FIELD_Z -
-            1 +
-            Math.random() * 2
-
-        phases[index] =
-            Math.random() *
-            Math.PI *
-            2
-
-        speeds[index] =
-            0.5 +
-            Math.random()
-
-        sizes[index] =
-            1.4 +
-            Math.random() * 3.2
-
-        hues[index] =
-            Math.random()
+        sizes[index] = 1.4 + Math.random() * 3.2
+        hues[index] = Math.random()
 
         kinds[index] = 3
         seeds[index] = Math.random()
@@ -937,15 +528,7 @@ function generateStars(w, h) {
         index++
     }
 
-    return {
-        positions,
-        phases,
-        speeds,
-        sizes,
-        hues,
-        kinds,
-        seeds,
-    }
+    return { positions, phases, speeds, sizes, hues, kinds, seeds }
 }
 
 // ============================================================
@@ -954,176 +537,73 @@ function generateStars(w, h) {
 
 function StarParticles() {
 
-    const viewport =
-        useThree((s) => s.viewport)
+    const viewport = useThree((s) => s.viewport)
+    const gl = useThree((s) => s.gl)
+    const materialRef = useRef(null)
+    const pixelRatio = Math.min(gl.getPixelRatio(), DPR_LIMIT)
 
-    const gl =
-        useThree((s) => s.gl)
+    const { geometry, material } = useMemo(() => {
 
-    const materialRef =
-        useRef(null)
+        const w = viewport.width * PADDING
+        const h = viewport.height * PADDING
+        const data = generateStars(w, h)
 
-    const pixelRatio = Math.min(
-        gl.getPixelRatio(),
-        DPR_LIMIT
-    )
+        const geometry = new THREE.BufferGeometry()
 
-    const { geometry, material } =
-        useMemo(() => {
+        geometry.setAttribute("position", new THREE.BufferAttribute(data.positions, 3))
+        geometry.setAttribute("aPhase", new THREE.BufferAttribute(data.phases, 1))
+        geometry.setAttribute("aSpeed", new THREE.BufferAttribute(data.speeds, 1))
 
-            const w =
-                viewport.width *
-                PADDING
-
-            const h =
-                viewport.height *
-                PADDING
-
-            const data =
-                generateStars(w, h)
-
-            const geometry =
-                new THREE.BufferGeometry()
-
-            geometry.setAttribute(
-                "position",
-                new THREE.BufferAttribute(
-                    data.positions,
-                    3
-                )
+        geometry.setAttribute("aSize",
+            new THREE.BufferAttribute(data.sizes,
+                1
             )
+        )
 
-            geometry.setAttribute(
-                "aPhase",
-                new THREE.BufferAttribute(
-                    data.phases,
-                    1
-                )
+        geometry.setAttribute("aHue",
+            new THREE.BufferAttribute(data.hues,
+                1
             )
+        )
 
-            geometry.setAttribute(
-                "aSpeed",
-                new THREE.BufferAttribute(
-                    data.speeds,
-                    1
-                )
-            )
+        geometry.setAttribute("aKind", new THREE.BufferAttribute(data.kinds, 1))
+        geometry.setAttribute("aSeed", new THREE.BufferAttribute(data.seeds, 1))
 
-            geometry.setAttribute(
-                "aSize",
-                new THREE.BufferAttribute(
-                    data.sizes,
-                    1
-                )
-            )
+        const material = new THREE.ShaderMaterial({
 
-            geometry.setAttribute(
-                "aHue",
-                new THREE.BufferAttribute(
-                    data.hues,
-                    1
-                )
-            )
+            vertexShader: starVertexShader,
+            fragmentShader: starFragmentShader,
 
-            geometry.setAttribute(
-                "aKind",
-                new THREE.BufferAttribute(
-                    data.kinds,
-                    1
-                )
-            )
+            uniforms: {
+                uTime: { value: 0, },
+                uPixelRatio: { value: pixelRatio },
+                uBaseSize: { value: 18 },
+                uColorWhite: { value: new THREE.Color(COLORS.white) },
+                uColorAmber: { value: new THREE.Color(COLORS.amber) },
+                uColorPink: { value: new THREE.Color(COLORS.pink) },
+                uColorViolet: { value: new THREE.Color(COLORS.violet) },
+                uColorCyan: { value: new THREE.Color(COLORS.cyan) },
+            },
 
-            geometry.setAttribute(
-                "aSeed",
-                new THREE.BufferAttribute(
-                    data.seeds,
-                    1
-                )
-            )
+            transparent: true,
+            depthWrite: false,
+            depthTest: false,
+            blending: THREE.AdditiveBlending,
+            toneMapped: false,
+        })
 
-            const material =
-                new THREE.ShaderMaterial({
+        return {
+            geometry,
+            material,
+        }
 
-                    vertexShader:
-                        starVertexShader,
+    }, [
+        viewport.width,
+        viewport.height,
+        pixelRatio,
+    ])
 
-                    fragmentShader:
-                        starFragmentShader,
-
-                    uniforms: {
-
-                        uTime: {
-                            value: 0,
-                        },
-
-                        uPixelRatio: {
-                            value: pixelRatio,
-                        },
-
-                        uBaseSize: {
-                            value: 18,
-                        },
-
-                        uColorWhite: {
-                            value:
-                                new THREE.Color(
-                                    COLORS.white
-                                ),
-                        },
-
-                        uColorAmber: {
-                            value:
-                                new THREE.Color(
-                                    COLORS.amber
-                                ),
-                        },
-
-                        uColorPink: {
-                            value:
-                                new THREE.Color(
-                                    COLORS.pink
-                                ),
-                        },
-
-                        uColorViolet: {
-                            value:
-                                new THREE.Color(
-                                    COLORS.violet
-                                ),
-                        },
-
-                        uColorCyan: {
-                            value:
-                                new THREE.Color(
-                                    COLORS.cyan
-                                ),
-                        },
-                    },
-
-                    transparent: true,
-
-                    depthWrite: false,
-                    depthTest: false,
-
-                    blending:
-                        THREE.AdditiveBlending,
-
-                    toneMapped: false,
-                })
-
-            return {
-                geometry,
-                material,
-            }
-
-        }, [
-            viewport.width,
-            viewport.height,
-            pixelRatio,
-        ])
-
-    materialRef.current =
-        material
+    materialRef.current = material
 
     useEffect(() => {
 
@@ -1139,10 +619,7 @@ function StarParticles() {
         if (!materialRef.current)
             return
 
-        materialRef.current
-            .uniforms
-            .uTime
-            .value += delta
+        materialRef.current.uniforms.uTime.value += delta
 
     })
 
@@ -1163,65 +640,31 @@ function StarParticles() {
 function makeSparkleTexture() {
 
     const size = 64
-
-    const canvas =
-        document.createElement(
-            "canvas"
-        )
+    const canvas = document.createElement("canvas")
 
     canvas.width = size
     canvas.height = size
 
-    const ctx =
-        canvas.getContext("2d")
-
+    const ctx = canvas.getContext("2d")
     const c = size / 2
 
-    const glow =
-        ctx.createRadialGradient(
-            c,
-            c,
-            0,
-            c,
-            c,
-            c
-        )
+    const glow = ctx.createRadialGradient(c, c, 0, c, c, c)
 
-    glow.addColorStop(
-        0,
-        "rgba(255,255,255,1)"
-    )
-
-    glow.addColorStop(
-        0.35,
-        "rgba(255,255,255,0.55)"
-    )
-
-    glow.addColorStop(
-        1,
-        "rgba(255,255,255,0)"
-    )
+    glow.addColorStop(0, "rgba(255,255,255,1)")
+    glow.addColorStop(0.35, "rgba(255,255,255,0.55)")
+    glow.addColorStop(1, "rgba(255,255,255,0)")
 
     ctx.fillStyle = glow
-    ctx.fillRect(
-        0,
-        0,
-        size,
-        size
-    )
+    ctx.fillRect(0, 0, size, size)
 
-    ctx.strokeStyle =
-        "rgba(255,255,255,0.9)"
-
+    ctx.strokeStyle = "rgba(255,255,255,0.9)"
     ctx.lineCap = "round"
-
     ctx.lineWidth = 1.4
 
     ctx.beginPath()
 
     ctx.moveTo(c, 2)
     ctx.lineTo(c, size - 2)
-
     ctx.moveTo(2, c)
     ctx.lineTo(size - 2, c)
 
@@ -1232,32 +675,14 @@ function makeSparkleTexture() {
 
     ctx.beginPath()
 
-    ctx.moveTo(
-        c - c * 0.6,
-        c - c * 0.6
-    )
-
-    ctx.lineTo(
-        c + c * 0.6,
-        c + c * 0.6
-    )
-
-    ctx.moveTo(
-        c - c * 0.6,
-        c + c * 0.6
-    )
-
-    ctx.lineTo(
-        c + c * 0.6,
-        c - c * 0.6
-    )
+    ctx.moveTo(c - c * 0.6, c - c * 0.6)
+    ctx.lineTo(c + c * 0.6, c + c * 0.6)
+    ctx.moveTo(c - c * 0.6, c + c * 0.6)
+    ctx.lineTo(c + c * 0.6, c - c * 0.6)
 
     ctx.stroke()
 
-    const texture =
-        new THREE.CanvasTexture(
-            canvas
-        )
+    const texture = new THREE.CanvasTexture(canvas)
 
     texture.needsUpdate = true
 
@@ -1268,57 +693,25 @@ function makeHaloTexture() {
 
     const size = 128
 
-    const canvas =
-        document.createElement(
-            "canvas"
-        )
+    const canvas = document.createElement("canvas")
 
     canvas.width = size
     canvas.height = size
 
-    const ctx =
-        canvas.getContext("2d")
+    const ctx = canvas.getContext("2d")
 
     const c = size / 2
 
-    const glow =
-        ctx.createRadialGradient(
-            c,
-            c,
-            0,
-            c,
-            c,
-            c
-        )
+    const glow = ctx.createRadialGradient(c, c, 0, c, c, c)
 
-    glow.addColorStop(
-        0,
-        "rgba(255,255,255,0.9)"
-    )
-
-    glow.addColorStop(
-        0.4,
-        "rgba(255,255,255,0.35)"
-    )
-
-    glow.addColorStop(
-        1,
-        "rgba(255,255,255,0)"
-    )
+    glow.addColorStop(0, "rgba(255,255,255,0.9)")
+    glow.addColorStop(0.4, "rgba(255,255,255,0.35)")
+    glow.addColorStop(1, "rgba(255,255,255,0)")
 
     ctx.fillStyle = glow
+    ctx.fillRect(0, 0, size, size)
 
-    ctx.fillRect(
-        0,
-        0,
-        size,
-        size
-    )
-
-    const texture =
-        new THREE.CanvasTexture(
-            canvas
-        )
+    const texture = new THREE.CanvasTexture(canvas)
 
     texture.needsUpdate = true
 
@@ -1345,29 +738,15 @@ varying float vHue;
 
 void main() {
 
-    vec4 mvPosition =
-        modelViewMatrix *
-        vec4(position, 1.0);
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
 
-    gl_Position =
-        projectionMatrix *
-        mvPosition;
+    gl_Position = projectionMatrix * mvPosition;
 
-    vAlpha =
-        0.7 +
-        0.3 *
-        sin(
-            uTime * 0.8 +
-            aPhase
-        );
+    vAlpha = 0.7 + 0.3 * sin(uTime * 0.8 + aPhase);
 
     vHue = aHue;
 
-    gl_PointSize =
-        aSize *
-        uBaseSize *
-        uPixelRatio *
-        (1.0 / max(-mvPosition.z, 0.001));
+    gl_PointSize = aSize * uBaseSize * uPixelRatio * (1.0 / max(-mvPosition.z, 0.001));
 }
 `
 
@@ -1380,17 +759,9 @@ varying float vAlpha;
 
 void main() {
 
-    vec4 tex =
-        texture2D(
-            uMap,
-            gl_PointCoord
-        );
+    vec4 tex = texture2D(uMap, gl_PointCoord);
 
-    gl_FragColor =
-        vec4(
-            tex.rgb,
-            tex.a * vAlpha
-        );
+    gl_FragColor = vec4(tex.rgb, tex.a * vAlpha);
 }
 `
 
@@ -1409,67 +780,35 @@ varying float vHue;
 
 void main() {
 
-    vec4 tex =
-        texture2D(
-            uMap,
-            gl_PointCoord
-        );
+    vec4 tex = texture2D(uMap, gl_PointCoord);
 
     vec3 color;
 
     if (vHue < 0.33) {
 
-        color =
-            mix(
-                uColorCyan,
-                uColorViolet,
-                vHue / 0.33
-            );
+        color = mix(uColorCyan, uColorViolet, vHue / 0.33);
 
     }
     else if (vHue < 0.66) {
 
-        color =
-            mix(
-                uColorViolet,
-                uColorPink,
-                (vHue - 0.33) / 0.33
-            );
+        color = mix(uColorViolet, uColorPink, (vHue - 0.33) / 0.33);
 
     }
     else {
 
-        color =
-            mix(
-                uColorPink,
-                uColorAmber,
-                (vHue - 0.66) / 0.34
-            );
+        color = mix(uColorPink, uColorAmber, (vHue - 0.66) / 0.34);
     }
 
-    gl_FragColor =
-        vec4(
-            color,
-            tex.a *
-            vAlpha *
-            0.55
-        );
+    gl_FragColor = vec4(color, tex.a * vAlpha * 0.55);
 }
 `
 
 function BrightStars() {
 
-    const viewport =
-        useThree((s) => s.viewport)
-
-    const gl =
-        useThree((s) => s.gl)
-
-    const sparkleMatRef =
-        useRef(null)
-
-    const haloMatRef =
-        useRef(null)
+    const viewport = useThree((s) => s.viewport)
+    const gl = useThree((s) => s.gl)
+    const sparkleMatRef = useRef(null)
+    const haloMatRef = useRef(null)
 
     const {
         geometry,
@@ -1479,217 +818,75 @@ function BrightStars() {
         haloTex,
     } = useMemo(() => {
 
-        const w =
-            viewport.width *
-            PADDING
+        const w = viewport.width * PADDING
+        const h = viewport.height * PADDING
 
-        const h =
-            viewport.height *
-            PADDING
-
-        const positions =
-            new Float32Array(
-                BRIGHT_STAR_COUNT * 3
-            )
-
-        const phases =
-            new Float32Array(
-                BRIGHT_STAR_COUNT
-            )
-
-        const sizes =
-            new Float32Array(
-                BRIGHT_STAR_COUNT
-            )
-
-        const hues =
-            new Float32Array(
-                BRIGHT_STAR_COUNT
-            )
+        const positions = new Float32Array(BRIGHT_STAR_COUNT * 3)
+        const phases = new Float32Array(BRIGHT_STAR_COUNT)
+        const sizes = new Float32Array(BRIGHT_STAR_COUNT)
+        const hues = new Float32Array(BRIGHT_STAR_COUNT)
 
         for (
-            let i = 0;
-            i < BRIGHT_STAR_COUNT;
-            i++
+            let i = 0; i < BRIGHT_STAR_COUNT; i++
         ) {
 
-            positions[i * 3] =
-                (Math.random() - 0.5) *
-                w
-
-            positions[i * 3 + 1] =
-                (Math.random() - 0.5) *
-                h
-
-            positions[i * 3 + 2] =
-                FIELD_Z + 0.2
-
-            phases[i] =
-                Math.random() *
-                Math.PI *
-                2
-
-            sizes[i] =
-                2.2 +
-                Math.random() * 2.2
-
-            hues[i] =
-                Math.random()
+            positions[i * 3] = (Math.random() - 0.5) * w
+            positions[i * 3 + 1] = (Math.random() - 0.5) * h
+            positions[i * 3 + 2] = FIELD_Z + 0.2
+            phases[i] = Math.random() * Math.PI * 2
+            sizes[i] = 2.2 + Math.random() * 2.2
+            hues[i] = Math.random()
         }
 
-        const geometry =
-            new THREE.BufferGeometry()
+        const geometry = new THREE.BufferGeometry()
 
-        geometry.setAttribute(
-            "position",
-            new THREE.BufferAttribute(
-                positions,
-                3
-            )
-        )
+        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3))
+        geometry.setAttribute("aPhase", new THREE.BufferAttribute(phases, 1))
+        geometry.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1))
+        geometry.setAttribute("aHue", new THREE.BufferAttribute(hues, 1))
 
-        geometry.setAttribute(
-            "aPhase",
-            new THREE.BufferAttribute(
-                phases,
-                1
-            )
-        )
+        const sparkleTex = makeSparkleTexture()
+        const haloTex = makeHaloTexture()
+        const sparkleMaterial = new THREE.ShaderMaterial({
+            vertexShader: sparkleVertexShader,
+            fragmentShader: sparkleFragmentShader,
+            uniforms: {
+                uTime: { value: 0 },
+                uPixelRatio: { value: Math.min(gl.getPixelRatio(), DPR_LIMIT), },
+                uBaseSize: { value: 16 },
+                uMap: { value: sparkleTex },
+            },
 
-        geometry.setAttribute(
-            "aSize",
-            new THREE.BufferAttribute(
-                sizes,
-                1
-            )
-        )
+            transparent: true,
+            depthWrite: false,
+            depthTest: false,
+            blending: THREE.AdditiveBlending,
+            toneMapped: false,
+        })
 
-        geometry.setAttribute(
-            "aHue",
-            new THREE.BufferAttribute(
-                hues,
-                1
-            )
-        )
+        const haloMaterial = new THREE.ShaderMaterial({
 
-        const sparkleTex =
-            makeSparkleTexture()
+            vertexShader: sparkleVertexShader,
+            fragmentShader: haloFragmentShader,
 
-        const haloTex =
-            makeHaloTexture()
+            uniforms: {
 
-        const sparkleMaterial =
-            new THREE.ShaderMaterial({
+                uTime: { value: 0 },
+                uPixelRatio: { value: Math.min(gl.getPixelRatio(), DPR_LIMIT) },
+                uBaseSize: { value: 58 },
+                uMap: { value: haloTex },
+                uColorAmber: { value: new THREE.Color(COLORS.amber) },
+                uColorPink: { value: new THREE.Color(COLORS.pink), },
+                uColorViolet: {  value: new THREE.Color(COLORS.violet) },
+                uColorCyan: { value: new THREE.Color(COLORS.cyan), },
+            },
 
-                vertexShader:
-                    sparkleVertexShader,
-
-                fragmentShader:
-                    sparkleFragmentShader,
-
-                uniforms: {
-                    uTime: {
-                        value: 0,
-                    },
-
-                    uPixelRatio: {
-                        value:
-                            Math.min(
-                                gl.getPixelRatio(),
-                                DPR_LIMIT
-                            ),
-                    },
-
-                    uBaseSize: {
-                        value: 16,
-                    },
-
-                    uMap: {
-                        value:
-                            sparkleTex,
-                    },
-                },
-
-                transparent: true,
-                depthWrite: false,
-                depthTest: false,
-
-                blending:
-                    THREE.AdditiveBlending,
-
-                toneMapped: false,
-            })
-
-        const haloMaterial =
-            new THREE.ShaderMaterial({
-
-                vertexShader:
-                    sparkleVertexShader,
-
-                fragmentShader:
-                    haloFragmentShader,
-
-                uniforms: {
-
-                    uTime: {
-                        value: 0,
-                    },
-
-                    uPixelRatio: {
-                        value:
-                            Math.min(
-                                gl.getPixelRatio(),
-                                DPR_LIMIT
-                            ),
-                    },
-
-                    uBaseSize: {
-                        value: 58,
-                    },
-
-                    uMap: {
-                        value:
-                            haloTex,
-                    },
-
-                    uColorAmber: {
-                        value:
-                            new THREE.Color(
-                                COLORS.amber
-                            ),
-                    },
-
-                    uColorPink: {
-                        value:
-                            new THREE.Color(
-                                COLORS.pink
-                            ),
-                    },
-
-                    uColorViolet: {
-                        value:
-                            new THREE.Color(
-                                COLORS.violet
-                            ),
-                    },
-
-                    uColorCyan: {
-                        value:
-                            new THREE.Color(
-                                COLORS.cyan
-                            ),
-                    },
-                },
-
-                transparent: true,
-                depthWrite: false,
-                depthTest: false,
-
-                blending:
-                    THREE.AdditiveBlending,
-
-                toneMapped: false,
-            })
+            transparent: true,
+            depthWrite: false,
+            depthTest: false,
+            blending: THREE.AdditiveBlending,
+            toneMapped: false,
+        })
 
         return {
             geometry,
@@ -1705,21 +902,17 @@ function BrightStars() {
         gl,
     ])
 
-    sparkleMatRef.current =
-        sparkleMaterial
+    sparkleMatRef.current = sparkleMaterial
 
-    haloMatRef.current =
-        haloMaterial
+    haloMatRef.current = haloMaterial
 
     useEffect(() => {
 
         return () => {
 
             geometry.dispose()
-
             sparkleMaterial.dispose()
             haloMaterial.dispose()
-
             sparkleTex.dispose()
             haloTex.dispose()
         }
@@ -1735,21 +928,13 @@ function BrightStars() {
     useFrame((_, delta) => {
 
         if (
-            !sparkleMatRef.current ||
-            !haloMatRef.current
+            !sparkleMatRef.current || !haloMatRef.current
         ) {
             return
         }
 
-        sparkleMatRef.current
-            .uniforms
-            .uTime
-            .value += delta
-
-        haloMatRef.current
-            .uniforms
-            .uTime
-            .value += delta
+        sparkleMatRef.current.uniforms.uTime.value += delta
+        haloMatRef.current.uniforms.uTime.value += delta
     })
 
     return (
@@ -1772,12 +957,6 @@ function BrightStars() {
 }
 
 // ============================================================
-// SHOOTING STARS
-//
-// Instanced.
-// No Mesh creation.
-// No Material creation.
-// No disposal during gameplay.
 // ============================================================
 
 const shootingStarVertexShader = /* glsl */ `
@@ -1796,28 +975,15 @@ void main() {
 
     vec3 p = position;
 
-    float c =
-        cos(aRotation);
+    float c = cos(aRotation);
+    float s = sin(aRotation);
 
-    float s =
-        sin(aRotation);
+    vec2 rotated = vec2(p.x * c - p.y * s, p.x * s + p.y * c);
 
-    vec2 rotated =
-        vec2(
-            p.x * c - p.y * s,
-            p.x * s + p.y * c
-        );
-
-    p.xy =
-        rotated *
-        aScale;
-
+    p.xy = rotated * aScale;
     p += aOffset;
 
-    gl_Position =
-        projectionMatrix *
-        modelViewMatrix *
-        vec4(p, 1.0);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
 
     vOpacity = aOpacity;
     vColor = aColor;
@@ -1832,210 +998,94 @@ varying vec3 vColor;
 
 void main() {
 
-    // Plane runs from x=-0.5 to +0.5.
-    float head =
-        smoothstep(
-            0.25,
-            0.5,
-            gl_FragCoord.x
-        );
+    float head = smoothstep(0.25, 0.5, gl_FragCoord.x);
+    float alpha = vOpacity * head;
 
-    float alpha =
-        vOpacity *
-        head;
-
-    gl_FragColor =
-        vec4(
-            vColor,
-            alpha
-        );
+    gl_FragColor = vec4(vColor, alpha);
 }
 `
 
 function ShootingStars() {
 
-    const viewport =
-        useThree((s) => s.viewport)
+    const viewport = useThree((s) => s.viewport)
+    const meshRef = useRef(null)
+    const stateRef = useRef([])
 
-    const meshRef =
-        useRef(null)
+    const nextSpawnRef = useRef(1.5 + Math.random() * 2.5)
+    const nextShowerRef = useRef(10 + Math.random() * 12)
 
-    const stateRef =
-        useRef([])
+    const geometry = useMemo(() => {
 
-    const nextSpawnRef =
-        useRef(
-            1.5 +
-            Math.random() * 2.5
-        )
+        const base = new THREE.PlaneGeometry(1, 1)
+        const geo = new THREE.InstancedBufferGeometry()
 
-    const nextShowerRef =
-        useRef(
-            10 +
-            Math.random() * 12
-        )
+        geo.index = base.index
+        geo.attributes = base.attributes
 
-    const geometry =
-        useMemo(() => {
+        return geo
 
-            const base =
-                new THREE.PlaneGeometry(
-                    1,
-                    1
-                )
+    }, [])
 
-            const geo =
-                new THREE.InstancedBufferGeometry()
+    const attributes = useMemo(() => {
 
-            geo.index =
-                base.index
+        const offsets = new Float32Array(MAX_SHOOTING_STARS * 3)
+        const scales = new Float32Array(MAX_SHOOTING_STARS * 2)
+        const rotations = new Float32Array(MAX_SHOOTING_STARS)
+        const opacities = new Float32Array(MAX_SHOOTING_STARS)
+        const colors = new Float32Array(MAX_SHOOTING_STARS * 3)
 
-            geo.attributes =
-                base.attributes
+        opacities.fill(0)
 
-            return geo
+        geometry.setAttribute("aOffset", new THREE.InstancedBufferAttribute(offsets, 3))
+        geometry.setAttribute("aScale", new THREE.InstancedBufferAttribute(scales, 2))
+        geometry.setAttribute("aRotation", new THREE.InstancedBufferAttribute(rotations, 1))
+        geometry.setAttribute("aOpacity", new THREE.InstancedBufferAttribute(opacities, 1))
+        geometry.setAttribute("aColor", new THREE.InstancedBufferAttribute(colors, 3))
 
-        }, [])
+        geometry.instanceCount = MAX_SHOOTING_STARS
 
-    const attributes =
-        useMemo(() => {
+        return {
+            offsets,
+            scales,
+            rotations,
+            opacities,
+            colors,
+        }
 
-            const offsets =
-                new Float32Array(
-                    MAX_SHOOTING_STARS * 3
-                )
+    }, [geometry])
 
-            const scales =
-                new Float32Array(
-                    MAX_SHOOTING_STARS * 2
-                )
+    const material = useMemo(() => {
 
-            const rotations =
-                new Float32Array(
-                    MAX_SHOOTING_STARS
-                )
+        return new THREE.ShaderMaterial({
 
-            const opacities =
-                new Float32Array(
-                    MAX_SHOOTING_STARS
-                )
+            vertexShader: shootingStarVertexShader,
+            fragmentShader: shootingStarFragmentShader,
+            transparent: true,
+            depthWrite: false,
+            depthTest: false,
+            blending: THREE.AdditiveBlending,
+            toneMapped: false,
+        })
 
-            const colors =
-                new Float32Array(
-                    MAX_SHOOTING_STARS * 3
-                )
-
-            // Initialise inactive.
-            opacities.fill(0)
-
-            geometry.setAttribute(
-                "aOffset",
-                new THREE.InstancedBufferAttribute(
-                    offsets,
-                    3
-                )
-            )
-
-            geometry.setAttribute(
-                "aScale",
-                new THREE.InstancedBufferAttribute(
-                    scales,
-                    2
-                )
-            )
-
-            geometry.setAttribute(
-                "aRotation",
-                new THREE.InstancedBufferAttribute(
-                    rotations,
-                    1
-                )
-            )
-
-            geometry.setAttribute(
-                "aOpacity",
-                new THREE.InstancedBufferAttribute(
-                    opacities,
-                    1
-                )
-            )
-
-            geometry.setAttribute(
-                "aColor",
-                new THREE.InstancedBufferAttribute(
-                    colors,
-                    3
-                )
-            )
-
-            geometry.instanceCount =
-                MAX_SHOOTING_STARS
-
-            return {
-                offsets,
-                scales,
-                rotations,
-                opacities,
-                colors,
-            }
-
-        }, [geometry])
-
-    const material =
-        useMemo(() => {
-
-            return new THREE.ShaderMaterial({
-
-                vertexShader:
-                    shootingStarVertexShader,
-
-                fragmentShader:
-                    shootingStarFragmentShader,
-
-                transparent: true,
-
-                depthWrite: false,
-                depthTest: false,
-
-                blending:
-                    THREE.AdditiveBlending,
-
-                toneMapped: false,
-            })
-
-        }, [])
+    }, [])
 
     useEffect(() => {
 
         return () => {
-
             geometry.dispose()
             material.dispose()
-
         }
 
-    }, [
-        geometry,
-        material,
-    ])
+    }, [geometry, material])
 
     function createStar(dim = false) {
 
-        const existing =
-            stateRef.current
-
+        const existing = stateRef.current
         let slot = -1
 
-        for (
-            let i = 0;
-            i < MAX_SHOOTING_STARS;
-            i++
-        ) {
+        for (let i = 0; i < MAX_SHOOTING_STARS; i++) {
 
-            if (
-                !existing[i] ||
-                !existing[i].active
-            ) {
+            if (!existing[i] || !existing[i].active) {
                 slot = i
                 break
             }
@@ -2045,43 +1095,16 @@ function ShootingStars() {
             return
         }
 
-        const w =
-            viewport.width *
-            PADDING
+        const w = viewport.width * PADDING
+        const h = viewport.height * PADDING
 
-        const h =
-            viewport.height *
-            PADDING
+        const angle = THREE.MathUtils.degToRad(-18 - Math.random() * 20)
 
-        const angle =
-            THREE.MathUtils.degToRad(
-                -18 -
-                Math.random() * 20
-            )
-
-        const speed =
-            (dim ? 3 : 3.5) +
-            Math.random() * 3
-
-        const length =
-            (dim ? 2.5 : 3.5) +
-            Math.random() * 2.5
-
-        const margin =
-            Math.max(w, h) *
-            0.25
-
-        const startX =
-            -w / 2 -
-            margin
-
-        const startY =
-            h *
-            (
-                Math.random() *
-                0.7 -
-                0.15
-            )
+        const speed = (dim ? 3 : 3.5) + Math.random() * 3
+        const length = (dim ? 2.5 : 3.5) + Math.random() * 2.5
+        const margin = Math.max(w, h) * 0.25
+        const startX = -w / 2 - margin
+        const startY = h * (Math.random() * 0.7 - 0.15)
 
         const colors = [
             [0.27, 0.67, 1.0],
@@ -2090,13 +1113,7 @@ function ShootingStars() {
             [0.89, 0.35, 0.16],
         ]
 
-        const color =
-            colors[
-                Math.floor(
-                    Math.random() *
-                    colors.length
-                )
-            ]
+        const color = colors[Math.floor(Math.random() * colors.length)]
 
         const star = {
             active: true,
@@ -2106,62 +1123,25 @@ function ShootingStars() {
             angle,
             length,
             travel: 0,
-            maxTravel:
-                w +
-                margin * 2,
+            maxTravel: w + margin * 2,
             peakOpacity:
-                dim
-                    ? 0.6
-                    : 1.0,
-            dirX:
-                Math.cos(angle),
-            dirY:
-                Math.sin(angle),
-            color,
+                dim ? 0.6 : 1.0,
+            dirX: Math.cos(angle),
+            dirY: Math.sin(angle), color,
         }
 
         existing[slot] = star
 
-        attributes.offsets[
-            slot * 3
-        ] = star.x
-
-        attributes.offsets[
-            slot * 3 + 1
-        ] = star.y
-
-        attributes.offsets[
-            slot * 3 + 2
-        ] = FIELD_Z + 1
-
-        attributes.scales[
-            slot * 2
-        ] = length
-
-        attributes.scales[
-            slot * 2 + 1
-        ] =
-            dim
-                ? 0.015
-                : 0.025
-
-        attributes.rotations[slot] =
-            angle
-
-        attributes.colors[
-            slot * 3
-        ] = color[0]
-
-        attributes.colors[
-            slot * 3 + 1
-        ] = color[1]
-
-        attributes.colors[
-            slot * 3 + 2
-        ] = color[2]
-
+        attributes.offsets[slot * 3] = star.x
+        attributes.offsets[slot * 3 + 1] = star.y
+        attributes.offsets[slot * 3 + 2] = FIELD_Z + 1
+        attributes.scales[slot * 2] = length
+        attributes.scales[slot * 2 + 1] = dim ? 0.015 : 0.025
+        attributes.rotations[slot] = angle
+        attributes.colors[slot * 3] = color[0]
+        attributes.colors[slot * 3 + 1] = color[1]
+        attributes.colors[slot * 3 + 2] = color[2]
         attributes.opacities[slot] = 0
-
     }
 
     useFrame((_, delta) => {
@@ -2169,168 +1149,75 @@ function ShootingStars() {
         if (!meshRef.current)
             return
 
-        nextSpawnRef.current -=
-            delta
+        nextSpawnRef.current -= delta
 
-        if (
-            nextSpawnRef.current <= 0
-        ) {
+        if (nextSpawnRef.current <= 0) {
 
             createStar(false)
 
-            nextSpawnRef.current =
-                4 +
-                Math.random() * 6
+            nextSpawnRef.current = 4 + Math.random() * 6
         }
 
-        nextShowerRef.current -=
-            delta
+        nextShowerRef.current -= delta
 
-        if (
-            nextShowerRef.current <= 0
-        ) {
+        if (nextShowerRef.current <= 0) {
 
-            const count =
-                5 +
-                Math.floor(
-                    Math.random() * 6
-                )
+            const count = 5 + Math.floor(Math.random() * 6)
 
-            for (
-                let i = 0;
-                i < count;
-                i++
-            ) {
+            for (let i = 0; i < count; i++) {
 
-                // Delayed burst without setTimeout.
-                const delay =
-                    i *
-                    (
-                        0.07 +
-                        Math.random() *
-                        0.12
-                    )
-
-                stateRef.current.push({
-                    active: false,
-                    pending: true,
-                    delay,
-                })
+                const delay = i * (0.07 + Math.random() * 0.12)
+                stateRef.current.push({ active: false, pending: true, delay, })
             }
 
-            nextShowerRef.current =
-                16 +
-                Math.random() * 18
+            nextShowerRef.current = 16 + Math.random() * 18
         }
 
-        // Process pending shower spawns.
-        for (
-            let i = stateRef.current.length - 1;
-            i >= 0;
-            i--
-        ) {
+        for (let i = stateRef.current.length - 1; i >= 0; i--) {
 
-            const star =
-                stateRef.current[i]
+            const star = stateRef.current[i]
 
-            if (
-                star &&
-                star.pending
-            ) {
+            if (star && star.pending) {
 
                 star.delay -= delta
 
-                if (
-                    star.delay <= 0
-                ) {
+                if (star.delay <= 0) {
 
-                    stateRef.current[i] =
-                        null
+                    stateRef.current[i] = null
 
                     createStar(true)
                 }
             }
         }
 
-        for (
-            let i = 0;
-            i < MAX_SHOOTING_STARS;
-            i++
-        ) {
-
-            const star =
-                stateRef.current[i]
-
-            if (
-                !star ||
-                !star.active
-            ) {
+        for (let i = 0; i < MAX_SHOOTING_STARS; i++) {
+            const star = stateRef.current[i]
+            if (!star || !star.active) {
                 attributes.opacities[i] = 0
                 continue
             }
 
-            star.travel +=
-                star.speed *
-                delta
+            star.travel += star.speed * delta
+            star.x += star.dirX * star.speed * delta
+            star.y += star.dirY * star.speed * delta
 
-            star.x +=
-                star.dirX *
-                star.speed *
-                delta
+            const t = star.travel / star.maxTravel
+            const fadeIn = Math.min(t / 0.06, 1)
+            const fadeOut = 1 - Math.min(Math.max((t - 0.75) / 0.25, 0), 1)
 
-            star.y +=
-                star.dirY *
-                star.speed *
-                delta
-
-            const t =
-                star.travel /
-                star.maxTravel
-
-            const fadeIn =
-                Math.min(
-                    t / 0.06,
-                    1
-                )
-
-            const fadeOut =
-                1 -
-                Math.min(
-                    Math.max(
-                        (t - 0.75) /
-                        0.25,
-                        0
-                    ),
-                    1
-                )
-
-            attributes.offsets[
-                i * 3
-            ] = star.x
-
-            attributes.offsets[
-                i * 3 + 1
-            ] = star.y
-
-            attributes.opacities[i] =
-                star.peakOpacity *
-                fadeIn *
-                fadeOut
+            attributes.offsets[i * 3] = star.x
+            attributes.offsets[i * 3 + 1] = star.y
+            attributes.opacities[i] = star.peakOpacity * fadeIn * fadeOut
 
             if (t >= 1) {
 
                 star.active = false
-
-                attributes.opacities[i] =
-                    0
+                attributes.opacities[i] = 0
             }
         }
 
-        geometry.attributes
-            .aOffset.needsUpdate = true
-
-        geometry.attributes
-            .aOpacity.needsUpdate = true
+        geometry.attributes.aOffset.needsUpdate = true
+        geometry.attributes.aOpacity.needsUpdate = true
     })
 
     return (
@@ -2352,26 +1239,11 @@ export function StarfieldRenderer() {
 
     return (
         <>
-
-            {/* Cheapest layer */}
             <SkyBase />
-
-            {/* Procedural galactic cloud */}
             <DustBand />
-
-            {/* One draw call containing:
-                normal stars
-                Milky Way stars
-                clusters
-                dust */}
             <StarParticles />
-
-            {/* Hero stars: 2 draws */}
             <BrightStars />
-
-            {/* Instanced meteor pool */}
             <ShootingStars />
-
         </>
     )
 }
