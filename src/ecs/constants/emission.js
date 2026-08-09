@@ -4,43 +4,55 @@ import { BOSSES } from './bosses.js'
 import { BossType } from './components.js'
 
 /*
-    All offsets are LOCAL TO THE SHIP.
-
-    x = sideways
-    y = forward
-
-    Positive Y = ship nose
-    Negative Y = ship rear
-
-    The offsets rotate automatically with the ship.
+============================================================
+EMISSION COORDINATES
+============================================================
 */
+
+// ============================================================
+// PLAYER
+// ============================================================
 
 export const PLAYER_CONFIG = {
     emission: {
 
         exhaust: {
             offsetX: 0,
-            offsetY: -0.70,
-            engineGap: 0.15,
+            offsetY: -0.57,
+            engineGap: 0.29,
             nozzleOffset: 0,
         },
 
         projectile: {
             offsetX: 0,
-            offsetY: 0.55,
+            offsetY: 0.9,
+            gunGap: 0.495,
         },
 
         beam: {
             offsetX: 0,
-            offsetY: 0.55,
+            offsetY: 0.695,
+            gunGap: 0.495,
+        },
+
+        missile: {
+            offsetX: 0,
+            offsetY: 0.695,
+            gunGap: 0.495,
         },
 
         thrower: {
             offsetX: 0,
-            offsetY: 0.55,
+            offsetY: 0.695,
+            gunGap: 0.495,
         },
+
     },
 }
+
+// ============================================================
+// LOCAL -> WORLD
+// ============================================================
 
 export function localToWorldOffset(offsetX = 0, offsetY = 0, rot = 0) {
     const cos = Math.cos(rot)
@@ -52,12 +64,15 @@ export function localToWorldOffset(offsetX = 0, offsetY = 0, rot = 0) {
     }
 }
 
-export function getEmissionPoint(x, y, rot, config = {}) {
-    const offset = localToWorldOffset(
-        config.offsetX ?? 0,
-        config.offsetY ?? 0,
-        rot
-    )
+// ============================================================
+// SINGLE EMISSION POINT
+// ============================================================
+
+export function getEmissionPoint(x, y, rot, config = {}, side = 0) {
+    const gap = config.gunGap ?? config.engineGap ?? 0
+    const sideOffset = side * gap
+
+    const offset = localToWorldOffset((config.offsetX ?? 0) + sideOffset, (config.offsetY ?? 0) + (config.nozzleOffset ?? 0), rot)
 
     return {
         x: x + offset.x,
@@ -65,9 +80,33 @@ export function getEmissionPoint(x, y, rot, config = {}) {
     }
 }
 
+
+// ============================================================
+// PAIRED POINTS
+// ============================================================
+
+export function getEmissionPair(x, y, rot, config = {}) {
+    return {
+        left: getEmissionPoint(x, y, rot, config, -1),
+        right: getEmissionPoint(x, y, rot, config, 1),
+    }
+}
+
+// ============================================================
+// PLAYER CONFIG
+// ============================================================
+
+export function getPlayerEmissionConfig(type = 'projectile') {
+    return PLAYER_CONFIG.emission[type] ?? {}
+}
+
+
+// ============================================================
+// BOSS CONFIG
+// ============================================================
+
 export function getBossEmissionConfig(id, type = 'projectile') {
     const bossIndex = BossType.typeIndex[id] ?? 0
     const boss = BOSSES[bossIndex]
-
     return boss?.emission?.[type] ?? {}
 }

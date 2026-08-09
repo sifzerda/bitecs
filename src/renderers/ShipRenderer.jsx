@@ -34,14 +34,11 @@ const FALLBACK_BOSS_SVG = BOSS_SVG_BY_KEY.shotgun
 const PLAYER_COCKPIT_GLASS_CFG = {
     offsetX: 0,
     offsetY: 0.137,
-
     // Overall canopy size
     width: 0.065,
     height: 0.10,
-
     // Glass
     lensColor: '#00eaff',
-
     // Structural canopy frame
     frameColor: '#07131c',
     edgeThickness: 0.075,

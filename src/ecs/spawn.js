@@ -66,6 +66,7 @@ function setHealth(id, hp) {
     Health.max[id] = hp
 }
 
+const GUN_GAP = 0.45
 
 // ============================================================
 // Player Ship
@@ -91,9 +92,6 @@ export function spawnPlayer(x, y) {
 // Bullets
 // ============================================================
 
-export const GUN_GAP = 0.45
-
-
 export function spawnBullet(
     x,
     y,
@@ -101,7 +99,8 @@ export function spawnBullet(
     weaponId = 0,
     owner = BULLET_OWNER.ENEMY,
     gapOffset = 0,
-    sourceId = -1
+    sourceId = -1,
+    emissionOverride = null
 ) {
 
     const weapon = getWeapon(weaponId)
@@ -116,8 +115,7 @@ export function spawnBullet(
 
     // Beam and thrower weapons have their own systems.
     if (
-        weapon.category === "beam" ||
-        weapon.category === "thrower"
+        weapon.category === "beam" || weapon.category === "thrower"
     ) {
 
         return {
@@ -132,15 +130,7 @@ export function spawnBullet(
     // Emission configuration
     // --------------------------------------------------------
 
-    const isBoss =
-        sourceId !== -1 &&
-        BossTag?.[sourceId]
-
-    const emission =
-        isBoss
-            ? getBossEmissionConfig(sourceId, "projectile")
-            : PLAYER_CONFIG.emission.projectile
-
+    const emission = emissionOverride ?? PLAYER_CONFIG.emission.projectile
 
     // --------------------------------------------------------
     // Forward direction
@@ -165,13 +155,8 @@ export function spawnBullet(
     const perpX = Math.cos(-rot)
     const perpY = -Math.sin(-rot)
 
-
-    const forwardOffset =
-        emission.offsetY ?? 0
-
-    const sideOffset =
-        (emission.offsetX ?? 0) +
-        gapOffset
+    const forwardOffset = emission.offsetY ?? 0
+    const sideOffset = (emission.offsetX ?? 0) + gapOffset
 
 
     // --------------------------------------------------------
@@ -181,48 +166,27 @@ export function spawnBullet(
     // Both the forward offset AND gun gap rotate with the ship.
     // --------------------------------------------------------
 
-    const originX =
-        x +
-        fwdX * forwardOffset +
-        perpX * sideOffset
-
-    const originY =
-        y +
-        fwdY * forwardOffset +
-        perpY * sideOffset
-
+    const originX = x + fwdX * forwardOffset + perpX * sideOffset
+    const originY = y + fwdY * forwardOffset + perpY * sideOffset
 
     // --------------------------------------------------------
     // Weapon projectile configuration
     // --------------------------------------------------------
 
-    const count =
-        weapon.projectileCount ?? 1
-
-    const spread =
-        weapon.spreadAngle ?? 0
+    const count = weapon.projectileCount ?? 1
+    const spread = weapon.spreadAngle ?? 0
 
     const ids = []
 
-
     for (let i = 0; i < count; i++) {
 
-        const offset =
-            count > 1
-                ? -spread / 2 +
-                  (spread / (count - 1)) * i
-                : 0
+        const offset = count > 1 ? -spread / 2 + (spread / (count - 1)) * i : 0
+        const shotRot = rot + offset
 
-        const shotRot =
-            rot + offset
-
-
-        const id =
-            acquireBulletEntity()
+        const id = acquireBulletEntity()
 
         if (id === -1)
             continue
-
 
         // ----------------------------------------------------
         // Position
@@ -231,62 +195,31 @@ export function spawnBullet(
         Position.x[id] = originX
         Position.y[id] = originY
 
-
         // ----------------------------------------------------
         // Velocity
         // ----------------------------------------------------
 
-        Velocity.x[id] =
-            Math.sin(-shotRot) *
-            weapon.speed
-
-        Velocity.y[id] =
-            Math.cos(-shotRot) *
-            weapon.speed
-
+        Velocity.x[id] = Math.sin(-shotRot) * weapon.speed
+        Velocity.y[id] = Math.cos(-shotRot) * weapon.speed
 
         // ----------------------------------------------------
         // Bullet metadata
         // ----------------------------------------------------
 
-        Lifetime.remaining[id] =
-            weapon.lifetime
-
-        Bullet.type[id] =
-            weapon.id
-
-        Bullet.owner[id] =
-            owner
-
-        Bullet.source[id] =
-            sourceId
-
+        Lifetime.remaining[id] = weapon.lifetime
+        Bullet.type[id] = weapon.id
+        Bullet.owner[id] = owner
+        Bullet.source[id] = sourceId
 
         // ----------------------------------------------------
         // Cached render color
         // ----------------------------------------------------
 
-        const color =
-            new THREE.Color(
-                weapon.glowColor ??
-                weapon.color
-            )
-
-        color.offsetHSL(
-            0,
-            0.30,
-            0.00
-        )
-
-        Bullet.colorR[id] =
-            color.r
-
-        Bullet.colorG[id] =
-            color.g
-
-        Bullet.colorB[id] =
-            color.b
-
+        const color = new THREE.Color(weapon.glowColor ?? weapon.color)
+        color.offsetHSL(0, 0.30, 0.00)
+        Bullet.colorR[id] = color.r
+        Bullet.colorG[id] = color.g
+        Bullet.colorB[id] = color.b
 
         ids.push(id)
     }
@@ -298,7 +231,6 @@ export function spawnBullet(
         originY,
     }
 }
-
 
 // ============================================================
 // Player twin-gun firing
@@ -312,6 +244,8 @@ export function spawnPlayerBullet(
     owner = BULLET_OWNER.PLAYER,
     sourceId = -1
 ) {
+    const emission = PLAYER_CONFIG.emission.projectile
+    const gap = emission.gunGap
 
     const left =
         spawnBullet(
@@ -320,10 +254,10 @@ export function spawnPlayerBullet(
             rot,
             weaponId,
             owner,
-            GUN_GAP,
-            sourceId
+            gap,
+            sourceId,
+            emission
         )
-
 
     const right =
         spawnBullet(
@@ -332,13 +266,12 @@ export function spawnPlayerBullet(
             rot,
             weaponId,
             owner,
-            -GUN_GAP,
-            sourceId
+            -gap,
+            sourceId,
+            emission
         )
 
-
     return {
-
         ids: [
             ...left.ids,
             ...right.ids,
@@ -358,7 +291,6 @@ export function spawnPlayerBullet(
     }
 }
 
-
 // ============================================================
 // Boss twin-gun firing
 // ============================================================
@@ -377,13 +309,7 @@ export function spawnBossBullet(
             "projectile"
         )
 
-
-    // Boss-specific gun gap if configured.
-    // Otherwise use the normal twin-gun spacing.
-    const gap =
-        emission.gunGap ??
-        GUN_GAP
-
+    const gap = emission.gunGap
 
     const left =
         spawnBullet(
@@ -393,9 +319,9 @@ export function spawnBossBullet(
             weaponId,
             BULLET_OWNER.ENEMY,
             gap,
-            bossId
+            bossId,
+            emission
         )
-
 
     const right =
         spawnBullet(
@@ -405,7 +331,8 @@ export function spawnBossBullet(
             weaponId,
             BULLET_OWNER.ENEMY,
             -gap,
-            bossId
+            bossId,
+            emission
         )
 
 

@@ -126,8 +126,30 @@ Inside combat.js at end of file lives = 0
 
 ## Tasks
 
+
+- [ ] add asteroid collision with player, and boss collision with player.
+Asteroid damages ship a little if collides with it, boss destroys player on collision
+
+- [ ] optimize things
+- [ ] optimize starfield renderer, make milky way
+
+- [ ] fix emission configs for bosses
+
+- [ ] render one laser gun and position centrally from ship nose
+
+
+- [ ] fix ship cockpit glass panel lines for player and boss
+
+
+
+
+
 PLAYER EMISSION POINTS CONFIG IN emission.js, 
 BOSS EMISSION CONFIG IN bosses.js
+
+
+Make config screen for emission point, using a dot to show emission points on ship svg, not actual bullets/exhaust
+
 
 - [x] config bullet/missile/beam emission point for bosses and player
 - [x] config exhaust emission point for player and bosses
