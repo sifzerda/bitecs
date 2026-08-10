@@ -8,8 +8,8 @@ import { WEAPONS } from '../ecs/weapons/config/weapons.js'
 import { activeBullets } from '../ecs/pools/bulletPool.js'
 
 const MAX_BULLETS = 512
-const BULLET_LENGTH = 0.9
-const BULLET_WIDTH = 0.18
+const BULLET_LENGTH = 1.0
+const BULLET_WIDTH = 0.2
 
 export function BulletRenderer() {
 
