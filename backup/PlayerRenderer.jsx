@@ -399,11 +399,7 @@ void main(){
     vec3 idleColor = vec3(0.3, 0.6, 1.0);
     vec3 boostColor = vec3(0.75, 0.92, 1.0);
     vec3 color = mix(idleColor, boostColor, uThrust);
-
-    vec3 result =
-          color * core * 1.6 * power
-        + color * glow * 0.9  * power
-        + color * halo * 0.4  * power;
+    vec3 result = color * core * 1.6 * power + color * glow * 0.9  * power + color * halo * 0.4  * power;
 
     float alpha = clamp(core + glow * 0.7 + halo * 0.4, 0.0, 1.0) * power * flicker;
 

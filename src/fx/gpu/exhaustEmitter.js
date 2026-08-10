@@ -5,7 +5,6 @@ import { EFFECT } from "../FXTypes"
 import { Position, Velocity, Rotation } from "../../ecs/constants/components"
 import { playerQuery, bossAIQuery } from "../../ecs/constants/queries"
 import { input } from "../../ecs/systems/input"
-import { gameState } from "../../state/gameState"
 
 export function exhaustEmitter() {
 
@@ -22,8 +21,7 @@ export function exhaustEmitter() {
             vx: Velocity.x[id],
             vy: Velocity.y[id],
             rot: Rotation[id],
-            emitting: input.thrust,
-            boost: gameState.boostActive > 0,
+            emitting: input.thrust
         })
 
     }
@@ -41,8 +39,7 @@ export function exhaustEmitter() {
             vx: Velocity.x[id],
             vy: Velocity.y[id],
             rot: Rotation[id],
-            emitting: true,
-            boost: false,
+            emitting: true
         })
 
     }

@@ -12,7 +12,6 @@ export const input = {
   brake: false,
 
   fire: false,
-  boost: false,
   deflect: false,
 
   // screen-space (pixels)
@@ -41,7 +40,6 @@ const bindings = {
   Space: 'fire',
   Spacebar: 'fire',
 
-  KeyB: 'boost',
   KeyX: 'deflect',
 };
 

@@ -30,7 +30,6 @@ const simFragmentShader = /* glsl */
   uniform float uDelta;
   uniform float uTime;
   uniform float uEmitting;
-  uniform float uBoost;
   uniform float uNozzleOffset;
   uniform float uEngineGap;
 
@@ -59,10 +58,9 @@ const simFragmentShader = /* glsl */
       float lifespan = 0.5 + seed * 0.5;
       float age = 1.0 - clamp(life / lifespan, 0.0, 1.0);
 
-     vec2 expand = right * engineSide * age * mix(0.9, 2.4, uBoost);
+      vec2 expand = right * engineSide * age * 0.9;
       float velFade = 1.0 - smoothstep(0.0, 0.35, age);
-      vec2 boostKick = -backward * uBoost * 6.0 * velFade;
-      vec2 exhaustVel = -uShipVel * 0.85 * velFade + curl(pos) * 1.5 + expand + boostKick;
+      vec2 exhaustVel = -uShipVel * 0.85 * velFade + curl(pos) * 1.5 + expand;
       pos += exhaustVel * uDelta;
 
       if (life <= 0.0) {
@@ -79,9 +77,7 @@ const simFragmentShader = /* glsl */
           float nozzleJitter = (subSeed - 0.5) * 0.06;
           float engineOffset = engineSide * uEngineGap + nozzleJitter;
           pos = uShipPos + backward * uNozzleOffset + right * engineOffset;
-          float lifeMix = mix(1.0, 0.75, uBoost);
-
-          life = (0.5 + seed * 0.5) * lifeMix;
+          life = 0.5 + seed * 0.5;
         } else {
           life = -(0.05 + seed * 0.90);
         }
@@ -100,7 +96,6 @@ const renderVertexShader = /* glsl */
 
   uniform sampler2D uPosTex;
   uniform float uSize;
-  uniform float uBoost;
 
   void main() {
     vec4 data = texture2D(uPosTex, particleUv);
@@ -113,8 +108,7 @@ const renderVertexShader = /* glsl */
     vec3 pos = vec3(data.xy, 0.0);
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
 
-    float sizeBoost = mix(1.0, 2.0, uBoost);
-    gl_PointSize = uSize * sizeBoost * mix(0.3, 1.0, clamp(vLife, 0.0, 1.0)) * (40.0 / -mvPosition.z);
+    gl_PointSize = uSize * mix(0.3, 1.0, clamp(vLife, 0.0, 1.0)) * (40.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
 `
@@ -124,7 +118,6 @@ const renderFragmentShader = /* glsl */
   precision highp float;
   varying float vLife;
   varying float vAge;
-  uniform float uBoost;
   uniform vec3 uHotCore;
   uniform vec3 uFireColor;
   uniform vec3 uSmokeColor;
@@ -139,10 +132,6 @@ const renderFragmentShader = /* glsl */
 
     vec3 color = mix(uHotCore, uFireColor, smoothstep(0.0, 0.15, vAge));
     color = mix(color, uSmokeColor, smoothstep(0.15, 1.0, vAge));
-
-    vec3 boostColor = vec3(0.05, 0.25, 1.0);
-    color = mix(color, boostColor, uBoost);
-    alpha *= mix(1.0, 1.6, uBoost);
 
     gl_FragColor = vec4(color, alpha);
   }
@@ -184,7 +173,7 @@ function createRenderTarget(size) {
 // component
 // ---------------------------------------------------------------------------
 //
-// getShip: () => { x, y, vx, vy, rot, emitting, boost } | null
+// getShip: () => { x, y, vx, vy, rot, emitting } | null
 //   Called every frame. Return null when the source entity doesn't exist
 //   (e.g. boss slot empty) — the sim keeps ticking so any live particles
 //   fade out naturally instead of freezing or popping.
@@ -214,8 +203,6 @@ export function ExhaustRenderer({
   const writeTarget = useRef(rtA)
   const otherTarget = useRef(rtB)
 
-  const boostSmooth = useRef(0)
-
   const simMaterial = useMemo(() => new THREE.ShaderMaterial({
     uniforms: {
       uPosTex: { value: null },
@@ -225,7 +212,6 @@ export function ExhaustRenderer({
       uDelta: { value: 0 },
       uTime: { value: 0 },
       uEmitting: { value: 0 },
-      uBoost: { value: 0 },
       uNozzleOffset: { value: nozzleOffset },
       uEngineGap: { value: engineGap },
     },
@@ -242,7 +228,6 @@ export function ExhaustRenderer({
     uniforms: {
       uPosTex: { value: null },
       uSize: { value: size },
-      uBoost: { value: 0 },
       uHotCore: { value: new THREE.Color(hotCore) },
       uFireColor: { value: new THREE.Color(fireColor) },
       uSmokeColor: { value: new THREE.Color(smokeColor) },
@@ -279,17 +264,13 @@ export function ExhaustRenderer({
 
   useFrame((state, delta) => {
 
-   // console.log(exhaustSources)
+    // console.log(exhaustSources)
 
     const ship = exhaustSources.find(s => s.slot === slot)
-
-    const boostTarget = ship?.boost ? 1 : 0
-    boostSmooth.current = THREE.MathUtils.lerp(boostSmooth.current, boostTarget, 0.2)
 
     simMaterial.uniforms.uPosTex.value = readTexture.current
     simMaterial.uniforms.uDelta.value = Math.min(delta, 0.1)
     simMaterial.uniforms.uTime.value = state.clock.elapsedTime
-    simMaterial.uniforms.uBoost.value = boostSmooth.current
 
     if (ship) {
       simMaterial.uniforms.uShipPos.value.set(ship.x, ship.y)
@@ -310,7 +291,6 @@ export function ExhaustRenderer({
 
     readTexture.current = writeTarget.current.texture
     renderMaterial.uniforms.uPosTex.value = readTexture.current
-    renderMaterial.uniforms.uBoost.value = boostSmooth.current
 
     const tmp = writeTarget.current
     writeTarget.current = otherTarget.current

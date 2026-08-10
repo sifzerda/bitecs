@@ -39,9 +39,6 @@ export const gameState = {
 
     paused: false,
 
-    boostCooldown: 0,
-    boostActive: 0,
-
     deflectBufferTime: 0,
     deflectFlashTimer: 0,
     deflectFlashX: 0,
@@ -54,21 +51,6 @@ export const gameState = {
 }
 
 /*
- * gameState is a module-level singleton — it persists for the lifetime
- * of the page across every screen transition. Two independent things
- * were previously NOT resetting it between games:
- *
- *   1. Home.jsx's "enter play" effect only called spawnPlayer(), never
- *      touching wave/bossAlive/bossDone/asteroidsRemaining/score/lives.
- *   2. GameOverScreen didn't reset anything beyond `lives` before
- *      returning to the menu.
- *
- * A stale `wave` left at a multiple of 3 (with bossDone true) from a
- * previous session could satisfy waveSystem's boss-spawn condition on
- * the very first tick of a "new" game — appearing as a boss on wave 1.
- *
- * Call this on any transition that starts a genuinely fresh run:
- * Menu → Play, Game Over → Restart, Game Over → Menu.
  */
 export function resetRun() {
     gameState.stage = 1
@@ -87,9 +69,6 @@ export function resetRun() {
     gameState.asteroidsRemaining = 0
 
     gameState.paused = false
-
-    gameState.boostCooldown = 0
-    gameState.boostActive = 0
 
     gameState.deflectBufferTime = 0
     gameState.deflectFlashTimer = 0

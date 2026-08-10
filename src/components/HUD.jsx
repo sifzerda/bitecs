@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { gameState } from '../state/gameState.js'
 import { skipWave } from '../ecs/systems/waveSystem.js'
-import { BOOST_COOLDOWN } from '../ecs/systems/playerControlSystem.js'
 
 export function HUD({ onPause, paused }) {
 
@@ -12,8 +11,7 @@ export function HUD({ onPause, paused }) {
         health: gameState.health,
         lives: gameState.lives,
         wave: gameState.wave,
-        asteroidsRemaining: gameState.asteroidsRemaining,
-        boostCooldown: gameState.boostCooldown
+        asteroidsRemaining: gameState.asteroidsRemaining
     })
 
     useEffect(() => {
@@ -30,8 +28,6 @@ export function HUD({ onPause, paused }) {
                     lives: gameState.lives,
                     wave: gameState.wave,
                     asteroidsRemaining: gameState.asteroidsRemaining,
-                    boostCooldown: gameState.boostCooldown,
-                    boostActive: gameState.boostActive,
                     bossAlive: gameState.bossAlive,
                 }
 
@@ -55,10 +51,6 @@ export function HUD({ onPause, paused }) {
 
     const healthPct = Math.max(0, hud.health / 100)
     const healthColor = healthPct > 0.5 ? "#44ff88" : healthPct > 0.25 ? "#ffdd44" : "#ff4466"
-
-    const boostPct = Math.max(0, Math.min(1, 1 - hud.boostCooldown / BOOST_COOLDOWN))
-    const boostReady = boostPct >= 1
-    const boostColor = boostReady ? "#44ddff" : "#2a6a80"
 
     return (
 
@@ -91,15 +83,6 @@ export function HUD({ onPause, paused }) {
                 <span>BOOST</span>
 
                 <div className="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
-
-                    <div
-                        style={{
-                            width: `${boostPct * 100}%`,
-                            height: "100%",
-                            background: boostColor,
-                            transition: "width .1s linear"
-                        }}
-                    />
 
                 </div>
 

@@ -18,13 +18,7 @@ const BRAKE = 18
 const MAX_SPEED = 24
 const DRAG = 0.995
 
-const BOOST_THRUST = 90
-const BOOST_MAX_SPEED = 40
-export const BOOST_DURATION = 0.35
-export const BOOST_COOLDOWN = 2.0
-
 const DEFLECT_BUFFER = 0.6
-
 // how quickly the ship turns toward the mouse (rad/s scale factor)
 const MOUSE_TURN_SPEED = 8
 
@@ -88,26 +82,6 @@ export default function playerControlSystem(shootState) {
     }
 
     //----------------------------------
-    // Boost
-    //----------------------------------
-
-    gameState.boostCooldown = Math.max(0, gameState.boostCooldown - dt)
-    gameState.boostActive = Math.max(0, gameState.boostActive - dt)
-
-    // trigger: only allowed to start a fresh boost window when off cooldown
-    if (input.boost && gameState.boostCooldown <= 0 && gameState.boostActive <= 0) {
-        gameState.boostActive = BOOST_DURATION
-        gameState.boostCooldown = BOOST_COOLDOWN
-    }
-
-    // continuous thrust for as long as the boost window is active,
-    // re-reads Rotation every frame so it curves with turning
-    if (gameState.boostActive > 0) {
-        Velocity.x[pid] += Math.sin(-Rotation[pid]) * BOOST_THRUST * dt
-        Velocity.y[pid] += Math.cos(-Rotation[pid]) * BOOST_THRUST * dt
-    }
-
-    //----------------------------------
     // Deflect
     //----------------------------------
 
@@ -123,11 +97,10 @@ export default function playerControlSystem(shootState) {
     // Clamp speed
     //----------------------------------
 
-    const currentMaxSpeed = gameState.boostActive > 0 ? BOOST_MAX_SPEED : MAX_SPEED
     const speed = Math.hypot(Velocity.x[pid], Velocity.y[pid])
 
-    if (speed > currentMaxSpeed) {
-        const scale = currentMaxSpeed / speed
+   if (speed > MAX_SPEED) {
+    const scale = MAX_SPEED / speed
         Velocity.x[pid] *= scale
         Velocity.y[pid] *= scale
     }
