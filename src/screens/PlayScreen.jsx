@@ -160,7 +160,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                             mipmapBlur                 // Better quality
                         />
 
-                        {/* Optional: Keep these if you like them */}
+                        {/* Optional */}
                         <Vignette
                             eskil={false}
                             offset={0.25}

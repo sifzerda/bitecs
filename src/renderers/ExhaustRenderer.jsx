@@ -1,11 +1,14 @@
 // src/renderers/ExhaustRenderer.jsx
 
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { exhaustSources } from "../fx/gpu/ExhaustState"
 
 const PARTICLE_SIZE = 128
+
+// Matches the shader's lifespan formula: 0.5 + seed * 0.5, seed in [0,1]
+const MAX_LIFESPAN = 1.0
 
 // ---------------------------------------------------------------------------
 
@@ -93,6 +96,7 @@ const renderVertexShader = /* glsl */
   attribute vec2 particleUv;
   varying float vLife;
   varying float vAge;
+  varying float vEnvelope;
 
   uniform sampler2D uPosTex;
   uniform float uSize;
@@ -103,12 +107,27 @@ const renderVertexShader = /* glsl */
     vLife = data.z;
     float seed = data.w;
     float lifespan = 0.5 + seed * 0.5;
-    vAge = 1.0 - clamp(vLife / lifespan, 0.0, 1.0);
+
+    // 1.0 at spawn, 0.0 at death — normalized, unlike raw vLife which
+    // varies in absolute scale depending on each particle's random
+    // lifespan (0.5–1.0), so short-lived particles used to never reach
+    // full size.
+    float lifeFrac = clamp(vLife / lifespan, 0.0, 1.0);
+    vAge = 1.0 - lifeFrac;
+
+    // Smooth envelope: fade in over the first ~8% of life, hold, fade
+    // out over the last ~25%. Drives both size and alpha (in the
+    // fragment shader) so particles never hard-pop in or out.
+    vEnvelope = smoothstep(0.0, 0.08, lifeFrac) * (1.0 - smoothstep(0.75, 1.0, vAge));
 
     vec3 pos = vec3(data.xy, 0.0);
     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
 
-    gl_PointSize = uSize * mix(0.3, 1.0, clamp(vLife, 0.0, 1.0)) * (40.0 / -mvPosition.z);
+    // Per-particle size variance from the seed (stable per-particle, not
+    // re-randomized per frame) so the exhaust cloud reads as less uniform.
+    float sizeVariance = mix(0.75, 1.25, fract(seed * 13.7));
+
+    gl_PointSize = uSize * sizeVariance * vEnvelope * (40.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
   }
 `
@@ -192,6 +211,16 @@ export function ExhaustRenderer({
 }) {
   const { gl } = useThree()
 
+  const pointsRef = useRef()
+
+  // Tracks how long to keep simulating after emission stops. Reset forward
+  // to (now + MAX_LIFESPAN) every frame the ship is actively emitting; once
+  // "now" passes this, every particle that could still be alive has already
+  // fully decayed (matches the shader's own lifespan formula), so the sim
+  // pass and the points draw are both skipped entirely — pure GPU cost with
+  // zero visual difference, since nothing would be visible anyway.
+  const activeUntilRef = useRef(0)
+
   const simScene = useMemo(() => new THREE.Scene(), [])
   const simCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), [])
 
@@ -219,9 +248,19 @@ export function ExhaustRenderer({
     fragmentShader: simFragmentShader,
   }), [nozzleOffset, engineGap])
 
-  useMemo(() => {
+  // Side effect (adding the quad to the sim scene) belongs in useEffect, not
+  // useMemo — useMemo has no cleanup, so if simMaterial ever changed
+  // identity (e.g. nozzleOffset/engineGap props change on a live instance)
+  // this would silently add a second quad on top of the first instead of
+  // replacing it.
+  useEffect(() => {
     const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), simMaterial)
     simScene.add(quad)
+
+    return () => {
+      simScene.remove(quad)
+      quad.geometry.dispose()
+    }
   }, [simScene, simMaterial])
 
   const renderMaterial = useMemo(() => new THREE.ShaderMaterial({
@@ -262,11 +301,43 @@ export function ExhaustRenderer({
     return geo
   }, [])
 
+  // Dispose every GPU resource this component owns when it unmounts.
+  // None of this existed before — rtA/rtB/initialPosTexture/simMaterial/
+  // renderMaterial/pointsGeometry were all leaking on unmount.
+  useEffect(() => {
+    return () => {
+      initialPosTexture.dispose()
+      rtA.dispose()
+      rtB.dispose()
+      simMaterial.dispose()
+      renderMaterial.dispose()
+      pointsGeometry.dispose()
+    }
+  }, [initialPosTexture, rtA, rtB, simMaterial, renderMaterial, pointsGeometry])
+
   useFrame((state, delta) => {
 
-    // console.log(exhaustSources)
-
     const ship = exhaustSources.find(s => s.slot === slot)
+    const now = state.clock.elapsedTime
+    const emitting = !!(ship && ship.emitting)
+
+    if (emitting) {
+      activeUntilRef.current = now + MAX_LIFESPAN
+    }
+
+    const isActive = now < activeUntilRef.current
+
+    if (pointsRef.current) {
+      pointsRef.current.visible = isActive
+    }
+
+    // Nothing could possibly be alive or spawning this frame — skip the
+    // sim pass and the points draw entirely rather than paying for a
+    // 128x128 fragment shader pass and a 16,384-point draw call that would
+    // render nothing visible (every particle already discards on life <= 0).
+    if (!isActive) {
+      return
+    }
 
     simMaterial.uniforms.uPosTex.value = readTexture.current
     simMaterial.uniforms.uDelta.value = Math.min(delta, 0.1)
@@ -298,7 +369,9 @@ export function ExhaustRenderer({
   })
 
   return (
-    <points geometry={pointsGeometry}
+    <points
+      ref={pointsRef}
+      geometry={pointsGeometry}
       material={renderMaterial}
       frustumCulled={false}
     />

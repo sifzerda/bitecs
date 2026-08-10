@@ -221,7 +221,11 @@ function DustBand() {
 
             transparent: true,
             depthWrite: false,
-            depthTest: false,
+            // Was false — with depthTest off this layer painted over every
+            // opaque object in front of it (asteroids, ships) regardless of
+            // actual depth, since transparent objects render after the
+            // opaque pass and this skipped checking what was already there.
+            depthTest: true,
             blending: THREE.AdditiveBlending,
         })
     }, [])
@@ -587,7 +591,10 @@ function StarParticles() {
 
             transparent: true,
             depthWrite: false,
-            depthTest: false,
+            // Was false — this is the main star layer, and with depth
+            // testing off it drew on top of asteroids/ships every frame
+            // no matter which was actually closer to the camera.
+            depthTest: true,
             blending: THREE.AdditiveBlending,
             toneMapped: false,
         })
@@ -859,7 +866,9 @@ function BrightStars() {
 
             transparent: true,
             depthWrite: false,
-            depthTest: false,
+            // Was false — same issue as the other layers: bright stars
+            // were painting over asteroids/ships regardless of depth.
+            depthTest: true,
             blending: THREE.AdditiveBlending,
             toneMapped: false,
         })
@@ -883,7 +892,7 @@ function BrightStars() {
 
             transparent: true,
             depthWrite: false,
-            depthTest: false,
+            depthTest: true,
             blending: THREE.AdditiveBlending,
             toneMapped: false,
         })
@@ -1062,7 +1071,9 @@ function ShootingStars() {
             fragmentShader: shootingStarFragmentShader,
             transparent: true,
             depthWrite: false,
-            depthTest: false,
+            // Was false — shooting stars would streak across in front of
+            // asteroids/ships even when those were actually closer to camera.
+            depthTest: true,
             blending: THREE.AdditiveBlending,
             toneMapped: false,
         })
