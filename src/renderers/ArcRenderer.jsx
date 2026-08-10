@@ -42,6 +42,8 @@ uniform float uTime;
 uniform vec3 uCore;
 uniform vec3 uGlow;
 uniform vec3 uHalo;
+uniform vec3 uAccentA;
+uniform vec3 uAccentB;
 uniform float uSeed;
 uniform float uThicknessRatio;
 
@@ -72,6 +74,33 @@ float noise(float x, float seed) {
 }
 
 // ---------------------------------------------------------------------------
+// Fractal noise
+//
+// Stacks a few octaves so a path gets both a large sweeping wander AND
+// small chaotic kinks, instead of one smooth wave. This is what gives real
+// lightning its torn, fractured look rather than a drawn curve.
+// ---------------------------------------------------------------------------
+
+float fbm(float x, float seed) {
+
+    float total = 0.0;
+    float amplitude = 0.5;
+    float frequency = 1.0;
+
+    for (int i = 0; i < 4; i++) {
+
+        total +=
+            (noise(x * frequency, seed + float(i) * 91.7) - 0.5) *
+            amplitude;
+
+        amplitude *= 0.48;
+        frequency *= 2.4;
+    }
+
+    return total;
+}
+
+// ---------------------------------------------------------------------------
 // Main bolt path
 // ---------------------------------------------------------------------------
 
@@ -79,16 +108,7 @@ float boltPath(float y, float seed) {
 
     float fade = smoothstep(0.0, 0.06, y);
 
-    float largeNoise =
-        noise(y * 7.0, seed * 31.0) - 0.5;
-
-    float smallNoise =
-        noise(y * 24.0, seed * 67.0) - 0.5;
-
-    return (
-        largeNoise * 0.28 +
-        smallNoise * 0.10
-    ) * fade;
+    return fbm(y * 6.0, seed * 31.0) * 0.55 * fade;
 }
 
 // ---------------------------------------------------------------------------
@@ -103,11 +123,15 @@ void main() {
     float thickness =
         max(uThicknessRatio, 0.001);
 
+    // Edge jitter - real bolt edges are torn, not perfectly smooth.
+    float edgeJitter =
+        0.85 + 0.3 * noise(y * 18.0, uSeed * 3.0);
+
     float coreWidth =
-        thickness * 0.38;
+        thickness * 0.38 * edgeJitter;
 
     float glowStrength =
-        0.72 / thickness;
+        0.58 / thickness;
 
     float haloStrength =
         glowStrength * 0.45;
@@ -143,13 +167,19 @@ void main() {
         );
 
     // -----------------------------------------------------------------------
-    // Branches
+    // Branch filaments
     //
-    // Two branches instead of three. This is substantially cheaper while
-    // still giving the bolt a branching electrical appearance.
+    // Five thin, zigzagging tendrils instead of two smooth ones, kept in
+    // their own accumulators so they can be tinted independently of the
+    // weapon's core color - real tendrils read white/lavender even when
+    // the main channel itself is colored.
     // -----------------------------------------------------------------------
 
-    for (int i = 0; i < 2; i++) {
+    float filamentCoverageCore = 0.0;
+    float filamentCoverageGlow = 0.0;
+    vec3 filamentColorAccum = vec3(0.0);
+
+    for (int i = 0; i < 5; i++) {
 
         float fi = float(i);
 
@@ -157,86 +187,106 @@ void main() {
             uSeed * (17.0 + fi * 13.0) +
             fi * 29.0;
 
-float branchStart =
-    0.15 +
-    hash(branchSeed) * 0.48;
+        float branchStart =
+            0.06 +
+            hash(branchSeed) * 0.62;
 
-float branchLength =
-    0.18 +
-    hash(branchSeed + 11.0) * 0.25;
+        float branchLength =
+            0.20 +
+            hash(branchSeed + 11.0) * 0.55;
 
-float branchDirection =
-    hash(branchSeed + 23.0) * 2.0 - 1.0;
+        float branchDirection =
+            hash(branchSeed + 23.0) * 2.0 - 1.0;
 
-float branchT =
-    clamp(
-        (y - branchStart) /
-        max(branchLength, 0.001),
-        0.0,
-        1.0
-    );
+        float branchT =
+            clamp(
+                (y - branchStart) /
+                max(branchLength, 0.001),
+                0.0,
+                1.0
+            );
 
-float branchMask =
-    step(branchStart, y) *
-    (
-        1.0 -
-        smoothstep(
-            branchStart + branchLength,
-            branchStart + branchLength + 0.05,
-            y
-        )
-    );
+        float branchMask =
+            step(branchStart, y) *
+            (
+                1.0 -
+                smoothstep(
+                    branchStart + branchLength,
+                    branchStart + branchLength + 0.04,
+                    y
+                )
+            );
+
+        // Sweeping drift plus its own fine-scale kinks - this is what
+        // makes the tendril zigzag instead of just curving away cleanly.
+        float branchWander =
+            branchDirection * branchT * 0.5 +
+            fbm(y * 32.0 + fi * 4.0, branchSeed * 5.0) *
+                0.14 * branchT;
 
         float branchPath =
-    path +
-    branchDirection *
-    branchT *
-    0.45;
+            path + branchWander;
 
-float branchDistance =
-    abs(x - branchPath);
+        float branchDistance =
+            abs(x - branchPath);
 
-float taper =
-    1.0 - branchT;
+        float taper =
+            1.0 - branchT;
 
         float branchWidth =
             mix(
-                coreWidth * 0.30,
-                coreWidth,
+                coreWidth * 0.05,
+                coreWidth * 0.20,
                 taper
             );
 
-float branchCore =
-    (
-        1.0 -
-        smoothstep(
-            0.0,
-            branchWidth,
-            branchDistance
-        )
-    ) *
-    branchMask *
-    taper;
+        float branchCore =
+            (
+                1.0 -
+                smoothstep(
+                    0.0,
+                    branchWidth,
+                    branchDistance
+                )
+            ) *
+            branchMask *
+            taper;
 
-float branchGlow =
-    exp(
-        -branchDistance *
-        glowStrength
-    ) *
-    branchMask *
-    taper;
+        float branchGlow =
+            exp(
+                -branchDistance *
+                glowStrength * 1.8
+            ) *
+            branchMask *
+            taper *
+            0.55;
 
-        core =
-            min(
-                1.0,
-                core + branchCore
-            );
+        // Pick a color per branch - mostly white/lavender like real
+        // filaments, with some branches carrying a turquoise or cyan tint
+        // so color threads weave through the tendrils instead of reading
+        // as one flat hue.
+        float tintPick =
+            hash(branchSeed + 47.0);
 
-        glow =
-            min(
-                1.0,
-                glow + branchGlow
-            );
+        vec3 branchTint =
+            tintPick < 0.45
+                ? vec3(1.0)
+                : tintPick < 0.72
+                    ? uAccentA
+                    : uAccentB;
+
+        vec3 branchColor =
+            mix(uGlow, branchTint, 0.7);
+
+        filamentColorAccum +=
+            branchColor *
+            (branchCore * 1.25 + branchGlow * 0.55);
+
+        filamentCoverageCore =
+            min(1.0, filamentCoverageCore + branchCore);
+
+        filamentCoverageGlow =
+            min(1.0, filamentCoverageGlow + branchGlow);
     }
 
     // -----------------------------------------------------------------------
@@ -257,6 +307,22 @@ float branchGlow =
         0.78 +
         0.22 * streak;
 
+    // Fibrous texture across the channel - breaks up the flat gradient
+    // into something closer to the mottled, plasma-like core of a real
+    // strike, instead of a clean smooth falloff.
+    float coreTexture =
+        0.85 +
+        0.3 * noise(y * 40.0 + x * 9.0, uSeed * 7.0);
+
+    // Color weaving - drifting streaks of turquoise and cyan woven through
+    // the glow, layered over the weapon's base color rather than replacing
+    // it, so the existing dark purplish-blue still reads as the base hue.
+    float colorWeave =
+        noise(y * 8.0 + x * 2.5, uSeed * 41.0);
+
+    float weaveMask =
+        smoothstep(0.4, 0.75, noise(y * 4.0, uSeed * 53.0));
+
     // Small global flicker.
     float flicker =
         0.94 +
@@ -271,10 +337,15 @@ float branchGlow =
     // Color
     // -----------------------------------------------------------------------
 
+    vec3 weaveColor =
+        mix(uAccentA, uAccentB, colorWeave);
+
     vec3 color =
-          uCore * core * 1.45
+          uCore * core * 1.45 * coreTexture
         + uGlow * glow * 0.85 * energy
-        + uHalo * halo * 0.32;
+        + uHalo * halo * 0.32
+        + weaveColor * weaveMask * (glow * 0.55 + halo * 0.45) * energy
+        + filamentColorAccum;
 
     color *= flicker;
 
@@ -286,7 +357,9 @@ float branchGlow =
         clamp(
             core +
             glow * 0.78 +
-            halo * 0.38,
+            halo * 0.38 +
+            filamentCoverageCore * 0.9 +
+            filamentCoverageGlow * 0.45,
             0.0,
             1.0
         );
@@ -329,6 +402,8 @@ function createBoltMaterial() {
             uCore: { value: new THREE.Color() },
             uGlow: { value: new THREE.Color() },
             uHalo: { value: new THREE.Color() },
+            uAccentA: { value: new THREE.Color('#30e0c0') },
+            uAccentB: { value: new THREE.Color('#40f0ff') },
             uSeed: { value: Math.random() },
             uThicknessRatio: { value: 0.1 },
         },
@@ -687,6 +762,8 @@ export function ArcRenderer({
             const core = material.uniforms.uCore.value
             const glow = material.uniforms.uGlow.value
             const halo = material.uniforms.uHalo.value
+            const accentA = material.uniforms.uAccentA.value
+            const accentB = material.uniforms.uAccentB.value
 
             if (core.getHexString() !== weapon.color.slice(1)) {
                 core.set(weapon.color)
@@ -698,6 +775,21 @@ export function ArcRenderer({
 
             if (halo.getHexString() !== weapon.haloColor.slice(1)) {
                 halo.set(weapon.haloColor)
+            }
+
+            // Turquoise/cyan accent threads woven through the bolt. Falls
+            // back to a sensible default so this works even for weapons
+            // that haven't been given explicit accentColorA/B entries in
+            // weapons.js yet.
+            const accentAHex = weapon.accentColorA || '#30e0c0'
+            const accentBHex = weapon.accentColorB || '#40f0ff'
+
+            if (accentA.getHexString() !== accentAHex.slice(1)) {
+                accentA.set(accentAHex)
+            }
+
+            if (accentB.getHexString() !== accentBHex.slice(1)) {
+                accentB.set(accentBHex)
             }
         }
 
