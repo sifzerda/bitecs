@@ -1,263 +1,440 @@
 // src/renderers/ArcRenderer.jsx
 
-import { useMemo, useRef, createRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+
 import { laserState } from '../ecs/weapons/weaponState/laserState.js'
 import { bossLaserState } from '../ecs/weapons/weaponState/bossLaserState.js'
-import { activeArcs } from "../ecs/pools/arcPool.js"
-import { Arc, ArcPointsX, ArcPointsY } from "../ecs/constants/components.js"
+import { activeArcs } from '../ecs/pools/arcPool.js'
+
+import { Arc, ArcPointsX, ArcPointsY, BossAI } from '../ecs/constants/components.js'
+
 import { gameState } from '../state/gameState.js'
 import { getWeapon } from '../ecs/weapons/config/weapons.js'
 import { bossAIQuery } from '../ecs/constants/queries.js'
-import { BossAI } from '../ecs/constants/components.js'
 
-const MAX_BEAMS = 3       // headroom for a future multi-bolt jagged weapon
+const MAX_BEAMS = 3
 const MAX_ARCS = 24
 const MAX_POINTS_PER_ARC = 64
 
-// -------------------------
+const HIT_EPSILON = 0.01
 
-function getBossArcData() {
+// ---------------------------------------------------------------------------
+// Primary bolt shader
+// ---------------------------------------------------------------------------
 
-    const bosses = bossAIQuery()
-
-    if (bosses.length === 0 || !bossLaserState.active || bossLaserState.beamCount === 0) {
-        return {
-            active: false,
-            originX: 0,
-            originY: 0,
-            weapon: null,
-            hits: [],
-        }
-    }
-
-    const weapon = getWeapon(BossAI.weapon[bosses[0]])
-
-    if (!weapon.jagged) {
-        return {
-            active: false,
-            originX: 0,
-            originY: 0,
-            weapon: null,
-            hits: [],
-        }
-    }
-
-    const hits = []
-
-    for (let i = 0; i < bossLaserState.beamCount; i++) {
-
-        if (bossLaserState.hitT[i] <= 0.01)
-            continue
-
-        hits.push({
-            dirX: bossLaserState.dirX[i],
-            dirY: bossLaserState.dirY[i],
-            hitT: bossLaserState.hitT[i],
-        })
-    }
-
-    return {
-        active: hits.length > 0,
-        originX: bossLaserState.originX,
-        originY: bossLaserState.originY,
-        weapon,
-        hits,
-    }
-}
-
-export function ArcRenderer({ source = 'player', renderChainLinks = source === 'player' }) {
-
-    const getArcData = source === "player"
-        ? getPlayerArcData
-        : getBossArcData
-    const weaponCache = useRef({ id: -1, weapon: null })
-
-    function getPlayerArcData() {
-
-        if (weaponCache.current.id !== gameState.currentWeapon) {
-            weaponCache.current.id = gameState.currentWeapon
-            weaponCache.current.weapon = getWeapon(gameState.currentWeapon)
-        }
-
-        const weapon = weaponCache.current.weapon
-
-        const active =
-            weapon.category === "beam" &&
-            !!weapon.jagged &&
-            laserState.active &&
-            laserState.beamCount > 0
-
-        const hits = []
-
-        if (active) {
-            for (let i = 0; i < laserState.beamCount; i++) {
-
-                if (laserState.hitT[i] <= 0.01)
-                    continue
-
-                hits.push({
-                    dirX: laserState.dirX[i],
-                    dirY: laserState.dirY[i],
-                    hitT: laserState.hitT[i],
-                })
-            }
-        }
-
-        return {
-            active,
-            originX: laserState.originX,
-            originY: laserState.originY,
-            weapon,
-            hits,
-        }
-    }
-    // -------------------------
-    // Primary jagged bolt — quad + jagged shader (moved from LaserRenderer)
-    // -------------------------
-
-    const boltRefs = useRef(Array.from({ length: MAX_BEAMS }, () => createRef()))
-    const jagState = useRef(Array.from({ length: MAX_BEAMS }, () => ({ timer: 0, seed: Math.random() })))
-
-    const boltGeometry = useMemo(() => {
-        const geo = new THREE.PlaneGeometry(1, 1)
-        geo.translate(0, 0.5, 0)
-        return geo
-    }, [])
-
-    const boltMaterials = useMemo(() => (
-        Array.from({ length: MAX_BEAMS }, () => new THREE.ShaderMaterial({
-            transparent: true,
-            depthWrite: false,
-            depthTest: false,
-            side: THREE.DoubleSide,
-            blending: THREE.AdditiveBlending,
-            toneMapped: false,
-
-            uniforms: {
-                uTime: { value: 0 },
-                uCore: { value: new THREE.Color('#ffffff') },
-                uGlow: { value: new THREE.Color('#ffffff') },
-                uHalo: { value: new THREE.Color('#ffffff') },
-                uLength: { value: 1 },
-                uSeed: { value: 0 },
-                uThicknessRatio: { value: 0.1 },
-            },
-
-            vertexShader: /* glsl */`
+const boltVertexShader = /* glsl */ `
 varying vec2 vUv;
+
 void main() {
     vUv = uv;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
-`,
+`
 
-            fragmentShader: /* glsl */`
+const boltFragmentShader = /* glsl */ `
 precision highp float;
+
 varying vec2 vUv;
 
 uniform float uTime;
 uniform vec3 uCore;
 uniform vec3 uGlow;
 uniform vec3 uHalo;
-uniform float uLength;
 uniform float uSeed;
 uniform float uThicknessRatio;
 
-float hash1(vec2 p){
-    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+// ---------------------------------------------------------------------------
+// Cheap 1D hash
+// ---------------------------------------------------------------------------
+
+float hash(float n) {
+    return fract(sin(n) * 43758.5453);
 }
 
-float boltPath(float y, float seed){
-    float startFade = smoothstep(0.0, 0.06, y);
+// ---------------------------------------------------------------------------
+// Cheap interpolated noise
+// ---------------------------------------------------------------------------
 
-    float coarseCount = 7.0;
-    float coarsePos = y * coarseCount;
-    float coarseIndex = floor(coarsePos);
-    float coarseFrac = fract(coarsePos);
-    float ca = (hash1(vec2(coarseIndex, seed * 47.0)) - 0.5) * 0.30;
-    float cb = (hash1(vec2(coarseIndex + 1.0, seed * 47.0)) - 0.5) * 0.30;
-    float coarse = mix(ca, cb, coarseFrac);
+float noise(float x, float seed) {
 
-    float fineCount = 40.0;
-    float finePos = y * fineCount;
-    float fineIndex = floor(finePos);
-    float fineFrac = fract(finePos);
-    float fa = (hash1(vec2(fineIndex, seed * 91.0 + 17.0)) - 0.5) * 0.09;
-    float fb = (hash1(vec2(fineIndex + 1.0, seed * 91.0 + 17.0)) - 0.5) * 0.09;
-    float fine = mix(fa, fb, fineFrac);
+    float i = floor(x);
+    float f = fract(x);
 
-    return (coarse + fine) * startFade;
+    // Smooth interpolation.
+    f = f * f * (3.0 - 2.0 * f);
+
+    float a = hash(i + seed);
+    float b = hash(i + seed + 1.0);
+
+    return mix(a, b, f);
 }
 
-void main(){
+// ---------------------------------------------------------------------------
+// Main bolt path
+// ---------------------------------------------------------------------------
 
-    vec2 uv = vUv;
-    float y = uv.y;
-    float x = uv.x - 0.5;
+float boltPath(float y, float seed) {
 
-    float coreThresh = uThicknessRatio * 0.4;
-    float glowK = 0.70 / max(uThicknessRatio, 0.001);
-    float haloK = glowK * 0.5;
-    float mainPath = boltPath(y, uSeed);
-    float wMain = abs(x - mainPath);
+    float fade = smoothstep(0.0, 0.06, y);
 
-    float core = 1.0 - smoothstep(0.0, coreThresh, wMain);
-    float glow = exp(-wMain * glowK);
-    float halo = exp(-wMain * haloK);
+    float largeNoise =
+        noise(y * 7.0, seed * 31.0) - 0.5;
 
-    for (int f = 0; f < 3; f++) {
+    float smallNoise =
+        noise(y * 24.0, seed * 67.0) - 0.5;
 
-        float fi = float(f);
-        float fSeed = uSeed * (11.0 + fi * 6.3) + fi * 3.7;
-        float forkStart = 0.10 + hash1(vec2(fSeed, 1.0)) * 0.55;
-        float forkLen = 0.18 + hash1(vec2(fSeed, 11.0)) * 0.30;
-        float forkDir = (hash1(vec2(fSeed, 22.0)) - 0.5) * 2.0;
-        float t = clamp((y - forkStart) / max(forkLen, 0.001), 0.0, 1.0);
-        float forkPath = mainPath + forkDir * t * 0.5;
+    return (
+        largeNoise * 0.28 +
+        smallNoise * 0.10
+    ) * fade;
+}
 
-        float mask = step(forkStart, y) * (1.0 - smoothstep(forkStart + forkLen, forkStart + forkLen + 0.05, y));
-        float taper = 1.0 - t;
+// ---------------------------------------------------------------------------
+// Fragment
+// ---------------------------------------------------------------------------
 
-        float wF = abs(x - forkPath);
-        float forkCoreThresh = mix(coreThresh * 0.3, coreThresh, taper);
+void main() {
 
-        float coreF = (1.0 - smoothstep(0.0, forkCoreThresh, wF)) * mask * taper;
-        float glowF = exp(-wF * glowK) * mask * taper;
+    float y = vUv.y;
+    float x = vUv.x - 0.5;
 
-        core = clamp(core + coreF, 0.0, 1.0);
-        glow = clamp(glow + glowF, 0.0, 1.0);
+    float thickness =
+        max(uThicknessRatio, 0.001);
+
+    float coreWidth =
+        thickness * 0.38;
+
+    float glowStrength =
+        0.72 / thickness;
+
+    float haloStrength =
+        glowStrength * 0.45;
+
+    // -----------------------------------------------------------------------
+    // Main bolt
+    // -----------------------------------------------------------------------
+
+    float path =
+        boltPath(y, uSeed);
+
+    float distanceToPath =
+        abs(x - path);
+
+    float core =
+        1.0 -
+        smoothstep(
+            0.0,
+            coreWidth,
+            distanceToPath
+        );
+
+    float glow =
+        exp(
+            -distanceToPath *
+            glowStrength
+        );
+
+    float halo =
+        exp(
+            -distanceToPath *
+            haloStrength
+        );
+
+    // -----------------------------------------------------------------------
+    // Branches
+    //
+    // Two branches instead of three. This is substantially cheaper while
+    // still giving the bolt a branching electrical appearance.
+    // -----------------------------------------------------------------------
+
+    for (int i = 0; i < 2; i++) {
+
+        float fi = float(i);
+
+        float branchSeed =
+            uSeed * (17.0 + fi * 13.0) +
+            fi * 29.0;
+
+float branchStart =
+    0.15 +
+    hash(branchSeed) * 0.48;
+
+float branchLength =
+    0.18 +
+    hash(branchSeed + 11.0) * 0.25;
+
+float branchDirection =
+    hash(branchSeed + 23.0) * 2.0 - 1.0;
+
+float branchT =
+    clamp(
+        (y - branchStart) /
+        max(branchLength, 0.001),
+        0.0,
+        1.0
+    );
+
+float branchMask =
+    step(branchStart, y) *
+    (
+        1.0 -
+        smoothstep(
+            branchStart + branchLength,
+            branchStart + branchLength + 0.05,
+            y
+        )
+    );
+
+        float branchPath =
+    path +
+    branchDirection *
+    branchT *
+    0.45;
+
+float branchDistance =
+    abs(x - branchPath);
+
+float taper =
+    1.0 - branchT;
+
+        float branchWidth =
+            mix(
+                coreWidth * 0.30,
+                coreWidth,
+                taper
+            );
+
+float branchCore =
+    (
+        1.0 -
+        smoothstep(
+            0.0,
+            branchWidth,
+            branchDistance
+        )
+    ) *
+    branchMask *
+    taper;
+
+float branchGlow =
+    exp(
+        -branchDistance *
+        glowStrength
+    ) *
+    branchMask *
+    taper;
+
+        core =
+            min(
+                1.0,
+                core + branchCore
+            );
+
+        glow =
+            min(
+                1.0,
+                glow + branchGlow
+            );
     }
 
-    float scroll = fract(vUv.y * 6.0 - uTime * 3.0);
-    float streak = smoothstep(0.0, 0.5, scroll) * smoothstep(1.0, 0.5, scroll);
-    float energy = 0.75 + 0.25 * streak;
+    // -----------------------------------------------------------------------
+    // Energy animation
+    // -----------------------------------------------------------------------
 
-    float flicker = 0.92 + 0.08 * sin(uTime * 60.0 + vUv.y * 40.0);
-    vec3 color = uCore * core * 1.4 + uGlow * glow * 0.85 * energy + uHalo * halo * 0.35;
+    float streak =
+        fract(
+            y * 6.0 -
+            uTime * 3.0
+        );
+
+    streak =
+        smoothstep(0.0, 0.5, streak) *
+        smoothstep(1.0, 0.5, streak);
+
+    float energy =
+        0.78 +
+        0.22 * streak;
+
+    // Small global flicker.
+    float flicker =
+        0.94 +
+        0.06 *
+        sin(
+            uTime * 55.0 +
+            y * 32.0 +
+            uSeed * 10.0
+        );
+
+    // -----------------------------------------------------------------------
+    // Color
+    // -----------------------------------------------------------------------
+
+    vec3 color =
+          uCore * core * 1.45
+        + uGlow * glow * 0.85 * energy
+        + uHalo * halo * 0.32;
+
     color *= flicker;
-    float alpha = clamp(core * 1.0 + glow * 0.8 + halo * 0.4, 0.0, 1.0);
-    alpha *= smoothstep(0.0, 0.03, vUv.y) * smoothstep(1.0, 0.97, vUv.y);
 
-    gl_FragColor = vec4(color, alpha);
+    // -----------------------------------------------------------------------
+    // Alpha
+    // -----------------------------------------------------------------------
+
+    float alpha =
+        clamp(
+            core +
+            glow * 0.78 +
+            halo * 0.38,
+            0.0,
+            1.0
+        );
+
+    // Fade at both ends.
+    alpha *=
+        smoothstep(
+            0.0,
+            0.035,
+            y
+        );
+
+    alpha *=
+        smoothstep(
+            1.0,
+            0.965,
+            y
+        );
+
+    gl_FragColor =
+        vec4(color, alpha);
 }
 `
-        }))
-    ), [])
 
-    // -------------------------
-    // Chain-lightning line pool 
-    // -------------------------
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function createBoltMaterial() {
+    return new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        toneMapped: false,
+
+        uniforms: {
+            uTime: { value: 0 },
+            uCore: { value: new THREE.Color() },
+            uGlow: { value: new THREE.Color() },
+            uHalo: { value: new THREE.Color() },
+            uSeed: { value: Math.random() },
+            uThicknessRatio: { value: 0.1 },
+        },
+
+        vertexShader: boltVertexShader,
+        fragmentShader: boltFragmentShader,
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export function ArcRenderer({
+    source = 'player',
+    renderChainLinks = source === 'player',
+}) {
+
+    // -----------------------------------------------------------------------
+    // Static bolt resources
+    // -----------------------------------------------------------------------
+
+    const boltGeometry = useMemo(() => {
+        const geometry = new THREE.PlaneGeometry(1, 1)
+
+        // Origin at the start of the bolt.
+        geometry.translate(0, 0.5, 0)
+
+        return geometry
+    }, [])
+
+    const boltMaterials = useMemo(
+        () => Array.from(
+            { length: MAX_BEAMS },
+            createBoltMaterial
+        ),
+        []
+    )
+
+    const boltMeshes = useRef(
+        Array(MAX_BEAMS).fill(null)
+    )
+
+    // Independent randomization state per bolt.
+    const jagState = useRef(
+        Array.from(
+            { length: MAX_BEAMS },
+            () => ({
+                timer: Math.random() * 0.07,
+                seed: Math.random(),
+            })
+        )
+    )
+
+    // Cache the current player weapon.
+    const weaponCache = useRef({
+        id: -1,
+        weapon: null,
+    })
+
+    // Cache boss weapon/entity.
+    const bossCache = useRef({
+        entity: -1,
+        weaponId: -1,
+        weapon: null,
+    })
+
+    // Reusable hit data.
+    const hitData = useRef(
+        Array.from(
+            { length: MAX_BEAMS },
+            () => ({
+                dirX: 0,
+                dirY: 0,
+                hitT: 0,
+            })
+        )
+    )
+
+    // -----------------------------------------------------------------------
+    // Chain-lightning line pool
+    // -----------------------------------------------------------------------
 
     const chainLines = useMemo(() => {
-        const pool = []
+
+        const pool = new Array(MAX_ARCS)
+
         for (let i = 0; i < MAX_ARCS; i++) {
+
             const geometry = new THREE.BufferGeometry()
-            const positions = new Float32Array(MAX_POINTS_PER_ARC * 3)
-            const attribute = new THREE.BufferAttribute(positions, 3)
-            attribute.setUsage(THREE.DynamicDrawUsage)
-            geometry.setAttribute("position", attribute)
+
+            const positions =
+                new Float32Array(MAX_POINTS_PER_ARC * 3)
+
+            const positionAttribute =
+                new THREE.BufferAttribute(positions, 3)
+
+            positionAttribute.setUsage(
+                THREE.DynamicDrawUsage
+            )
+
+            geometry.setAttribute(
+                'position',
+                positionAttribute
+            )
+
             geometry.setDrawRange(0, 0)
 
             const material = new THREE.LineBasicMaterial({
@@ -270,137 +447,403 @@ void main(){
                 toneMapped: false,
             })
 
-            const line = new THREE.Line(geometry, material)
-            line.frustumCulled = false
-            line.userData.positionAttribute = attribute
-            line.userData.positions = positions
-            line.userData.drawCount = -1
+            const line = new THREE.Line(
+                geometry,
+                material
+            )
 
+            line.frustumCulled = false
+
+            line.userData.positionAttribute =
+                positionAttribute
+
+            line.userData.positions =
+                positions
+
+            line.userData.drawCount = 0
             line.userData.version = -1
 
             line.userData.r = -1
             line.userData.g = -1
             line.userData.b = -1
 
-            pool.push(line)
+            pool[i] = line
         }
+
         return pool
+
     }, [])
+
+    // -----------------------------------------------------------------------
+    // Data collection
+    // -----------------------------------------------------------------------
+
+    const updatePlayerData = () => {
+
+        const cache = weaponCache.current
+        const weaponId = gameState.currentWeapon
+
+        if (cache.id !== weaponId) {
+            cache.id = weaponId
+            cache.weapon = getWeapon(weaponId)
+        }
+
+        const weapon = cache.weapon
+
+        if (!weapon) {
+            return {
+                active: false,
+                originX: 0,
+                originY: 0,
+                weapon: null,
+            }
+        }
+
+        const active =
+            weapon.category === 'beam' &&
+            weapon.jagged === true &&
+            laserState.active &&
+            laserState.beamCount > 0
+
+        return {
+            active,
+            originX: laserState.originX,
+            originY: laserState.originY,
+            weapon,
+        }
+    }
+
+    const updateBossData = () => {
+
+        const bosses = bossAIQuery()
+
+        if (
+            bosses.length === 0 ||
+            !bossLaserState.active ||
+            bossLaserState.beamCount === 0
+        ) {
+            return {
+                active: false,
+                originX: 0,
+                originY: 0,
+                weapon: null,
+            }
+        }
+
+        const bossId = bosses[0]
+        const bossWeaponId = BossAI.weapon[bossId]
+        const cache = bossCache.current
+
+        if (
+            cache.entity !== bossId ||
+            cache.weaponId !== bossWeaponId
+        ) {
+            cache.entity = bossId
+            cache.weaponId = bossWeaponId
+            cache.weapon = getWeapon(bossWeaponId)
+        }
+
+        const weapon = cache.weapon
+
+        if (!weapon?.jagged) {
+            return {
+                active: false,
+                originX: 0,
+                originY: 0,
+                weapon: null,
+            }
+        }
+
+        return {
+            active:
+                bossLaserState.beamCount > 0,
+            originX: bossLaserState.originX,
+            originY: bossLaserState.originY,
+            weapon,
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Frame update
+    // -----------------------------------------------------------------------
 
     useFrame((state, delta) => {
 
-        // ---- primary bolt ----
+        const time = state.clock.elapsedTime
 
-        const t = state.clock.elapsedTime
-        const { active, originX, originY, weapon, hits } = getArcData()
+        const data =
+            source === 'player'
+                ? updatePlayerData()
+                : updateBossData()
+
+        const {
+            active,
+            originX,
+            originY,
+            weapon,
+        } = data
+
+        // -------------------------------------------------------------------
+        // Primary jagged bolts
+        // -------------------------------------------------------------------
+
+        const laser =
+            source === 'player'
+                ? laserState
+                : bossLaserState
+
+        const beamCount =
+            active
+                ? Math.min(laser.beamCount, MAX_BEAMS)
+                : 0
 
         for (let slot = 0; slot < MAX_BEAMS; slot++) {
 
-            const mesh = boltRefs.current[slot].current
+            const mesh = boltMeshes.current[slot]
             if (!mesh) continue
 
-            const material = boltMaterials[slot]
-            material.uniforms.uTime.value = t
+            const material =
+                boltMaterials[slot]
 
-            const js = jagState.current[slot]
-            js.timer -= delta
-            if (js.timer <= 0) {
-                js.seed = Math.random()
-                js.timer = 0.04 + Math.random() * 0.03
-            }
-            material.uniforms.uSeed.value = js.seed
+            // Don't update inactive bolts.
+            if (slot >= beamCount) {
 
-            const hitData = active ? hits[slot] : null
-            const visible = !!hitData && hitData.hitT > 0.01
+                if (mesh.visible)
+                    mesh.visible = false
 
-            mesh.visible = visible
-            if (!visible) continue
-
-            const dirX = hitData.dirX
-            const dirY = hitData.dirY
-            const length = hitData.hitT
-
-            const angle = Math.atan2(dirY, dirX) - Math.PI / 2
-            const width = Math.max(length * 0.30, weapon.beamWidth * 10)
-            material.uniforms.uThicknessRatio.value = weapon.beamWidth / width
-
-            mesh.position.set(originX, originY, 0.02)
-            mesh.rotation.set(0, 0, angle)
-            mesh.scale.set(width, length, 1)
-
-            material.uniforms.uLength.value = length
-            material.uniforms.uCore.value.set(weapon.color)
-            material.uniforms.uGlow.value.set(weapon.glowColor)
-            material.uniforms.uHalo.value.set(weapon.haloColor)
-        }
-
-        // ---- chain-lightning segments ----
-
-        if (!renderChainLinks) return
-
-        const arcs = activeArcs
-
-        for (let i = 0; i < MAX_ARCS; i++) {
-
-            const line = chainLines[i]
-
-            if (i >= arcs.length) {
-                line.visible = false
-                line.userData.version = -1
                 continue
             }
 
+            const hitT = laser.hitT[slot]
+
+            if (hitT <= HIT_EPSILON) {
+
+                mesh.visible = false
+                continue
+            }
+
+            mesh.visible = true
+
+            // ---------------------------------------------------------------
+            // Jagged animation
+            // ---------------------------------------------------------------
+
+            const js = jagState.current[slot]
+
+            js.timer -= delta
+
+            if (js.timer <= 0) {
+
+                js.seed = Math.random()
+
+                js.timer =
+                    0.04 +
+                    Math.random() * 0.03
+            }
+
+            material.uniforms.uTime.value = time
+            material.uniforms.uSeed.value = js.seed
+
+            // ---------------------------------------------------------------
+            // Geometry transform
+            // ---------------------------------------------------------------
+
+            const dirX = laser.dirX[slot]
+            const dirY = laser.dirY[slot]
+
+            const length = hitT
+
+            const angle =
+                Math.atan2(dirY, dirX) -
+                Math.PI * 0.5
+
+            const width =
+                Math.max(
+                    length * 0.30,
+                    weapon.beamWidth * 10
+                )
+
+            const thicknessRatio =
+                weapon.beamWidth / width
+
+            material.uniforms.uThicknessRatio.value =
+                thicknessRatio
+
+            mesh.position.set(
+                originX,
+                originY,
+                0.02
+            )
+
+            mesh.rotation.z = angle
+
+            mesh.scale.set(
+                width,
+                length,
+                1
+            )
+
+            // Only update colors if necessary.
+            const core = material.uniforms.uCore.value
+            const glow = material.uniforms.uGlow.value
+            const halo = material.uniforms.uHalo.value
+
+            if (core.getHexString() !== weapon.color.slice(1)) {
+                core.set(weapon.color)
+            }
+
+            if (glow.getHexString() !== weapon.glowColor.slice(1)) {
+                glow.set(weapon.glowColor)
+            }
+
+            if (halo.getHexString() !== weapon.haloColor.slice(1)) {
+                halo.set(weapon.haloColor)
+            }
+        }
+
+        // -------------------------------------------------------------------
+        // Chain lightning
+        // -------------------------------------------------------------------
+
+        if (!renderChainLinks)
+            return
+
+        const arcs = activeArcs
+        const arcCount =
+            Math.min(arcs.length, MAX_ARCS)
+
+        for (let i = 0; i < arcCount; i++) {
+
+            const line = chainLines[i]
             const id = arcs[i]
 
             line.visible = true
 
-            const count = Math.min(Arc.pointCount[id], MAX_POINTS_PER_ARC)
+            const count =
+                Math.min(
+                    Arc.pointCount[id],
+                    MAX_POINTS_PER_ARC
+                )
 
-            const posAttr = line.userData.positionAttribute
-            const arr = line.userData.positions
+            const version =
+                Arc.version[id]
 
-            const xs = ArcPointsX[id]
-            const ys = ArcPointsY[id]
+            // Only copy point positions when the
+            // ECS arc actually changed.
+            if (line.userData.version !== version) {
 
-            if (line.userData.version !== Arc.version[id]) {
+                const positions =
+                    line.userData.positions
+
+                const xs =
+                    ArcPointsX[id]
+
+                const ys =
+                    ArcPointsY[id]
 
                 for (let p = 0; p < count; p++) {
 
                     const base = p * 3
 
-                    arr[base] = xs[p]
-                    arr[base + 1] = ys[p]
-                    arr[base + 2] = 0.03
+                    positions[base] =
+                        xs[p]
+
+                    positions[base + 1] =
+                        ys[p]
+
+                    positions[base + 2] =
+                        0.03
                 }
-                posAttr.needsUpdate = true
-                line.userData.version = Arc.version[id]
+
+                line.userData.positionAttribute.needsUpdate =
+                    true
+
+                line.userData.version =
+                    version
             }
 
-            if (line.userData.drawCount !== count) {
-                line.geometry.setDrawRange(0, count)
-                line.userData.drawCount = count
+            if (
+                line.userData.drawCount !== count
+            ) {
+
+                line.geometry.setDrawRange(
+                    0,
+                    count
+                )
+
+                line.userData.drawCount =
+                    count
             }
 
-            const lifeT = Arc.life[id] / Arc.maxLife[id]
+            const life =
+                Arc.maxLife[id] > 0
+                    ? Arc.life[id] /
+                      Arc.maxLife[id]
+                    : 0
 
-            line.material.opacity = lifeT * Arc.intensity[id]
-            if (line.userData.r !== Arc.colorR[id] || line.userData.g !== Arc.colorG[id] || line.userData.b !== Arc.colorB[id]) {
-                line.material.color.setRGB(Arc.colorR[id], Arc.colorG[id], Arc.colorB[id])
-                line.userData.r = Arc.colorR[id]
-                line.userData.g = Arc.colorG[id]
-                line.userData.b = Arc.colorB[id]
+            line.material.opacity =
+                life * Arc.intensity[id]
+
+            const r = Arc.colorR[id]
+            const g = Arc.colorG[id]
+            const b = Arc.colorB[id]
+
+            if (
+                line.userData.r !== r ||
+                line.userData.g !== g ||
+                line.userData.b !== b
+            ) {
+
+                line.material.color.setRGB(
+                    r,
+                    g,
+                    b
+                )
+
+                line.userData.r = r
+                line.userData.g = g
+                line.userData.b = b
+            }
+        }
+
+        // Hide unused chain lines.
+        for (let i = arcCount; i < MAX_ARCS; i++) {
+
+            const line = chainLines[i]
+
+            if (line.visible) {
+                line.visible = false
+                line.userData.version = -1
             }
         }
     })
 
+    // -----------------------------------------------------------------------
+    // Render
+    // -----------------------------------------------------------------------
+
     return (
         <>
-            {boltRefs.current.map((ref, i) => (
-                <mesh key={`bolt-${i}`} ref={ref} geometry={boltGeometry} material={boltMaterials[i]} frustumCulled={false} />
+            {boltMaterials.map((material, i) => (
+                <mesh
+                    key={`bolt-${i}`}
+                    ref={(mesh) => {
+                        boltMeshes.current[i] = mesh
+                    }}
+                    geometry={boltGeometry}
+                    material={material}
+                    frustumCulled={false}
+                    visible={false}
+                />
             ))}
-            {renderChainLinks && chainLines.map((line, i) => (
-                <primitive key={`chain-${i}`} object={line} />
-            ))}
+
+            {renderChainLinks &&
+                chainLines.map((line, i) => (
+                    <primitive
+                        key={`chain-${i}`}
+                        object={line}
+                    />
+                ))}
         </>
     )
 }

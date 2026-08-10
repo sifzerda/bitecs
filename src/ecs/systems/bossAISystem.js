@@ -2,55 +2,37 @@
 
 import { world } from "../constants/world.js"
 import { bossAIQuery, playerQuery } from "../constants/queries.js"
-
-import {
-    Position,
-    Velocity,
-    Rotation,
-    BossAI,
-    BULLET_OWNER,
-} from "../constants/components.js"
-
+import { Position, Velocity, Rotation, BossAI, BULLET_OWNER } from "../constants/components.js"
 import { spawnBossBullet } from "../spawn.js"
 import { getWeapon } from "../weapons/config/weapons.js"
 import { getAction } from "../weapons/config/weaponActions.js"
-
 
 // ============================================================
 // Tuning
 // ============================================================
 
 const TURN_SPEED = 3.8
-
 const THRUST = 16
 const MAX_SPEED = 9
 const DRAG = 0.985
-
 // How close the boss tries to remain to the player
 const MIN_COMBAT_RANGE = 5.5
 const IDEAL_COMBAT_RANGE = 9.0
 const MAX_COMBAT_RANGE = 14.0
-
 // If player is moving toward boss faster than this,
 // boss considers it an aggressive approach.
 const PLAYER_APPROACH_SPEED = 3.0
-
 // How accurately the boss needs to face the player before shooting.
 const FIRE_ANGLE = 0.22
-
 // Random behavior changes
 const DECISION_MIN = 0.45
 const DECISION_MAX = 1.35
-
 // Evade strength
 const EVADE_BIAS = 0.85
-
 // Strafing
 const STRAFE_BIAS = 0.9
-
 // Boss doesn't constantly shoot even when aligned.
 const OPPORTUNITY_FIRE_CHANCE = 0.82
-
 const SHOOT_INTERVAL = 1.4
 
 
