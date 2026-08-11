@@ -6,7 +6,12 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { world } from '../ecs/constants/world.js'
 import { playerQuery, bossQuery } from '../ecs/constants/queries.js'
-import { Position, Rotation, BossType } from '../ecs/constants/components.js'
+import {
+    Position,
+    Rotation,
+    BossType,
+    Invulnerability,
+} from '../ecs/constants/components.js'
 import { BOSSES } from '../ecs/constants/bosses.js'
 import { RENDER_ORDER } from './WeaponMount.jsx'
 
@@ -122,55 +127,20 @@ const GLASS_FRAGMENT_SHADER = /* glsl */ `
         return length(pa - ba * h);
     }
 
-
-    // ============================================================
-    // DISTANCE TO CONVEX CANOPY EDGES
-    //
-    // Shape:
-    //
-    //              ┌────────┐
-    //             /          \\
-    //            /            \\
-    //           /              \\
-    //          │                │
-    //          │                │
-    //          │                │
-    //           \\              /
-    //            \\            /
-    //             └──────────┘
-    //
-    // ============================================================
-
     float canopyOutside(vec2 p) {
 
         // --------------------------------------------------------
         // OUTER CANOPY VERTICES
         // --------------------------------------------------------
 
-        vec2 topLeft =
-            vec2(-0.28, 1.00);
-
-        vec2 topRight =
-            vec2(0.28, 1.00);
-
-        vec2 upperRight =
-            vec2(0.48, 0.50);
-
-        vec2 lowerRight =
-            vec2(0.40, -0.82);
-
-        vec2 bottomRight =
-            vec2(0.25, -1.00);
-
-        vec2 bottomLeft =
-            vec2(-0.25, -1.00);
-
-        vec2 lowerLeft =
-            vec2(-0.40, -0.82);
-
-        vec2 upperLeft =
-            vec2(-0.48, 0.50);
-
+        vec2 topLeft = vec2(-0.28, 1.00);
+        vec2 topRight = vec2(0.28, 1.00);
+        vec2 upperRight = vec2(0.48, 0.50);
+        vec2 lowerRight = vec2(0.40, -0.82);
+        vec2 bottomRight = vec2(0.25, -1.00);
+        vec2 bottomLeft = vec2(-0.25, -1.00);
+        vec2 lowerLeft = vec2(-0.40, -0.82);
+        vec2 upperLeft = vec2(-0.48, 0.50);
 
         // --------------------------------------------------------
         // CONVEX POLYGON HALF PLANES
@@ -735,18 +705,33 @@ function PropellerFan({ mount, shipSize }) {
         }
     })
 
-return (
-    <group position={[offsetX, offsetY, 0.008]}>
-        <group ref={spinRef}>
-            {bladeAngles.map((angle, i) => (
+    return (
+        <group position={[offsetX, offsetY, 0.008]}>
+            <group ref={spinRef}>
+                {bladeAngles.map((angle, i) => (
+                    <mesh
+                        key={i}
+                        geometry={bladeGeometry}
+                        rotation={[0, 0, angle]}
+                        renderOrder={RENDER_ORDER.propeller}
+                    >
+                        <meshBasicMaterial
+                            color={bladeColor}
+                            side={THREE.DoubleSide}
+                            transparent
+                            depthTest={false}
+                            depthWrite={false}
+                            toneMapped={false}
+                        />
+                    </mesh>
+                ))}
+
                 <mesh
-                    key={i}
-                    geometry={bladeGeometry}
-                    rotation={[0, 0, angle]}
+                    geometry={hubGeometry}
                     renderOrder={RENDER_ORDER.propeller}
                 >
                     <meshBasicMaterial
-                        color={bladeColor}
+                        color={hubColor}
                         side={THREE.DoubleSide}
                         transparent
                         depthTest={false}
@@ -754,24 +739,9 @@ return (
                         toneMapped={false}
                     />
                 </mesh>
-            ))}
-
-            <mesh
-                geometry={hubGeometry}
-                renderOrder={RENDER_ORDER.propeller}
-            >
-                <meshBasicMaterial
-                    color={hubColor}
-                    side={THREE.DoubleSide}
-                    transparent
-                    depthTest={false}
-                    depthWrite={false}
-                    toneMapped={false}
-                />
-            </mesh>
+            </group>
         </group>
-    </group>
-)
+    )
 }
 
 const PROP_BLUR_VERTEX_SHADER = /* glsl */ `
@@ -834,26 +804,26 @@ function PropellerBlur({ mount, shipSize }) {
     const width = worldRadius * 0.55
     const height = worldRadius * 2.3
 
-return (
-    <mesh
-        position={[offsetX, offsetY, 0.008]}
-        renderOrder={RENDER_ORDER.propeller}
-    >
-        <planeGeometry args={[width, height]} />
+    return (
+        <mesh
+            position={[offsetX, offsetY, 0.008]}
+            renderOrder={RENDER_ORDER.propeller}
+        >
+            <planeGeometry args={[width, height]} />
 
-        <shaderMaterial
-            ref={materialRef}
-            vertexShader={PROP_BLUR_VERTEX_SHADER}
-            fragmentShader={PROP_BLUR_FRAGMENT_SHADER}
-            uniforms={uniforms.current}
-            transparent
-            depthTest={false}
-            depthWrite={false}
-            side={THREE.DoubleSide}
-            toneMapped={false}
-        />
-    </mesh>
-)
+            <shaderMaterial
+                ref={materialRef}
+                vertexShader={PROP_BLUR_VERTEX_SHADER}
+                fragmentShader={PROP_BLUR_FRAGMENT_SHADER}
+                uniforms={uniforms.current}
+                transparent
+                depthTest={false}
+                depthWrite={false}
+                side={THREE.DoubleSide}
+                toneMapped={false}
+            />
+        </mesh>
+    )
 }
 
 function PropellerMount({ mount, shipSize }) {
@@ -888,7 +858,7 @@ export function PlayerRenderer() {
     const [hasPlayer, setHasPlayer] = useState(false)
     const hasPlayerRef = useRef(false)
 
-    useFrame(() => {
+    useFrame((state) => {
         const group = groupRef.current
 
         if (!group) return
@@ -897,10 +867,12 @@ export function PlayerRenderer() {
 
         if (!players.length) {
             group.visible = false
+
             if (hasPlayerRef.current) {
                 hasPlayerRef.current = false
                 setHasPlayer(false)
             }
+
             return
         }
 
@@ -914,10 +886,43 @@ export function PlayerRenderer() {
             return
         }
 
-        group.visible = true
+        // ----------------------------------------------------
+        // Position
+        // ----------------------------------------------------
+
         group.position.set(x, y, 0)
-        const angle = Rotation.angle?.[eid] ?? Rotation?.[eid] ?? 0
+
+        // ----------------------------------------------------
+        // Rotation
+        // ----------------------------------------------------
+
+        const angle =
+            Rotation.angle?.[eid] ??
+            Rotation?.[eid] ??
+            0
+
         group.rotation.z = angle
+
+        // ----------------------------------------------------
+        // Invulnerability flashing
+        //
+        // PLAYER ONLY
+        // ----------------------------------------------------
+
+        const invulnerable =
+            (Invulnerability?.remaining?.[eid] ?? 0) > 0
+
+        if (invulnerable) {
+            // ~10 flashes per second
+            group.visible =
+                Math.floor(state.clock.elapsedTime * 10) % 2 === 0
+        } else {
+            group.visible = true
+        }
+
+        // ----------------------------------------------------
+        // Player exists
+        // ----------------------------------------------------
 
         if (!hasPlayerRef.current) {
             hasPlayerRef.current = true
@@ -933,6 +938,7 @@ export function PlayerRenderer() {
                         src={PLAYER_SVG}
                         size={PLAYER_SIZE}
                     />
+
                     <CockpitGlassOverlay
                         cfg={PLAYER_COCKPIT_GLASS_CFG}
                         shipSize={PLAYER_SIZE}

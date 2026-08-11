@@ -19,12 +19,18 @@ export const Health = {
     max: new Float32Array(MAX),
 };
 
+export const Invulnerability = {
+    remaining: new Float32Array(MAX),
+};
+
 export const Lifetime = {
     remaining: new Float32Array(MAX),
 };
 
 export const Asteroid = {
     active: new Uint8Array(MAX),
+    radius: new Float32Array(MAX),
+    scale: new Float32Array(MAX),
 }
 
 export const BossAI = {

@@ -10,6 +10,7 @@ import {
 import {
     Position,
     Health,
+    Invulnerability,
     Lifetime,
     Velocity,
     Bullet,
@@ -136,6 +137,10 @@ export function combatSystem() {
         else {
 
             if (pid === null) continue
+
+            if (Invulnerability.remaining[pid] > 0) {
+                continue
+            }
 
             const dx = Position.x[bid] - Position.x[pid]
             const dy = Position.y[bid] - Position.y[pid]

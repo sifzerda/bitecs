@@ -5,28 +5,19 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { activeAsteroids } from '../ecs/pools/asteroidPool.js'
 import { world } from '../ecs/constants/world.js'
-import { Position, Health } from '../ecs/constants/components.js'
+import { Position, Health, Asteroid } from '../ecs/constants/components.js'
 
 const MAX_ASTEROIDS = 64
 
 // ------------------------------------------------------
 
 const colours = [
-    new THREE.Color("#b89878"),  
-    new THREE.Color("#a8846a"),  
-    new THREE.Color("#928077"),  
-    new THREE.Color("#7c6d63"),  
-    new THREE.Color("#c0ac8c"),  
-    new THREE.Color("#8f7d6f"),  
-    new THREE.Color("#d0a878"),  
-    new THREE.Color("#a3907a"),  
-    new THREE.Color("#9a9a9e"),  
-    new THREE.Color("#c4c4c8"),  
-    new THREE.Color("#b8b8bc"),  
-    new THREE.Color("#8a8a88"),  
-    new THREE.Color("#a0a0a4"),  
-    new THREE.Color("#b0b0b4"), 
-
+    new THREE.Color("#a8846a"),
+    new THREE.Color("#928077"),
+    new THREE.Color("#7c6d63"),
+    new THREE.Color("#c0ac8c"),
+    new THREE.Color("#9a9a9e"),
+    new THREE.Color("#b8b8bc"),
 ]
 
 // ------------------------------------------------------
@@ -135,14 +126,11 @@ export function AsteroidRenderer() {
 
         return Array.from({ length: MAX_ASTEROIDS }, () => {
 
-            const scale = 0.8 + Math.random() * 0.7
-
-            const spinScale = 0.35 / scale
+            const spinScale = 0.35
 
             const color =
                 colours[Math.floor(Math.random() * colours.length)].clone()
 
-            // slight brightness variation
             color.offsetHSL(
                 (Math.random() - 0.5) * 0.02,
                 (Math.random() - 0.5) * 0.10,
@@ -150,8 +138,6 @@ export function AsteroidRenderer() {
             )
 
             return {
-
-                scale,
 
                 rotation: new THREE.Euler(
                     Math.random() * Math.PI * 2,
@@ -284,6 +270,9 @@ export function AsteroidRenderer() {
             const x = Position.x[eid]
             const y = Position.y[eid]
 
+            // Scale comes from the ECS asteroid component.
+            const scale = Asteroid.scale[eid]
+
             // --- asteroid instance matrix ---
             _pos.set(x, y, 0)
 
@@ -292,7 +281,7 @@ export function AsteroidRenderer() {
             data.rotation.z += data.spin.z * delta
 
             _rot.setFromEuler(data.rotation)
-            _scale.setScalar(data.scale)
+            _scale.setScalar(scale)
 
             _mat.compose(_pos, _rot, _scale)
             mesh.setMatrixAt(i, _mat)

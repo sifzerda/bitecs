@@ -2,10 +2,13 @@
 
 import playerControlSystem from "../ecs/systems/playerControlSystem"
 import { movementSystem } from "../ecs/systems/movement"
+import { asteroidCollisionSystem } from "../ecs/systems/asteroidCollisionSystem"
 import { boundsSystem } from "../ecs/systems/bounds"
 import { combatSystem } from "../ecs/systems/combat"
 import { waveSystem } from "../ecs/systems/waveSystem"
 import { trailSystem } from "../ecs/systems/trailSystem"
+
+import { invulnerabilitySystem } from "../ecs/systems/invulnerabilitySystem"
 
 import { laserSystem } from "../ecs/weapons/weaponSystems/laserSystem"
 import { missileSystem } from "../ecs/weapons/weaponSystems/missileSystem"
@@ -16,34 +19,48 @@ import { statusEffectSystem } from "../ecs/systems/statusEffectSystem.js"
 import { bossAISystem } from "../ecs/systems/bossAISystem"
 import { bossLaserSystem } from "../ecs/weapons/weaponSystems/bossLaserSystem"
 import { bossThrowerSystem } from "../ecs/weapons/weaponSystems/bossThrowerSystem"
+
 // fx
 import { updateSparkEmitter } from "../fx/gpu/SparkEmitter"
 import { exhaustEmitter } from "../fx/gpu/exhaustEmitter"
 import { updateEffects } from "../fx/index"
 
-import { clearSpatialGrids, insertAsteroid, insertBoss } from "../ecs/constants/spatialGrid"
+import {
+    clearSpatialGrids,
+    insertAsteroid,
+    insertBoss
+} from "../ecs/constants/spatialGrid"
 
 import { activeAsteroids } from "../ecs/pools/asteroidPool"
 import { bossQuery } from "../ecs/constants/queries"
 
-//import { tentacleSystem } from "../ecs/systems/tentacleSystem"
+// import { tentacleSystem } from "../ecs/systems/tentacleSystem"
 
 export function gameLoop(shootState, dt) {
 
     playerControlSystem(shootState)
+
     bossAISystem()
     bossLaserSystem()
     bossThrowerSystem()
 
-    //    tentacleSystem(dt)
+    // tentacleSystem(dt)
 
     missileSystem()
+
+    // Move entities
     movementSystem()
+
+    // Resolve physical asteroid collisions
+    asteroidCollisionSystem()
+    invulnerabilitySystem()
+
     exhaustEmitter()
     boundsSystem()
     waveSystem()
 
-    // spatial grid------------//
+    // spatial grid ------------ //
+
     clearSpatialGrids()
 
     for (let i = 0; i < activeAsteroids.length; i++) {
@@ -56,7 +73,7 @@ export function gameLoop(shootState, dt) {
         insertBoss(bosses[i])
     }
 
-    //-----------------------//
+    // ------------------------- //
 
     combatSystem()
     laserSystem()
@@ -68,6 +85,4 @@ export function gameLoop(shootState, dt) {
 
     updateEffects()
     updateSparkEmitter(dt)
-
 }
-

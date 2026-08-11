@@ -1,20 +1,43 @@
 // src/ecs/pools/asteroidPool.js
 
 import { createPool } from './createPool'
-import { Position, Velocity, Health, AsteroidTag, StatusEffect, Asteroid } from '../constants/components'
+import {
+    Position,
+    Velocity,
+    Health,
+    AsteroidTag,
+    StatusEffect,
+    Asteroid
+} from '../constants/components'
 
 const pool = createPool({
-    size: 64,   // tune to your max concurrent asteroid count
-    components: [Position, Velocity, Health, AsteroidTag, StatusEffect, Asteroid],
+    size: 64,
+
+    components: [
+        Position,
+        Velocity,
+        Health,
+        AsteroidTag,
+        StatusEffect,
+        Asteroid
+    ],
+
     activeField: [Asteroid, 'active'],
+
     resetFields(id) {
         Position.x[id] = 0
         Position.y[id] = 0
+
         Velocity.x[id] = 0
         Velocity.y[id] = 0
+
         Health.current[id] = 0
         Health.max[id] = 0
+
         StatusEffect.frozen[id] = 0
+
+        Asteroid.scale[id] = 0
+        Asteroid.radius[id] = 0
     }
 })
 
