@@ -107,7 +107,7 @@ export const BULLET_OWNER = {
 
 export const StatusEffect = {
     frozen: new Float32Array(MAX),
-    corrosion: new Float32Array(MAX),
+    corrosionRemaining: new Float32Array(MAX),
     corrosionDamage: new Float32Array(MAX),
 };
 

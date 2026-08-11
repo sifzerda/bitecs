@@ -135,8 +135,8 @@ export function resolveHit({
     big = false
 }) {
 
-    if (weapon.damage > 0) {
-        Health.current[targetId] -= weapon.damage
+    if (weapon.directDamage > 0) {
+        Health.current[targetId] -= weapon.directDamage
     }
 
 

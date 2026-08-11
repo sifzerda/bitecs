@@ -29,7 +29,7 @@ import { notifyUIChanged } from "../../state/uiState.js"
 
 
 // ============================================================
-// Apply status effects
+// Apply / refresh status effects
 // ============================================================
 
 export function applyStatusEffects(targetId, weapon) {
@@ -39,42 +39,23 @@ export function applyStatusEffects(targetId, weapon) {
     // --------------------------------------------------------
 
     if (
-        weapon.corrosion &&
-        weapon.corrosionDamagePerSecond > 0 &&
-        weapon.corrosionDuration > 0
+        weapon.corrosion && weapon.corrosionDamage > 0 && weapon.corrosionDuration > 0
     ) {
-
-        // Apply/refresh corrosion duration.
-        StatusEffect.corrosion[targetId] =
-            Math.max(
-                StatusEffect.corrosion[targetId],
-                weapon.corrosionDuration
-            )
-
-        // Store the corrosion damage rate.
-        StatusEffect.corrosionDamagePerSecond[targetId] =
-            weapon.corrosionDamagePerSecond
+        StatusEffect.corrosionDamage[targetId] = weapon.corrosionDamage
+        // Refresh duration when hit again.
+        StatusEffect.corrosionRemaining[targetId] = weapon.corrosionDuration
     }
-
 
     // --------------------------------------------------------
     // Freeze
     // --------------------------------------------------------
 
     if (
-        weapon.freezeDuration &&
-        weapon.freezeDuration > 0
+        weapon.freezeDuration && weapon.freezeDuration > 0
     ) {
-
-        // Refresh freeze duration.
-        StatusEffect.frozen[targetId] =
-            Math.max(
-                StatusEffect.frozen[targetId],
-                weapon.freezeDuration
-            )
+        StatusEffect.frozen[targetId] = weapon.freezeDuration
     }
 }
-
 
 // ============================================================
 // Update status effects
@@ -83,7 +64,6 @@ export function applyStatusEffects(targetId, weapon) {
 export function statusEffectSystem() {
 
     const dt = world.time.delta
-
 
     // ========================================================
     // Asteroids
@@ -95,7 +75,6 @@ export function statusEffectSystem() {
 
         const id = asteroids[i]
 
-
         // ----------------------------------------------------
         // Freeze
         // ----------------------------------------------------
@@ -109,47 +88,38 @@ export function statusEffectSystem() {
             }
         }
 
-
         // ----------------------------------------------------
         // Corrosion
         // ----------------------------------------------------
 
-        if (StatusEffect.corrosion[id] > 0) {
+        if (StatusEffect.corrosionRemaining[id] > 0) {
 
-            Health.current[id] -=
-                StatusEffect.corrosionDamagePerSecond[id] * dt
-
-            StatusEffect.corrosion[id] -= dt
-
+            const corrosionDPS = StatusEffect.corrosionDamage[id]
+            // Damage every frame.
+            Health.current[id] -= corrosionDPS * dt
+            StatusEffect.corrosionRemaining[id] -= dt
 
             // ------------------------------------------------
-            // Death from corrosion
+            // Death
             // ------------------------------------------------
 
             if (Health.current[id] <= 0) {
 
-                killAsteroid(
-                    id,
-                    Position.x[id],
-                    Position.y[id]
-                )
+                killAsteroid(id, Position.x[id], Position.y[id])
 
                 continue
             }
 
-
             // ------------------------------------------------
-            // Corrosion expired
+            // Expired
             // ------------------------------------------------
 
-            if (StatusEffect.corrosion[id] <= 0) {
-
-                StatusEffect.corrosion[id] = 0
-                StatusEffect.corrosionDamagePerSecond[id] = 0
+            if (StatusEffect.corrosionRemaining[id] <= 0) {
+                StatusEffect.corrosionRemaining[id] = 0
+                StatusEffect.corrosionDamage[id] = 0
             }
         }
     }
-
 
     // ========================================================
     // Bosses
@@ -161,7 +131,6 @@ export function statusEffectSystem() {
 
         const id = bosses[i]
 
-
         // ----------------------------------------------------
         // Freeze
         // ----------------------------------------------------
@@ -175,43 +144,36 @@ export function statusEffectSystem() {
             }
         }
 
-
         // ----------------------------------------------------
         // Corrosion
         // ----------------------------------------------------
 
-        if (StatusEffect.corrosion[id] > 0) {
+        if (StatusEffect.corrosionRemaining[id] > 0) {
 
-            Health.current[id] -=
-                StatusEffect.corrosionDamagePerSecond[id] * dt
-
-            StatusEffect.corrosion[id] -= dt
-
+            const corrosionDPS = StatusEffect.corrosionDamage[id]
+            Health.current[id] -= corrosionDPS * dt
+            StatusEffect.corrosionRemaining[id] -= dt
 
             // ------------------------------------------------
-            // Death from corrosion
+            // Death
             // ------------------------------------------------
 
             if (Health.current[id] <= 0) {
 
-                killBoss(
-                    id,
-                    Position.x[id],
-                    Position.y[id]
-                )
+                killBoss(id, Position.x[id], Position.y[id])
 
                 continue
             }
 
 
             // ------------------------------------------------
-            // Corrosion expired
+            // Expired
             // ------------------------------------------------
 
-            if (StatusEffect.corrosion[id] <= 0) {
+            if (StatusEffect.corrosionRemaining[id] <= 0) {
 
-                StatusEffect.corrosion[id] = 0
-                StatusEffect.corrosionDamagePerSecond[id] = 0
+                StatusEffect.corrosionRemaining[id] = 0
+                StatusEffect.corrosionDamage[id] = 0
             }
         }
     }
@@ -243,30 +205,16 @@ export function statusEffectSystem() {
         }
     }
 
-
     // --------------------------------------------------------
     // Corrosion
     // --------------------------------------------------------
 
-    if (StatusEffect.corrosion[pid] > 0) {
+    if (StatusEffect.corrosionRemaining[pid] > 0) {
 
-        Health.current[pid] -=
-            StatusEffect.corrosionDamagePerSecond[pid] * dt
-
-        StatusEffect.corrosion[pid] -= dt
-
-
-        // ----------------------------------------------------
-        // Corrosion expired
-        // ----------------------------------------------------
-
-        if (StatusEffect.corrosion[pid] <= 0) {
-
-            StatusEffect.corrosion[pid] = 0
-            StatusEffect.corrosionDamagePerSecond[pid] = 0
-        }
+        const corrosionDPS = StatusEffect.corrosionDamage[pid]
+        Health.current[pid] -= corrosionDPS * dt
+        StatusEffect.corrosionRemaining[pid] -= dt
     }
-
 
     // --------------------------------------------------------
     // Player death
@@ -275,11 +223,6 @@ export function statusEffectSystem() {
     if (Health.current[pid] <= 0) {
 
         gameState.lives--
-
-
-        // ----------------------------------------------------
-        // Game over
-        // ----------------------------------------------------
 
         if (gameState.lives <= 0) {
 
@@ -290,18 +233,25 @@ export function statusEffectSystem() {
             return
         }
 
+        // Respawn.
+        Health.current[pid] = Health.max[pid]
 
-        // ----------------------------------------------------
-        // Respawn
-        // ----------------------------------------------------
-
-        Health.current[pid] =
-            Health.max[pid]
-
-
-        // Clear all active statuses.
+        // Clear all statuses.
         StatusEffect.frozen[pid] = 0
-        StatusEffect.corrosion[pid] = 0
-        StatusEffect.corrosionDamagePerSecond[pid] = 0
+        StatusEffect.corrosionRemaining[pid] = 0
+        StatusEffect.corrosionDamage[pid] = 0
+
+        notifyUIChanged()
+
+        return
+    }
+
+    // --------------------------------------------------------
+    // Expire player corrosion
+    // --------------------------------------------------------
+
+    if (StatusEffect.corrosionRemaining[pid] <= 0) {
+        StatusEffect.corrosionRemaining[pid] = 0
+        StatusEffect.corrosionDamage[pid] = 0
     }
 }

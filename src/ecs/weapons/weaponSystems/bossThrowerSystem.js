@@ -64,7 +64,7 @@ export function bossThrowerSystem() {
     bossThrowerState.dirY = dy / dist
 
     Health.current[pid] -=
-        weapon.Damage * dt
+        weapon.directDamage * dt
 
     applyStatusEffects(pid, weapon)
 

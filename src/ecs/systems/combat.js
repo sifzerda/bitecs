@@ -184,7 +184,7 @@ export function combatSystem() {
 
             if (distSq <= PLAYER_HIT_RADIUS * PLAYER_HIT_RADIUS) {
 
-                Health.current[pid] -= weapon.damage
+                Health.current[pid] -= weapon.directDamage
                 releaseBulletEntity(bid)
 
                 if (Health.current[pid] <= 0) {

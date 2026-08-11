@@ -26,7 +26,7 @@ export function explodeAt(x, y, weapon, asteroids, bosses) {
 
         if (dx * dx + dy * dy <= radiusSq) {
 
-            Health.current[aid] -= weapon.damage
+            Health.current[aid] -= weapon.directDamage
 
             if (Health.current[aid] <= 0) {
                 killAsteroid(aid, Position.x[aid], Position.y[aid])
@@ -43,7 +43,7 @@ export function explodeAt(x, y, weapon, asteroids, bosses) {
 
         if (dx * dx + dy * dy <= bossRadius * bossRadius) {
 
-            Health.current[bossId] -= weapon.damage
+            Health.current[bossId] -= weapon.directDamage
 
             if (Health.current[bossId] <= 0) {
                 killBoss(bossId, Position.x[bossId], Position.y[bossId])
@@ -91,7 +91,7 @@ export function chainLightning(startX, startY, weapon, asteroids, excludeId) {
 
         if (nearestId === -1) break
 
-        Health.current[nearestId] -= weapon.damage
+        Health.current[nearestId] -= weapon.directDamage
 
         emitEffect(EFFECT.SPARK_BURST, {
             type: EFFECT.SPARK_BURST,

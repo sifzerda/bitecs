@@ -20,21 +20,21 @@ const RAW = [
     {
         name: "raygun",
         category: "bullet",
-        damage: 10, maxBullets: 128, hitRadius: 0.5, fireRate: 0.15,
+        directDamage: 10, maxBullets: 128, hitRadius: 0.5, fireRate: 0.15,
         speed: 18, lifetime: 1.2, projectileCount: 1, spreadAngle: 0,
         color: "#e8fff5", glowColor: "#66ffcc", haloColor: "#77ffdd",
     },
     {
         name: "shotgun",
         category: "bullet",
-        damage: 12, maxBullets: 128, hitRadius: 0.6, fireRate: 0.35,
+        directDamage: 12, maxBullets: 128, hitRadius: 0.6, fireRate: 0.35,
         speed: 16, lifetime: 1.0, projectileCount: 3, spreadAngle: 0.20,
         color: "#fff2b0", glowColor: '#ffe605', haloColor: "#ff8800",
     },
     {
         name: "machinegun",
         category: "bullet",
-        damage: 5, maxBullets: 128, hitRadius: 0.5, fireRate: 0.07,
+        directDamage: 5, maxBullets: 128, hitRadius: 0.5, fireRate: 0.07,
         speed: 22, lifetime: 0.9, projectileCount: 1, spreadAngle: 0.05,
         color: "#c9e8ff", glowColor: "#5599ff", haloColor: "#3366ff",
 
@@ -45,7 +45,7 @@ const RAW = [
         category: "thrower",
         range: 5.5, // length of spray
         coneAngle: 0.6, // angular shape of spray, higher causes edges to curl around
-        Damage: 10,
+        directDamage: 10,
         freezeDuration: 2.5,
         tickSparkInterval: 0.08,
         color: "#c9f5ff", glowColor: "#66e0ff", haloColor: "#0099cc",
@@ -61,7 +61,7 @@ const RAW = [
         name: "grenadegun",
         category: "bullet",
         trail: true, trailColor: "#7DF9FF",
-        explosive: true, explosionRadius: 2.5, damage: 25, maxBullets: 32,
+        explosive: true, explosionRadius: 2.5, directDamage: 25, maxBullets: 32,
         hitRadius: 0.6, fireRate: 0.9, speed: 12, lifetime: 1.6,
         projectileCount: 1, spreadAngle: 0,
         color: "#ffcf80", glowColor: "#ff9933", haloColor: "#ff7700",
@@ -69,9 +69,9 @@ const RAW = [
     {
         name: "acidsprayer",
         category: "thrower",
-        range: 5.5, coneAngle: 0.55, Damage: 10,
+        range: 5.5, coneAngle: 0.55, directDamage: 10,
         // Strong lingering corrosion.
-        corrosion: true, corrosionDamage: 8, corrosionDuration: 5.0,
+        corrosion: true, corrosionDamage: 1, corrosionDuration: 5.0,
 
         tickSparkInterval: 0.08,
         color: "#ccff66", glowColor: "#99ff00", haloColor: "#669900",
@@ -88,7 +88,7 @@ const RAW = [
         name: "missilegun",
         category: "bullet",
         trail: true, trailColor: "#3366ff",
-        damage: 30, maxBullets: 128, hitRadius: 1.0, fireRate: 0.8,
+        directDamage: 30, maxBullets: 128, hitRadius: 1.0, fireRate: 0.8,
         speed: 10, lifetime: 3.0, projectileCount: 1, spreadAngle: 0,
         color: "#ffaa00", glowColor: "#ff6600", haloColor: "#ff2200",
         turnRate: 3.0, homing: true,   // <-- explicit flag, see missileSystem below
@@ -96,12 +96,12 @@ const RAW = [
     {
         name: "flamethrower",
         category: "thrower",
-        range: 6, coneAngle: 0.65, Damage: 35, tickSparkInterval: 0.06,
+        range: 6, coneAngle: 0.65, directDamage: 35, tickSparkInterval: 0.06,
         color: "#ffcc66", glowColor: "#ff6600", haloColor: "#ff2200",
         particleMist: false,
 
         // Short-lived burn/corrosion.
-        corrosion: true, corrosionDamage: 12, corrosionDuration: 1.5,
+        corrosion: true, corrosionDamage: 3, corrosionDuration: 1.5,
 
         particleTurbulence: 0.4, particleSpeedMult: 1.0,
         particleSizeMult: 0.3, particleFlicker: 0,
@@ -111,21 +111,21 @@ const RAW = [
     {
         name: "lasergun",
         category: "beam",
-        hitRadius: 0.3, range: 30, Damage: 40, beamWidth: 0.11,
+        hitRadius: 0.3, range: 30, directDamage: 40, beamWidth: 0.11,
         tickSparkInterval: 0.05,
         color: "#ffe0ee", glowColor: "#ff0055", haloColor: "#ff0033",
     },
     {
         name: "arcgun",
         category: "beam",
-        jagged: true, range: 14, Damage: 35, chainDamage: 14,
+        jagged: true, range: 14, directDamage: 35, chainDamage: 14,
         chainCount: 3, chainRange: 5, beamWidth: 0.09, tickSparkInterval: 0.06,
         color: "#fffbe8", glowColor: "#1F51FF", haloColor: "#0818A8",
     },
     {
         name: "plasmagun",
         category: "beam",
-        range: 20, Damage: 22, beamWidth: 0.16, surgeSpeed: 2.2,
+        range: 20, directDamage: 22, beamWidth: 0.16, surgeSpeed: 2.2,
         tickSparkInterval: 0.08, rainbow: true, surgeIntensity: 0.6,
         color: "#ffffff", glowColor: "#ff66ff", haloColor: "#66ffff",
     },

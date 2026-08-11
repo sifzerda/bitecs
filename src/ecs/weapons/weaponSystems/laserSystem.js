@@ -149,7 +149,7 @@ export function laserSystem() {
 
         // -------------------------
 
-        let dps = weapon.Damage
+        let dps = weapon.directDamage
 
         if (weapon.rampTime && beamCount === 1) {
 
@@ -165,7 +165,7 @@ export function laserSystem() {
             }
 
             const t = laserState.lockTime / weapon.rampTime
-            dps = weapon.Damage + (weapon.maxDamage - weapon.Damage) * t
+            dps = weapon.directDamage + (weapon.maxDamage - weapon.directDamage) * t
         }
 
         const result = resolveBeam(laserState.originX, laserState.originY, dirX, dirY, weapon, dps, asteroids, bosses)
@@ -188,7 +188,7 @@ export function laserSystem() {
         if (weapon.chainCount && result.hitType === "asteroid" && result.alive) {
 
             const chainRangeSq = weapon.chainRange * weapon.chainRange
-            const chainDps = weapon.chainDamage ?? weapon.Damage * 0.4
+            const chainDps = weapon.chainDamage ?? weapon.directDamage * 0.4
 
             const used = new Set([result.hitId])
 

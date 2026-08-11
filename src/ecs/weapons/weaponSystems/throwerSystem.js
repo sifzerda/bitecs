@@ -176,7 +176,7 @@ export function throwerSystem() {
     const bosses = bossQuery()
 
     const dps =
-        weapon.Damage
+        weapon.directDamage
 
     const hitIds = []
 

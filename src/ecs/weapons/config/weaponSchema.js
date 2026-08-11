@@ -1,9 +1,9 @@
 // src/ecs/weapons/config/weaponSchema.js
 
 const REQUIRED_BY_CATEGORY = {
-    bullet:  ['damage', 'fireRate', 'speed', 'lifetime', 'projectileCount', 'spreadAngle'],
-    beam:    ['range', 'Damage'],
-    thrower: ['range', 'coneAngle', 'Damage'],
+    bullet:  ['directDamage', 'fireRate', 'speed', 'lifetime', 'projectileCount', 'spreadAngle'],
+    beam:    ['range', 'directDamage'],
+    thrower: ['range', 'coneAngle', 'directDamage'],
 }
 
 export function validateWeapons(WEAPONS) {
