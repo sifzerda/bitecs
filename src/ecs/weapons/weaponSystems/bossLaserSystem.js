@@ -7,6 +7,10 @@ import { Position, Rotation, BossAI, Health } from "../../constants/components.j
 import { getWeapon } from "../config/weapons.js"
 import { bossLaserState } from "../weaponState/bossLaserState.js"
 
+import { killAsteroid } from "../../systems/entityDeath.js"
+import { activeAsteroids } from "../../pools/asteroidPool.js"
+import { pushArc } from "../weaponState/arcState.js"
+
 const BEAM_ON_DURATION = 3.0
 const BEAM_OFF_DURATION = 6.0
 
@@ -134,4 +138,69 @@ export function bossLaserSystem() {
     bossLaserState.hitXLegacy = bossLaserState.hitX[0]
     bossLaserState.hitYLegacy = bossLaserState.hitY[0]
     bossLaserState.length = hitT
+
+    //----------------------------------
+    // Chain lightning
+    //
+    // Mirrors laserSystem.js's chain branch: once the beam connects
+    // with the player, it arcs out from the player's position to the
+    // nearest unused asteroids, chainCount hops deep, damaging and
+    // potentially destroying each one along the way. Chain lightning
+    // damage is separate from and additive to the direct beam damage
+    // already applied to the player above.
+    //----------------------------------
+
+    if (weapon.chainCount && hit) {
+
+        const chainRangeSq = weapon.chainRange * weapon.chainRange
+        const chainDps = weapon.chainDamage ?? weapon.directDamage * 0.4
+
+        const asteroids = activeAsteroids
+        const used = new Set()
+
+        let chainX = Position.x[pid]
+        let chainY = Position.y[pid]
+
+        for (let chain = 0; chain < weapon.chainCount; chain++) {
+
+            let bestId = -1
+            let bestDistSq = chainRangeSq
+
+            for (let k = 0; k < asteroids.length; k++) {
+
+                const aid = asteroids[k]
+
+                if (used.has(aid))
+                    continue
+
+                const adx = Position.x[aid] - chainX
+                const ady = Position.y[aid] - chainY
+                const distSq = adx * adx + ady * ady
+
+                if (distSq < bestDistSq) {
+                    bestDistSq = distSq
+                    bestId = aid
+                }
+            }
+
+            if (bestId === -1)
+                break
+
+            used.add(bestId)
+
+            const secX = Position.x[bestId]
+            const secY = Position.y[bestId]
+
+            Health.current[bestId] -= chainDps * dt
+
+            pushArc([{ x: chainX, y: chainY }, { x: secX, y: secY }], 0.12)
+
+            if (Health.current[bestId] <= 0) {
+                killAsteroid(bestId, secX, secY)
+            }
+
+            chainX = secX
+            chainY = secY
+        }
+    }
 }

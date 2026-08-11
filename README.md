@@ -128,16 +128,13 @@ Inside combat.js at end of file lives = 0
 
 
 - [x] make thrower emit two streams
-
-- [ ] add asteroid collision with player, and boss collision with player.
+- [x] add asteroid collision with player, and boss collision with player.
 Asteroid damages ship a little if collides with it, boss destroys player on collision
 
 - [ ] optimize things
 - [ ] optimize starfield renderer, make milky way
 
 - [ ] fix emission configs for bosses
-
-- [ ] render one laser gun and position centrally from ship nose
 
 
 - [ ] fix ship cockpit glass panel lines for player and boss

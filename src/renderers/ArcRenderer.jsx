@@ -551,6 +551,14 @@ export function ArcRenderer({
 
     // -----------------------------------------------------------------------
     // Data collection
+    //
+    // NOTE: origin is no longer returned here. Both laserState and
+    // bossLaserState now carry a PER-BEAM origin array (originX[]/originY[]),
+    // populated upstream in laserSystem.js/bossLaserSystem.js — including the
+    // twin-gun split when a weapon's beam emission config has gunGap set.
+    // ArcRenderer reads laser.originX[slot]/laser.originY[slot] directly in
+    // the frame loop below, the same way LaserRenderer.jsx does, so a jagged
+    // twin-gun weapon automatically renders two parallel bolts.
     // -----------------------------------------------------------------------
 
     const updatePlayerData = () => {
@@ -568,8 +576,6 @@ export function ArcRenderer({
         if (!weapon) {
             return {
                 active: false,
-                originX: 0,
-                originY: 0,
                 weapon: null,
             }
         }
@@ -582,8 +588,6 @@ export function ArcRenderer({
 
         return {
             active,
-            originX: laserState.originX,
-            originY: laserState.originY,
             weapon,
         }
     }
@@ -599,8 +603,6 @@ export function ArcRenderer({
         ) {
             return {
                 active: false,
-                originX: 0,
-                originY: 0,
                 weapon: null,
             }
         }
@@ -623,8 +625,6 @@ export function ArcRenderer({
         if (!weapon?.jagged) {
             return {
                 active: false,
-                originX: 0,
-                originY: 0,
                 weapon: null,
             }
         }
@@ -632,8 +632,6 @@ export function ArcRenderer({
         return {
             active:
                 bossLaserState.beamCount > 0,
-            originX: bossLaserState.originX,
-            originY: bossLaserState.originY,
             weapon,
         }
     }
@@ -653,8 +651,6 @@ export function ArcRenderer({
 
         const {
             active,
-            originX,
-            originY,
             weapon,
         } = data
 
@@ -721,6 +717,9 @@ export function ArcRenderer({
 
             // ---------------------------------------------------------------
             // Geometry transform
+            //
+            // originX/originY are now read per-slot (twin-gun aware) rather
+            // than as one shared origin for every bolt.
             // ---------------------------------------------------------------
 
             const dirX = laser.dirX[slot]
@@ -745,8 +744,8 @@ export function ArcRenderer({
                 thicknessRatio
 
             mesh.position.set(
-                originX,
-                originY,
+                laser.originX[slot],
+                laser.originY[slot],
                 0.02
             )
 
