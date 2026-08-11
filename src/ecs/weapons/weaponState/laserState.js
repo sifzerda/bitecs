@@ -5,8 +5,8 @@ const MAX_BEAMS = 16
 export const laserState = {
     active: false,
 
-    originX: 0,
-    originY: 0,
+    originX: new Float32Array(MAX_BEAMS),
+    originY: new Float32Array(MAX_BEAMS),
 
     beamCount: 0,
 

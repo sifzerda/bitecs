@@ -10,6 +10,22 @@ import { bossLaserState } from "../weaponState/bossLaserState.js"
 const BEAM_ON_DURATION = 3.0
 const BEAM_OFF_DURATION = 6.0
 
+// Mirrors laserSystem.js's getTwinOrigins — purely visual muzzle split.
+// Hit detection/damage still resolves against the boss's centered aim
+// point, so gunGap does not double boss beam damage.
+function getTwinOrigins(centerX, centerY, rot, gap) {
+
+    if (!gap) return [{ x: centerX, y: centerY }]
+
+    const perpX = Math.cos(-rot)
+    const perpY = -Math.sin(-rot)
+
+    return [
+        { x: centerX + perpX * gap, y: centerY + perpY * gap },
+        { x: centerX - perpX * gap, y: centerY - perpY * gap },
+    ]
+}
+
 export function bossLaserSystem() {
 
     const dt = world.time.delta
@@ -54,7 +70,7 @@ export function bossLaserSystem() {
     }
 
     //----------------------------------
-    // Firing (unchanged from before)
+    // Firing
     //----------------------------------
 
     const pid = players[0]
@@ -69,53 +85,53 @@ export function bossLaserSystem() {
 
     bossLaserState.active = true
 
-    bossLaserState.originX = point.x
-    bossLaserState.originY = point.y
+    const centerX = point.x
+    const centerY = point.y
 
-    bossLaserState.beamCount = 1
+    // Add `gunGap` to this boss's 'beam' emission config to split its
+    // beam into two parallel visual streams.
+    const gap = emission.gunGap ?? 0
+    const origins = getTwinOrigins(centerX, centerY, Rotation[id], gap)
 
-    // Reset beam data
     for (let i = 0; i < bossLaserState.dirX.length; i++) {
         bossLaserState.hit[i] = 0
         bossLaserState.hitT[i] = 0
     }
 
-    if (dist <= weapon.range) {
+    const inv = 1 / Math.max(dist, 0.0001)
+    const dirX = dx * inv
+    const dirY = dy * inv
 
-        const inv = 1 / Math.max(dist, 0.0001)
+    const hit = dist <= weapon.range
+    const hitT = hit ? dist : weapon.range
 
-        bossLaserState.dirX[0] = dx * inv
-        bossLaserState.dirY[0] = dy * inv
-
-        bossLaserState.hitT[0] = dist
-        bossLaserState.hitX[0] = Position.x[pid]
-        bossLaserState.hitY[0] = Position.y[pid]
-        bossLaserState.hit[0] = 1
-
-        // legacy fields
-        bossLaserState.hitLegacy = true
-        bossLaserState.hitXLegacy = Position.x[pid]
-        bossLaserState.hitYLegacy = Position.y[pid]
-        bossLaserState.length = dist
-
+    if (hit) {
         Health.current[pid] -= weapon.directDamage * dt
-
-    } else {
-
-        const inv = 1 / Math.max(dist, 0.0001)
-
-        bossLaserState.dirX[0] = dx * inv
-        bossLaserState.dirY[0] = dy * inv
-
-        bossLaserState.hitT[0] = weapon.range
-        bossLaserState.hitX[0] = Position.x[id] + bossLaserState.dirX[0] * weapon.range
-        bossLaserState.hitY[0] = Position.y[id] + bossLaserState.dirY[0] * weapon.range
-        bossLaserState.hit[0] = 0
-
-        // legacy fields
-        bossLaserState.hitLegacy = false
-        bossLaserState.hitXLegacy = bossLaserState.hitX[0]
-        bossLaserState.hitYLegacy = bossLaserState.hitY[0]
-        bossLaserState.length = weapon.range
     }
+
+    let outIndex = 0
+
+    for (let o = 0; o < origins.length && outIndex < bossLaserState.dirX.length; o++) {
+
+        const origin = origins[o]
+
+        bossLaserState.originX[outIndex] = origin.x
+        bossLaserState.originY[outIndex] = origin.y
+        bossLaserState.dirX[outIndex] = dirX
+        bossLaserState.dirY[outIndex] = dirY
+        bossLaserState.hitT[outIndex] = hitT
+        bossLaserState.hitX[outIndex] = origin.x + dirX * hitT
+        bossLaserState.hitY[outIndex] = origin.y + dirY * hitT
+        bossLaserState.hit[outIndex] = hit ? 1 : 0
+
+        outIndex++
+    }
+
+    bossLaserState.beamCount = outIndex
+
+    // legacy fields
+    bossLaserState.hitLegacy = hit
+    bossLaserState.hitXLegacy = bossLaserState.hitX[0]
+    bossLaserState.hitYLegacy = bossLaserState.hitY[0]
+    bossLaserState.length = hitT
 }

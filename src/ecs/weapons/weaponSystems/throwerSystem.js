@@ -79,13 +79,34 @@ function inCone(
 
     const angle = Math.acos(dot)
 
-    // Widen the effective half-angle so large targets
-    // near the edge of the cone still register.
     const angularRadius =
         Math.atan2(targetRadius, dist)
 
     return angle <=
         coneAngle / 2 + angularRadius
+}
+
+
+// ============================================================
+// Twin-gun muzzle offset
+//
+// Purely visual — cone collision/damage below still tests from the
+// single centered mount point, so gunGap doesn't double thrower DPS.
+// ============================================================
+
+function getTwinOrigins(centerX, centerY, rot, gap) {
+
+    if (!gap) return { ax: centerX, ay: centerY, bx: centerX, by: centerY }
+
+    const perpX = Math.cos(-rot)
+    const perpY = -Math.sin(-rot)
+
+    return {
+        ax: centerX + perpX * gap,
+        ay: centerY + perpY * gap,
+        bx: centerX - perpX * gap,
+        by: centerY - perpY * gap,
+    }
 }
 
 
@@ -101,10 +122,6 @@ export function throwerSystem() {
         getWeapon(gameState.currentWeapon)
 
 
-    // --------------------------------------------------------
-    // Not a thrower
-    // --------------------------------------------------------
-
     if (weapon.category !== "thrower") {
 
         throwerState.active = false
@@ -113,10 +130,6 @@ export function throwerSystem() {
         return
     }
 
-
-    // --------------------------------------------------------
-    // No player / not firing
-    // --------------------------------------------------------
 
     const players = playerQuery()
 
@@ -136,14 +149,16 @@ export function throwerSystem() {
 
 
     // --------------------------------------------------------
-    // Emission point
+    // Emission point (centered — used for cone testing)
     // --------------------------------------------------------
+
+    const emissionCfg = PLAYER_CONFIG.emission.thrower
 
     const point = getEmissionPoint(
         Position.x[pid],
         Position.y[pid],
         Rotation[pid],
-        PLAYER_CONFIG.emission.thrower
+        emissionCfg
     )
 
 
@@ -166,6 +181,22 @@ export function throwerSystem() {
 
     throwerState.length =
         weapon.range
+
+
+    // --------------------------------------------------------
+    // Twin visual muzzle points
+    //
+    // Add `gunGap` to PLAYER_CONFIG.emission.thrower in emission.js to
+    // split the stream into two parallel visual jets.
+    // --------------------------------------------------------
+
+    const gap = emissionCfg.gunGap ?? 0
+    const twin = getTwinOrigins(throwerState.originX, throwerState.originY, Rotation[pid], gap)
+
+    throwerState.originAX = twin.ax
+    throwerState.originAY = twin.ay
+    throwerState.originBX = twin.bx
+    throwerState.originBY = twin.by
 
 
     // --------------------------------------------------------
@@ -208,32 +239,15 @@ export function throwerSystem() {
         hitIds.push(aid)
 
 
-        // ----------------------------------------------------
-        // Direct spray damage
-        // ----------------------------------------------------
-
         Health.current[aid] -=
             dps * dt
 
-
-        // ----------------------------------------------------
-        // Status effects
-        //
-        // Handles:
-        //   - corrosion
-        //   - freeze
-        //   - future effects
-        // ----------------------------------------------------
 
         applyStatusEffects(
             aid,
             weapon
         )
 
-
-        // ----------------------------------------------------
-        // Death
-        // ----------------------------------------------------
 
         if (Health.current[aid] <= 0) {
 
@@ -273,27 +287,15 @@ export function throwerSystem() {
         hitIds.push(bossId)
 
 
-        // ----------------------------------------------------
-        // Direct spray damage
-        // ----------------------------------------------------
-
         Health.current[bossId] -=
             dps * dt
 
-
-        // ----------------------------------------------------
-        // Status effects
-        // ----------------------------------------------------
 
         applyStatusEffects(
             bossId,
             weapon
         )
 
-
-        // ----------------------------------------------------
-        // Death
-        // ----------------------------------------------------
 
         if (Health.current[bossId] <= 0) {
 

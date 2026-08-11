@@ -3,6 +3,12 @@
 // Shape matches the classic flamethrower photo:
 //   narrow coherent stream at the nozzle → long jet → wide flaring plume at the tip.
 // All of that is configurable per-weapon; colours stay fully per-weapon.
+//
+// Twin-gun support: particles now spawn from one of TWO origins (A/B),
+// chosen per-particle by seed parity, so a single GPGPU pass renders two
+// parallel streams instead of running two full sims. Direction/cone/range
+// stay shared between the two streams (mirrors how twin bullet guns fire
+// parallel shots, not a fan).
 
 import { useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
@@ -25,8 +31,10 @@ function getPlayerThrowerData() {
     const active = weapon?.category === 'thrower' && throwerState.active
     return {
         active,
-        originX: throwerState.originX,
-        originY: throwerState.originY,
+        originAX: throwerState.originAX,
+        originAY: throwerState.originAY,
+        originBX: throwerState.originBX,
+        originBY: throwerState.originBY,
         dirX: throwerState.dirX,
         dirY: throwerState.dirY,
         coneAngle: throwerState.coneAngle,
@@ -44,8 +52,10 @@ function getBossThrowerData() {
 
     return {
         active,
-        originX: bossThrowerState.originX,
-        originY: bossThrowerState.originY,
+        originAX: bossThrowerState.originAX,
+        originAY: bossThrowerState.originAY,
+        originBX: bossThrowerState.originBX,
+        originBY: bossThrowerState.originBY,
         dirX: bossThrowerState.dirX,
         dirY: bossThrowerState.dirY,
         coneAngle: bossThrowerState.coneAngle,
@@ -75,7 +85,8 @@ const simFragmentShader = /* glsl */ `
   precision highp float;
   varying vec2 vUv;
   uniform sampler2D uPosTex;
-  uniform vec2 uOrigin;
+  uniform vec2 uOriginA;
+  uniform vec2 uOriginB;
   uniform vec2 uDir;
   uniform float uConeAngle;      // max fan angle (radians)
   uniform float uRange;
@@ -143,13 +154,15 @@ const simFragmentShader = /* glsl */ `
       life += uDelta;
       if (life >= 0.0) {
         if (uEmitting > 0.5) {
-          // Extremely tight spawn → dense narrow hose core
+          // Extremely tight spawn → dense narrow hose core.
+          // Half the particles (by seed parity) spawn from each gun.
           float j = 0.008 + (1.0 - uCoreTightness) * 0.01;
           vec2 jitter = vec2(
             sin(seed * 78.233 + uTime * 0.1),
             cos(seed * 45.164 - uTime * 0.07)
           ) * j;
-          pos = uOrigin + jitter;
+          vec2 origin = (fract(seed * 173.11) < 0.5) ? uOriginA : uOriginB;
+          pos = origin + jitter;
           life = maxLife;
         } else {
           life = -(0.02 + seed * 0.97);
@@ -296,7 +309,8 @@ export function ThrowerRenderer({ source = 'player', size = 10 }) {
   const simMaterial = useMemo(() => new THREE.ShaderMaterial({
     uniforms: {
       uPosTex:        { value: null },
-      uOrigin:        { value: new THREE.Vector2() },
+      uOriginA:       { value: new THREE.Vector2() },
+      uOriginB:       { value: new THREE.Vector2() },
       uDir:           { value: new THREE.Vector2(0, 1) },
       uConeAngle:     { value: 0.55 },
       uRange:         { value: 6 },
@@ -362,7 +376,7 @@ export function ThrowerRenderer({ source = 'player', size = 10 }) {
   }, [])
 
   useFrame((state, delta) => {
-    const { active, originX, originY, dirX, dirY, coneAngle, range, weapon } = getThrowerData()
+    const { active, originAX, originAY, originBX, originBY, dirX, dirY, coneAngle, range, weapon } = getThrowerData()
 
     if (weapon && weapon.category === 'thrower') {
       const c = last.current
@@ -393,7 +407,8 @@ export function ThrowerRenderer({ source = 'player', size = 10 }) {
     simMaterial.uniforms.uPosTex.value        = readTexture.current
     simMaterial.uniforms.uDelta.value         = Math.min(delta, 0.08)
     simMaterial.uniforms.uTime.value          = state.clock.elapsedTime
-    simMaterial.uniforms.uOrigin.value.set(originX ?? 0, originY ?? 0)
+    simMaterial.uniforms.uOriginA.value.set(originAX ?? 0, originAY ?? 0)
+    simMaterial.uniforms.uOriginB.value.set(originBX ?? 0, originBY ?? 0)
     simMaterial.uniforms.uDir.value.set(dirX ?? 0, dirY ?? 1)
     // coneAngle = max width of the final plume
     simMaterial.uniforms.uConeAngle.value     = (coneAngle ?? 0.55) * 0.95

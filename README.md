@@ -127,6 +127,8 @@ Inside combat.js at end of file lives = 0
 ## Tasks
 
 
+- [ ] make thrower emit two streams, or one gun
+
 - [ ] add asteroid collision with player, and boss collision with player.
 Asteroid damages ship a little if collides with it, boss destroys player on collision
 

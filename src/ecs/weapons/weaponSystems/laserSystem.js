@@ -19,6 +19,7 @@ import { EFFECT } from "../../../fx/FXTypes.js"
 
 const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
+const MAX_BEAMS = 16
 
 function findNearestHit(list, radius, originX, originY, dirX, dirY, maxT) {
 
@@ -86,6 +87,30 @@ function resolveBeam(originX, originY, dirX, dirY, weapon, dps, asteroids, bosse
     return { hitId, hitType, hitT, hitX, hitY, alive }
 }
 
+// --------------------------------------------------------
+// Twin-gun muzzle offset
+//
+// Mirrors the perpendicular offset math spawnBullet/spawnPlayerBullet
+// use for twin bullet guns: the two muzzles sit gunGap either side of
+// the ship's centerline, perpendicular to its facing direction.
+//
+// Purely visual — hit detection below still raycasts from the single
+// centered muzzle point, so adding gunGap does NOT double beam DPS.
+// --------------------------------------------------------
+
+function getTwinOrigins(centerX, centerY, rot, gap) {
+
+    if (!gap) return [{ x: centerX, y: centerY }]
+
+    const perpX = Math.cos(-rot)
+    const perpY = -Math.sin(-rot)
+
+    return [
+        { x: centerX + perpX * gap, y: centerY + perpY * gap },
+        { x: centerX - perpX * gap, y: centerY - perpY * gap },
+    ]
+}
+
 export function laserSystem() {
 
     const dt = world.time.delta
@@ -95,6 +120,7 @@ export function laserSystem() {
         laserState.active = false
         laserState.lockTargetId = -1
         laserState.lockTime = 0
+        laserState.beamCount = 0
         return
     }
 
@@ -103,21 +129,25 @@ export function laserSystem() {
         laserState.active = false
         laserState.lockTargetId = -1
         laserState.lockTime = 0
+        laserState.beamCount = 0
         return
     }
 
     const pid = players[0]
 
+    const emissionCfg = PLAYER_CONFIG.emission.beam
+
     const point = getEmissionPoint(
         Position.x[pid],
         Position.y[pid],
         Rotation[pid],
-        PLAYER_CONFIG.emission.beam
+        emissionCfg
     )
 
     laserState.active = true
-    laserState.originX = point.x
-    laserState.originY = point.y
+
+    const centerX = point.x
+    const centerY = point.y
 
     const baseDirX = Math.sin(-Rotation[pid])
     const baseDirY = Math.cos(-Rotation[pid])
@@ -128,11 +158,15 @@ export function laserSystem() {
     const beamCount = weapon.beamCount ?? 1
     const beamSpread = weapon.beamSpread ?? 0
 
-    laserState.beamCount = beamCount
+    // Add `gunGap` to PLAYER_CONFIG.emission.beam in emission.js to
+    // split each fanned beam into two parallel visual streams.
+    const gap = emissionCfg.gunGap ?? 0
+    const origins = getTwinOrigins(centerX, centerY, Rotation[pid], gap)
 
+    let outIndex = 0
     let primaryHitId = -1
-    let primaryHitX = laserState.originX
-    let primaryHitY = laserState.originY
+    let primaryHitX = centerX
+    let primaryHitY = centerY
 
     const chainHitPoints = []
 
@@ -148,13 +182,16 @@ export function laserSystem() {
         const dirY = baseDirX * sin + baseDirY * cos
 
         // -------------------------
+        // Damage / ramp-up — single raycast from the centered muzzle
+        // point, unaffected by gunGap.
+        // -------------------------
 
         let dps = weapon.directDamage
 
         if (weapon.rampTime && beamCount === 1) {
 
-            const asteroidHit = findNearestHit(asteroids, ASTEROID_RADIUS, laserState.originX, laserState.originY, dirX, dirY, weapon.range)
-            const bossHit = findNearestHit(bosses, BOSS_RADIUS, laserState.originX, laserState.originY, dirX, dirY, asteroidHit.id !== -1 ? asteroidHit.t : weapon.range)
+            const asteroidHit = findNearestHit(asteroids, ASTEROID_RADIUS, centerX, centerY, dirX, dirY, weapon.range)
+            const bossHit = findNearestHit(bosses, BOSS_RADIUS, centerX, centerY, dirX, dirY, asteroidHit.id !== -1 ? asteroidHit.t : weapon.range)
             const targetId = bossHit.id !== -1 ? bossHit.id : asteroidHit.id
 
             if (targetId !== -1 && targetId === laserState.lockTargetId) {
@@ -168,14 +205,7 @@ export function laserSystem() {
             dps = weapon.directDamage + (weapon.maxDamage - weapon.directDamage) * t
         }
 
-        const result = resolveBeam(laserState.originX, laserState.originY, dirX, dirY, weapon, dps, asteroids, bosses)
-
-        laserState.dirX[i] = dirX
-        laserState.dirY[i] = dirY
-        laserState.hitT[i] = result.hitT
-        laserState.hitX[i] = result.hitX
-        laserState.hitY[i] = result.hitY
-        laserState.hitActive[i] = result.hitId !== -1
+        const result = resolveBeam(centerX, centerY, dirX, dirY, weapon, dps, asteroids, bosses)
 
         if (i === 0) {
             primaryHitId = result.hitId
@@ -183,6 +213,31 @@ export function laserSystem() {
             primaryHitY = result.hitY
         }
 
+        // -------------------------
+        // Emit one visual beam entry per muzzle (1 or 2), sharing this
+        // fan beam's direction/hitT/hit-status but drawn from its own
+        // origin so twin beams render parallel.
+        // -------------------------
+
+        for (let o = 0; o < origins.length && outIndex < MAX_BEAMS; o++) {
+
+            const origin = origins[o]
+
+            laserState.originX[outIndex] = origin.x
+            laserState.originY[outIndex] = origin.y
+            laserState.dirX[outIndex] = dirX
+            laserState.dirY[outIndex] = dirY
+            laserState.hitT[outIndex] = result.hitT
+            laserState.hitX[outIndex] = origin.x + dirX * result.hitT
+            laserState.hitY[outIndex] = origin.y + dirY * result.hitT
+            laserState.hitActive[outIndex] = result.hitId !== -1
+
+            outIndex++
+        }
+
+        // -------------------------
+        // Chain lightning (unchanged — still keyed off the single
+        // centered raycast result, not per visual beam)
         // -------------------------
 
         if (weapon.chainCount && result.hitType === "asteroid" && result.alive) {
@@ -200,7 +255,6 @@ export function laserSystem() {
                 let bestId = -1
                 let bestDistSq = chainRangeSq
 
-                // Find nearest unused asteroid
                 for (let k = 0; k < asteroids.length; k++) {
 
                     const aid = asteroids[k]
@@ -242,11 +296,13 @@ export function laserSystem() {
         }
     }
 
+    laserState.beamCount = outIndex
+
     laserState.hitLegacy = primaryHitId !== -1
     laserState.hitXLegacy = primaryHitX
     laserState.hitYLegacy = primaryHitY
 
-    laserState.length = beamCount > 0
+    laserState.length = outIndex > 0
         ? laserState.hitT[0]
         : weapon.range
 

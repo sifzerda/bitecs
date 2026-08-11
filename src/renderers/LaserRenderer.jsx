@@ -10,12 +10,18 @@ import { getWeapon } from '../ecs/weapons/config/weapons.js'
 import { bossAIQuery } from '../ecs/constants/queries.js'
 import { BossAI } from '../ecs/constants/components.js'
 
-const MAX_BEAMS = 3 // covers prism's 3 simultaneous beams
+const MAX_BEAMS = 3 // covers prism's 3-beam fan AND twin-gun's 2 parallel beams
 
 // -------------------------
 // Source getters
-// Both return the SAME shape: { active, originX, originY, weapon, beams }
-// where beams = [{ dirX, dirY, hitT }, ...]
+// Both return the SAME shape: { active, weapon, beams }
+// where beams = [{ originX, originY, dirX, dirY, hitT }, ...]
+//
+// Each beam now carries its OWN origin (not a shared scalar) so a
+// twin-gun weapon can fire two parallel beams from two separate
+// muzzle points, the same way spawnPlayerBullet/spawnBossBullet
+// fire two bullets from two origins. Prism-style weapons that fan
+// out from one point just repeat the same origin across all beams.
 // -------------------------
 
 function getPlayerLaserData() {
@@ -26,14 +32,18 @@ function getPlayerLaserData() {
 
     if (active) {
         for (let i = 0; i < laserState.beamCount; i++) {
-            beams.push({dirX: laserState.dirX[i], dirY: laserState.dirY[i], hitT: laserState.hitT[i]})
+            beams.push({
+                originX: laserState.originX[i],
+                originY: laserState.originY[i],
+                dirX: laserState.dirX[i],
+                dirY: laserState.dirY[i],
+                hitT: laserState.hitT[i],
+            })
         }
     }
 
     return {
         active,
-        originX: laserState.originX,
-        originY: laserState.originY,
         weapon,
         beams,
     }
@@ -44,27 +54,31 @@ function getBossLaserData() {
     const bosses = bossAIQuery()
 
     if (bosses.length === 0 || !bossLaserState.active || bossLaserState.beamCount === 0) {
-        return { active: false, originX: 0, originY: 0, weapon: null, beams: [] }
+        return { active: false, weapon: null, beams: [] }
     }
 
     const weapon = getWeapon(BossAI.weapon[bosses[0]])
 
     if (!weapon || weapon.jagged) {
-        return { active: false, originX: 0, originY: 0, weapon: null, beams: [] }
+        return { active: false, weapon: null, beams: [] }
     }
 
     const beams = []
 
     for (let i = 0; i < bossLaserState.beamCount; i++) {
         if (bossLaserState.hitT[i] > 0.01) {
-            beams.push({dirX: bossLaserState.dirX[i], dirY: bossLaserState.dirY[i], hitT: bossLaserState.hitT[i]})
+            beams.push({
+                originX: bossLaserState.originX[i],
+                originY: bossLaserState.originY[i],
+                dirX: bossLaserState.dirX[i],
+                dirY: bossLaserState.dirY[i],
+                hitT: bossLaserState.hitT[i],
+            })
         }
     }
 
     return {
         active: beams.length > 0,
-        originX: bossLaserState.originX,
-        originY: bossLaserState.originY,
         weapon,
         beams,
     }
@@ -197,7 +211,7 @@ void main(){
 
         const t = state.clock.elapsedTime
 
-        const { active, originX, originY, weapon, beams } = getLaserData()
+        const { active, weapon, beams } = getLaserData()
 
         for (let slot = 0; slot < MAX_BEAMS; slot++) {
 
@@ -214,7 +228,7 @@ void main(){
 
             if (!visible) continue
 
-            const { dirX, dirY, hitT: length } = beam
+            const { originX, originY, dirX, dirY, hitT: length } = beam
 
             const angle = Math.atan2(dirY, dirX) - Math.PI / 2
             const width = weapon.beamWidth * 5
