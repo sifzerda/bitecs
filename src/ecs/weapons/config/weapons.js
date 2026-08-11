@@ -45,11 +45,11 @@ const RAW = [
         category: "thrower",
         range: 5.5, // length of spray
         coneAngle: 0.6, // angular shape of spray, higher causes edges to curl around
-        damagePerSecond: 10, 
+        damagePerSecond: 10,
         freezeDuration: 2.5,
         tickSparkInterval: 0.08,
         color: "#c9f5ff", glowColor: "#66e0ff", haloColor: "#0099cc",
-        particleMist: true, 
+        particleMist: true,
         particleTurbulence: 0.45, // how much the spray surges around (lower means straighter stream)
         particleSpeedMult: 0.5, // how fast the spray comes out
         particleSizeMult: 0.3, // how big the spray particles are
@@ -73,10 +73,14 @@ const RAW = [
         hazardRadius: 1.5, hazardDamage: 4, hazardTickInterval: 0.3, hazardDuration: 3.0,
         tickSparkInterval: 0.08,
         color: "#ccff66", glowColor: "#99ff00", haloColor: "#669900",
-        particleMist: false, particleTurbulence: 0.15, particleSpeedMult: 0.9,
-        particleSizeMult: 0.95, particleFlicker: 0.04,
+        particleMist: false,
+
+        particleTurbulence: 0.15,
+        particleSpeedMult: 0.9,
+        particleSizeMult: 0.3,
+        particleFlicker: 0.00,
         particleSpreadPower: 2.2,
-        particleCoreTightness: 0.88,
+        particleCoreTightness: 0.85,
     },
     {
         name: "missilegun",
@@ -92,10 +96,12 @@ const RAW = [
         category: "thrower",
         range: 6, coneAngle: 0.65, damagePerSecond: 35, tickSparkInterval: 0.06,
         color: "#ffcc66", glowColor: "#ff6600", haloColor: "#ff2200",
-        particleMist: false, particleTurbulence: 0.4, particleSpeedMult: 1.0,
-        particleSizeMult: 1.0, particleFlicker: 0.18,
+        particleMist: false, 
+        
+        particleTurbulence: 0.4, particleSpeedMult: 1.0,
+        particleSizeMult: 0.3, particleFlicker: 0,
         particleSpreadPower: 2.4,
-        particleCoreTightness: 0.9,
+        particleCoreTightness: 0.8,
     },
     {
         name: "lasergun",
