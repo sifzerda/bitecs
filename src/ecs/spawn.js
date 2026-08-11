@@ -19,8 +19,6 @@ import {
     BossTag,
     BossAI,
     BossType,
-    HazardZone,
-    HazardTag,
     StatusEffect,
     Octopus,
     OctopusTag,
@@ -356,76 +354,6 @@ export function spawnBossBullet(
         ],
     }
 }
-
-
-// ============================================================
-// Hazards
-// ============================================================
-
-export function spawnHazard(
-    x,
-    y,
-    weaponId,
-    owner,
-    targetId = -1
-) {
-
-    const weapon =
-        getWeapon(weaponId)
-
-    const id =
-        addEntity(world)
-
-
-    addComponent(
-        world,
-        id,
-        Position
-    )
-
-    addComponent(
-        world,
-        id,
-        HazardZone
-    )
-
-    addComponent(
-        world,
-        id,
-        HazardTag
-    )
-
-    addComponent(
-        world,
-        id,
-        Lifetime
-    )
-
-
-    Position.x[id] = x
-    Position.y[id] = y
-
-
-    HazardZone.weaponType[id] =
-        weapon.id
-
-    HazardZone.owner[id] =
-        owner
-
-    HazardZone.target[id] =
-        targetId
-
-    HazardZone.tickTimer[id] =
-        0
-
-
-    Lifetime.remaining[id] =
-        weapon.hazardDuration ?? 3.0
-
-
-    return id
-}
-
 
 // ============================================================
 // Asteroids

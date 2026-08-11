@@ -98,7 +98,7 @@ export function bossLaserSystem() {
         bossLaserState.hitYLegacy = Position.y[pid]
         bossLaserState.length = dist
 
-        Health.current[pid] -= weapon.damagePerSecond * dt
+        Health.current[pid] -= weapon.Damage * dt
 
     } else {
 

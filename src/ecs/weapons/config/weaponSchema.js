@@ -2,8 +2,8 @@
 
 const REQUIRED_BY_CATEGORY = {
     bullet:  ['damage', 'fireRate', 'speed', 'lifetime', 'projectileCount', 'spreadAngle'],
-    beam:    ['range', 'damagePerSecond'],
-    thrower: ['range', 'coneAngle', 'damagePerSecond'],
+    beam:    ['range', 'Damage'],
+    thrower: ['range', 'coneAngle', 'Damage'],
 }
 
 export function validateWeapons(WEAPONS) {

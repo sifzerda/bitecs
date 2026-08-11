@@ -10,8 +10,8 @@ import { trailSystem } from "../ecs/systems/trailSystem"
 import { laserSystem } from "../ecs/weapons/weaponSystems/laserSystem"
 import { missileSystem } from "../ecs/weapons/weaponSystems/missileSystem"
 import { throwerSystem } from "../ecs/weapons/weaponSystems/throwerSystem"
-import { hazardSystem } from "../ecs/weapons/weaponSystems/hazardSystem"
 import { updateArcs } from "../ecs/weapons/weaponState/arcState"
+import { statusEffectSystem } from "../ecs/systems/statusEffectSystem.js"
 
 import { bossAISystem } from "../ecs/systems/bossAISystem"
 import { bossLaserSystem } from "../ecs/weapons/weaponSystems/bossLaserSystem"
@@ -43,7 +43,7 @@ export function gameLoop(shootState, dt) {
     boundsSystem()
     waveSystem()
 
-        // spatial grid------------//
+    // spatial grid------------//
     clearSpatialGrids()
 
     for (let i = 0; i < activeAsteroids.length; i++) {
@@ -58,10 +58,10 @@ export function gameLoop(shootState, dt) {
 
     //-----------------------//
 
-    hazardSystem()
     combatSystem()
     laserSystem()
     throwerSystem()
+    statusEffectSystem()
 
     trailSystem()
     updateArcs(dt)

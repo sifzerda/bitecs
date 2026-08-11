@@ -3,9 +3,10 @@
 import { world } from "../../constants/world.js"
 import { getEmissionPoint, getBossEmissionConfig } from '../../constants/emission.js'
 import { bossAIQuery, playerQuery } from "../../constants/queries.js"
-import { Position, Rotation, BossAI, Health, StatusEffect } from "../../constants/components.js"
+import { Position, Rotation, BossAI, Health } from "../../constants/components.js"
 import { getWeapon } from "../config/weapons.js"
 import { bossThrowerState } from "../weaponState/bossThrowerState.js"
+import { applyStatusEffects } from "../../systems/statusEffectSystem.js"
 
 export function bossThrowerSystem() {
 
@@ -62,6 +63,9 @@ export function bossThrowerSystem() {
     bossThrowerState.dirX = dx / dist
     bossThrowerState.dirY = dy / dist
 
-    Health.current[pid] -= weapon.damagePerSecond * dt
-    if (weapon.freezeDuration) StatusEffect.frozen[pid] = weapon.freezeDuration
+    Health.current[pid] -=
+        weapon.Damage * dt
+
+    applyStatusEffects(pid, weapon)
+
 }

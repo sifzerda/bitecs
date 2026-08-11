@@ -105,23 +105,16 @@ export const BULLET_OWNER = {
     ENEMY: 1
 }
 
-export const HazardZone = {
-    weaponType: new Uint8Array(MAX),
-    owner: new Uint8Array(MAX),
-    target: new Int32Array(MAX),
-    tickTimer: new Float32Array(MAX),
-    detonated: new Uint8Array(MAX),
-};
-
 export const StatusEffect = {
     frozen: new Float32Array(MAX),
-}
+    corrosion: new Float32Array(MAX),
+    corrosionDamage: new Float32Array(MAX),
+};
 
 export const PlayerTag = {};
 export const BulletTag = {};
 export const AsteroidTag = {};
 export const BossTag = {};
-export const HazardTag = {};
 
 export const TentacleTag = {};
 export const TentacleBossTag = {};

@@ -45,7 +45,7 @@ const RAW = [
         category: "thrower",
         range: 5.5, // length of spray
         coneAngle: 0.6, // angular shape of spray, higher causes edges to curl around
-        damagePerSecond: 10,
+        Damage: 10,
         freezeDuration: 2.5,
         tickSparkInterval: 0.08,
         color: "#c9f5ff", glowColor: "#66e0ff", haloColor: "#0099cc",
@@ -69,8 +69,10 @@ const RAW = [
     {
         name: "acidsprayer",
         category: "thrower",
-        range: 5.5, coneAngle: 0.55, damagePerSecond: 16, leavesHazard: true,
-        hazardRadius: 1.5, hazardDamage: 4, hazardTickInterval: 0.3, hazardDuration: 3.0,
+        range: 5.5, coneAngle: 0.55, Damage: 10,
+        // Strong lingering corrosion.
+        corrosion: true, corrosionDamage: 8, corrosionDuration: 5.0,
+
         tickSparkInterval: 0.08,
         color: "#ccff66", glowColor: "#99ff00", haloColor: "#669900",
         particleMist: false,
@@ -94,10 +96,13 @@ const RAW = [
     {
         name: "flamethrower",
         category: "thrower",
-        range: 6, coneAngle: 0.65, damagePerSecond: 35, tickSparkInterval: 0.06,
+        range: 6, coneAngle: 0.65, Damage: 35, tickSparkInterval: 0.06,
         color: "#ffcc66", glowColor: "#ff6600", haloColor: "#ff2200",
-        particleMist: false, 
-        
+        particleMist: false,
+
+        // Short-lived burn/corrosion.
+        corrosion: true, corrosionDamage: 12, corrosionDuration: 1.5,
+
         particleTurbulence: 0.4, particleSpeedMult: 1.0,
         particleSizeMult: 0.3, particleFlicker: 0,
         particleSpreadPower: 2.4,
@@ -106,21 +111,21 @@ const RAW = [
     {
         name: "lasergun",
         category: "beam",
-        hitRadius: 0.3, range: 30, damagePerSecond: 40, beamWidth: 0.11,
+        hitRadius: 0.3, range: 30, Damage: 40, beamWidth: 0.11,
         tickSparkInterval: 0.05,
         color: "#ffe0ee", glowColor: "#ff0055", haloColor: "#ff0033",
     },
     {
         name: "arcgun",
         category: "beam",
-        jagged: true, range: 14, damagePerSecond: 35, chainDamagePerSecond: 14,
+        jagged: true, range: 14, Damage: 35, chainDamage: 14,
         chainCount: 3, chainRange: 5, beamWidth: 0.09, tickSparkInterval: 0.06,
         color: "#fffbe8", glowColor: "#1F51FF", haloColor: "#0818A8",
     },
     {
         name: "plasmagun",
         category: "beam",
-        range: 20, damagePerSecond: 22, beamWidth: 0.16, surgeSpeed: 2.2,
+        range: 20, Damage: 22, beamWidth: 0.16, surgeSpeed: 2.2,
         tickSparkInterval: 0.08, rainbow: true, surgeIntensity: 0.6,
         color: "#ffffff", glowColor: "#ff66ff", haloColor: "#66ffff",
     },

@@ -16,7 +16,6 @@ import {
     BULLET_OWNER
 } from "../constants/components.js"
 
-import { spawnHazard } from "../spawn.js"
 import { gameState, SCREEN } from "../../state/gameState.js"
 import { notifyUIChanged } from "../../state/uiState.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
@@ -58,8 +57,6 @@ export function combatSystem() {
 
             if (weapon.explosive) {
                 explodeAt(Position.x[bid], Position.y[bid], weapon, asteroids, bosses)
-            } else if (weapon.leavesHazard) {
-                spawnHazard(Position.x[bid], Position.y[bid], weapon.id, Bullet.owner[bid], -1)
             }
 
             releaseBulletEntity(bid)

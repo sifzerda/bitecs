@@ -30,7 +30,6 @@ import { GrenadeRenderer } from '../renderers/GrenadeRenderer.jsx'
 
 import { LaserRenderer } from '../renderers/LaserRenderer.jsx'
 import { ThrowerRenderer } from '../renderers/ThrowerRenderer.jsx'
-import { HazardRenderer } from '../renderers/HazardRenderer.jsx'
 import { DeflectRenderer } from '../renderers/DeflectRenderer.jsx'
 
 import { StarfieldRenderer } from '../renderers/StarfieldRenderer.jsx'
@@ -128,8 +127,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <ThrowerRenderer source="player" />
                     <ThrowerRenderer source="boss" />
-
-                    <HazardRenderer />
 
                     <SparkRenderer />
 

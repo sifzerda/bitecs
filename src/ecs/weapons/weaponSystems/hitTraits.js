@@ -1,61 +1,176 @@
 // src/ecs/systems/hitTraits.js
 
-import { Health, StatusEffect } from "../../constants/components"
-import { spawnHazard } from "../../spawn"
-import { killAsteroid, killBoss } from "../../systems/entityDeath"
+import { Health } from "../../constants/components.js"
 import { explodeAt, chainLightning } from "./weaponEffects.js"
-import { emitEffect } from "../../../fx/effects"
+import { applyStatusEffects } from "../../systems/statusEffectSystem.js"
+import { emitEffect } from "../../../fx/effects.js"
 import { EFFECT } from "../../../fx/FXTypes.js"
 
-// each trait: (present on weapon?) -> apply(ctx). ctx = { x, y, targetId, weapon, owner, kill, asteroids, bosses, big }
-// Traits run in this order for every hit; each is independent and optional.
+
+// Each trait: (present on weapon?) -> apply(ctx).
+// ctx = {
+//     x,
+//     y,
+//     targetId,
+//     weapon,
+//     owner,
+//     kill,
+//     asteroids,
+//     bosses,
+//     big
+// }
+//
+// Traits run in this order for every hit.
+// Each is independent and optional.
+
 export const HIT_TRAITS = [
+
+    // --------------------------------------------------------
+    // Explosion
+    // --------------------------------------------------------
+
     {
         applies: w => w.explosive,
-        apply: ({ x, y, weapon, asteroids, bosses }) => explodeAt(x, y, weapon, asteroids, bosses),
+
+        apply: ({
+            x,
+            y,
+            weapon,
+            asteroids,
+            bosses
+        }) =>
+            explodeAt(
+                x,
+                y,
+                weapon,
+                asteroids,
+                bosses
+            ),
     },
+
+
+    // --------------------------------------------------------
+    // Status effects
+    // --------------------------------------------------------
+
     {
-        applies: w => w.leavesHazard,
-        apply: ({ x, y, weapon, owner }) => spawnHazard(x, y, weapon.id, owner, -1),
+        applies: w =>
+            w.corrosion ||
+            w.freezeDuration,
+
+        apply: ({
+            targetId,
+            weapon
+        }) =>
+            applyStatusEffects(
+                targetId,
+                weapon
+            ),
     },
-    {
-        applies: w => w.attachHazard,
-        apply: ({ x, y, weapon, owner, targetId }) => spawnHazard(x, y, weapon.id, owner, targetId),
-    },
-    {
-        applies: w => w.freezeDuration,
-        apply: ({ targetId, weapon }) => { StatusEffect.frozen[targetId] = weapon.freezeDuration },
-    },
+
+
+    // --------------------------------------------------------
+    // Chain lightning
+    // --------------------------------------------------------
+
     {
         applies: w => w.chainCount,
-        apply: ({ x, y, weapon, asteroids, targetId }) => chainLightning(x, y, weapon, asteroids, targetId),
+
+        apply: ({
+            x,
+            y,
+            weapon,
+            asteroids,
+            targetId
+        }) =>
+            chainLightning(
+                x,
+                y,
+                weapon,
+                asteroids,
+                targetId
+            ),
     },
+
+
+    // --------------------------------------------------------
+    // Impact spark
+    // --------------------------------------------------------
+
     {
-        applies: w => !w.explosive && !w.leavesHazard,   // "plain impact" spark — skip if another trait already made its own vfx
-        apply: ({ x, y, big }) => emitEffect(EFFECT.SPARK_BURST, {
-            x, y,
-            count: big ? 26 : 20,
-            speed: big ? 10 : 8,
-            big: !!big,
-        }),
+        applies: w => !w.explosive,
+
+        apply: ({
+            x,
+            y,
+            big
+        }) =>
+            emitEffect(
+                EFFECT.SPARK_BURST,
+                {
+                    x,
+                    y,
+                    count: big ? 26 : 20,
+                    speed: big ? 10 : 8,
+                    big: !!big,
+                }
+            ),
     },
 ]
 
-// resolves damage + every matching trait for one hit, returns whether target died
-export function resolveHit({ x, y, targetId, weapon, owner, kill, asteroids, bosses, big = false }) {
 
-    if (weapon.damage > 0 || !weapon.leavesHazard) {
+// ============================================================
+// Resolve hit
+// ============================================================
+
+export function resolveHit({
+    x,
+    y,
+    targetId,
+    weapon,
+    owner,
+    kill,
+    asteroids,
+    bosses,
+    big = false
+}) {
+
+    if (weapon.damage > 0) {
         Health.current[targetId] -= weapon.damage
     }
 
-    const ctx = { x, y, targetId, weapon, owner, asteroids, bosses, big }
-    for (const trait of HIT_TRAITS) {
-        if (trait.applies(weapon)) trait.apply(ctx)
+
+    const ctx = {
+        x,
+        y,
+        targetId,
+        weapon,
+        owner,
+        asteroids,
+        bosses,
+        big
     }
 
+
+    for (const trait of HIT_TRAITS) {
+
+        if (trait.applies(weapon)) {
+            trait.apply(ctx)
+        }
+    }
+
+
     if (Health.current[targetId] <= 0) {
-        kill(targetId, x, y)
+
+        kill(
+            targetId,
+            x,
+            y
+        )
+
         return true
     }
+
+
     return false
 }

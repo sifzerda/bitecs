@@ -1,7 +1,7 @@
 // src/ecs/weapons/weaponSystems/weaponEffects.js
 
 import { Position, Health } from "../../constants/components.js"
-import { spawnHazard, spawnBullet } from "../../spawn.js"
+import { spawnBullet } from "../../spawn.js"
 import { killAsteroid, killBoss } from "../../systems/entityDeath.js"
 import { getWeapon } from "../config/weapons.js"
 import { pushArc } from "../weaponState/arcState.js"

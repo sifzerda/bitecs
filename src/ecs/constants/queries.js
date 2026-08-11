@@ -16,9 +16,6 @@ import {
     BossTag,
     BossAI,
 
-    HazardZone,
-    HazardTag,
-
     Tentacle,
     TentacleTag,
     TentacleBossTag,
@@ -30,7 +27,6 @@ export const bossQuery = () => query(world, [Position, Health, BossTag])
 export const movingQuery = () => query(world, [Position, Velocity])
 
 export const bossAIQuery = () => query(world, [Position, Velocity, BossAI, BossTag])
-export const hazardQuery = () => query(world, [Position, HazardZone, HazardTag, Lifetime])
 
 export const tentacleQuery = () => query(world, [Position, Health, TentacleBossTag])
 export const tentacleBossQuery = () => query(world, [Position, Health, TentacleBossTag])
