@@ -43,13 +43,19 @@ const RAW = [
     {
         name: "cryocannon",
         category: "thrower",
-        range: 5.5, coneAngle: 0.6, damagePerSecond: 10, freezeDuration: 2.5,
+        range: 5.5, // length of spray
+        coneAngle: 0.6, // angular shape of spray, higher causes edges to curl around
+        damagePerSecond: 10, 
+        freezeDuration: 2.5,
         tickSparkInterval: 0.08,
         color: "#c9f5ff", glowColor: "#66e0ff", haloColor: "#0099cc",
-        particleMist: true, particleTurbulence: 0.45, particleSpeedMult: 0.6,
-        particleSizeMult: 1.2, particleFlicker: 0.0,
-        particleSpreadPower: 2.3,
-        particleCoreTightness: 0.85,
+        particleMist: true, 
+        particleTurbulence: 0.45, // how much the spray surges around (lower means straighter stream)
+        particleSpeedMult: 0.5, // how fast the spray comes out
+        particleSizeMult: 0.3, // how big the spray particles are
+        particleFlicker: 0.0, // how much the particles switch between black and lit
+        particleSpreadPower: 3.0, // how much the spray spreads out -- higher value = less spread
+        particleCoreTightness: 0.85, // how much the particles stay together/tight, higher means looser
     },
     {
         name: "grenadegun",
