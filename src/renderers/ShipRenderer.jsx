@@ -248,7 +248,7 @@ const GLASS_FRAGMENT_SHADER = /* glsl */ `
 
 
         // --------------------------------------------------------
-        // PANEL VERTICES
+        // OUTER FRAME VERTICES
         // --------------------------------------------------------
 
         vec2 topLeft =
@@ -277,36 +277,8 @@ const GLASS_FRAGMENT_SHADER = /* glsl */ `
 
 
         // --------------------------------------------------------
-        // PANEL DIVIDERS
-        // --------------------------------------------------------
-
-        // Top panel / main cockpit boundary
-        vec2 topPanelLeft =
-            vec2(-0.28, 0.50);
-
-        vec2 topPanelRight =
-            vec2(0.28, 0.50);
-
-
-        // Left central panel boundary
-        vec2 centerLeftBottom =
-            vec2(-0.25, -0.82);
-
-        // Right central panel boundary
-        vec2 centerRightBottom =
-            vec2(0.25, -0.82);
-
-
-        // Bottom panel boundary
-        vec2 bottomPanelLeft =
-            vec2(-0.25, -0.82);
-
-        vec2 bottomPanelRight =
-            vec2(0.25, -0.82);
-
-
-        // --------------------------------------------------------
-        // FRAME DISTANCES
+        // FRAME DISTANCES (outer canopy edge only — no internal
+        // panel divider lines)
         // --------------------------------------------------------
 
         // Outer frame
@@ -368,46 +340,6 @@ const GLASS_FRAGMENT_SHADER = /* glsl */ `
 
 
         // --------------------------------------------------------
-        // INTERNAL PANEL FRAMES
-        // --------------------------------------------------------
-
-        // Horizontal line below top panel
-        float dividerTop =
-            sdSegment(
-                p,
-                topPanelLeft,
-                topPanelRight
-            );
-
-
-        // Left vertical-ish structural frame
-        float dividerLeft =
-            sdSegment(
-                p,
-                topPanelLeft,
-                centerLeftBottom
-            );
-
-
-        // Right vertical-ish structural frame
-        float dividerRight =
-            sdSegment(
-                p,
-                topPanelRight,
-                centerRightBottom
-            );
-
-
-        // Bottom panel top edge
-        float dividerBottom =
-            sdSegment(
-                p,
-                bottomPanelLeft,
-                bottomPanelRight
-            );
-
-
-        // --------------------------------------------------------
         // FIND CLOSEST FRAME
         // --------------------------------------------------------
 
@@ -418,14 +350,8 @@ const GLASS_FRAGMENT_SHADER = /* glsl */ `
                     min(frameRight, frameBottomRight)
                 ),
                 min(
-                    min(
-                        min(frameBottom, frameBottomLeft),
-                        min(frameLeft, frameUpperLeft)
-                    ),
-                    min(
-                        min(dividerTop, dividerLeft),
-                        min(dividerRight, dividerBottom)
-                    )
+                    min(frameBottom, frameBottomLeft),
+                    min(frameLeft, frameUpperLeft)
                 )
             );
 
