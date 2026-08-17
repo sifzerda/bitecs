@@ -1,52 +1,29 @@
 import { useEffect } from "react"
-
-import {
-    useGameStore,
-    getLevelId,
-} from "../../store/gameStore.js"
+import { useGameStore, getLevelId } from "../../store/gameStore.js"
 import { simState } from "../state/simState.js"
-
 import FlightLayout2 from "../components/FlightLayout2.jsx"
 
-
-export function StageCompleteScreen({
-    onContinue,
-    onMenu,
-    onGuns,
-}) {
+export function StageCompleteScreen({ onContinue, onMenu, onGuns}) {
 
     const stage = useGameStore((s) => s.stage)
     const section = useGameStore((s) => s.section)
-
-    const clearedLabel =
-        getLevelId(stage, section)
-
-    const unlockedWeapon =
-        simState.pendingUnlockWeapon
-
+    const clearedLabel = getLevelId(stage, section)
+    const unlockedWeapon = simState.pendingUnlockWeapon
 
     useEffect(() => {
 
         const onKey = (e) => {
 
             if (e.key === "Enter") {
-
                 e.preventDefault()
-
                 onContinue?.()
             }
         }
 
-        window.addEventListener(
-            "keydown",
-            onKey
-        )
+        window.addEventListener("keydown", onKey)
 
         return () => {
-            window.removeEventListener(
-                "keydown",
-                onKey
-            )
+            window.removeEventListener("keydown", onKey)
         }
 
     }, [onContinue])
@@ -56,8 +33,7 @@ export function StageCompleteScreen({
 
         <FlightLayout2
             title="STAGE COMPLETE"
-            footer={`${clearedLabel} CLEARED`}
-        >
+            footer={`${clearedLabel} CLEARED`}>
 
             <div className="mt-10 flex flex-col items-center gap-6 font-mono text-center">
 
@@ -74,16 +50,12 @@ export function StageCompleteScreen({
 
                 )}
 
-
                 <div className="mt-4 flex flex-col gap-4">
 
                     <button
                         type="button"
                         onClick={onContinue}
-                        className="w-56 py-3 border border-green-300 text-cyan-300 bg-cyan-500/10 uppercase tracking-[0.4em] hover:bg-cyan-500/20"
-                    >
-                        CONTINUE
-                    </button>
+                        className="w-56 py-3 border border-green-300 text-cyan-300 bg-cyan-500/10 uppercase tracking-[0.4em] hover:bg-cyan-500/20"> CONTINUE</button>
 
 
                     {unlockedWeapon != null && (

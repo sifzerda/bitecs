@@ -46,7 +46,7 @@ const PLAYER_COCKPIT_GLASS_CFG = {
    ============================================================ */
 
 const PX_TO_WORLD = 1 / 35
-const PLAYER_SIZE = 220 * PX_TO_WORLD
+const PLAYER_SIZE = 80 * PX_TO_WORLD
 const BOSS_SIZE = 220 * PX_TO_WORLD
 
 /* ============================================================
