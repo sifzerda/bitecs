@@ -3,7 +3,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { gameState } from '../state/gameState.js'
+import { simState } from '../state/simState.js'
 
 const DEFLECT_FLASH_DURATION = 0.15 // keep in sync with combat.js
 
@@ -92,12 +92,12 @@ void main(){
 
     const uniforms = material.uniforms
 
-    useFrame(() => {
+useFrame(() => {
 
         const mesh = meshRef.current
         if (!mesh) return
 
-        const timer = gameState.deflectFlashTimer
+        const timer = simState.deflectFlashTimer
 
         if (timer <= 0) {
             mesh.visible = false
@@ -106,7 +106,7 @@ void main(){
         }
 
         mesh.visible = true
-        mesh.position.set(gameState.deflectFlashX, gameState.deflectFlashY, 0.06)
+        mesh.position.set(simState.deflectFlashX, simState.deflectFlashY, 0.06)
 
         // Detect new flash start
         if (lastTimer.current <= 0 && timer > 0) {

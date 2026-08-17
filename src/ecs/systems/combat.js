@@ -5,6 +5,7 @@ import { world } from "../constants/world.js"
 import {
     bossQuery,
     playerQuery,
+    tentacleQuery,
 } from "../constants/queries.js"
 
 import {
@@ -14,25 +15,38 @@ import {
     Lifetime,
     Velocity,
     Bullet,
+    Tentacle,
+    BossType,
     BULLET_OWNER
 } from "../constants/components.js"
 
-import { gameState, SCREEN } from "../../state/gameState.js"
-import { notifyUIChanged } from "../../state/uiState.js"
+import { BOSSES } from "../constants/bosses.js"
+import {
+    useGameStore,
+    SCREEN,
+} from "../../../store/gameStore.js"
+import { simState } from "../../state/simState.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
+import { damageTentacle, PHASE } from "./tentacleSystem.js"
 import { explodeAt } from "../weapons/weaponSystems/weaponEffects.js"
 import { releaseBulletEntity, activeBullets } from "../pools/bulletPool.js"
 import { activeAsteroids } from "../pools/asteroidPool.js"
 import { getWeapon } from "../weapons/config/weapons.js"
 import { resolveHit } from "../weapons/weaponSystems/hitTraits.js"
 
+import { emitEffect } from "../../fx/effects.js"
+import { EFFECT } from "../../fx/FXTypes.js"
+
 const PLAYER_HIT_RADIUS = 0.6
 const ASTEROID_RADIUS = 0.7
-const BOSS_RADIUS = 2.0
+const BOSS_RADIUS = 2.0 // fallback for any boss without a custom hitRadius
 const DEFLECT_RADIUS = 4.0             // DEBUG: was 1.4 — huge catch radius so any nearby bullet deflects
 const DEFLECT_SPEED_MULT = 1.3
 const DEFLECT_FLASH_DURATION = 0.15    // keep in sync with DeflectRenderer.jsx
 
+function getBossHitRadius(bossId) {
+    return BOSSES[BossType.typeIndex[bossId]]?.hitRadius ?? BOSS_RADIUS
+}
 export function combatSystem() {
 
     const dt = world.time.delta
@@ -102,6 +116,41 @@ export function combatSystem() {
             if (hit) continue
 
             // -------------------------
+            // Tentacles (octopus boss)
+            // -------------------------
+
+            const tentacles = tentacleQuery()
+
+            for (let j = 0; j < tentacles.length; j++) {
+
+                const tid = tentacles[j]
+
+                if (Tentacle.phase[tid] !== PHASE.ACTIVE) continue
+
+                const dx = Position.x[bid] - Position.x[tid]
+                const dy = Position.y[bid] - Position.y[tid]
+
+                const tentacleHitDist = weapon.hitRadius + Tentacle.tipRadius[tid]
+                if (dx * dx + dy * dy <= tentacleHitDist * tentacleHitDist) {
+
+                    damageTentacle(tid, weapon.directDamage)
+
+                    emitEffect(EFFECT.SPARK_BURST, {
+                        x: Position.x[bid],
+                        y: Position.y[bid],
+                        count: 10,
+                        speed: 6,
+                    })
+
+                    releaseBulletEntity(bid)
+                    hit = true
+                    break
+                }
+            }
+
+            if (hit) continue
+
+            // -------------------------
             // Bosses
             // -------------------------
 
@@ -111,7 +160,7 @@ export function combatSystem() {
 
                 const dx = Position.x[bid] - Position.x[bossId]
                 const dy = Position.y[bid] - Position.y[bossId]
-                const bossRadius = weapon.hitRadius + BOSS_RADIUS
+                const bossRadius = weapon.hitRadius + getBossHitRadius(bossId)
 
                 if (dx * dx + dy * dy <= bossRadius * bossRadius) {
 
@@ -150,22 +199,19 @@ export function combatSystem() {
             // Deflect — tap X while an enemy bullet is inside DEFLECT_RADIUS
             //----------------------------------
 
-            if (gameState.deflectBufferTime > 0 && distSq <= DEFLECT_RADIUS * DEFLECT_RADIUS) {
+            if (simState.deflectBufferTime > 0 && distSq <= DEFLECT_RADIUS * DEFLECT_RADIUS) {
 
                 const dist = Math.sqrt(distSq) || 1
-                const nx = dx / dist   // surface normal: ship center -> bullet
+                const nx = dx / dist
                 const ny = dy / dist
 
                 const vx = Velocity.x[bid]
                 const vy = Velocity.y[bid]
 
-                // true reflection off the normal — angle depends on incoming trajectory
                 const dot = vx * nx + vy * ny
                 let rvx = vx - 2 * dot * nx
                 let rvy = vy - 2 * dot * ny
 
-                // safety: if the bullet was moving away from the ship already
-                // (dot > 0, e.g. spawned very close), fall back to a simple outward push
                 if (dot > 0) {
                     rvx = nx
                     rvy = ny
@@ -180,9 +226,9 @@ export function combatSystem() {
 
                 Bullet.owner[bid] = BULLET_OWNER.PLAYER
 
-                gameState.deflectFlashTimer = DEFLECT_FLASH_DURATION
-                gameState.deflectFlashX = Position.x[pid]
-                gameState.deflectFlashY = Position.y[pid]
+                simState.deflectFlashTimer = DEFLECT_FLASH_DURATION
+                simState.deflectFlashX = Position.x[pid]
+                simState.deflectFlashY = Position.y[pid]
 
                 continue
             }
@@ -194,11 +240,14 @@ export function combatSystem() {
 
                 if (Health.current[pid] <= 0) {
 
-                    gameState.lives--
+                    simState.lives--
 
-                    if (gameState.lives <= 0) {
-                        gameState.screen = SCREEN.GAME_OVER
-                        notifyUIChanged()
+                    if (simState.lives <= 0) {
+
+                        useGameStore
+                            .getState()
+                            .gameOver()
+
                         return
                     }
                     Health.current[pid] = Health.max[pid]

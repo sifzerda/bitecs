@@ -502,8 +502,61 @@ export const BOSSES = [
 
     },
 
+
+
+ 
+{
+        key: "octopus",
+        name: "The Kraken",
+
+        // Not a ship — no hull/cockpit/propellers to render.
+        // OctopusRenderer.jsx already draws its body (the tentacle plume)
+        // directly from this entity's Position/Rotation, same as GunMount
+        // tracks any other boss. isShip lets a ship-hull renderer skip this
+        // entry once wired up — see chat, I don't have that file yet.
+        isShip: false,
+
+        // Reused ONLY to derive a weaponId (thrower/"ink spray" category)
+        // via the same getGunTypeById() lookup spawn.js already does for
+        // every boss — NOT rendered as a held weapon model. gunVisible
+        // tells GunMount.jsx to skip mounting a visible gun mesh here.
+        gun: { typeId: "05_acidthrower" },
+        gunVisible: false,
+
+        // Final-boss stat weight.
+        health: 900,
+
+        // Tentacle plume reads much larger on-screen than a ship hull —
+        // widen the hit circle combat.js uses for this boss specifically.
+        hitRadius: 3.5,
+
+        emission: {
+            exhaust: {
+                offsetX: 0,
+                offsetY: 0,
+                engineGap: 0,
+                nozzleOffset: 0,
+            },
+            // No exhaust — it doesn't thrust like a ship. octoAISystem.js
+            // drives its movement directly via Velocity, so nothing calls
+            // getBossEmissionConfig(id, "exhaust") for it in practice.
+            thrower: {
+                offsetX: 0,
+                offsetY: 0,
+                gunGap: 0,
+            },
+        },
+    },
 ]
 
 export const BOSS_INDEX_BY_KEY = Object.fromEntries(
     BOSSES.map((boss, index) => [boss.key, index])
 )
+
+// Central place to identify the octopus by its resolved type index,
+// instead of string-comparing boss.key in every system that needs to
+// know "is this boss the octopus." Used by tentacleSystem.js,
+// octoAISystem.js, and combat.js.
+export function isOctopusType(typeIndex) {
+    return typeIndex === BOSS_INDEX_BY_KEY["octopus"]
+}

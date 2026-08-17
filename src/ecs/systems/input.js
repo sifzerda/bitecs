@@ -1,6 +1,6 @@
 // src/ecs/systems/input.js
 
-import { gameState } from "../../state/gameState.js"
+import { simState } from "../../state/simState.js"
 import { WEAPONS } from "../weapons/config/weapons.js";
 import { settings } from "../systems/settings.js";
 
@@ -48,8 +48,8 @@ let initialized = false;
 const wheelOptions = { passive: false };
 
 function cycleWeapon(direction) {
-  gameState.currentWeapon =
-    (gameState.currentWeapon + direction + WEAPONS.length) % WEAPONS.length;
+  simState.currentWeapon =
+    (simState.currentWeapon + direction + WEAPONS.length) % WEAPONS.length;
 }
 
 export function clearInput() {
@@ -118,9 +118,9 @@ export function initializeInput(onPause) {
       return;
     }
 
-    const weaponIndex = weaponKeys[e.code];
+  const weaponIndex = weaponKeys[e.code];
     if (weaponIndex !== undefined && weaponIndex < WEAPONS.length) {
-      gameState.currentWeapon = weaponIndex;
+      simState.currentWeapon = weaponIndex;
     }
   }
 

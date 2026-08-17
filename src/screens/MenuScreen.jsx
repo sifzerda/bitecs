@@ -5,28 +5,32 @@ import FlightLayout2 from '../components/FlightLayout2.jsx';
 
 const ITEMS = [
   { label: 'START', action: 'onPlay' },
+  { label: 'LEVEL SELECT', action: 'onLevelSelect' },
   { label: 'GUNS', action: 'onGuns' },
   { label: 'SETTINGS', action: 'onSettings' },
   { label: 'HOW TO PLAY', action: 'onHowToPlay' },
   { label: 'HIGHSCORES', action: 'onHighscores' },
-];
+]
 
 export default function MenuScreen({
   onPlay,
+  onLevelSelect,
   onGuns,
   onSettings,
   onHowToPlay,
   onHighscores,
 }) {
+
   const [selected, setSelected] = useState(0);
 
   const handlers = {
     onPlay,
+    onLevelSelect,
     onGuns,
     onSettings,
     onHowToPlay,
     onHighscores,
-  };
+  }
 
   const activate = useCallback(
     (index) => {
@@ -59,10 +63,9 @@ export default function MenuScreen({
 
   const btnClass = (active) => `
     cursor-pointer relative w-56 py-3 uppercase tracking-[0.45em] text-sm border transition-all duration-200
-    ${
-      active
-        ? 'border-green-300 text-cyan-300 bg-cyan-500/10 shadow-[0_0_18px_rgba(0,255,255,0.35)]'
-        : 'border-[#39ff14]/40 text-[#39ff14]/70 bg-black/40'
+    ${active
+      ? 'border-green-300 text-cyan-300 bg-cyan-500/10 shadow-[0_0_18px_rgba(0,255,255,0.35)]'
+      : 'border-[#39ff14]/40 text-[#39ff14]/70 bg-black/40'
     }
   `;
 

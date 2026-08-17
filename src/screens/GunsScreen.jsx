@@ -1,16 +1,17 @@
 // src/screens/GunsScreen.jsx
 
 import { useState, useEffect, useCallback } from "react"
-import { gameState, advanceStage, SCREEN } from "../state/gameState"
-import { notifyUIChanged } from "../state/uiState"
+import { useGameStore } from "../../store/gameStore.js"
+import { simState } from "../state/simState.js"
 import { WEAPONS, getWeapon } from "../ecs/weapons/config/weapons"
 import { getGunTypeByWeaponId } from "../ecs/weapons/config/gunConfigs"
 import FlightLayout2 from "../components/FlightLayout2.jsx"
 
-export function GunsScreen({ onBack, onPlay }) {
+export function GunsScreen({ onBack,
+    onContinueAfterStage, }) {
 
     const [selected, setSelected] = useState(
-        gameState.currentWeapon
+        simState.currentWeapon
     )
 
     // 0 = EQUIP, 1 = BACK
@@ -24,23 +25,32 @@ export function GunsScreen({ onBack, onPlay }) {
             onBack()
             return
         }
-        gameState.screen = SCREEN.MENU
-        notifyUIChanged()
+        useGameStore.setState({ screen: SCREEN.MENU })
     }, [onBack])
 
     const handleEquip = useCallback(() => {
-        gameState.currentWeapon = selected
-        advanceStage()
+        simState.currentWeapon = selected
 
         if (onPlay) {
             onPlay()
             return
         }
 
-        // fallback if no onPlay prop was supplied
-        gameState.screen = SCREEN.PLAY
-        notifyUIChanged()
+        useGameStore.setState({
+            screen: SCREEN.PLAY,
+            paused: false,
+        })
+
     }, [selected, onPlay])
+
+    const openGunsFromMenu = useCallback(() => {
+        openGuns(SCREEN.MENU)
+    }, [openGuns])
+
+
+    const openGunsAfterStage = useCallback(() => {
+        openGuns(SCREEN.STAGE_COMPLETE)
+    }, [openGuns])
 
     useEffect(() => {
         const onKey = (e) => {
@@ -84,9 +94,9 @@ export function GunsScreen({ onBack, onPlay }) {
                             {WEAPONS.map((w) => {
 
                                 const gun = getGunTypeByWeaponId(w.id)
-                                const unlocked = gameState.unlockedWeapons.includes(w.id)
+                                const unlocked = simState.unlockedWeapons.includes(w.id)
                                 const isSelected = selected === w.id
-                                const isNew = gameState.pendingUnlockWeapon === w.id
+                                const isNew = simState.pendingUnlockWeapon === w.id
 
                                 return (
                                     <button

@@ -2,9 +2,7 @@
 
 import { addEntity, addComponent } from "bitecs"
 import * as THREE from "three"
-
 import { world } from "./constants/world"
-
 import {
     Position,
     Velocity,
@@ -25,17 +23,12 @@ import {
     Octopus,
     OctopusTag,
 } from "./constants/components"
-
 import { BOSS_INDEX_BY_KEY, BOSSES } from "./constants/bosses"
-
-import { gameState } from "../state/gameState"
-
+import { simState } from "../state/simState.js"
 import { acquireBulletEntity } from "./pools/bulletPool"
 import { acquireAsteroidEntity } from "./pools/asteroidPool"
-
 import { getGunTypeById } from "./weapons/config/gunConfigs"
 import { getWeapon } from "./weapons/config/weapons"
-
 import { getBossEmissionConfig, PLAYER_CONFIG } from "./constants/emission.js"
 
 // ============================================================
@@ -498,7 +491,7 @@ export function spawnBoss(bossKey = "shotgun") {
     // --------------------------------------------------------
 
     BossType.typeIndex[id] = bossIndex
-    gameState.bossAlive = true
+    simState.bossAlive = true
 
     return id
 }

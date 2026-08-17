@@ -5,7 +5,7 @@ import { world } from "../constants/world.js"
 import { Position, Velocity, Rotation, BULLET_OWNER } from "../constants/components.js"
 import { spawnPlayerBullet } from "../spawn.js"
 import { input, isMouseControlEnabled } from "./input.js"
-import { gameState } from "../../state/gameState.js"
+import { simState } from "../../state/simState.js"
 import { getWeapon } from "../weapons/config/weapons.js"
 import { getAction } from "../weapons/config/weaponActions.js"
 
@@ -85,11 +85,11 @@ export default function playerControlSystem(shootState) {
     // Deflect
     //----------------------------------
 
-    gameState.deflectBufferTime = Math.max(0, gameState.deflectBufferTime - dt)
-    gameState.deflectFlashTimer = Math.max(0, gameState.deflectFlashTimer - dt)
+    simState.deflectBufferTime = Math.max(0, simState.deflectBufferTime - dt)
+    simState.deflectFlashTimer = Math.max(0, simState.deflectFlashTimer - dt)
 
     if (input.deflect) {
-        gameState.deflectBufferTime = DEFLECT_BUFFER
+        simState.deflectBufferTime = DEFLECT_BUFFER
         input.deflect = false
     }
 
@@ -116,7 +116,7 @@ export default function playerControlSystem(shootState) {
     // Shooting
     //----------------------------------
 
-    const weapon = getWeapon(gameState.currentWeapon)
+    const weapon = getWeapon(simState.currentWeapon)
 
     if (!getAction(weapon).continuous) {
         shootState.timer -= dt

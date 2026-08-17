@@ -21,11 +21,10 @@ import {
 } from "./entityDeath.js"
 
 import {
-    gameState,
-    SCREEN,
-} from "../../state/gameState.js"
+    useGameStore
+} from "../../../store/gameStore.js"
 
-import { notifyUIChanged } from "../../state/uiState.js"
+import { simState } from "../../state/simState.js"
 
 
 // ============================================================
@@ -222,13 +221,11 @@ export function statusEffectSystem() {
 
     if (Health.current[pid] <= 0) {
 
-        gameState.lives--
+        simState.lives--
 
-        if (gameState.lives <= 0) {
+        if (simState.lives <= 0) {
 
-            gameState.screen = SCREEN.GAME_OVER
-
-            notifyUIChanged()
+            useGameStore.setState({ screen: SCREEN.GAME_OVER })
 
             return
         }
@@ -240,8 +237,6 @@ export function statusEffectSystem() {
         StatusEffect.frozen[pid] = 0
         StatusEffect.corrosionRemaining[pid] = 0
         StatusEffect.corrosionDamage[pid] = 0
-
-        notifyUIChanged()
 
         return
     }

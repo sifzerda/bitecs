@@ -25,7 +25,7 @@ export default function SettingsScreen({ onBack }) {
   }, [onBack]);
 
   const handleSave = useCallback(() => {
-    // persist settings later (localStorage / gameState)
+    // persist settings later (localStorage / simState)
     onBack?.();
   }, [onBack]);
 

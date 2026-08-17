@@ -1,17 +1,17 @@
 // src/components/HUD.jsx
 
 import { useEffect, useState } from 'react'
-import { gameState } from '../state/gameState.js'
+import { simState } from '../state/simState.js'
 import { skipWave } from '../ecs/systems/waveSystem.js'
 
 export function HUD({ onPause, paused }) {
 
     const [hud, setHud] = useState({
-        score: gameState.score,
-        health: gameState.health,
-        lives: gameState.lives,
-        wave: gameState.wave,
-        asteroidsRemaining: gameState.asteroidsRemaining
+        score: simState.score,
+        health: simState.health,
+        lives: simState.lives,
+        wave: simState.wave,
+        asteroidsRemaining: simState.asteroidsRemaining
     })
 
     useEffect(() => {
@@ -23,12 +23,12 @@ export function HUD({ onPause, paused }) {
             setHud(prev => {
 
                 const next = {
-                    score: gameState.score,
-                    health: gameState.health,
-                    lives: gameState.lives,
-                    wave: gameState.wave,
-                    asteroidsRemaining: gameState.asteroidsRemaining,
-                    bossAlive: gameState.bossAlive,
+                    score: simState.score,
+                    health: simState.health,
+                    lives: simState.lives,
+                    wave: simState.wave,
+                    asteroidsRemaining: simState.asteroidsRemaining,
+                    bossAlive: simState.bossAlive,
                 }
 
                 for (const k in next)

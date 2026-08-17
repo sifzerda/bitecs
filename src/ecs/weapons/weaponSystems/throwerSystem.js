@@ -20,7 +20,7 @@ import {
 import { applyStatusEffects } from "../../systems/statusEffectSystem.js"
 
 import { input } from "../../systems/input.js"
-import { gameState } from "../../../state/gameState.js"
+import { simState } from "../../../state/simState.js"
 
 import { getWeapon } from "../config/weapons.js"
 import { throwerState } from "../weaponState/throwerState.js"
@@ -118,8 +118,7 @@ export function throwerSystem() {
 
     const dt = world.time.delta
 
-    const weapon =
-        getWeapon(gameState.currentWeapon)
+    const weapon = getWeapon(simState.currentWeapon)
 
 
     if (weapon.category !== "thrower") {

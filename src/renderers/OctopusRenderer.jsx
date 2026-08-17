@@ -4,11 +4,14 @@ import { useMemo, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import { useControls } from "leva"
 import * as THREE from "three"
-import { octopusQuery } from "../ecs/constants/queries.js"
-import { Position, Velocity } from "../ecs/constants/components.js"
-import { gameState } from "../state/gameState.js"
+import { bossQuery } from "../ecs/constants/queries.js"
+import { Position, Velocity, Rotation, BossType } from "../ecs/constants/components.js"
+import { BOSS_INDEX_BY_KEY } from "../ecs/constants/bosses.js"
 
-const MAX_OCTOPUSES = 6              // upper bound for buffer sizing
+// Must match the `key` used for the octopus entry in bosses.js.
+const OCTOPUS_KEY = "octopus"
+
+const MAX_OCTOPUSES = 4              // upper bound for buffer sizing — normally only 1 boss is alive at once
 const MAX_TENTACLES_PER_OCTOPUS = 24 // upper bound for buffer sizing
 const MAX_TENTACLES = MAX_OCTOPUSES * MAX_TENTACLES_PER_OCTOPUS
 
@@ -198,8 +201,7 @@ void main() {
 
 export function OctopusRenderer() {
 
-    const cfg = useControls('Eldritch / Octopuses', {
-        octopusCount: { value: 3, min: 1, max: MAX_OCTOPUSES, step: 1 },
+    const cfg = useControls('Eldritch / Octopus Boss', {
         tentaclesPerOctopus: { value: 12, min: 1, max: MAX_TENTACLES_PER_OCTOPUS, step: 1 },
         headRadius: { value: 0.6, min: 0.05, max: 6, step: 0.05, label: 'head radius' },
         pulse: { value: true, label: 'head pulse' },
@@ -221,9 +223,6 @@ export function OctopusRenderer() {
         detailSpeed: { value: 3.0, min: 0, max: 8, step: 0.05, label: 'ripple speed' },
         curvatureSmoothing: { value: 0.3, min: 0, max: 1, step: 0.02, label: 'joint smoothing' },
         smoothIterations: { value: 3, min: 0, max: 6, step: 1, label: 'smoothing passes' },
-        moveSpeed: { value: 1.2, min: 0, max: 10, step: 0.05, label: 'wander move speed' },
-        turnRate: { value: 1.5, min: 0, max: 8, step: 0.05, label: 'wander turn rate' },
-        wanderRadius: { value: 15, min: 1, max: 60, step: 1, label: 'wander radius' },
     }, { collapsed: false })
 
     const plumeCfg = useControls('Eldritch / Octopus Plume', {
@@ -235,7 +234,7 @@ export function OctopusRenderer() {
         coreWidth: { value: 0.55, min: 0, max: 0.95, step: 0.02, label: 'solid core width' },
     }, { collapsed: false })
 
-    const totalTentacles = cfg.octopusCount * cfg.tentaclesPerOctopus
+    const totalTentacles = MAX_OCTOPUSES * cfg.tentaclesPerOctopus
     const pointsPerTentacle = Math.max(cfg.nodeCount - 1, 2)
     const quadsPerTentacle = pointsPerTentacle - 1
     const vertsPerTentacle = pointsPerTentacle * 2
@@ -243,8 +242,7 @@ export function OctopusRenderer() {
     const totalTris = MAX_TENTACLES * quadsPerTentacle * 2
 
     // persistent per-tentacle simulation state, plus one seed per octopus
-    // (used to desync head-pulse phase between octopuses), plus one
-    // wander heading per octopus slot for random-walk movement
+    // slot (desyncs head-pulse phase if more than one is ever alive)
     const stateRef = useRef(null)
     if (
         !stateRef.current ||
@@ -262,17 +260,14 @@ export function OctopusRenderer() {
             })
         }
         const octopusSeeds = new Float32Array(MAX_OCTOPUSES)
-        const wanderAngles = new Float32Array(MAX_OCTOPUSES)
         for (let o = 0; o < MAX_OCTOPUSES; o++) {
             octopusSeeds[o] = Math.random()
-            wanderAngles[o] = Math.random() * Math.PI * 2
         }
 
         stateRef.current = {
             nodeCount: cfg.nodeCount,
             tentacles,
             octopusSeeds,
-            wanderAngles,
             reachWeights: buildReachWeights(cfg.nodeCount),
         }
     }
@@ -365,75 +360,43 @@ export function OctopusRenderer() {
     useFrame((frameState, delta) => {
         if (!meshRef.current) return
 
-        if (!gameState.octopusEnabled) {
-            // zero out all verts so nothing renders, without tearing down GPU buffers
-            const positions = positionAttr.array
-            positions.fill(0)
-            positionAttr.needsUpdate = true
-            return
-        }
+        const octopusTypeIndex = BOSS_INDEX_BY_KEY[OCTOPUS_KEY]
 
         const t = frameState.clock.elapsedTime
         plumeMaterial.uniforms.uTime.value = t
 
-        const { tentacles: sims, octopusSeeds, wanderAngles, reachWeights } = stateRef.current
+        const { tentacles: sims, octopusSeeds, reachWeights } = stateRef.current
         const positions = positionAttr.array
 
-        const octopusEntities = octopusQuery()
+        // Find live boss entities that are the octopus type. In practice
+        // this is 0 or 1 (waveSystem only spawns one boss at a time), but
+        // it's handled as a list so nothing breaks if that ever changes.
+        const octopusEntities = bossQuery().filter(
+            eid => BossType.typeIndex[eid] === octopusTypeIndex
+        )
 
-        // hide every slot beyond what's currently in use
-        for (let i = totalTentacles; i < MAX_TENTACLES; i++) {
-            const vBase = i * vertsPerTentacle
-            for (let p = 0; p < pointsPerTentacle; p++) {
-                const outerIdx = vBase + p * 2
-                const innerIdx = outerIdx + 1
-                positions[outerIdx * 3] = positions[outerIdx * 3 + 1] = positions[outerIdx * 3 + 2] = 0
-                positions[innerIdx * 3] = positions[innerIdx * 3 + 1] = positions[innerIdx * 3 + 2] = 0
+        // hide every slot beyond what's currently alive
+        for (let i = octopusEntities.length; i < MAX_OCTOPUSES; i++) {
+            for (let k = 0; k < cfg.tentaclesPerOctopus; k++) {
+                const idx = i * cfg.tentaclesPerOctopus + k
+                if (idx >= MAX_TENTACLES) continue
+                const vBase = idx * vertsPerTentacle
+                for (let p = 0; p < pointsPerTentacle; p++) {
+                    const outerIdx = vBase + p * 2
+                    const innerIdx = outerIdx + 1
+                    positions[outerIdx * 3] = positions[outerIdx * 3 + 1] = positions[outerIdx * 3 + 2] = 0
+                    positions[innerIdx * 3] = positions[innerIdx * 3 + 1] = positions[innerIdx * 3 + 2] = 0
+                }
             }
         }
 
-        for (let o = 0; o < cfg.octopusCount; o++) {
-            const active = o < octopusEntities.length
-            const eid = active ? octopusEntities[o] : null
+        for (let o = 0; o < octopusEntities.length && o < MAX_OCTOPUSES; o++) {
 
-            if (!active) {
-                for (let k = 0; k < cfg.tentaclesPerOctopus; k++) {
-                    const i = o * cfg.tentaclesPerOctopus + k
-                    const vBase = i * vertsPerTentacle
-                    for (let p = 0; p < pointsPerTentacle; p++) {
-                        const outerIdx = vBase + p * 2
-                        const innerIdx = outerIdx + 1
-                        positions[outerIdx * 3] = positions[outerIdx * 3 + 1] = positions[outerIdx * 3 + 2] = 0
-                        positions[innerIdx * 3] = positions[innerIdx * 3 + 1] = positions[innerIdx * 3 + 2] = 0
-                    }
-                }
-                continue
-            }
+            const eid = octopusEntities[o]
 
-            // ---- random-walk wander movement ----
-            // smoothly steer a heading angle, drive velocity from it, and
-            // apply a soft pull back toward the origin once past wanderRadius
-            // so octopuses don't drift off into open space forever
-            let angle = wanderAngles[o] + (Math.random() - 0.5) * cfg.turnRate * delta
-            wanderAngles[o] = angle
-
-            let vx = Math.cos(angle) * cfg.moveSpeed
-            let vy = Math.sin(angle) * cfg.moveSpeed
-
-            const px = Position.x[eid]
-            const py = Position.y[eid]
-            const distFromCenter = Math.hypot(px, py)
-            if (distFromCenter > cfg.wanderRadius && distFromCenter > 0.0001) {
-                vx += (-px / distFromCenter) * cfg.moveSpeed
-                vy += (-py / distFromCenter) * cfg.moveSpeed
-            }
-
-            Velocity.x[eid] = vx
-            Velocity.y[eid] = vy
-            Position.x[eid] += vx * delta
-            Position.y[eid] += vy * delta
-            // ---- end wander movement ----
-
+            // Movement/position is owned by the boss AI system, same as
+            // every other boss (see GunMount.jsx) — this renderer only
+            // reads it, it never writes Position/Velocity itself.
             const centerX = Position.x[eid]
             const centerY = Position.y[eid]
             const vxCur = Velocity.x[eid]
@@ -444,8 +407,8 @@ export function OctopusRenderer() {
                 : 0
             const headR = cfg.headRadius * (1 - cfg.pulseAmount * 0.5 + cfg.pulseAmount * 0.5 * pulse)
 
-            // drag opposite velocity — tentacles trail behind the octopus
-            // as it flies, instead of sagging toward a fixed world direction
+            // drag opposite velocity — tentacles trail behind the boss as
+            // it moves, instead of sagging toward a fixed world direction
             const dragX = -vxCur * cfg.dragStrength
             const dragY = -vyCur * cfg.dragStrength
 
@@ -500,6 +463,17 @@ export function OctopusRenderer() {
                     positions[innerIdx * 3 + 1] = n2.y
                     positions[innerIdx * 3 + 2] = 0.05
                 }
+            }
+        }
+
+        // Reset per-tentacle sim state for any slot no longer in use, so a
+        // future respawn of the boss starts its tentacles cleanly instead
+        // of snapping in from wherever they last were.
+        for (let o = octopusEntities.length; o < MAX_OCTOPUSES; o++) {
+            for (let k = 0; k < cfg.tentaclesPerOctopus; k++) {
+                const idx = o * cfg.tentaclesPerOctopus + k
+                if (idx >= MAX_TENTACLES) continue
+                sims[idx].initialized = false
             }
         }
 

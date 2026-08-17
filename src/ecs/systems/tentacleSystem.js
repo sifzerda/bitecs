@@ -4,15 +4,16 @@ import { addEntity, addComponent } from "bitecs"
 import { world } from "../constants/world.js"
 import {
     Position, Health,
-    Tentacle, TentacleTag,
+    Tentacle, TentacleTag, TentacleBossTag,
+    BossType,
 } from "../constants/components.js"
-import { tentacleQuery, playerQuery } from "../constants/queries.js"
-import { gameState } from "../../state/gameState.js"
+import { tentacleQuery, playerQuery, bossQuery } from "../constants/queries.js"
+import { isOctopusType } from "../constants/bosses.js"
 
 const MAX_PER_EDGE = 4
 const EDGES = [0, 1, 2, 3] // left, right, top, bottom
 
-const PHASE = { HIDDEN: 0, EMERGING: 1, ACTIVE: 2, RETRACTING: 3 }
+export const PHASE = { HIDDEN: 0, EMERGING: 1, ACTIVE: 2, RETRACTING: 3 }
 
 const TIMINGS = {
     emerge: 1.4,
@@ -47,6 +48,7 @@ function spawnTentacles() {
             addComponent(world, id, Health)
             addComponent(world, id, Tentacle)
             addComponent(world, id, TentacleTag)
+            addComponent(world, id, TentacleBossTag)
 
             Health.current[id] = DEFAULT_TENTACLE_HP
             Health.max[id] = DEFAULT_TENTACLE_HP
@@ -72,8 +74,24 @@ function easeInOutCubic(x) {
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2
 }
 
-// Sever a tentacle — call this from your bullet-vs-entity collision code
-// whenever a player bullet hits a tentacle eid (from tentacleQuery).
+// Whether the octopus boss is currently alive — gates the edge-tentacle
+// hazard automatically: starts when spawnBoss("octopus") fires, ends
+// when killBoss removes it.
+function isOctopusBossAlive() {
+
+    const bosses = bossQuery()
+
+    for (let i = 0; i < bosses.length; i++) {
+        if (isOctopusType(BossType.typeIndex[bosses[i]])) {
+            return true
+        }
+    }
+
+    return false
+}
+
+// Sever a tentacle — called from combat.js whenever a player bullet
+// hits a tentacle eid (from tentacleQuery).
 export function damageTentacle(eid, amount) {
     if (Tentacle.phase[eid] !== PHASE.ACTIVE) return // can only be hit while reached out
 
@@ -86,10 +104,10 @@ export function damageTentacle(eid, amount) {
     }
 }
 
-// Call every frame from your main system loop.
+// Call every frame from the main system loop.
 export function tentacleSystem(dt) {
 
-    if (!gameState.tentaclesEnabled) {
+    if (!isOctopusBossAlive()) {
         if (spawned) {
             const tentacles = tentacleQuery()
             for (let i = 0; i < tentacles.length; i++) {
@@ -138,13 +156,10 @@ export function tentacleSystem(dt) {
             } else if (phase === PHASE.RETRACTING) {
                 Tentacle.phase[eid] = PHASE.HIDDEN
                 Tentacle.timer[eid] = randRange(TIMINGS.hiddenMin, TIMINGS.hiddenMax)
-                // re-roll spawn point so it doesn't always emerge in the same spot
                 Tentacle.along[eid] = randRange(-0.42, 0.42)
             }
         }
 
-        // deployT is recalculated every frame from phase+timer so the renderer
-        // (or anything else) can read a smooth 0..1 value without re-deriving state.
         const currentPhase = Tentacle.phase[eid]
         if (currentPhase === PHASE.EMERGING) {
             Tentacle.deployT[eid] = easeInOutCubic(1 - Math.max(0, Tentacle.timer[eid]) / TIMINGS.emerge)
@@ -156,8 +171,6 @@ export function tentacleSystem(dt) {
             Tentacle.deployT[eid] = 0
         }
 
-        // Contact damage — tip position (Position.x/y[eid]) is written by the
-        // renderer each frame from its verlet chain tip. Only check while active.
         if (currentPhase === PHASE.ACTIVE && hasPlayer && Tentacle.hitCooldown[eid] <= 0) {
             const dx = Position.x[playerEid] - Position.x[eid]
             const dy = Position.y[playerEid] - Position.y[eid]

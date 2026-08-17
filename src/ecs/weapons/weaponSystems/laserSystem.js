@@ -6,7 +6,7 @@ import { Position, Rotation, Health } from "../../constants/components.js"
 import { getEmissionPoint, PLAYER_CONFIG } from '../../constants/emission.js'
 
 import { input } from "../../systems/input.js"
-import { gameState } from "../../../state/gameState.js"
+import { simState } from "../../../state/simState.js"
 import { getWeapon } from "../config/weapons.js"
 import { laserState } from "../weaponState/laserState.js"
 
@@ -114,7 +114,7 @@ function getTwinOrigins(centerX, centerY, rot, gap) {
 export function laserSystem() {
 
     const dt = world.time.delta
-    const weapon = getWeapon(gameState.currentWeapon)
+    const weapon = getWeapon(simState.currentWeapon)
 
     if (weapon.category !== "beam") {
         laserState.active = false

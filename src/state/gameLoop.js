@@ -20,6 +20,8 @@ import { bossAISystem } from "../ecs/systems/bossAISystem"
 import { bossLaserSystem } from "../ecs/weapons/weaponSystems/bossLaserSystem"
 import { bossThrowerSystem } from "../ecs/weapons/weaponSystems/bossThrowerSystem"
 
+import { octoAISystem } from "../ecs/systems/octoAISystem"
+
 // fx
 import { updateSparkEmitter } from "../fx/gpu/SparkEmitter"
 import { exhaustEmitter } from "../fx/gpu/exhaustEmitter"
@@ -41,6 +43,7 @@ export function gameLoop(shootState, dt) {
     playerControlSystem(shootState)
 
     bossAISystem()
+    octoAISystem()
     bossLaserSystem()
     bossThrowerSystem()
 

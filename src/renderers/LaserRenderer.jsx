@@ -5,7 +5,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { laserState } from '../ecs/weapons/weaponState/laserState.js'
 import { bossLaserState } from '../ecs/weapons/weaponState/bossLaserState.js'
-import { gameState } from '../state/gameState.js'
+import { simState } from '../state/simState.js'
 import { getWeapon } from '../ecs/weapons/config/weapons.js'
 import { bossAIQuery } from '../ecs/constants/queries.js'
 import { BossAI } from '../ecs/constants/components.js'
@@ -26,7 +26,7 @@ const MAX_BEAMS = 3 // covers prism's 3-beam fan AND twin-gun's 2 parallel beams
 
 function getPlayerLaserData() {
 
-    const weapon = getWeapon(gameState.currentWeapon)
+    const weapon = getWeapon(simState.currentWeapon)
     const active = weapon.category === "beam" && !weapon.jagged && laserState.active && laserState.beamCount > 0
     const beams = []
 

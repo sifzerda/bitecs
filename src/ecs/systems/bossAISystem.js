@@ -2,10 +2,11 @@
 
 import { world } from "../constants/world.js"
 import { bossAIQuery, playerQuery } from "../constants/queries.js"
-import { Position, Velocity, Rotation, BossAI, BULLET_OWNER } from "../constants/components.js"
+import { Position, Velocity, Rotation, BossAI, BossType, BULLET_OWNER } from "../constants/components.js"
 import { spawnBossBullet } from "../spawn.js"
 import { getWeapon } from "../weapons/config/weapons.js"
 import { getAction } from "../weapons/config/weaponActions.js"
+import { isOctopusType } from "../constants/bosses.js"
 
 // ============================================================
 // Tuning
@@ -229,6 +230,12 @@ export function bossAISystem() {
     for (let i = 0; i < bosses.length; i++) {
 
         const id = bosses[i]
+
+        // Octopus boss runs entirely on octoAISystem.js instead —
+        // its behavior has nothing in common with the ship tactical
+        // AI below. Skip it here so the two systems don't fight over
+        // Velocity/Rotation.
+        if (isOctopusType(BossType.typeIndex[id])) continue
 
         // ====================================================
         // Player information

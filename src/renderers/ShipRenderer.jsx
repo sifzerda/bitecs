@@ -6,12 +6,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { world } from '../ecs/constants/world.js'
 import { playerQuery, bossQuery } from '../ecs/constants/queries.js'
-import {
-    Position,
-    Rotation,
-    BossType,
-    Invulnerability,
-} from '../ecs/constants/components.js'
+import { Position, Rotation, BossType, Invulnerability } from '../ecs/constants/components.js'
 import { BOSSES } from '../ecs/constants/bosses.js'
 import { RENDER_ORDER } from './WeaponMount.jsx'
 
@@ -39,12 +34,9 @@ const FALLBACK_BOSS_SVG = BOSS_SVG_BY_KEY.shotgun
 const PLAYER_COCKPIT_GLASS_CFG = {
     offsetX: 0,
     offsetY: 0.137,
-    // Overall canopy size
     width: 0.065,
     height: 0.10,
-    // Glass
     lensColor: '#00eaff',
-    // Structural canopy frame
     frameColor: '#07131c',
     edgeThickness: 0.075,
 }
@@ -107,7 +99,6 @@ const GLASS_FRAGMENT_SHADER = /* glsl */ `
 
     varying vec2 vUv;
 
-
     // ============================================================
     // DISTANCE TO LINE SEGMENT
     // ============================================================
@@ -117,12 +108,7 @@ const GLASS_FRAGMENT_SHADER = /* glsl */ `
         vec2 pa = p - a;
         vec2 ba = b - a;
 
-        float h =
-            clamp(
-                dot(pa, ba) / dot(ba, ba),
-                0.0,
-                1.0
-            );
+        float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
 
         return length(pa - ba * h);
     }
@@ -146,29 +132,10 @@ const GLASS_FRAGMENT_SHADER = /* glsl */ `
         // CONVEX POLYGON HALF PLANES
         // --------------------------------------------------------
 
-        float e0 =
-            cross(
-                vec3(topRight - topLeft, 0.0),
-                vec3(p - topLeft, 0.0)
-            ).z;
-
-        float e1 =
-            cross(
-                vec3(upperRight - topRight, 0.0),
-                vec3(p - topRight, 0.0)
-            ).z;
-
-        float e2 =
-            cross(
-                vec3(lowerRight - upperRight, 0.0),
-                vec3(p - upperRight, 0.0)
-            ).z;
-
-        float e3 =
-            cross(
-                vec3(bottomRight - lowerRight, 0.0),
-                vec3(p - lowerRight, 0.0)
-            ).z;
+        float e0 = cross(vec3(topRight - topLeft, 0.0), vec3(p - topLeft, 0.0)).z;
+        float e1 = cross(vec3(upperRight - topRight, 0.0), vec3(p - topRight, 0.0)).z;
+        float e2 = cross(vec3(lowerRight - upperRight, 0.0), vec3(p - upperRight, 0.0)).z;
+        float e3 = cross(vec3(bottomRight - lowerRight, 0.0), vec3(p - lowerRight, 0.0)).z;
 
         float e4 =
             cross(
@@ -223,182 +190,66 @@ const GLASS_FRAGMENT_SHADER = /* glsl */ `
         // --------------------------------------------------------
 
         vec2 p = vUv - 0.5;
-
-        // Preserve canopy proportions
         p.x *= 2.0;
-
 
         // --------------------------------------------------------
         // OUTER SHAPE
         // --------------------------------------------------------
 
-        float outside =
-            canopyOutside(p);
-
-        float insideMask =
-            1.0 -
-            smoothstep(
-                0.0,
-                0.018,
-                outside
-            );
+        float outside = canopyOutside(p);
+        float insideMask = 1.0 - smoothstep(0.0, 0.018, outside);
 
         if (insideMask <= 0.001)
             discard;
-
 
         // --------------------------------------------------------
         // OUTER FRAME VERTICES
         // --------------------------------------------------------
 
-        vec2 topLeft =
-            vec2(-0.28, 1.00);
-
-        vec2 topRight =
-            vec2(0.28, 1.00);
-
-        vec2 upperRight =
-            vec2(0.48, 0.50);
-
-        vec2 lowerRight =
-            vec2(0.40, -0.82);
-
-        vec2 bottomRight =
-            vec2(0.25, -1.00);
-
-        vec2 bottomLeft =
-            vec2(-0.25, -1.00);
-
-        vec2 lowerLeft =
-            vec2(-0.40, -0.82);
-
-        vec2 upperLeft =
-            vec2(-0.48, 0.50);
-
+        vec2 topLeft = vec2(-0.28, 1.00);
+        vec2 topRight = vec2(0.28, 1.00);
+        vec2 upperRight = vec2(0.48, 0.50);
+        vec2 lowerRight = vec2(0.40, -0.82);
+        vec2 bottomRight = vec2(0.25, -1.00);
+        vec2 bottomLeft = vec2(-0.25, -1.00);
+        vec2 lowerLeft = vec2(-0.40, -0.82);
+        vec2 upperLeft = vec2(-0.48, 0.50);
 
         // --------------------------------------------------------
         // FRAME DISTANCES (outer canopy edge only — no internal
         // panel divider lines)
         // --------------------------------------------------------
 
-        // Outer frame
-        float frameTop =
-            sdSegment(
-                p,
-                topLeft,
-                topRight
-            );
-
-        float frameUpperRight =
-            sdSegment(
-                p,
-                topRight,
-                upperRight
-            );
-
-        float frameRight =
-            sdSegment(
-                p,
-                upperRight,
-                lowerRight
-            );
-
-        float frameBottomRight =
-            sdSegment(
-                p,
-                lowerRight,
-                bottomRight
-            );
-
-        float frameBottom =
-            sdSegment(
-                p,
-                bottomRight,
-                bottomLeft
-            );
-
-        float frameBottomLeft =
-            sdSegment(
-                p,
-                bottomLeft,
-                lowerLeft
-            );
-
-        float frameLeft =
-            sdSegment(
-                p,
-                lowerLeft,
-                upperLeft
-            );
-
-        float frameUpperLeft =
-            sdSegment(
-                p,
-                upperLeft,
-                topLeft
-            );
-
+        float frameTop = sdSegment(p, topLeft, topRight);
+        float frameUpperRight = sdSegment(p, topRight, upperRight);
+        float frameRight = sdSegment(p, upperRight, lowerRight);
+        float frameBottomRight = sdSegment(p, lowerRight, bottomRight);
+        float frameBottom = sdSegment(p, bottomRight, bottomLeft);
+        float frameBottomLeft = sdSegment(p, bottomLeft, lowerLeft);
+        float frameLeft = sdSegment(p, lowerLeft, upperLeft);
+        float frameUpperLeft = sdSegment(p, upperLeft, topLeft);
 
         // --------------------------------------------------------
         // FIND CLOSEST FRAME
         // --------------------------------------------------------
 
-        float frameDistance =
-            min(
-                min(
-                    min(frameTop, frameUpperRight),
-                    min(frameRight, frameBottomRight)
-                ),
-                min(
-                    min(frameBottom, frameBottomLeft),
-                    min(frameLeft, frameUpperLeft)
-                )
-            );
-
+        float frameDistance = min(min(min(frameTop, frameUpperRight), min(frameRight, frameBottomRight)), min(min(frameBottom, frameBottomLeft), min(frameLeft, frameUpperLeft)));
 
         // --------------------------------------------------------
         // FRAME MASK
         // --------------------------------------------------------
 
-        float frameMask =
-            1.0 -
-            smoothstep(
-                0.0,
-                uEdgeThickness,
-                frameDistance
-            );
-
+        float frameMask = 1.0 - smoothstep(0.0, uEdgeThickness, frameDistance);
 
         // --------------------------------------------------------
         // FAKE CURVED GLASS NORMAL
         // --------------------------------------------------------
 
-        vec2 normalXY =
-            p * 1.55;
-
-        float radial =
-            dot(normalXY, normalXY);
-
-        float normalZ =
-            sqrt(
-                max(
-                    0.001,
-                    1.0 - min(radial, 0.90)
-                )
-            );
-
-        vec3 normal =
-            normalize(
-                vec3(
-                    normalXY.x,
-                    normalXY.y,
-                    normalZ
-                )
-            );
-
-        vec3 viewDir =
-            vec3(0.0, 0.0, 1.0);
-
+        vec2 normalXY = p * 1.55;
+        float radial = dot(normalXY, normalXY);
+        float normalZ = sqrt(max(0.001, 1.0 - min(radial, 0.90)));
+        vec3 normal = normalize(vec3(normalXY.x, normalXY.y, normalZ));
+        vec3 viewDir = vec3(0.0, 0.0, 1.0);
 
         // --------------------------------------------------------
         // FRESNEL REFLECTION
@@ -496,23 +347,12 @@ const GLASS_FRAGMENT_SHADER = /* glsl */ `
 `
 
 function CockpitGlassOverlay({ cfg, shipSize }) {
-
     const materialRef = useRef(null)
-
     const uniforms = useRef({
         uTime: { value: 0 },
-
-        uLensColor: {
-            value: new THREE.Color(cfg?.lensColor ?? '#00eaff')
-        },
-
-        uFrameColor: {
-            value: new THREE.Color(cfg?.frameColor ?? '#07131c')
-        },
-
-        uEdgeThickness: {
-            value: cfg?.edgeThickness ?? 0.075
-        }
+        uLensColor: { value: new THREE.Color(cfg?.lensColor ?? '#00eaff') },
+        uFrameColor: { value: new THREE.Color(cfg?.frameColor ?? '#07131c') },
+        uEdgeThickness: { value: cfg?.edgeThickness ?? 0.075 }
     })
 
 
@@ -611,19 +451,9 @@ function PropellerFan({ mount, shipSize }) {
     const offsetX = (mount.offsetX ?? 0) * (shipSize / 2)
     const offsetY = (mount.offsetY ?? 0) * (shipSize / 2)
 
-    const bladeGeometry = useMemo(
-        () => new THREE.ShapeGeometry(buildPropellerBladeShape(worldRadius, worldRadius * 0.32, hubScale)),
-        [worldRadius, hubScale]
-    )
-    const hubGeometry = useMemo(
-        () => new THREE.ShapeGeometry(buildHubShape(worldRadius, hubScale)),
-        [worldRadius, hubScale]
-    )
-
-    const bladeAngles = useMemo(
-        () => Array.from({ length: bladeCount }, (_, i) => (Math.PI * 2 * i) / bladeCount),
-        [bladeCount]
-    )
+    const bladeGeometry = useMemo(() => new THREE.ShapeGeometry(buildPropellerBladeShape(worldRadius, worldRadius * 0.32, hubScale)), [worldRadius, hubScale])
+    const hubGeometry = useMemo(() => new THREE.ShapeGeometry(buildHubShape(worldRadius, hubScale)), [worldRadius, hubScale])
+    const bladeAngles = useMemo(() => Array.from({ length: bladeCount }, (_, i) => (Math.PI * 2 * i) / bladeCount), [bladeCount])
 
     useFrame((_, delta) => {
         if (spinRef.current) {
@@ -635,35 +465,25 @@ function PropellerFan({ mount, shipSize }) {
         <group position={[offsetX, offsetY, 0.008]}>
             <group ref={spinRef}>
                 {bladeAngles.map((angle, i) => (
-                    <mesh
-                        key={i}
-                        geometry={bladeGeometry}
-                        rotation={[0, 0, angle]}
-                        renderOrder={RENDER_ORDER.propeller}
-                    >
+                    <mesh key={i} geometry={bladeGeometry} rotation={[0, 0, angle]} renderOrder={RENDER_ORDER.propeller}>
                         <meshBasicMaterial
                             color={bladeColor}
                             side={THREE.DoubleSide}
                             transparent
                             depthTest={false}
                             depthWrite={false}
-                            toneMapped={false}
-                        />
+                            toneMapped={false} />
                     </mesh>
                 ))}
 
-                <mesh
-                    geometry={hubGeometry}
-                    renderOrder={RENDER_ORDER.propeller}
-                >
+                <mesh geometry={hubGeometry} renderOrder={RENDER_ORDER.propeller}>
                     <meshBasicMaterial
                         color={hubColor}
                         side={THREE.DoubleSide}
                         transparent
                         depthTest={false}
                         depthWrite={false}
-                        toneMapped={false}
-                    />
+                        toneMapped={false} />
                 </mesh>
             </group>
         </group>
@@ -711,15 +531,9 @@ function PropellerBlur({ mount, shipSize }) {
     const offsetY = (mount.offsetY ?? 0) * (shipSize / 2)
     const spinSpeed = mount.spinSpeed ?? 10
 
-    const uniforms = useRef({
-        uTime: { value: 0 },
-        uColor: { value: new THREE.Color(mount.bladeColor ?? '#5f5f5f') },
-        uSpeed: { value: spinSpeed },
-    })
+    const uniforms = useRef({ uTime: { value: 0 }, uColor: { value: new THREE.Color(mount.bladeColor ?? '#5f5f5f') }, uSpeed: { value: spinSpeed } })
 
-    useEffect(() => {
-        uniforms.current.uColor.value.set(mount.bladeColor ?? '#5f5f5f')
-    }, [mount.bladeColor])
+    useEffect(() => { uniforms.current.uColor.value.set(mount.bladeColor ?? '#5f5f5f') }, [mount.bladeColor])
 
     useFrame((state) => {
         if (materialRef.current) {
@@ -731,10 +545,7 @@ function PropellerBlur({ mount, shipSize }) {
     const height = worldRadius * 2.3
 
     return (
-        <mesh
-            position={[offsetX, offsetY, 0.008]}
-            renderOrder={RENDER_ORDER.propeller}
-        >
+        <mesh position={[offsetX, offsetY, 0.008]} renderOrder={RENDER_ORDER.propeller}>
             <planeGeometry args={[width, height]} />
 
             <shaderMaterial
@@ -763,13 +574,7 @@ function PropellerOverlay({ propellers, shipSize }) {
 
     return (
         <>
-            {propellers.map((mount, i) => (
-                <PropellerMount
-                    key={mount.mountKey ?? i}
-                    mount={mount}
-                    shipSize={shipSize}
-                />
-            ))}
+            {propellers.map((mount, i) => (<PropellerMount key={mount.mountKey ?? i} mount={mount} shipSize={shipSize} />))}
         </>
     )
 }
@@ -815,33 +620,22 @@ export function PlayerRenderer() {
         // ----------------------------------------------------
         // Position
         // ----------------------------------------------------
-
         group.position.set(x, y, 0)
-
         // ----------------------------------------------------
         // Rotation
         // ----------------------------------------------------
-
-        const angle =
-            Rotation.angle?.[eid] ??
-            Rotation?.[eid] ??
-            0
-
+        const angle = Rotation.angle?.[eid] ?? Rotation?.[eid] ?? 0
         group.rotation.z = angle
-
         // ----------------------------------------------------
         // Invulnerability flashing
         //
         // PLAYER ONLY
         // ----------------------------------------------------
-
-        const invulnerable =
-            (Invulnerability?.remaining?.[eid] ?? 0) > 0
+        const invulnerable = (Invulnerability?.remaining?.[eid] ?? 0) > 0
 
         if (invulnerable) {
             // ~10 flashes per second
-            group.visible =
-                Math.floor(state.clock.elapsedTime * 10) % 2 === 0
+            group.visible = Math.floor(state.clock.elapsedTime * 10) % 2 === 0
         } else {
             group.visible = true
         }
@@ -860,15 +654,8 @@ export function PlayerRenderer() {
         <group ref={groupRef}>
             {hasPlayer && (
                 <>
-                    <ShipImage
-                        src={PLAYER_SVG}
-                        size={PLAYER_SIZE}
-                    />
-
-                    <CockpitGlassOverlay
-                        cfg={PLAYER_COCKPIT_GLASS_CFG}
-                        shipSize={PLAYER_SIZE}
-                    />
+                    <ShipImage src={PLAYER_SVG} size={PLAYER_SIZE} />
+                    <CockpitGlassOverlay cfg={PLAYER_COCKPIT_GLASS_CFG} shipSize={PLAYER_SIZE} />
                 </>
             )}
         </group>
@@ -951,13 +738,11 @@ export function BossRenderer() {
 
         group.visible = true
         group.position.set(x, y, 0.15)
-
         /* ----------------------------------------------------
         Rotation
         ---------------------------------------------------- */
         const angle = Rotation.angle?.[eid] ?? Rotation?.[eid] ?? 0
         group.rotation.z = angle
-
         /* ----------------------------------------------------
         Boss Type
         ---------------------------------------------------- */
@@ -978,9 +763,15 @@ export function BossRenderer() {
         }
     })
 
+    // The octopus (and any future non-ship boss) has no hull/cockpit/
+    // propellers to draw here — its entire visual comes from
+    // OctopusRenderer.jsx, which tracks this same entity's Position
+    // independently. Ship-only visuals stay behind this guard.
+    const isShipBoss = bossCfg?.isShip !== false
+
     return (
         <group ref={groupRef} visible={false}>
-            {hasBoss && (
+            {hasBoss && isShipBoss && (
                 <>
                     <ShipImage src={svgSrc} size={BOSS_SIZE} />
                     <CockpitGlassOverlay cfg={bossCfg?.cockpitGlass} shipSize={BOSS_SIZE} />
