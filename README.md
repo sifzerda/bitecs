@@ -130,23 +130,16 @@ Asteroid damages ship a little if collides with it, boss destroys player on coll
 
 - [ ] optimize things
 - [ ] optimize starfield renderer, make milky way
-
 - [ ] fix emission configs for bosses
-
-
 - [ ] fix ship cockpit glass panel lines for player and boss
 
-
-- SKIP WAVE NOT SKIPPING THROUGH BOSSES.
-- NEED TO CHECK OCTOPUS COMES LAST
-
+- level select screen play and back btns not showing.
+- octopus not rendering properly
 
 PLAYER EMISSION POINTS CONFIG IN emission.js, 
 BOSS EMISSION CONFIG IN bosses.js
 
-
 Make config screen for emission point, using a dot to show emission points on ship svg, not actual bullets/exhaust
-
 
 - [x] config bullet/missile/beam emission point for bosses and player
 - [x] config exhaust emission point for player and bosses
