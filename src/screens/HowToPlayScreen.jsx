@@ -207,7 +207,7 @@ export default function HowToPlayScreen({ onBack }) {
           <button
             type="button"
             onClick={() => setPageDirect(nextPageIndex)}
-            className="cursor-pointer min-w-[220px] border border-[#39ff14]/40 bg-black/40 px-4 py-2 text-center uppercase tracking-[0.3em] text-cyan-300 hover:border-cyan-300 hover:shadow-[0_0_14px_rgba(0,255,255,0.35)] transition-all duration-150"
+            className="cursor-pointer min-w-55 border border-[#39ff14]/40 bg-black/40 px-4 py-2 text-center uppercase tracking-[0.3em] text-cyan-300 hover:border-cyan-300 hover:shadow-[0_0_14px_rgba(0,255,255,0.35)] transition-all duration-150"
           >
             {pageLabel}
           </button>

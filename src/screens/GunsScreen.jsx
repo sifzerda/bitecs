@@ -105,15 +105,15 @@ export function GunsScreen({ onBack }) {
 
                                         {unlocked && (
                                             <>
-                                                <div className="text-cyan-300/90 text-[9px] truncate tracking-[0.1em]">
+                                                <div className="text-cyan-300/90 text-[9px] truncate tracking-widest">
                                                     {gun.name}
                                                 </div>
-                                                <div className="text-white/40 truncate text-[8px] tracking-[0.1em]">
+                                                <div className="text-white/40 truncate text-[8px] tracking-widest">
                                                     {w.category}
                                                 </div>
 
                                                 {isNew && (
-                                                    <div className="absolute top-0.5 right-0.5 text-yellow-300 text-[7px] font-bold tracking-[0.1em] animate-pulse">
+                                                    <div className="absolute top-0.5 right-0.5 text-yellow-300 text-[7px] font-bold tracking-widest animate-pulse">
                                                         NEW
                                                     </div>
                                                 )}
@@ -152,7 +152,7 @@ export function GunsScreen({ onBack }) {
                             </div>
 
                             <div className="mt-6">
-                                <h2 className="text-xl sm:text-2xl text-cyan-300 tracking-[0.2em] break-words">
+                                <h2 className="text-xl sm:text-2xl text-cyan-300 tracking-[0.2em] wrap-break-word">
                                     {selectedGun.name}
                                 </h2>
 

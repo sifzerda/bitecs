@@ -454,12 +454,12 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
                             ? boss
                               ? `
                                 border-yellow-300
-                                bg-yellow-400/[0.08]
+                                bg-yellow-400/8
                                 shadow-[0_0_30px_rgba(255,220,50,0.25)]
                               `
                               : `
                                 border-cyan-300
-                                bg-cyan-400/[0.08]
+                                bg-cyan-400/8
                                 shadow-[0_0_30px_rgba(0,255,255,0.25)]
                               `
                             : unlocked
@@ -468,17 +468,17 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
                                   border-yellow-400/40
                                   bg-black/70
                                   hover:border-yellow-300
-                                  hover:bg-yellow-400/[0.06]
+                                  hover:bg-yellow-400/6
                                 `
                                 : `
                                   border-[#39ff14]/30
                                   bg-black/70
                                   hover:border-cyan-300/70
-                                  hover:bg-cyan-400/[0.04]
+                                  hover:bg-cyan-400/4
                                 `
                               : `
                                 cursor-not-allowed
-                                border-white/[0.06]
+                                border-white/6
                                 bg-black/80
                               `
                         }
@@ -769,7 +769,7 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
               overflow-hidden
               border-2
               border-cyan-300
-              bg-cyan-400/[0.08]
+              bg-cyan-400/8
               px-8
               py-4
               text-sm
@@ -778,7 +778,7 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
               text-cyan-300
               shadow-[0_0_18px_rgba(0,255,255,0.15)]
               transition-all
-              hover:bg-cyan-400/[0.18]
+              hover:bg-cyan-400/18
               hover:shadow-[0_0_28px_rgba(0,255,255,0.3)]
               disabled:cursor-not-allowed
               disabled:border-white/10
@@ -806,7 +806,6 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
 
           </button>
 
-
           <button
             type="button"
             onClick={back}
@@ -823,7 +822,7 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
               text-[#39ff14]/70
               transition-all
               hover:border-[#39ff14]
-              hover:bg-[#39ff14]/[0.06]
+              hover:bg-[#39ff14]/6
               hover:text-[#39ff14]
               sm:w-48
             "
