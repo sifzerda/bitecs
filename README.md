@@ -141,21 +141,7 @@ BOSS EMISSION CONFIG IN bosses.js
 
 Make config screen for emission point, using a dot to show emission points on ship svg, not actual bullets/exhaust
 
-- [x] config bullet/missile/beam emission point for bosses and player
-- [x] config exhaust emission point for player and bosses
-
-- [x] add irridescent cockpit glass, plus moving propellers, plus gun core glow flashing animation
-
-- [x] fix gun rendering for bosses
-
-- [x] switch guns to the gun_svgs (remove glow and add it to be animated as currently is)
-- [x] switch boss gun to svgs. boss gun currently not showing
-- [ ] create svgs of ships and switch bosses and player with svgs
-- [x] create a shipgallery like gungallery but for ships
-- [x] see if you can combine gunmout, weaponmount, boss mount, svggun, 
-
 - [ ] optimize starfield renderer
-- [ ] bomb weapons lost trail
 
 OPTIMIZE RENDERERS:
 - [x] ArcRenderer
