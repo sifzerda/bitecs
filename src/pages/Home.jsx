@@ -1,23 +1,17 @@
 // src/pages/Home.jsx
 
 import { useEffect, useRef, useCallback } from "react"
-
 import BG from "../components/BG"
 import MenuScreen from "../screens/MenuScreen"
 import HowToPlayScreen from "../screens/HowToPlayScreen"
 import { PlayScreen } from "../screens/PlayScreen"
 import LevelSelectScreen from "../screens/LevelSelectScreen.jsx"
-import { StageCompleteScreen } from "../screens/StageCompleteScreen"
+import { LevelCompleteScreen } from "../screens/LevelCompleteScreen"
 import SettingsScreen from "../screens/SettingsScreen"
 import { GunsScreen } from "../screens/GunsScreen.jsx"
 import { GameOverScreen } from "../screens/GameOverScreen"
 import HighscoresScreen from "../screens/HighscoresScreen"
-
-import {
-  useGameStore,
-  SCREEN,
-} from "../../store/gameStore.js"
-
+import { useGameStore, SCREEN } from "../../store/gameStore.js"
 import { spawnPlayer } from "../ecs/spawn.js"
 import { initializeInput } from "../ecs/systems/input.js"
 import { initializeBulletPool } from "../ecs/pools/bulletPool.js"
@@ -27,16 +21,10 @@ export default function Home() {
 
   const screen = useGameStore((s) => s.screen)
   const paused = useGameStore((s) => s.paused)
-
   const resetRun = useGameStore((s) => s.resetRun)
   const advanceLevel = useGameStore((s) => s.advanceLevel)
-
-  const openGunsFromMenu = useGameStore((s) => s.openGunsFromMenu)
-  const openGunsAfterStage = useGameStore((s) => s.openGunsAfterStage)
-
   const keysRef = useRef({})
   const poolsReady = useRef(false)
-
 
   // ========================================================
   // SCREEN NAVIGATION
@@ -53,17 +41,14 @@ export default function Home() {
       highscores: SCREEN.HIGHSCORES,
       howtoplay: SCREEN.HOW_TO_PLAY,
       guns: SCREEN.GUNS,
-      stagecomplete: SCREEN.STAGE_COMPLETE,
+      levelcomplete: SCREEN.LEVEL_COMPLETE,
     }
 
     const nextScreen = map[next] ?? next
 
     useGameStore.setState({
       screen: nextScreen,
-
-      ...(next === "play"
-        ? { paused: false }
-        : {}),
+      ...(next === "play" ? { paused: false } : {}),
     })
 
   }, [])
@@ -74,26 +59,18 @@ export default function Home() {
   // ========================================================
 
   const startNewGame = useCallback(() => {
-
-    resetRun()
-
-    go("play")
-
-  }, [go, resetRun])
-
+    resetRun()                         // score/lives/level → clean run
+    useGameStore.getState().startLevel(1) // always from level 1
+  }, [resetRun])
 
   // ========================================================
   // MENU
   // ========================================================
 
-  const backToMenuFresh = useCallback(() => {
-
-    resetRun()
-
-    go("menu")
-
-  }, [go, resetRun])
-
+  const backToMenu = useCallback(() => {
+    // soft return: don't wipe unlocks
+    useGameStore.setState({ screen: SCREEN.MENU, paused: false })
+  }, [])
 
   // ========================================================
   // CONTINUE AFTER STAGE
@@ -109,10 +86,8 @@ export default function Home() {
   //
   // ========================================================
 
-  const continueAfterStage = useCallback(() => {
-
+  const continueAfterLevel = useCallback(() => {
     advanceLevel()
-
   }, [advanceLevel])
 
   // ========================================================
@@ -120,19 +95,14 @@ export default function Home() {
   // ========================================================
 
   const togglePause = useCallback(() => {
-
-    if (
-      useGameStore.getState().screen !== SCREEN.PLAY
-    ) {
+    if (useGameStore.getState().screen !== SCREEN.PLAY) {
       return
     }
-
     useGameStore.setState((s) => ({
       paused: !s.paused,
     }))
 
   }, [])
-
 
   // ========================================================
   // ECS / INPUT INITIALIZATION
@@ -141,17 +111,14 @@ export default function Home() {
   useEffect(() => {
 
     if (!poolsReady.current) {
-
       initializeAsteroidPool()
       initializeBulletPool()
-
       poolsReady.current = true
     }
 
     initializeInput(togglePause)
 
   }, [togglePause])
-
 
   // ========================================================
   // SPAWN PLAYER
@@ -164,13 +131,11 @@ export default function Home() {
     }
 
     spawnPlayer(0, 0)
-
     useGameStore.setState({
       paused: false,
     })
 
   }, [screen])
-
 
   // ========================================================
   // RENDER
@@ -182,105 +147,24 @@ export default function Home() {
 
       <BG />
 
-
       {screen === SCREEN.MENU && (
-
         <MenuScreen
-          onPlay={startNewGame}
+          onPlay={startNewGame}                 // New Game
           onLevelSelect={() => go("levelselect")}
-          onGuns={openGunsFromMenu}
+          onGuns={() => go("guns")}
           onSettings={() => go("settings")}
           onHowToPlay={() => go("howtoplay")}
           onHighscores={() => go("highscores")}
         />
-
       )}
-
-
-      {screen === SCREEN.PLAY && (
-
-        <PlayScreen
-          keysRef={keysRef}
-          paused={paused}
-          onPause={togglePause}
-          onGameOver={() => go("gameover")}
-          onStageComplete={() => go("stagecomplete")}
-        />
-
-      )}
-
-
-      {screen === SCREEN.LEVEL_SELECT && (
-
-        <LevelSelectScreen
-          onBack={() => go("menu")}
-          onPlay={() => go("play")}
-        />
-
-      )}
-
-
-      {screen === SCREEN.GAME_OVER && (
-
-        <GameOverScreen
-          onRestart={startNewGame}
-          onMenu={backToMenuFresh}
-        />
-
-      )}
-
-
-      {screen === SCREEN.STAGE_COMPLETE && (
-
-        <StageCompleteScreen
-          onContinue={continueAfterStage}
-          onMenu={backToMenuFresh}
-          onGuns={openGunsAfterStage}
-        />
-
-      )}
-
-
-      {screen === SCREEN.GUNS && (
-
-        <GunsScreen
-          onContinueAfterStage={continueAfterStage}
-          onBack={() => {
-            const returnScreen =
-              useGameStore.getState().gunsReturnScreen
-
-            go(returnScreen)
-          }}
-        />
-
-      )}
-
-
-      {screen === SCREEN.SETTINGS && (
-
-        <SettingsScreen
-          onBack={() => go("menu")}
-        />
-
-      )}
-
-
-      {screen === SCREEN.HOW_TO_PLAY && (
-
-        <HowToPlayScreen
-          onBack={() => go("menu")}
-        />
-
-      )}
-
-
-      {screen === SCREEN.HIGHSCORES && (
-
-        <HighscoresScreen
-          onBack={() => go("menu")}
-        />
-
-      )}
+      {screen === SCREEN.PLAY && (<PlayScreen keysRef={keysRef} paused={paused} onPause={togglePause} onGameOver={() => go("gameover")} onLevelComplete={() => go("levelcomplete")} />)}
+      {screen === SCREEN.LEVEL_SELECT && (<LevelSelectScreen onBack={() => go("menu")} />)}
+      {screen === SCREEN.GAME_OVER && (<GameOverScreen onRestart={startNewGame} onMenu={backToMenu} />)}
+      {screen === SCREEN.LEVEL_COMPLETE && (<LevelCompleteScreen onContinue={continueAfterLevel} onMenu={backToMenu} />)}
+      {screen === SCREEN.GUNS && (<GunsScreen onBack={() => go("menu")} />)}
+      {screen === SCREEN.SETTINGS && (<SettingsScreen onBack={() => go("menu")} />)}
+      {screen === SCREEN.HOW_TO_PLAY && (<HowToPlayScreen onBack={() => go("menu")} />)}
+      {screen === SCREEN.HIGHSCORES && (<HighscoresScreen onBack={() => go("menu")} />)}
 
     </div>
   )

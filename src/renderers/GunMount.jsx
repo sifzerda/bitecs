@@ -43,10 +43,10 @@ export function GunMount() {
             }
         }
 
-        const prevIds = activeBosses.map(b => b.eid).sort().join(',')
-        const nextIds = currentEids.slice().sort().join(',')
+        const prevKey = activeBosses.map(b => `${b.eid}:${b.type}`).sort().join(',')
+        const nextKey = currentEids.map(eid => `${eid}:${BossType.typeIndex[eid]}`).sort().join(',')
 
-        if (prevIds !== nextIds) {
+        if (prevKey !== nextKey) {
             const next = currentEids.map(eid => ({ eid, type: BossType.typeIndex[eid] }))
             setActiveBosses(next)
 

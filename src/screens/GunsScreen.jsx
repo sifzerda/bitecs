@@ -1,22 +1,17 @@
 // src/screens/GunsScreen.jsx
 
 import { useState, useEffect, useCallback } from "react"
-import { useGameStore } from "../../store/gameStore.js"
+import { useGameStore, SCREEN } from "../../store/gameStore.js"
 import { simState } from "../state/simState.js"
 import { WEAPONS, getWeapon } from "../ecs/weapons/config/weapons"
 import { getGunTypeByWeaponId } from "../ecs/weapons/config/gunConfigs"
 import FlightLayout2 from "../components/FlightLayout2.jsx"
 
-export function GunsScreen({ onBack,
-    onContinueAfterStage, }) {
+export function GunsScreen({ onBack }) {
 
-    const [selected, setSelected] = useState(
-        simState.currentWeapon
-    )
-
+    const [selected, setSelected] = useState(simState.currentWeapon)
     // 0 = EQUIP, 1 = BACK
     const [navSelected, setNavSelected] = useState(0)
-
     const weapon = getWeapon(selected)
     const selectedGun = getGunTypeByWeaponId(selected)
 
@@ -30,27 +25,8 @@ export function GunsScreen({ onBack,
 
     const handleEquip = useCallback(() => {
         simState.currentWeapon = selected
-
-        if (onPlay) {
-            onPlay()
-            return
-        }
-
-        useGameStore.setState({
-            screen: SCREEN.PLAY,
-            paused: false,
-        })
-
-    }, [selected, onPlay])
-
-    const openGunsFromMenu = useCallback(() => {
-        openGuns(SCREEN.MENU)
-    }, [openGuns])
-
-
-    const openGunsAfterStage = useCallback(() => {
-        openGuns(SCREEN.STAGE_COMPLETE)
-    }, [openGuns])
+        handleBack()
+    }, [selected, handleBack])
 
     useEffect(() => {
         const onKey = (e) => {

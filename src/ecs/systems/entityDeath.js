@@ -4,7 +4,7 @@ import { removeEntity } from "bitecs"
 
 import { world } from "../constants/world.js"
 
-import { useGameStore } from "../../../store/gameStore.js"
+import { useGameStore, isBossLevel } from "../../../store/gameStore.js"
 import { simState } from "../../state/simState.js"
 
 import {
@@ -76,6 +76,13 @@ export function killAsteroid(id, x, y) {
         kind: "rock",
         maxLife: 1.6,
     })
+
+    if (simState.asteroidsRemaining <= 0) {
+        const { level, advanceWave } = useGameStore.getState()
+        if (!isBossLevel(level)) {
+            advanceWave() // level 1→2→3→4 and bumps highestLevelReached
+        }
+    }
 }
 
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import FlightLayout2 from '../components/FlightLayout2.jsx';
 
 const ITEMS = [
-  { label: 'START', action: 'onPlay' },
+  { label: 'NEW GAME', action: 'onPlay' },
   { label: 'LEVEL SELECT', action: 'onLevelSelect' },
   { label: 'GUNS', action: 'onGuns' },
   { label: 'SETTINGS', action: 'onSettings' },

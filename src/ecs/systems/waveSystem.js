@@ -1,134 +1,77 @@
 // src/ecs/systems/waveSystem.js
 
 import { removeEntity } from "bitecs"
-
 import { world } from "../constants/world.js"
-
 import {
-    useGameStore,
-    LEVEL_SECTION,
+  useGameStore,
+  isBossLevel,
+  getBossIndex,
+  getWave,
 } from "../../../store/gameStore.js"
-
 import { simState } from "../../state/simState.js"
-
-import {
-    spawnAsteroid,
-    spawnBoss,
-} from "../spawn.js"
-
+import { spawnAsteroid, spawnBoss } from "../spawn.js"
 import { bossQuery } from "../constants/queries.js"
-
 import { BOSSES } from "../constants/bosses.js"
-
 import {
-    activeAsteroids,
-    releaseAsteroidEntity,
+  activeAsteroids,
+  releaseAsteroidEntity,
 } from "../pools/asteroidPool.js"
-
 
 const SPAWN_RADIUS = 16
 
-
-const BOSS_ROSTER =
-    BOSSES.filter(
-        (b) => b.key !== "player"
-    )
-
+const BOSS_ROSTER = BOSSES.filter((b) => b.key !== "player")
 
 export function waveSystem() {
+  if (simState.asteroidsRemaining > 0 || simState.bossAlive) {
+    return
+  }
 
-    if (
-        simState.asteroidsRemaining > 0 ||
-        simState.bossAlive
-    ) {
-        return
-    }
+  const level = useGameStore.getState().level
 
+  // --------------------------------------------------------
+  // Boss level
+  // --------------------------------------------------------
+  if (isBossLevel(level) && !simState.bossDone) {
+    const bossIndex = getBossIndex(level) % BOSS_ROSTER.length
+    const bossKey = BOSS_ROSTER[bossIndex].key
 
-    const { stage } =
-        useGameStore.getState()
+    spawnBoss(bossKey)
+    simState.bossAlive = true
+    simState.bossDone = true
+    return
+  }
 
+  // --------------------------------------------------------
+  // Asteroid level
+  // --------------------------------------------------------
+  if (isBossLevel(level)) {
+    // Boss already handled (or done); nothing to spawn.
+    return
+  }
 
-    // ========================================================
-    // BOSS
-    // ========================================================
+  const waveNum = getWave(level) // 1, 2, or 3
+  const count = 4 + waveNum * 2
+  simState.asteroidsRemaining = count
 
-    if (
-        simState.wave >= 3 &&
-        !simState.bossDone
-    ) {
-
-        const bossIndex =
-            (stage - 1) % BOSS_ROSTER.length
-
-        const bossKey =
-            BOSS_ROSTER[bossIndex].key
-
-        spawnBoss(bossKey)
-
-        simState.bossAlive = true
-        simState.bossDone = true
-
-        return
-    }
-
-
-    // ========================================================
-    // ASTEROID WAVE
-    // ========================================================
-
-    simState.wave += 1
-
-    simState.bossDone = false
-
-    const count =
-        4 + simState.wave * 2
-
-    simState.asteroidsRemaining = count
-
-
-    for (let i = 0; i < count; i++) {
-
-        const angle =
-            Math.random() * Math.PI * 2
-
-        spawnAsteroid(
-            Math.cos(angle) * SPAWN_RADIUS,
-            Math.sin(angle) * SPAWN_RADIUS
-        )
-    }
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2
+    spawnAsteroid(
+      Math.cos(angle) * SPAWN_RADIUS,
+      Math.sin(angle) * SPAWN_RADIUS
+    )
+  }
 }
 
-
-// ============================================================
-// DEBUG
-// ============================================================
-
 export function skipWave() {
+  for (let i = activeAsteroids.length - 1; i >= 0; i--) {
+    releaseAsteroidEntity(activeAsteroids[i])
+  }
 
-    for (
-        let i = activeAsteroids.length - 1;
-        i >= 0;
-        i--
-    ) {
-        releaseAsteroidEntity(
-            activeAsteroids[i]
-        )
-    }
+  const bosses = bossQuery()
+  for (let i = 0; i < bosses.length; i++) {
+    removeEntity(world, bosses[i])
+  }
 
-
-    const bosses = bossQuery()
-
-
-    for (let i = 0; i < bosses.length; i++) {
-
-        removeEntity(
-            world,
-            bosses[i]
-        )
-    }
-
-
-    simState.asteroidsRemaining = 0
-    simState.bossAlive = false
+  simState.asteroidsRemaining = 0
+  simState.bossAlive = false
 }
