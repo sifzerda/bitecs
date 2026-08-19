@@ -53,7 +53,6 @@ export default function Home() {
 
   }, [])
 
-
   // ========================================================
   // NEW GAME
   // ========================================================
@@ -74,16 +73,6 @@ export default function Home() {
 
   // ========================================================
   // CONTINUE AFTER STAGE
-  // ========================================================
-  //
-  // THIS is the only place that advances the level from the
-  // UI flow.
-  //
-  // StageComplete -> Continue
-  // StageComplete -> Guns -> Equip -> Continue
-  //
-  // both eventually arrive here.
-  //
   // ========================================================
 
   const continueAfterLevel = useCallback(() => {
@@ -149,7 +138,7 @@ export default function Home() {
 
       {screen === SCREEN.MENU && (
         <MenuScreen
-          onPlay={startNewGame}                 // New Game
+          onPlay={startNewGame} 
           onLevelSelect={() => go("levelselect")}
           onGuns={() => go("guns")}
           onSettings={() => go("settings")}

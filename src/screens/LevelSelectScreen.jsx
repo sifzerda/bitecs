@@ -1,22 +1,7 @@
 // src/screens/LevelSelectScreen.jsx
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react"
-
-import {
-  useGameStore,
-  SCREEN,
-  WAVES_PER_ZONE,
-  isBossLevel,
-  getZone,
-  getWave,
-  formatLevelLabel,
-} from "../../store/gameStore.js"
-
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { useGameStore, SCREEN, WAVES_PER_ZONE, isBossLevel, getZone, getWave, formatLevelLabel } from "../../store/gameStore.js"
 import FlightLayout2 from "../components/FlightLayout2.jsx"
 
 function levelLabel(level) {
@@ -96,12 +81,8 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
   }, [back, play])
 
   return (
-    <FlightLayout2
-      title="LEVEL SELECT"
-      footer={`REACHED: ${formatLevelLabel(highestLevelReached)}`}
-      size="xl"
-      centered={false}
-    >
+    <FlightLayout2 title="LEVEL SELECT" footer={`REACHED: ${formatLevelLabel(highestLevelReached)}`} size="xl" centered={false}>
+      
       <div className="max-w-5xl mx-auto font-mono text-xs tracking-[0.2em]">
         {Array.from({ length: zoneCount }).map((_, i) => {
           const zone = i + 1
@@ -109,9 +90,8 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
 
           return (
             <section key={zone} className="mb-8">
-              <div className="mb-3 text-[#39ff14]/60 tracking-[0.3em]">
-                ZONE {zone}
-              </div>
+
+              <div className="mb-3 text-[#39ff14]/60 tracking-[0.3em]">ZONE {zone}</div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {Array.from({ length: WAVES_PER_ZONE }).map((_, j) => {
@@ -121,50 +101,31 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
                   const boss = isBossLevel(level)
 
                   return (
-                    <button
-                      key={level}
-                      type="button"
-                      disabled={!unlocked}
-                      onClick={() => select(level)}
-                      className={`
-                        relative h-28 border flex flex-col
-                        items-center justify-center
-                        transition-all duration-200
+                    <button key={level} type="button" disabled={!unlocked} onClick={() => select(level)}
+                      className={`relative h-28 border flex flex-col items-center justify-center transition-all duration-200
                         ${active && unlocked
                           ? "border-cyan-300 text-cyan-300 bg-cyan-500/10 shadow-[0_0_18px_rgba(0,255,255,0.35)]"
                           : unlocked
                             ? "border-[#39ff14]/40 text-[#39ff14]/80 bg-black/40 hover:border-cyan-300/70"
                             : "border-white/10 text-white/20 bg-black/60 cursor-not-allowed"
-                        }
-                      `}
-                    >
+                        }`}>
                       {unlocked ? (
                         <>
-                          <div className="text-2xl tracking-[0.2em]">
-                            {levelLabel(level)}
-                          </div>
+                          <div className="text-2xl tracking-[0.2em]">{levelLabel(level)}</div>
                           <div
-                            className={`
-                              mt-2 text-[8px] tracking-[0.25em]
-                              ${boss ? "text-yellow-400/70" : "text-white/30"}
-                            `}
-                          >
+                            className={`mt-2 text-[8px] tracking-[0.25em] ${boss ? "text-yellow-400/70" : "text-white/30"}`}>
                             {levelSubLabel(level)}
                           </div>
                         </>
                       ) : (
                         <>
                           <div className="text-xl opacity-30">LOCKED</div>
-                          <div className="mt-2 text-[8px] text-red-400/50">
-                            UNREACHED
-                          </div>
+                          <div className="mt-2 text-[8px] text-red-400/50">UNREACHED</div>
                         </>
                       )}
 
                       {active && unlocked && (
-                        <span className="absolute -left-3 top-1/2 -translate-y-1/2 text-cyan-300 animate-pulse">
-                          ▶
-                        </span>
+                        <span className="absolute -left-3 top-1/2 -translate-y-1/2 text-cyan-300 animate-pulse">▶</span>
                       )}
                     </button>
                   )
@@ -175,22 +136,18 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
         })}
 
         <div className="mt-8 flex justify-center gap-4">
+
           <button
             type="button"
             onClick={play}
             disabled={!isLevelUnlocked(selected)}
-            className="w-56 py-3 border border-green-300 text-cyan-300 bg-cyan-500/10 uppercase tracking-[0.4em] hover:bg-cyan-500/20 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            PLAY {formatLevelLabel(selected)}
-          </button>
+            className="w-56 py-3 border border-green-300 text-cyan-300 bg-cyan-500/10 uppercase tracking-[0.4em] hover:bg-cyan-500/20 disabled:opacity-30 disabled:cursor-not-allowed">
+            PLAY {formatLevelLabel(selected)}</button>
 
-          <button
-            type="button"
-            onClick={back}
-            className="w-44 py-3 border border-[#39ff14]/40 text-[#39ff14]/70 bg-black/40 uppercase tracking-[0.4em] hover:border-cyan-300/70 hover:text-cyan-300"
-          >
-            BACK
-          </button>
+          <button type="button" onClick={back}
+            className="w-44 py-3 border border-[#39ff14]/40 text-[#39ff14]/70 bg-black/40 uppercase tracking-[0.4em] hover:border-cyan-300/70 hover:text-cyan-300">
+            BACK</button>
+
         </div>
       </div>
     </FlightLayout2>
