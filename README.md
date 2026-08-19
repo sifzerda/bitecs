@@ -137,13 +137,8 @@ Asteroid damages ship a little if collides with it, boss destroys player on coll
 - [ ] fix ship cockpit glass panel lines for player and boss
 
 
-need to update:
-GUNSCREEN
-GAMESTORE
-STAGECOMPLETESCREEN
-HOME
-WAVESYSTEM
-LLEVELSELECTSCREEN
+- SKIP WAVE NOT SKIPPING THROUGH BOSSES.
+- NEED TO CHECK OCTOPUS COMES LAST
 
 
 PLAYER EMISSION POINTS CONFIG IN emission.js, 
