@@ -68,10 +68,13 @@ export function skipWave() {
   }
 
   const bosses = bossQuery()
+
   for (let i = 0; i < bosses.length; i++) {
     removeEntity(world, bosses[i])
   }
 
   simState.asteroidsRemaining = 0
   simState.bossAlive = false
+
+  useGameStore.getState().advanceWave()
 }

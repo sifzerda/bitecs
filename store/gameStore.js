@@ -114,6 +114,8 @@ export const useGameStore = create((set, get) => ({
   /** Auto-advance after asteroid wave cleared (no UI). */
   advanceWave: () => {
     const next = get().level + 1
+    resetSimStateForLevel()
+
     set({
       level: next,
       highestLevelReached: Math.max(get().highestLevelReached, next),

@@ -79,8 +79,9 @@ export function killAsteroid(id, x, y) {
 
     if (simState.asteroidsRemaining <= 0) {
         const { level, advanceWave } = useGameStore.getState()
+
         if (!isBossLevel(level)) {
-            advanceWave() // level 1→2→3→4 and bumps highestLevelReached
+            advanceWave()
         }
     }
 }
