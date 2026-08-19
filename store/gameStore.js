@@ -1,11 +1,7 @@
 // store/gameStore.js
 
 import { create } from "zustand"
-import {
-  simState,
-  resetSimState,
-  resetSimStateForLevel,
-} from "../src/state/simState.js"
+import { simState, resetSimState, resetSimStateForLevel } from "../src/state/simState.js"
 
 export const SCREEN = {
   MENU: "menu",
@@ -92,6 +88,7 @@ export const useGameStore = create((set, get) => ({
   /** Boss died → level complete screen (does not advance level). */
   completeCurrentLevel: () => {
     const { level, highestLevelReached } = get()
+
     set({
       highestLevelReached: Math.max(highestLevelReached, level + 1),
       paused: true,
@@ -102,7 +99,9 @@ export const useGameStore = create((set, get) => ({
   /** Continue after level complete → next linear level. */
   advanceLevel: () => {
     const next = get().level + 1
+
     resetSimStateForLevel()
+
     set({
       level: next,
       highestLevelReached: Math.max(get().highestLevelReached, next),
@@ -114,6 +113,7 @@ export const useGameStore = create((set, get) => ({
   /** Auto-advance after asteroid wave cleared (no UI). */
   advanceWave: () => {
     const next = get().level + 1
+
     resetSimStateForLevel()
 
     set({

@@ -24,7 +24,6 @@ import {
     OctopusTag,
 } from "./constants/components"
 import { BOSS_INDEX_BY_KEY, BOSSES } from "./constants/bosses"
-import { simState } from "../state/simState.js"
 import { acquireBulletEntity } from "./pools/bulletPool"
 import { acquireAsteroidEntity } from "./pools/asteroidPool"
 import { getGunTypeById } from "./weapons/config/gunConfigs"
@@ -491,8 +490,6 @@ export function spawnBoss(bossKey = "shotgun") {
     // --------------------------------------------------------
 
     BossType.typeIndex[id] = bossIndex
-    simState.bossAlive = true
-
     return id
 }
 

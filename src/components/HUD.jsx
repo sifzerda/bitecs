@@ -13,7 +13,6 @@ export function HUD({ onPause, paused }) {
     health: simState.health,
     lives: simState.lives,
     asteroidsRemaining: simState.asteroidsRemaining,
-    bossAlive: simState.bossAlive,
   })
 
   useEffect(() => {
@@ -26,7 +25,6 @@ export function HUD({ onPause, paused }) {
           health: simState.health,
           lives: simState.lives,
           asteroidsRemaining: simState.asteroidsRemaining,
-          bossAlive: simState.bossAlive,
         }
 
         for (const k in next) {
@@ -44,7 +42,7 @@ export function HUD({ onPause, paused }) {
 
   const healthPct = Math.max(0, hud.health / 100)
   const healthColor = healthPct > 0.5 ? "#44ff88" : healthPct > 0.25 ? "#ffdd44" : "#ff4466"
-  const boss = isBossLevel(level) || hud.bossAlive
+  const boss = isBossLevel(level)
 
   return (
     <div className="w-200 h-12 flex items-center justify-between px-4 bg-[#0a0a14] font-mono text-green-400 gap-3">
