@@ -213,9 +213,7 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
       <div className="mx-auto w-full max-w-5xl pb-22 font-mono">
 
         {/* ======================================================
-            TOP STATUS BAR
-            (SECTOR MAP // PROGRESS // SELECTED MISSION // ACTIONS)
-            — single line, wraps on very narrow screens
+            TOP STATUS BAR (SECTOR MAP // PROGRESS // SELECTED MISSION // ACTIONS)
         ====================================================== */}
 
         <div className="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-cyan-400/20 bg-black/50 px-4 py-3 text-[9px] tracking-[0.3em]">
