@@ -70,7 +70,7 @@ export function HUD({ onPause, paused }) {
         {boss && (<span className="text-[10px] text-yellow-400/80">BOSS</span>)}
       </div>
 
-      {!paused && (
+      {!paused && !boss && (
         <button type="button" tabIndex={-1}
           className="bg-transparent border-2 border-cyan-400 text-cyan-400 font-mono text-xs px-2 py-1 hover:bg-cyan-400 hover:text-black transition-colors"
           onClick={(e) => {
