@@ -43,6 +43,10 @@ import PauseScreen
     from "../screens/PauseScreen.jsx"
 
 import {
+    DebugScreen,
+} from "../screens/DebugScreen.jsx"
+
+import {
     useGameStore,
     SCREEN,
 } from "../../store/gameStore.js"
@@ -148,6 +152,9 @@ export default function Home() {
 
                     levelcomplete:
                         SCREEN.LEVEL_COMPLETE,
+
+                    debug:
+                        SCREEN.DEBUG,
 
                 }
 
@@ -437,6 +444,10 @@ export default function Home() {
                         go("highscores")
                     }
 
+                    onDebug={() =>
+                        go("debug")
+                    }
+
                 />
 
             )}
@@ -632,6 +643,23 @@ export default function Home() {
             {screen === SCREEN.HIGHSCORES && (
 
                 <HighscoresScreen
+
+                    onBack={() =>
+                        go("menu")
+                    }
+
+                />
+
+            )}
+
+
+            {/* ================================================= */}
+            {/* DEBUG */}
+            {/* ================================================= */}
+
+            {screen === SCREEN.DEBUG && (
+
+                <DebugScreen
 
                     onBack={() =>
                         go("menu")

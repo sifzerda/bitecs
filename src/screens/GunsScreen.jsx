@@ -170,7 +170,7 @@ export function GunsScreen({ onBack }) {
     <FlightLayout2
       title="GUNS"
       footer="ARMORY"
-      size="xl"
+      size="2xl"
       centered={false}
     >
 

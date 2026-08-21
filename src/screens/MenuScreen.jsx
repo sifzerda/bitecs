@@ -10,6 +10,8 @@ const ITEMS = [
   { label: 'SETTINGS', action: 'onSettings' },
   { label: 'HOW TO PLAY', action: 'onHowToPlay' },
   { label: 'HIGHSCORES', action: 'onHighscores' },
+
+    { label: 'DEBUG', action: 'onDebug' },
 ]
 
 export default function MenuScreen({
@@ -19,6 +21,8 @@ export default function MenuScreen({
   onSettings,
   onHowToPlay,
   onHighscores,
+
+  onDebug,
 }) {
 
   const [selected, setSelected] = useState(0);
@@ -38,6 +42,8 @@ export default function MenuScreen({
         onSettings,
         onHowToPlay,
         onHighscores,
+
+        onDebug,
       }
 
       callbacks[item.action]?.()
@@ -49,6 +55,8 @@ export default function MenuScreen({
       onSettings,
       onHowToPlay,
       onHighscores,
+
+      onDebug,
     ]
   )
 

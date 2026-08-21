@@ -53,8 +53,8 @@ export default function SettingsScreen({ onBack }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [selected, handleBack, handleSave]);
 
-  const btnClass = (active) => `
-    cursor-pointer relative w-56 py-3 uppercase tracking-[0.45em] text-sm border transition-all duration-200
+  const btnClass = (active) => 
+    `cursor-pointer relative w-56 py-3 uppercase tracking-[0.45em] text-sm border transition-all duration-200
     ${
       active
         ? 'border-green-300 text-cyan-300 bg-cyan-500/10 shadow-[0_0_18px_rgba(0,255,255,0.35)]'
@@ -63,7 +63,11 @@ export default function SettingsScreen({ onBack }) {
   `;
 
   return (
-    <FlightLayout2 title="SETTINGS" footer="SECTOR CLEAR">
+    <FlightLayout2 
+    title="SETTINGS" 
+    footer="SECTOR CLEAR"
+    size="xl"
+    centered={true} >
       <div className="mx-auto inline-block text-left font-mono text-xs tracking-[0.2em] text-white/80 w-full max-w-md">
         <div className="space-y-8">
           {/* AUDIO */}
@@ -110,8 +114,7 @@ export default function SettingsScreen({ onBack }) {
             <div className="space-y-3">
               <label
                 className="flex cursor-pointer items-center justify-between text-white/70"
-                onClick={() => selectControlScheme('keyboard')}
-              >
+                onClick={() => selectControlScheme('keyboard')}>
                 <span>Keyboard only</span>
                 <span className="text-cyan-300/80 text-base leading-none">
                   {controlScheme === 'keyboard' ? '☑' : '☐'}
@@ -120,8 +123,7 @@ export default function SettingsScreen({ onBack }) {
 
               <label
                 className="flex cursor-pointer items-center justify-between text-white/70"
-                onClick={() => selectControlScheme('keyboardMouse')}
-              >
+                onClick={() => selectControlScheme('keyboardMouse')}>
                 <span>Mouse + keyboard</span>
                 <span className="text-cyan-300/80 text-base leading-none">
                   {controlScheme === 'keyboardMouse' ? '☑' : '☐'}

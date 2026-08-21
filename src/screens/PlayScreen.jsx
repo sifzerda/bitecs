@@ -161,8 +161,8 @@ export function PlayScreen({
 
                     <BossRenderer />
 
-                    {/*         <TentacleRenderer />            */}
-                    {/*             <OctopusRenderer />           */}
+                             <TentacleRenderer />            
+                                 <OctopusRenderer />           
 
                     <EffectComposer multisampling={0}>
                         {/* === FIRE BLOOM SETUP === */}

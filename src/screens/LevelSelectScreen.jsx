@@ -388,7 +388,7 @@ export default function LevelSelectScreen({
     <FlightLayout2
       title="LEVEL SELECT"
       footer={`REACHED: ${formatLevelLabel(safeHighestLevel)}`}
-      size="xl"
+      size="2xl"
       centered={false}
       scrollable
     >

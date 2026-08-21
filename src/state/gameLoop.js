@@ -21,22 +21,17 @@ import { bossLaserSystem } from "../ecs/weapons/weaponSystems/bossLaserSystem"
 import { bossThrowerSystem } from "../ecs/weapons/weaponSystems/bossThrowerSystem"
 
 import { octoAISystem } from "../ecs/systems/octoAISystem"
-
 // fx
 import { updateSparkEmitter } from "../fx/gpu/SparkEmitter"
 import { exhaustEmitter } from "../fx/gpu/exhaustEmitter"
 import { updateEffects } from "../fx/index"
 
-import {
-    clearSpatialGrids,
-    insertAsteroid,
-    insertBoss
-} from "../ecs/constants/spatialGrid"
+import { clearSpatialGrids, insertAsteroid, insertBoss } from "../ecs/constants/spatialGrid"
 
 import { activeAsteroids } from "../ecs/pools/asteroidPool"
 import { bossQuery } from "../ecs/constants/queries"
 
-// import { tentacleSystem } from "../ecs/systems/tentacleSystem"
+ import { tentacleSystem } from "../ecs/systems/tentacleSystem"
 
 export function gameLoop(shootState, dt) {
 
@@ -47,7 +42,7 @@ export function gameLoop(shootState, dt) {
     bossLaserSystem()
     bossThrowerSystem()
 
-    // tentacleSystem(dt)
+    tentacleSystem(dt)
 
     missileSystem()
 

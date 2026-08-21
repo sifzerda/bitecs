@@ -26,22 +26,16 @@ import {
 export const SCREEN = {
 
     MENU: "menu",
-
     PLAY: "play",
-
     LEVEL_SELECT: "levelselect",
-
     GAME_OVER: "gameover",
-
     SETTINGS: "settings",
-
     HIGHSCORES: "highscores",
-
     HOW_TO_PLAY: "howtoplay",
-
     GUNS: "guns",
-
     LEVEL_COMPLETE: "levelcomplete",
+
+    DEBUG: "debug",
 }
 
 
