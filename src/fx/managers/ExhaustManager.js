@@ -3,6 +3,7 @@
 import { registerEffect } from "../effects"
 import { EFFECT } from "../FXTypes"
 import { exhaustSources } from "../gpu/ExhaustState"
+import { releaseExhaust } from "../../ecs/pools/exhaustPool"
 
 const pending = []
 
@@ -13,6 +14,10 @@ const exhaustManager = {
     },
 
     update() {
+
+        for (let i = 0; i < exhaustSources.length; i++) {
+            releaseExhaust(exhaustSources[i])
+        }
 
         exhaustSources.length = 0
 
@@ -27,6 +32,14 @@ const exhaustManager = {
     },
 
     clear() {
+
+        for (let i = 0; i < exhaustSources.length; i++) {
+            releaseExhaust(exhaustSources[i])
+        }
+
+        for (let i = 0; i < pending.length; i++) {
+            releaseExhaust(pending[i])
+        }
 
         pending.length = 0
         exhaustSources.length = 0

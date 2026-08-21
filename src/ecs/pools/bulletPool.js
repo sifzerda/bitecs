@@ -23,5 +23,12 @@ const pool = createPool({
 
 export const activeBullets = pool.active
 export const initializeBulletPool = pool.initialize
+export const disposeBulletPool = pool.dispose
 export const acquireBulletEntity = pool.acquire
 export const releaseBulletEntity = pool.release
+
+if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+        pool.dispose()
+    })
+}

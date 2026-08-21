@@ -1,20 +1,25 @@
 // src/ecs/constants/progression.js
 
-// ============================================================
-// CORE PROGRESSION CONFIG
-// ============================================================
-
-// Three asteroid waves followed by one boss.
-export const WAVES_PER_ZONE = 3
-
-// 3 asteroid waves + 1 boss.
-export const ENCOUNTERS_PER_ZONE = WAVES_PER_ZONE + 1
 
 // ============================================================
 // ZONES
+//
+// Each zone contains:
+//   - waves
+//   - one boss
+//
+// A level represents exactly one encounter:
+//   Wave 1
+//   Wave 2
+//   Wave 3
+//   Boss
+//
+// Add another zone here and the rest of the game automatically
+// scales to it.
 // ============================================================
 
 export const ZONES = [
+
     {
         id: 1,
         name: "ASTEROID BELT",
@@ -62,17 +67,55 @@ export const ZONES = [
             { asteroidCount: 18 },
         ],
     },
+
+    // --------------------------------------------------------
+    // ADD FUTURE ZONES HERE
+    // --------------------------------------------------------
+    //
+    // {
+    //     id: 5,
+    //     name: "ALIEN NEBULA",
+    //     boss: "lasergun",
+    //
+    //     waves: [
+    //         { asteroidCount: 15 },
+    //         { asteroidCount: 18 },
+    //         { asteroidCount: 22 },
+    //     ],
+    // },
 ]
 
+
 // ============================================================
-// TOTAL LEVELS
+// DERIVED PROGRESSION VALUES
 // ============================================================
 
+export const WAVES_PER_ZONE =
+    ZONES[0]?.waves?.length ?? 0
+
+
+export const ENCOUNTERS_PER_ZONE =
+    WAVES_PER_ZONE + 1
+
+
 export const TOTAL_LEVELS =
-    ZONES.length * ENCOUNTERS_PER_ZONE
+    ZONES.reduce(
+        (total, zone) =>
+            total + zone.waves.length + 1,
+        0
+    )
+
 
 // ============================================================
 // LEVEL → PROGRESSION
+//
+// This is the SINGLE source of truth for:
+//
+//   level
+//   zone
+//   wave
+//   boss
+//   encounter type
 // ============================================================
 
 export function getProgression(level) {
@@ -85,60 +128,150 @@ export function getProgression(level) {
         )
     )
 
-    const zoneIndex = Math.floor(
-        (safeLevel - 1) / ENCOUNTERS_PER_ZONE
-    )
+    let remaining = safeLevel - 1
 
-    const encounterIndex =
-        (safeLevel - 1) % ENCOUNTERS_PER_ZONE
+    for (let zoneIndex = 0; zoneIndex < ZONES.length; zoneIndex++) {
 
-    const zone =
-        ZONES[zoneIndex] ??
+        const zone = ZONES[zoneIndex]
+
+        const encounterCount =
+            zone.waves.length + 1
+
+        if (remaining < encounterCount) {
+
+            const encounterIndex = remaining
+
+            const isBoss =
+                encounterIndex === zone.waves.length
+
+            return {
+
+                level: safeLevel,
+
+                zone,
+
+                zoneIndex,
+
+                encounterIndex,
+
+                type: isBoss
+                    ? "boss"
+                    : "wave",
+
+                isBoss,
+
+                wave: isBoss
+                    ? null
+                    : encounterIndex + 1,
+
+                boss: isBoss
+                    ? zone.boss
+                    : null,
+
+                config: isBoss
+                    ? null
+                    : zone.waves[encounterIndex],
+            }
+        }
+
+        remaining -= encounterCount
+    }
+
+
+    // --------------------------------------------------------
+    // Safety fallback
+    // --------------------------------------------------------
+
+    const lastZone =
         ZONES[ZONES.length - 1]
 
-    const isBoss =
-        encounterIndex === WAVES_PER_ZONE
+    const lastEncounterIndex =
+        lastZone.waves.length
 
     return {
-        zone,
-        zoneIndex,
-        encounterIndex,
 
-        // Bosses don't have a wave number.
-        wave: isBoss
-            ? null
-            : encounterIndex + 1,
+        level: TOTAL_LEVELS,
 
-        isBoss,
+        zone: lastZone,
+
+        zoneIndex: ZONES.length - 1,
+
+        encounterIndex: lastEncounterIndex,
+
+        type: "boss",
+
+        isBoss: true,
+
+        wave: null,
+
+        boss: lastZone.boss,
+
+        config: null,
     }
 }
 
+
 // ============================================================
 // CONVENIENCE HELPERS
+//
+// Kept because your existing UI/code already uses them.
 // ============================================================
 
 export function getZone(level) {
+
     return getProgression(level).zone.id
 }
 
+
 export function getWave(level) {
+
     return getProgression(level).wave
 }
 
+
 export function isBossLevel(level) {
+
     return getProgression(level).isBoss
 }
 
+
 export function getBossKey(level) {
-    return getProgression(level).zone.boss
+
+    return getProgression(level).boss
 }
 
+
+// ============================================================
+// ZONE + WAVE → LEVEL
+//
+// Useful for level-select UI.
+//
+// Boss is represented by wave = 0 or "boss" if desired,
+// but normal waves remain fully compatible.
+// ============================================================
+
 export function getLevelFromZoneWave(zone, wave) {
-    return (
-        (zone - 1) * ENCOUNTERS_PER_ZONE +
-        wave
-    )
+
+    const zoneIndex =
+        ZONES.findIndex(
+            item => item.id === Number(zone)
+        )
+
+    if (zoneIndex < 0) {
+        return 1
+    }
+
+    let level = 1
+
+    for (let i = 0; i < zoneIndex; i++) {
+
+        level +=
+            ZONES[i].waves.length + 1
+    }
+
+    return level + Number(wave) - 1
 }
+
 
 // ============================================================
 // DISPLAY LABEL
@@ -146,13 +279,17 @@ export function getLevelFromZoneWave(zone, wave) {
 
 export function formatLevelLabel(level) {
 
+    const progression =
+        getProgression(level)
+
     const {
         zone,
         wave,
         isBoss,
-    } = getProgression(level)
+    } = progression
 
     if (isBoss) {
+
         return `ZONE ${zone.id} · BOSS`
     }
 

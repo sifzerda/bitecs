@@ -14,27 +14,42 @@ import {
     isBossLevel,
     getZone,
     getWave,
+    getBossKey,
     formatLevelLabel,
 } from "../src/ecs/constants/progression.js"
+
 
 // ============================================================
 // SCREEN
 // ============================================================
 
 export const SCREEN = {
+
     MENU: "menu",
+
     PLAY: "play",
+
     LEVEL_SELECT: "levelselect",
+
     GAME_OVER: "gameover",
+
     SETTINGS: "settings",
+
     HIGHSCORES: "highscores",
+
     HOW_TO_PLAY: "howtoplay",
+
     GUNS: "guns",
+
     LEVEL_COMPLETE: "levelcomplete",
 }
 
+
 // ============================================================
 // PROGRESSION RE-EXPORTS
+//
+// Existing components can continue importing these from
+// gameStore.js.
 // ============================================================
 
 export {
@@ -43,8 +58,26 @@ export {
     isBossLevel,
     getZone,
     getWave,
+    getBossKey,
     formatLevelLabel,
 }
+
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function clampLevel(level) {
+
+    return Math.max(
+        1,
+        Math.min(
+            Number(level) || 1,
+            TOTAL_LEVELS
+        )
+    )
+}
+
 
 // ============================================================
 // GAME STORE
@@ -64,60 +97,49 @@ export const useGameStore = create((set, get) => ({
 
     paused: false,
 
+
     // ========================================================
     // WEAPON / CAMPAIGN STATE
     //
-    // IMPORTANT:
-    // These persist when starting a NEW GAME.
-    //
-    // Only resetProgress() wipes them.
+    // These survive starting a new game.
     // ========================================================
 
     unlockedWeapons: [0],
 
     pendingUnlockWeapon: null,
 
+
     // ========================================================
     // START LEVEL
+    //
+    // Used by level select and starting a specific level.
     // ========================================================
 
     startLevel: (level = 1) => {
 
-        const safeLevel = Math.max(
-            1,
-            Math.min(level, TOTAL_LEVELS)
-        )
+        const safeLevel =
+            clampLevel(level)
 
         resetSimStateForLevel()
 
         set({
             level: safeLevel,
+
             screen: SCREEN.PLAY,
+
             paused: false,
 
-            // A level start consumes any old notification.
             pendingUnlockWeapon: null,
         })
     },
 
+
     // ========================================================
     // NEW GAME
     //
-    // IMPORTANT:
+    // Resets the current run.
     //
-    // A NEW GAME resets the RUN:
-    //
-    // - score
-    // - lives
-    // - health
-    // - level
-    //
-    // But it DOES NOT reset:
-    //
-    // - unlocked weapons
-    // - highest level reached
-    //
-    // Those are campaign progression.
+    // Does NOT erase campaign progression.
     // ========================================================
 
     resetRun: () => {
@@ -125,29 +147,26 @@ export const useGameStore = create((set, get) => ({
         resetSimState()
 
         set({
+
             screen: SCREEN.MENU,
 
             level: 1,
 
             paused: false,
 
-            // IMPORTANT:
-            // Do NOT reset unlockedWeapons here.
-            //
-            // Existing campaign unlocks survive
-            // starting a new game.
-
             pendingUnlockWeapon: null,
+
+            // IMPORTANT:
+            // unlockedWeapons remains unchanged.
+            // highestLevelReached remains unchanged.
         })
     },
+
 
     // ========================================================
     // RESET CAMPAIGN
     //
-    // This is the TRUE FULL RESET.
-    //
-    // Used when you deliberately want to erase
-    // all progression.
+    // Completely wipes progression.
     // ========================================================
 
     resetProgress: () => {
@@ -155,6 +174,7 @@ export const useGameStore = create((set, get) => ({
         resetSimState()
 
         set({
+
             screen: SCREEN.MENU,
 
             level: 1,
@@ -169,8 +189,21 @@ export const useGameStore = create((set, get) => ({
         })
     },
 
+
     // ========================================================
-    // COMPLETE LEVEL
+    // COMPLETE CURRENT ENCOUNTER
+    //
+    // Called when:
+    //
+    //   - final asteroid dies
+    //   - boss dies
+    //
+    // IMPORTANT:
+    //
+    // This does NOT increment the level.
+    //
+    // It takes the player to LEVEL_COMPLETE.
+    // The player decides when to continue.
     // ========================================================
 
     completeLevel: () => {
@@ -180,16 +213,25 @@ export const useGameStore = create((set, get) => ({
             highestLevelReached,
         } = get()
 
-        const nextLevel = Math.min(
-            level + 1,
-            TOTAL_LEVELS
-        )
+
+        const nextLevel =
+            level + 1
+
+
+        const unlockedLevel =
+            Math.min(
+                nextLevel,
+                TOTAL_LEVELS
+            )
+
 
         set({
-            highestLevelReached: Math.max(
-                highestLevelReached,
-                nextLevel
-            ),
+
+            highestLevelReached:
+                Math.max(
+                    highestLevelReached,
+                    unlockedLevel
+                ),
 
             paused: true,
 
@@ -197,43 +239,13 @@ export const useGameStore = create((set, get) => ({
         })
     },
 
-    // ========================================================
-    // COMPLETE CURRENT LEVEL
-    // ========================================================
-    //
-    // Kept for compatibility with any existing code.
-    //
-    // ========================================================
-
-    completeCurrentLevel: () => {
-
-        const {
-            level,
-            highestLevelReached,
-        } = get()
-
-        const nextLevel = Math.min(
-            level + 1,
-            TOTAL_LEVELS
-        )
-
-        set({
-            highestLevelReached: Math.max(
-                highestLevelReached,
-                nextLevel
-            ),
-
-            paused: true,
-
-            screen: SCREEN.LEVEL_COMPLETE,
-        })
-    },
 
     // ========================================================
     // CONTINUE
     //
     // Called by LevelCompleteScreen.
     //
+    // This is the ONLY place that advances level.
     // ========================================================
 
     continueLevel: () => {
@@ -244,6 +256,7 @@ export const useGameStore = create((set, get) => ({
         const nextLevel =
             currentLevel + 1
 
+
         // ----------------------------------------------------
         // CAMPAIGN COMPLETE
         // ----------------------------------------------------
@@ -251,73 +264,25 @@ export const useGameStore = create((set, get) => ({
         if (nextLevel > TOTAL_LEVELS) {
 
             set({
+
                 screen: SCREEN.MENU,
+
                 paused: false,
+
                 pendingUnlockWeapon: null,
             })
 
             return
         }
 
+
         // ----------------------------------------------------
-        // START NEXT LEVEL
+        // START NEXT ENCOUNTER
         // ----------------------------------------------------
 
         resetSimStateForLevel()
 
-        set((state) => ({
-
-            level: nextLevel,
-
-            highestLevelReached:
-                Math.max(
-                    state.highestLevelReached,
-                    nextLevel
-                ),
-
-            screen: SCREEN.PLAY,
-
-            paused: false,
-
-            // Notification has been consumed.
-            pendingUnlockWeapon: null,
-        }))
-    },
-
-    // ========================================================
-    // ADVANCE LEVEL
-    //
-    // Compatibility alias.
-    //
-    // Your old Home.jsx called advanceLevel().
-    // This simply forwards to continueLevel().
-    // ========================================================
-
-    advanceLevel: () => {
-
-        get().continueLevel()
-    },
-
-    // ========================================================
-    // ADVANCE WAVE
-    // ========================================================
-    //
-    // Currently equivalent to moving to the next level.
-    //
-    // ========================================================
-
-    advanceWave: () => {
-
-        const nextLevel =
-            get().level + 1
-
-        if (nextLevel > TOTAL_LEVELS) {
-            return
-        }
-
-        resetSimStateForLevel()
-
-        set((state) => ({
+        set(state => ({
 
             level: nextLevel,
 
@@ -334,6 +299,7 @@ export const useGameStore = create((set, get) => ({
             pendingUnlockWeapon: null,
         }))
     },
+
 
     // ========================================================
     // GAME OVER
@@ -342,54 +308,40 @@ export const useGameStore = create((set, get) => ({
     gameOver: () => {
 
         set({
+
             screen: SCREEN.GAME_OVER,
+
             paused: true,
         })
     },
 
+
     // ========================================================
     // UNLOCK WEAPON
-    // ========================================================
-    //
-    // IMPORTANT:
-    //
-    // If weapon is already unlocked:
-    //
-    //     DO NOTHING
-    //
-    // Therefore defeating the same boss again will NOT
-    // show "NEW WEAPON UNLOCKED".
-    //
-    // If weapon is genuinely new:
-    //
-    //     add it to unlockedWeapons
-    //     set pendingUnlockWeapon
-    //
     // ========================================================
 
     unlockWeapon: (weaponId) => {
 
         if (weaponId == null) {
-            return
+            return false
         }
 
-        set((state) => {
+
+        let newlyUnlocked = false
+
+
+        set(state => {
 
             const alreadyUnlocked =
                 state.unlockedWeapons.includes(
                     weaponId
                 )
 
-            // ------------------------------------------------
-            // ALREADY UNLOCKED
-            // ------------------------------------------------
-            //
-            // Do not generate another unlock notification.
-            //
 
             if (alreadyUnlocked) {
 
                 return {
+
                     unlockedWeapons:
                         state.unlockedWeapons,
 
@@ -398,9 +350,9 @@ export const useGameStore = create((set, get) => ({
                 }
             }
 
-            // ------------------------------------------------
-            // NEW WEAPON
-            // ------------------------------------------------
+
+            newlyUnlocked = true
+
 
             return {
 
@@ -413,18 +365,25 @@ export const useGameStore = create((set, get) => ({
                     weaponId,
             }
         })
+
+
+        return newlyUnlocked
     },
 
+
     // ========================================================
-    // CLEAR PENDING UNLOCK
+    // CLEAR PENDING WEAPON
     // ========================================================
 
     clearPendingUnlockWeapon: () => {
 
         set({
-            pendingUnlockWeapon: null,
+
+            pendingUnlockWeapon:
+                null,
         })
     },
+
 
     // ========================================================
     // UI
@@ -433,20 +392,35 @@ export const useGameStore = create((set, get) => ({
     setScreen: (screen) =>
         set({ screen }),
 
+
     setPaused: (paused) =>
         set({ paused }),
 
+
     togglePause: () =>
-        set((state) => ({
-            paused: !state.paused,
+        set(state => ({
+
+            paused:
+                !state.paused,
         })),
+
 
     // ========================================================
     // LEVEL ACCESS
     // ========================================================
 
-    isLevelUnlocked: (level) =>
-        level >= 1 &&
-        level <= get().highestLevelReached,
+    isLevelUnlocked: (level) => {
+
+        const safeLevel =
+            Number(level)
+
+        return (
+
+            safeLevel >= 1 &&
+
+            safeLevel <=
+                get().highestLevelReached
+        )
+    },
 
 }))

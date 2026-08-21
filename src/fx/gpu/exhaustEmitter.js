@@ -5,6 +5,7 @@ import { EFFECT } from "../FXTypes"
 import { Position, Velocity, Rotation } from "../../ecs/constants/components"
 import { playerQuery, bossAIQuery } from "../../ecs/constants/queries"
 import { input } from "../../ecs/systems/input"
+import { acquireExhaust } from "../../ecs/pools/exhaustPool"
 
 export function exhaustEmitter() {
 
@@ -14,15 +15,17 @@ export function exhaustEmitter() {
 
         const id = players[0]
 
-        emitEffect(EFFECT.EXHAUST, {
-            slot: 0,
-            x: Position.x[id],
-            y: Position.y[id],
-            vx: Velocity.x[id],
-            vy: Velocity.y[id],
-            rot: Rotation[id],
-            emitting: input.thrust
-        })
+        const effect = acquireExhaust()
+
+        effect.slot = 0
+        effect.x = Position.x[id]
+        effect.y = Position.y[id]
+        effect.vx = Velocity.x[id]
+        effect.vy = Velocity.y[id]
+        effect.rot = Rotation[id]
+        effect.emitting = input.thrust
+
+        emitEffect(EFFECT.EXHAUST, effect)
 
     }
 
@@ -32,15 +35,17 @@ export function exhaustEmitter() {
 
         const id = bosses[i]
 
-        emitEffect(EFFECT.EXHAUST, {
-            slot: i + 1,
-            x: Position.x[id],
-            y: Position.y[id],
-            vx: Velocity.x[id],
-            vy: Velocity.y[id],
-            rot: Rotation[id],
-            emitting: true
-        })
+        const effect = acquireExhaust()
+
+        effect.slot = i + 1
+        effect.x = Position.x[id]
+        effect.y = Position.y[id]
+        effect.vx = Velocity.x[id]
+        effect.vy = Velocity.y[id]
+        effect.rot = Rotation[id]
+        effect.emitting = true
+
+        emitEffect(EFFECT.EXHAUST, effect)
 
     }
 

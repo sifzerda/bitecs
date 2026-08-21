@@ -23,23 +23,34 @@ export default function MenuScreen({
 
   const [selected, setSelected] = useState(0);
 
-  const handlers = {
-    onPlay,
-    onLevelSelect,
-    onGuns,
-    onSettings,
-    onHowToPlay,
-    onHighscores,
-  }
-
   const activate = useCallback(
     (index) => {
-      const item = ITEMS[index];
-      if (!item) return;
-      handlers[item.action]?.();
+      const item = ITEMS[index]
+
+      if (!item) {
+        return
+      }
+
+      const callbacks = {
+        onPlay,
+        onLevelSelect,
+        onGuns,
+        onSettings,
+        onHowToPlay,
+        onHighscores,
+      }
+
+      callbacks[item.action]?.()
     },
-    [handlers]
-  );
+    [
+      onPlay,
+      onLevelSelect,
+      onGuns,
+      onSettings,
+      onHowToPlay,
+      onHighscores,
+    ]
+  )
 
   useEffect(() => {
     const onKey = (e) => {

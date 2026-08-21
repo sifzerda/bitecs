@@ -68,25 +68,42 @@ export function GameLoop({ keysRef, paused }) {
     return null
 }
 
-export function PlayScreen({ keysRef, paused, onPause }) {
+export function PlayScreen({
+    keysRef,
+    paused,
+    onPause,
+}) {
     return (
         <div className="border-2 border-green-400 flex flex-col h-[calc(100vh-120px)]">
 
-            <HUD paused={paused} onPause={onPause} />
-
-
+            <HUD
+                paused={paused}
+                onPause={onPause}
+            />
 
             <div className="relative flex-1 px-4">
 
                 <Canvas
                     orthographic
-                    camera={{ zoom: 60, position: [0, 0, 10], near: 0.1, far: 100 }}
-                    gl={{ antialias: false, powerPreference: "high-performance" }}
-                    dpr={[1, 2]}>
+                    camera={{
+                        zoom: 60,
+                        position: [0, 0, 10],
+                        near: 0.1,
+                        far: 100,
+                    }}
+                    gl={{
+                        antialias: false,
+                        powerPreference: "high-performance",
+                    }}
+                    dpr={[1, 2]}
+                >
 
                     <MouseWorldTracker />
 
-                    <GameLoop keysRef={keysRef} paused={paused} />
+                    <GameLoop
+                        keysRef={keysRef}
+                        paused={paused}
+                    />
 
                     <ambientLight intensity={1.1} />
                     <directionalLight position={[5, 8, 6]} intensity={2.0} />

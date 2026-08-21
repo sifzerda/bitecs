@@ -28,5 +28,12 @@ const pool = createPool({
 
 export const activeArcs = pool.active
 export const initializeArcPool = pool.initialize
+export const disposeArcPool = pool.dispose
 export const acquireArcEntity = pool.acquire
 export const releaseArcEntity = pool.release
+
+if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+        pool.dispose()
+    })
+}

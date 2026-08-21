@@ -39,6 +39,9 @@ import {
 import HighscoresScreen
     from "../screens/HighscoresScreen"
 
+import PauseScreen
+    from "../screens/PauseScreen.jsx"
+
 import {
     useGameStore,
     SCREEN,
@@ -77,15 +80,26 @@ export default function Home() {
             (s) => s.paused
         )
 
+    const level =
+        useGameStore(
+            (s) => s.level
+        )
+
     const resetRun =
         useGameStore(
             (s) => s.resetRun
+        )
+
+    const startLevel =
+        useGameStore(
+            (s) => s.startLevel
         )
 
     const continueLevel =
         useGameStore(
             (s) => s.continueLevel
         )
+
 
     // ========================================================
     // REFS
@@ -96,6 +110,7 @@ export default function Home() {
 
     const poolsReady =
         useRef(false)
+
 
     // ========================================================
     // SCREEN NAVIGATION
@@ -133,6 +148,7 @@ export default function Home() {
 
                     levelcomplete:
                         SCREEN.LEVEL_COMPLETE,
+
                 }
 
                 const nextScreen =
@@ -149,21 +165,16 @@ export default function Home() {
                         }
                         : {}
                     ),
+
                 })
 
             },
             []
         )
 
+
     // ========================================================
     // NEW GAME
-    // ========================================================
-    //
-    // IMPORTANT:
-    //
-    // resetRun() resets the RUN but does not erase
-    // unlocked weapons anymore.
-    //
     // ========================================================
 
     const startNewGame =
@@ -182,13 +193,50 @@ export default function Home() {
             ]
         )
 
+
+    // ========================================================
+    // RESTART CURRENT LEVEL
+    // ========================================================
+    //
+    // Used by the pause screen.
+    //
+    // This restarts the current level rather than
+    // resetting the entire run.
+    //
+    // ========================================================
+
+    const restartCurrentLevel =
+        useCallback(
+            () => {
+
+                const currentLevel =
+                    useGameStore
+                        .getState()
+                        .level
+
+                startLevel(
+                    currentLevel
+                )
+
+                useGameStore.setState({
+                    paused: false,
+                    screen: SCREEN.PLAY,
+                })
+
+            },
+            [
+                startLevel,
+            ]
+        )
+
+
     // ========================================================
     // BACK TO MENU
     // ========================================================
     //
-    // This is intentionally a SOFT return.
+    // Soft return.
     //
-    // It does not reset anything.
+    // Does NOT reset the run or unlocks.
     //
     // ========================================================
 
@@ -203,11 +251,13 @@ export default function Home() {
 
                     paused:
                         false,
+
                 })
 
             },
             []
         )
+
 
     // ========================================================
     // CONTINUE AFTER LEVEL
@@ -224,6 +274,7 @@ export default function Home() {
                 continueLevel,
             ]
         )
+
 
     // ========================================================
     // PAUSE
@@ -251,6 +302,31 @@ export default function Home() {
             []
         )
 
+
+    // ========================================================
+    // RESUME
+    // ========================================================
+
+    const resumeGame =
+        useCallback(
+            () => {
+
+                if (
+                    useGameStore.getState().screen
+                    !== SCREEN.PLAY
+                ) {
+                    return
+                }
+
+                useGameStore.setState({
+                    paused: false,
+                })
+
+            },
+            []
+        )
+
+
     // ========================================================
     // ECS / INPUT INITIALIZATION
     // ========================================================
@@ -261,22 +337,25 @@ export default function Home() {
             if (!poolsReady.current) {
 
                 initializeAsteroidPool()
-
                 initializeBulletPool()
 
-                poolsReady.current =
-                    true
+                poolsReady.current = true
+
             }
 
-            initializeInput(
-                togglePause
-            )
+            const disposeInput =
+                initializeInput(togglePause)
+
+            return () => {
+                disposeInput()
+            }
 
         },
         [
             togglePause,
         ]
     )
+
 
     // ========================================================
     // SPAWN PLAYER
@@ -306,6 +385,7 @@ export default function Home() {
         ]
     )
 
+
     // ========================================================
     // RENDER
     // ========================================================
@@ -314,11 +394,11 @@ export default function Home() {
 
         <div
             className="
-                w-screen
+                relative
                 h-screen
+                w-screen
                 overflow-hidden
                 bg-black
-                relative
             "
         >
 
@@ -396,15 +476,57 @@ export default function Home() {
 
 
             {/* ================================================= */}
+            {/* PAUSE */}
+            {/* ================================================= */}
+            //
+            // IMPORTANT:
+            //
+            // This is rendered ON TOP of PlayScreen.
+            //
+            // SCREEN remains SCREEN.PLAY.
+            //
+            // Therefore:
+            //
+            //   - ECS entities remain alive
+            //   - current level remains intact
+            //   - player position remains intact
+            //   - gameLoop stops because paused === true
+            //
+            // =================================================
+
+            {screen === SCREEN.PLAY && paused && (
+
+                <PauseScreen
+
+                    onResume={
+                        resumeGame
+                    }
+
+                    onRestart={
+                        restartCurrentLevel
+                    }
+
+                    onMenu={
+                        backToMenu
+                    }
+
+                />
+
+            )}
+
+
+            {/* ================================================= */}
             {/* LEVEL SELECT */}
             {/* ================================================= */}
 
             {screen === SCREEN.LEVEL_SELECT && (
 
                 <LevelSelectScreen
+
                     onBack={() =>
                         go("menu")
                     }
+
                 />
 
             )}
@@ -476,9 +598,11 @@ export default function Home() {
             {screen === SCREEN.SETTINGS && (
 
                 <SettingsScreen
+
                     onBack={() =>
                         go("menu")
                     }
+
                 />
 
             )}
@@ -491,9 +615,11 @@ export default function Home() {
             {screen === SCREEN.HOW_TO_PLAY && (
 
                 <HowToPlayScreen
+
                     onBack={() =>
                         go("menu")
                     }
+
                 />
 
             )}
@@ -506,9 +632,11 @@ export default function Home() {
             {screen === SCREEN.HIGHSCORES && (
 
                 <HighscoresScreen
+
                     onBack={() =>
                         go("menu")
                     }
+
                 />
 
             )}

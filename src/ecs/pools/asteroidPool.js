@@ -43,5 +43,12 @@ const pool = createPool({
 
 export const activeAsteroids = pool.active
 export const initializeAsteroidPool = pool.initialize
+export const disposeAsteroidPool = pool.dispose
 export const acquireAsteroidEntity = pool.acquire
 export const releaseAsteroidEntity = pool.release
+
+if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+        pool.dispose()
+    })
+}

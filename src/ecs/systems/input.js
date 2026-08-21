@@ -14,16 +14,13 @@ export const input = {
   fire: false,
   deflect: false,
 
-  // screen-space (pixels)
   mouseX: 0,
   mouseY: 0,
 
-  // world-space (updated by MouseWorldTracker)
   worldX: 0,
   worldY: 0,
 };
 
-// alias so MouseWorldTracker / other systems can import { mouse }
 export const mouse = input;
 
 const bindings = {
@@ -43,7 +40,18 @@ const bindings = {
   KeyX: 'deflect',
 };
 
-let initialized = false;
+const weaponKeys = {
+  Digit1: 0,
+  Digit2: 1,
+  Digit3: 2,
+  Digit4: 3,
+  Digit5: 4,
+  Digit6: 5,
+  Digit7: 6,
+  Digit8: 7,
+  Digit9: 8,
+  Digit0: 9,
+};
 
 const wheelOptions = { passive: false };
 
@@ -56,7 +64,6 @@ export function clearInput() {
   for (const action of new Set(Object.values(bindings))) {
     input[action] = false;
   }
-  // also clear mouse-button fire
   input.fire = false;
 }
 
@@ -64,42 +71,33 @@ export function isMouseControlEnabled() {
   return settings.controlScheme === 'keyboardMouse';
 }
 
-export function initializeInput(onPause) {
-  if (initialized) return;
-  initialized = true;
+// ------------------------------------------------------------
+// module-level state: listeners attach once, but the pause
+// callback is refreshed on every call so it never goes stale
+// ------------------------------------------------------------
 
-  const weaponKeys = {
-    Digit1: 0,
-    Digit2: 1,
-    Digit3: 2,
-    Digit4: 3,
-    Digit5: 4,
-    Digit6: 5,
-    Digit7: 6,
-    Digit8: 7,
-    Digit9: 8,
-    Digit0: 9,
-  };
+let listenersAttached = false;
+let currentOnPause = null;
+let handlers = null;
+
+export function initializeInput(onPause) {
+  // always point at the latest callback, even if already attached
+  currentOnPause = onPause;
+
+  if (listenersAttached) return disposeInput;
 
   function keyDown(e) {
     const key = e.code || e.key;
     const action = bindings[key];
 
     if (action) {
-      // left/right rotation only used in keyboard-only mode
-      if (
-        (action === 'left' || action === 'right') &&
-        isMouseControlEnabled()
-      ) {
-        // still allow keys if you want hybrid; remove this block to hard-disable
-      }
       input[action] = true;
     }
 
     if (e.repeat) return;
 
     if (e.code === 'KeyP') {
-      onPause?.();
+      currentOnPause?.();
       return;
     }
 
@@ -118,7 +116,7 @@ export function initializeInput(onPause) {
       return;
     }
 
-  const weaponIndex = weaponKeys[e.code];
+    const weaponIndex = weaponKeys[e.code];
     if (weaponIndex !== undefined && weaponIndex < WEAPONS.length) {
       simState.currentWeapon = weaponIndex;
     }
@@ -139,7 +137,6 @@ export function initializeInput(onPause) {
 
   function mouseDown(e) {
     if (!isMouseControlEnabled()) return;
-    // left button = fire
     if (e.button === 0) {
       input.fire = true;
     }
@@ -160,14 +157,54 @@ export function initializeInput(onPause) {
     }
   }
 
+  function onBlur() {
+    clearInput();
+  }
+
+  function onVisibilityChange() {
+    if (document.hidden) clearInput();
+  }
+
+  handlers = {
+    keyDown, keyUp, mouseMove, mouseDown, mouseUp, wheel,
+    onBlur, onVisibilityChange,
+  };
+
   window.addEventListener('keydown', keyDown);
   window.addEventListener('keyup', keyUp);
   window.addEventListener('mousemove', mouseMove);
   window.addEventListener('mousedown', mouseDown);
   window.addEventListener('mouseup', mouseUp);
   window.addEventListener('wheel', wheel, wheelOptions);
-  window.addEventListener('blur', clearInput);
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) clearInput();
+  window.addEventListener('blur', onBlur);
+  document.addEventListener('visibilitychange', onVisibilityChange);
+
+  listenersAttached = true;
+
+  return disposeInput;
+}
+
+export function disposeInput() {
+  if (!listenersAttached || !handlers) return;
+
+  window.removeEventListener('keydown', handlers.keyDown);
+  window.removeEventListener('keyup', handlers.keyUp);
+  window.removeEventListener('mousemove', handlers.mouseMove);
+  window.removeEventListener('mousedown', handlers.mouseDown);
+  window.removeEventListener('mouseup', handlers.mouseUp);
+  window.removeEventListener('wheel', handlers.wheel, wheelOptions);
+  window.removeEventListener('blur', handlers.onBlur);
+  document.removeEventListener('visibilitychange', handlers.onVisibilityChange);
+
+  handlers = null;
+  listenersAttached = false;
+  clearInput();
+}
+
+// tear down right before Vite swaps this module in dev, so a
+// hot-reload of this file can't leave orphaned listeners behind
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    disposeInput();
   });
 }

@@ -1,8 +1,16 @@
 // src/ecs/spawn.js
 
-import { addEntity, addComponent } from "bitecs"
+import {
+    addEntity,
+    addComponent,
+} from "bitecs"
+
 import * as THREE from "three"
-import { world } from "./constants/world"
+
+import {
+    world,
+} from "./constants/world.js"
+
 import {
     Position,
     Velocity,
@@ -13,70 +21,140 @@ import {
     Asteroid,
     PlayerTag,
     Bullet,
-    BulletTag,
     BULLET_OWNER,
-    AsteroidTag,
     BossTag,
     BossAI,
     BossType,
     StatusEffect,
     Octopus,
     OctopusTag,
-} from "./constants/components"
-import { BOSS_INDEX_BY_KEY, BOSSES } from "./constants/bosses"
-import { acquireBulletEntity } from "./pools/bulletPool"
-import { acquireAsteroidEntity } from "./pools/asteroidPool"
-import { getGunTypeById } from "./weapons/config/gunConfigs"
-import { getWeapon } from "./weapons/config/weapons"
-import { getBossEmissionConfig, PLAYER_CONFIG } from "./constants/emission.js"
+} from "./constants/components.js"
+
+import {
+    BOSS_INDEX_BY_KEY,
+    BOSSES,
+} from "./constants/bosses.js"
+
+import {
+    acquireBulletEntity,
+} from "./pools/bulletPool.js"
+
+import {
+    acquireAsteroidEntity,
+} from "./pools/asteroidPool.js"
+
+import {
+    getGunTypeById,
+} from "./weapons/config/gunConfigs.js"
+
+import {
+    getWeapon,
+} from "./weapons/config/weapons.js"
+
+import {
+    getBossEmissionConfig,
+    PLAYER_CONFIG,
+} from "./constants/emission.js"
+
 
 // ============================================================
-// Helpers
+// HELPERS
 // ============================================================
 
-function setPosition(id, x, y) {
+function setPosition(
+    id,
+    x,
+    y
+) {
 
-    addComponent(world, id, Position)
+    addComponent(
+        world,
+        id,
+        Position
+    )
 
     Position.x[id] = x
     Position.y[id] = y
 }
 
 
-function setHealth(id, hp) {
+function setHealth(
+    id,
+    hp
+) {
 
-    addComponent(world, id, Health)
+    addComponent(
+        world,
+        id,
+        Health
+    )
 
     Health.current[id] = hp
     Health.max[id] = hp
 }
 
-const GUN_GAP = 0.45
 
 // ============================================================
-// Player Ship
+// PLAYER SHIP
 // ============================================================
 
-export function spawnPlayer(x, y) {
+export function spawnPlayer(
+    x,
+    y
+) {
 
-    const id = addEntity(world)
+    const id =
+        addEntity(world)
 
-    setPosition(id, x, y)
 
-    addComponent(world, id, Velocity)
-    addComponent(world, id, Rotation)
-    addComponent(world, id, PlayerTag)
-    addComponent(world, id, Invulnerability)
+    setPosition(
+        id,
+        x,
+        y
+    )
 
-    setHealth(id, 100)
 
-    Invulnerability.remaining[id] = 0
+    addComponent(
+        world,
+        id,
+        Velocity
+    )
+
+    addComponent(
+        world,
+        id,
+        Rotation
+    )
+
+    addComponent(
+        world,
+        id,
+        PlayerTag
+    )
+
+    addComponent(
+        world,
+        id,
+        Invulnerability
+    )
+
+
+    setHealth(
+        id,
+        100
+    )
+
+
+    Invulnerability.remaining[id] =
+        0
+
 
     return id
 }
 
+
 // ============================================================
-// Bullets
+// BULLETS
 // ============================================================
 
 export function spawnBullet(
@@ -90,18 +168,27 @@ export function spawnBullet(
     emissionOverride = null
 ) {
 
-    const weapon = getWeapon(weaponId)
+    const weapon =
+        getWeapon(weaponId)
 
-    if (!weapon)
+
+    if (!weapon) {
+
         return {
             ids: [],
             originX: x,
             originY: y,
         }
+    }
 
-    // Beam and thrower weapons have their own systems.
+
+    // --------------------------------------------------------
+    // Beam / thrower weapons have their own systems.
+    // --------------------------------------------------------
+
     if (
-        weapon.category === "beam" || weapon.category === "thrower"
+        weapon.category === "beam" ||
+        weapon.category === "thrower"
     ) {
 
         return {
@@ -111,98 +198,192 @@ export function spawnBullet(
         }
     }
 
+
     // --------------------------------------------------------
     // Emission configuration
     // --------------------------------------------------------
 
-    const emission = emissionOverride ?? PLAYER_CONFIG.emission.projectile
+    const emission =
+        emissionOverride ??
+        PLAYER_CONFIG.emission.projectile
+
 
     // --------------------------------------------------------
     // Forward direction
     //
-    // Rotation convention used by the game:
+    // rot = 0
+    //     -> +Y
     //
-    // rot = 0      -> +Y
-    // rot = -PI/2  -> +X
-    // rot = +PI/2  -> -X
+    // rot = -PI/2
+    //     -> +X
+    //
+    // rot = +PI/2
+    //     -> -X
     // --------------------------------------------------------
 
-    const fwdX = Math.sin(-rot)
-    const fwdY = Math.cos(-rot)
+    const fwdX =
+        Math.sin(-rot)
+
+    const fwdY =
+        Math.cos(-rot)
+
 
     // --------------------------------------------------------
     // Perpendicular direction
-    //
-    // Used for left/right twin gun spacing.
     // --------------------------------------------------------
 
-    const perpX = Math.cos(-rot)
-    const perpY = -Math.sin(-rot)
+    const perpX =
+        Math.cos(-rot)
 
-    const forwardOffset = emission.offsetY ?? 0
-    const sideOffset = (emission.offsetX ?? 0) + gapOffset
+    const perpY =
+        -Math.sin(-rot)
+
+
+    const forwardOffset =
+        emission.offsetY ?? 0
+
+    const sideOffset =
+        (emission.offsetX ?? 0) +
+        gapOffset
+
 
     // --------------------------------------------------------
     // Final muzzle position
-    //
-    // IMPORTANT:
-    // Both the forward offset AND gun gap rotate with the ship.
     // --------------------------------------------------------
 
-    const originX = x + fwdX * forwardOffset + perpX * sideOffset
-    const originY = y + fwdY * forwardOffset + perpY * sideOffset
+    const originX =
+        x +
+        fwdX * forwardOffset +
+        perpX * sideOffset
+
+
+    const originY =
+        y +
+        fwdY * forwardOffset +
+        perpY * sideOffset
+
 
     // --------------------------------------------------------
-    // Weapon projectile configuration
+    // Projectile configuration
     // --------------------------------------------------------
 
-    const count = weapon.projectileCount ?? 1
-    const spread = weapon.spreadAngle ?? 0
+    const count =
+        weapon.projectileCount ?? 1
+
+    const spread =
+        weapon.spreadAngle ?? 0
+
 
     const ids = []
 
-    for (let i = 0; i < count; i++) {
 
-        const offset = count > 1 ? -spread / 2 + (spread / (count - 1)) * i : 0
-        const shotRot = rot + offset
+    // --------------------------------------------------------
+    // Create projectiles
+    // --------------------------------------------------------
 
-        const id = acquireBulletEntity()
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
 
-        if (id === -1)
+        const offset =
+            count > 1
+
+                ? (
+                    -spread / 2 +
+                    (
+                        spread /
+                        (count - 1)
+                    ) * i
+                )
+
+                : 0
+
+
+        const shotRot =
+            rot + offset
+
+
+        const id =
+            acquireBulletEntity()
+
+
+        if (
+            id === -1
+        ) {
             continue
+        }
+
 
         // ----------------------------------------------------
         // Position
         // ----------------------------------------------------
 
-        Position.x[id] = originX
-        Position.y[id] = originY
+        Position.x[id] =
+            originX
+
+        Position.y[id] =
+            originY
+
 
         // ----------------------------------------------------
         // Velocity
         // ----------------------------------------------------
 
-        Velocity.x[id] = Math.sin(-shotRot) * weapon.speed
-        Velocity.y[id] = Math.cos(-shotRot) * weapon.speed
+        Velocity.x[id] =
+            Math.sin(-shotRot) *
+            weapon.speed
+
+        Velocity.y[id] =
+            Math.cos(-shotRot) *
+            weapon.speed
+
 
         // ----------------------------------------------------
         // Bullet metadata
         // ----------------------------------------------------
 
-        Lifetime.remaining[id] = weapon.lifetime
-        Bullet.type[id] = weapon.id
-        Bullet.owner[id] = owner
-        Bullet.source[id] = sourceId
+        Lifetime.remaining[id] =
+            weapon.lifetime
+
+        Bullet.type[id] =
+            weapon.id
+
+        Bullet.owner[id] =
+            owner
+
+        Bullet.source[id] =
+            sourceId
+
 
         // ----------------------------------------------------
         // Cached render color
         // ----------------------------------------------------
 
-        const color = new THREE.Color(weapon.glowColor ?? weapon.color)
-        color.offsetHSL(0, 0.30, 0.00)
-        Bullet.colorR[id] = color.r
-        Bullet.colorG[id] = color.g
-        Bullet.colorB[id] = color.b
+        const color =
+            new THREE.Color(
+                weapon.glowColor ??
+                weapon.color
+            )
+
+
+        color.offsetHSL(
+            0,
+            0.30,
+            0.00
+        )
+
+
+        Bullet.colorR[id] =
+            color.r
+
+        Bullet.colorG[id] =
+            color.g
+
+        Bullet.colorB[id] =
+            color.b
+
 
         ids.push(id)
     }
@@ -215,8 +396,9 @@ export function spawnBullet(
     }
 }
 
+
 // ============================================================
-// Player twin-gun firing
+// PLAYER TWIN-GUN FIRING
 // ============================================================
 
 export function spawnPlayerBullet(
@@ -227,8 +409,14 @@ export function spawnPlayerBullet(
     owner = BULLET_OWNER.PLAYER,
     sourceId = -1
 ) {
-    const emission = PLAYER_CONFIG.emission.projectile
-    const gap = emission.gunGap
+
+    const emission =
+        PLAYER_CONFIG.emission.projectile
+
+
+    const gap =
+        emission.gunGap
+
 
     const left =
         spawnBullet(
@@ -242,6 +430,7 @@ export function spawnPlayerBullet(
             emission
         )
 
+
     const right =
         spawnBullet(
             x,
@@ -254,13 +443,16 @@ export function spawnPlayerBullet(
             emission
         )
 
+
     return {
+
         ids: [
             ...left.ids,
             ...right.ids,
         ],
 
         origins: [
+
             {
                 x: left.originX,
                 y: left.originY,
@@ -270,12 +462,14 @@ export function spawnPlayerBullet(
                 x: right.originX,
                 y: right.originY,
             },
+
         ],
     }
 }
 
+
 // ============================================================
-// Boss twin-gun firing
+// BOSS TWIN-GUN FIRING
 // ============================================================
 
 export function spawnBossBullet(
@@ -292,7 +486,10 @@ export function spawnBossBullet(
             "projectile"
         )
 
-    const gap = emission.gunGap
+
+    const gap =
+        emission.gunGap
+
 
     const left =
         spawnBullet(
@@ -305,6 +502,7 @@ export function spawnBossBullet(
             bossId,
             emission
         )
+
 
     const right =
         spawnBullet(
@@ -327,6 +525,7 @@ export function spawnBossBullet(
         ],
 
         origins: [
+
             {
                 x: left.originX,
                 y: left.originY,
@@ -336,23 +535,46 @@ export function spawnBossBullet(
                 x: right.originX,
                 y: right.originY,
             },
+
         ],
     }
 }
 
+
 // ============================================================
-// Asteroids
+// ASTEROIDS
 // ============================================================
 
-export function spawnAsteroid(x, y) {
+export function spawnAsteroid(
+    x,
+    y
+) {
 
-    const id = acquireAsteroidEntity()
+    const id =
+        acquireAsteroidEntity()
 
-    if (id === -1)
+
+    if (
+        id === -1
+    ) {
         return -1
+    }
 
-    Position.x[id] = x
-    Position.y[id] = y
+
+    // --------------------------------------------------------
+    // Position
+    // --------------------------------------------------------
+
+    Position.x[id] =
+        x
+
+    Position.y[id] =
+        y
+
+
+    // --------------------------------------------------------
+    // Velocity
+    // --------------------------------------------------------
 
     Velocity.x[id] =
         (Math.random() - 0.5) * 2
@@ -360,38 +582,86 @@ export function spawnAsteroid(x, y) {
     Velocity.y[id] =
         (Math.random() - 0.5) * 2
 
-    Health.current[id] = 20
-    Health.max[id] = 20
 
-    StatusEffect.frozen[id] = 0
+    // --------------------------------------------------------
+    // Health
+    // --------------------------------------------------------
 
-    // ----------------------------------------
-    // Asteroid size / collision radius
-    // ----------------------------------------
+    Health.current[id] =
+        20
 
-    const scale = 0.8 + Math.random() * 0.7
-    Asteroid.scale[id] = scale
-    Asteroid.radius[id] = 0.55 * scale
+    Health.max[id] =
+        20
+
+
+    // --------------------------------------------------------
+    // Status
+    // --------------------------------------------------------
+
+    StatusEffect.frozen[id] =
+        0
+
+
+    // --------------------------------------------------------
+    // Size / collision radius
+    // --------------------------------------------------------
+
+    const scale =
+        0.8 +
+        Math.random() * 0.7
+
+
+    Asteroid.scale[id] =
+        scale
+
+
+    Asteroid.radius[id] =
+        0.55 * scale
+
 
     return id
 }
 
+
 // ============================================================
-// Boss
+// BOSS
 // ============================================================
 
-export function spawnBoss(bossKey = "shotgun") {
+export function spawnBoss(
+    bossKey = "shotgun"
+) {
 
-    const id = addEntity(world)
+    const id =
+        addEntity(world)
+
 
     // --------------------------------------------------------
     // Components
     // --------------------------------------------------------
 
-    addComponent(world, id, Position)
-    addComponent(world, id, Velocity)
-    addComponent(world, id, Rotation)
-    addComponent(world, id, Health)
+    addComponent(
+        world,
+        id,
+        Position
+    )
+
+    addComponent(
+        world,
+        id,
+        Velocity
+    )
+
+    addComponent(
+        world,
+        id,
+        Rotation
+    )
+
+    addComponent(
+        world,
+        id,
+        Health
+    )
 
     addComponent(
         world,
@@ -417,56 +687,112 @@ export function spawnBoss(bossKey = "shotgun") {
         StatusEffect
     )
 
+
     // --------------------------------------------------------
     // Initial transform
     // --------------------------------------------------------
 
-    Position.x[id] = 0
-    Position.y[id] = 0
+    Position.x[id] =
+        0
 
-    Velocity.x[id] = 0
-    Velocity.y[id] = 0
+    Position.y[id] =
+        0
 
-    Rotation[id] = 0
+
+    Velocity.x[id] =
+        0
+
+    Velocity.y[id] =
+        0
+
+
+    Rotation[id] =
+        0
+
 
     // --------------------------------------------------------
-    // Health
+    // Boss health
     // --------------------------------------------------------
 
-    Health.current[id] = 300
-    Health.max[id] = 300
+    const bossIndex =
+        BOSS_INDEX_BY_KEY[bossKey] ?? 0
 
-    StatusEffect.frozen[id] = 0
+
+    const bossCfg =
+        BOSSES[bossIndex]
+
+
+    const bossHealth =
+        bossCfg?.health ??
+        300
+
+
+    Health.current[id] =
+        bossHealth
+
+    Health.max[id] =
+        bossHealth
+
+
+    StatusEffect.frozen[id] =
+        0
+
 
     // --------------------------------------------------------
-    // Boss configuration
+    // Boss weapon
     // --------------------------------------------------------
 
-    const bossIndex = BOSS_INDEX_BY_KEY[bossKey] ?? 0
-    const bossCfg = BOSSES[bossIndex]
-    const gunType = bossCfg?.gun ? getGunTypeById(bossCfg.gun.typeId) : null
-    BossAI.weapon[id] = gunType?.weaponId ?? 0
+    const gunType =
+        bossCfg?.gun
+            ? getGunTypeById(
+                bossCfg.gun.typeId
+            )
+            : null
+
+
+    BossAI.weapon[id] =
+        gunType?.weaponId ?? 0
+
 
     // ========================================================
-    // Basic AI timers
+    // BASIC AI TIMERS
     // ========================================================
 
-    BossAI.moveTimer[id] = 0
-    // Give the boss a short startup delay before firing.
-    BossAI.shootTimer[id] = 0.7 + Math.random() * 0.6
-    BossAI.beamCycleTimer[id] = 3.0
-    BossAI.beamActive[id] = 1
-    BossAI.targetRotation[id] = 0
+    BossAI.moveTimer[id] =
+        0
+
+
+    BossAI.shootTimer[id] =
+        0.7 +
+        Math.random() * 0.6
+
+
+    BossAI.beamCycleTimer[id] =
+        3.0
+
+
+    BossAI.beamActive[id] =
+        1
+
+
+    BossAI.targetRotation[id] =
+        0
+
 
     // ========================================================
-    // Burst state
+    // BURST STATE
     // ========================================================
 
-    BossAI.burstRemaining[id] = 0
-    BossAI.burstGapTimer[id] = 0
+    BossAI.burstRemaining[id] =
+        0
+
+
+    BossAI.burstGapTimer[id] =
+        0
+
 
     // ========================================================
-    // Tactical AI
+    // TACTICAL AI
     //
     // 0 = attack
     // 1 = evade
@@ -474,32 +800,66 @@ export function spawnBoss(bossKey = "shotgun") {
     // 3 = reposition
     // ========================================================
 
-    BossAI.state[id] = 0
-    BossAI.stateTimer[id] = 0.5 + Math.random() * 0.8
-    BossAI.moveRotation[id] = 0
-    BossAI.strafeDirection[id] = Math.random() < 0.5 ? -1 : 1
+    BossAI.state[id] =
+        0
 
-    // Each boss gets a slightly different
-    // combat personality.
-    BossAI.aggression[id] = 0.35 + Math.random() * 0.55
-    BossAI.attackTimer[id] = 0
-    BossAI.decisionCooldown[id] = 0
+
+    BossAI.stateTimer[id] =
+        0.5 +
+        Math.random() * 0.8
+
+
+    BossAI.moveRotation[id] =
+        0
+
+
+    BossAI.strafeDirection[id] =
+        Math.random() < 0.5
+            ? -1
+            : 1
+
+
+    // --------------------------------------------------------
+    // Combat personality
+    // --------------------------------------------------------
+
+    BossAI.aggression[id] =
+        0.35 +
+        Math.random() * 0.55
+
+
+    BossAI.attackTimer[id] =
+        0
+
+
+    BossAI.decisionCooldown[id] =
+        0
+
 
     // --------------------------------------------------------
     // Boss type
     // --------------------------------------------------------
 
-    BossType.typeIndex[id] = bossIndex
+    BossType.typeIndex[id] =
+        bossIndex
+
+
     return id
 }
 
+
 // ============================================================
-// Octopus
+// OCTOPUS
 // ============================================================
 
-export function spawnOctopus(x = 0, y = 0) {
+export function spawnOctopus(
+    x = 0,
+    y = 0
+) {
 
-    const id = addEntity(world)
+    const id =
+        addEntity(world)
+
 
     addComponent(
         world,
@@ -525,11 +885,20 @@ export function spawnOctopus(x = 0, y = 0) {
         OctopusTag
     )
 
-    Position.x[id] = x
-    Position.y[id] = y
 
-    Velocity.x[id] = 0
-    Velocity.y[id] = 0
+    Position.x[id] =
+        x
+
+    Position.y[id] =
+        y
+
+
+    Velocity.x[id] =
+        0
+
+    Velocity.y[id] =
+        0
+
 
     return id
 }
