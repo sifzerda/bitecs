@@ -32,14 +32,8 @@ export function GunsScreen({ onBack }) {
     (state) => state.unlockedWeapons
   )
 
-  const pendingUnlockWeapon = useGameStore(
-    (state) => state.pendingUnlockWeapon
-  )
-
-  const [selected, setSelected] = useState(
-    simState.currentWeapon
-  )
-
+  const pendingUnlockWeapon = useGameStore((state) => state.pendingUnlockWeapon)
+  const [selected, setSelected] = useState(simState.currentWeapon)
   const [navSelected, setNavSelected] = useState(0)
 
 
@@ -48,10 +42,7 @@ export function GunsScreen({ onBack }) {
   // ============================================================
 
   const weapon = getWeapon(selected)
-
-  const selectedGun =
-    getGunTypeByWeaponId(selected)
-
+  const selectedGun = getGunTypeByWeaponId(selected)
 
   // ============================================================
   // BACK
@@ -93,11 +84,7 @@ export function GunsScreen({ onBack }) {
     simState.currentWeapon = selected
 
     handleBack()
-  }, [
-    selected,
-    unlockedWeapons,
-    handleBack,
-  ])
+  }, [ selected, unlockedWeapons, handleBack ])
 
 
   // ============================================================
@@ -132,10 +119,7 @@ export function GunsScreen({ onBack }) {
     )
 
     return () => {
-      window.removeEventListener(
-        "keydown",
-        onKey
-      )
+      window.removeEventListener("keydown", onKey)
     }
   }, [
     handleBack,
@@ -497,7 +481,7 @@ export function GunsScreen({ onBack }) {
 
               <div className="mt-6">
 
-                <h2
+               <h2
                   className="
                     text-xl
                     sm:text-2xl
@@ -508,6 +492,21 @@ export function GunsScreen({ onBack }) {
                 >
                   {selectedGun.name}
                 </h2>
+
+                {selectedGun.description && (
+                  <p
+                    className="
+                      mt-3
+                      text-[11px]
+                      sm:text-xs
+                      text-white/50
+                      leading-relaxed
+                      tracking-wide
+                    "
+                  >
+                    {selectedGun.description}
+                  </p>
+                )}
 
                 <div
                   className="

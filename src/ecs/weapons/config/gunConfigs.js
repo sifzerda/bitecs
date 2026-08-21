@@ -41,13 +41,13 @@ export const DEFAULT_GUN_CONFIG = {
 // 20 gun types
 // ============================================================
 
-
 const RAW_TYPES = [
     {
         id: "00_raygun",
         name: "Ray Gun",
         weaponId: WEAPON_BY_NAME.raygun.id,
         svg: "/gun_svgs/00_raygun.svg",
+        description: "Standard-issue energy blaster.",
         overrides: {
             mount: {
                 width: 1.4,
@@ -70,6 +70,7 @@ const RAW_TYPES = [
         name: "Shotgun",
         weaponId: WEAPON_BY_NAME.shotgun.id,
         svg: "/gun_svgs/01_shotgun.svg",
+        description: "Wide-spread pellet blast.",
         overrides: {
             mount: { width: 1.4, height: 0.6, offsetX: 0.5, offsetY: 0.18 },
             coreGlow: { color: '#ffe605', size: 0.15, intensity: 0.8, offsetX: 0, offsetY: 0.6 },
@@ -80,6 +81,7 @@ const RAW_TYPES = [
         name: "Machine Gun",
         weaponId: WEAPON_BY_NAME.machinegun.id,
         svg: "/gun_svgs/02_machinegun.svg",
+        description: "High rate-of-fire.",
         overrides: {
             mount: { width: 1.5, height: 0.6, offsetX: 0.48, offsetY: 0.13 },
             coreGlow: { color: '#ff3355', size: 0.1, intensity: 1, offsetX: 0, offsetY: 0.9 },
@@ -87,9 +89,10 @@ const RAW_TYPES = [
     },
     {
         id: "03_cryogun",
-        name: "Cryo Gun",
+        name: "Cryo Cannon",
         weaponId: WEAPON_BY_NAME.cryocannon.id,
         svg: "/gun_svgs/03_cryogun.svg",
+        description: "Sprays a low damage freezing mist which briefly freezes entities.",
         overrides: {
             mount: { width: 1.5, height: 0.6, offsetX: 0.8, offsetY: -0.1 },
             coreGlow: { color: '#aef6ff', intensity: 1, offsetX: 0, offsetY: 0.2, mist: true, width: 0.6, height: 1.7 },
@@ -100,6 +103,7 @@ const RAW_TYPES = [
         name: "Grenade Launcher",
         weaponId: WEAPON_BY_NAME.grenadegun.id,
         svg: "/gun_svgs/04_grenadelauncher.svg",
+        description: "Grenades explode on impact, also damaging nearby entities.",
         overrides: {
             mount: { width: 1.4, height: 0.5, offsetX: 0.8, offsetY: -0.4 },
             coreGlow: { color: '#ff3355', intensity: 1, size: 0.22, offsetX: 0, offsetY: 1.2 },
@@ -110,6 +114,7 @@ const RAW_TYPES = [
         name: "Acidthrower",
         weaponId: WEAPON_BY_NAME.acidsprayer.id,
         svg: "/gun_svgs/05_acidthrower.svg",
+        description: "Sprays a corrosive stream that continues to drain entity HP.",
         overrides: {
             mount: { width: 1.35, height: 0.5, offsetX: 0.9, offsetY: 0 },
             coreGlow: { color: '#00FF7F', intensity: 0.6, offsetX: 0, offsetY: 0.2, mist: true, width: 0.5, height: 1.4 },
@@ -120,6 +125,7 @@ const RAW_TYPES = [
         name: "Missile Launcher",
         weaponId: WEAPON_BY_NAME.missilegun.id,
         svg: "/gun_svgs/06_missilelauncher.svg",
+        description: "Fires homing missiles which track enemy targets.",
         overrides: {
             mount: { width: 1.4, height: 0.6, offsetX: 0.8, offsetY: -0.01 },
             coreGlow: { color: '#FF5F1F', size: 0.22, intensity: 1, offsetX: 0, offsetY: 0.9 },
@@ -130,6 +136,7 @@ const RAW_TYPES = [
         name: "Flamethrower",
         weaponId: WEAPON_BY_NAME.flamethrower.id,
         svg: "/gun_svgs/07_flamethrower.svg",
+        description: "Short-range jet of burning fuel which deals ongoing damage.",
         overrides: {
             mount: { width: 1.3, height: 0.5, offsetX: 0.5, offsetY: 0.05 },
             coreGlow: { color: '#ff3355', size: 0.1, intensity: 1, offsetX: 0, offsetY: 1.2 },
@@ -140,6 +147,7 @@ const RAW_TYPES = [
         name: "Laser Gun",
         weaponId: WEAPON_BY_NAME.lasergun.id,
         svg: "/gun_svgs/08_lasergun.svg",
+        description: "A focused beam weapon with continuous damage.",
         overrides: {
             mount: { width: 1.4, height: 0.5, offsetX: 0.8, offsetY: -0.3 },
             coreGlow: { color: '#39FF14', size: 0.16, intensity: 1, offsetX: 0, offsetY: 1.45 },
@@ -150,6 +158,7 @@ const RAW_TYPES = [
         name: "RTL Gun",
         weaponId: WEAPON_BY_NAME.arcgun.id,
         svg: "/gun_svgs/09_arcgun.svg",
+        description: "Arcs chain lightning between nearby targets.",
         overrides: {
             mount: { width: 1.1, height: 0.4, offsetX: 0.4, offsetY: -0.04 },
             coreGlow: { color: '#005eff', size: 0.1, intensity: 1, offsetX: 0, offsetY: 1.2 },
@@ -160,6 +169,7 @@ const RAW_TYPES = [
         name: "Plasma Gun",
         weaponId: WEAPON_BY_NAME.plasmagun.id,
         svg: "/gun_svgs/10_plasmagun.svg",
+        description: "A superheated plasma laser beam.",
         overrides: {
             mount: { width: 1.3, height: 0.5, offsetX: 0.6, offsetY: -0.3 },
             coreGlow: { color: '#005eff', size: 0.13, intensity: 1, offsetX: 0, offsetY: 1.3 },
@@ -172,12 +182,14 @@ export const GUN_TYPES = RAW_TYPES.map(({
     name,
     weaponId,
     svg,
+    description = "",
     overrides = {},
 }) => ({
     id,
     name,
     weaponId,
     svg,
+    description,
     config: deepMerge(DEFAULT_GUN_CONFIG, overrides),
 }))
 
