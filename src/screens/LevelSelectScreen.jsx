@@ -39,27 +39,18 @@ function levelLabel(level) {
 function levelSubLabel(level) {
 
   return isBossLevel(level)
-    ? "BOSS // CORE"
-    : "ASTEROID FIELD"
+    ? "BOSS // CORE" : "ASTEROID FIELD"
 }
 
 // ============================================================
 // STAGE ICON
 // ============================================================
 
-function StageIcon({
-  boss,
-  locked,
-  active,
-}) {
+function StageIcon({ boss, locked, active }) {
 
   if (locked) {
 
-    return (
-      <div className="text-2xl text-white/20">
-        🔒
-      </div>
-    )
+    return ( <div className="text-2xl text-white/20">🔒</div> )
   }
 
   if (boss) {
@@ -71,14 +62,13 @@ function StageIcon({
           rotate-45 items-center justify-center
           border-2
 
-          ${
-            active
-              ? `
+          ${active
+            ? `
                 border-yellow-300
                 bg-yellow-400/10
                 shadow-[0_0_24px_rgba(255,220,50,0.6)]
               `
-              : `
+            : `
                 border-yellow-400/60
                 bg-yellow-400/5
               `
@@ -99,14 +89,13 @@ function StageIcon({
         items-center justify-center
         rounded-full border-2
 
-        ${
-          active
-            ? `
+        ${active
+          ? `
               border-cyan-300
               bg-cyan-400/10
               shadow-[0_0_22px_rgba(0,255,255,0.55)]
             `
-            : `
+          : `
               border-[#39ff14]/50
               bg-[#39ff14]/5
             `
@@ -131,11 +120,8 @@ function CornerBrackets() {
   return (
     <>
       <div className="absolute left-0 top-0 h-3 w-3 border-l-2 border-t-2 border-cyan-400/70" />
-
       <div className="absolute right-0 top-0 h-3 w-3 border-r-2 border-t-2 border-cyan-400/70" />
-
       <div className="absolute bottom-0 left-0 h-3 w-3 border-b-2 border-l-2 border-cyan-400/70" />
-
       <div className="absolute bottom-0 right-0 h-3 w-3 border-b-2 border-r-2 border-cyan-400/70" />
     </>
   )
@@ -145,26 +131,15 @@ function CornerBrackets() {
 // LEVEL SELECT SCREEN
 // ============================================================
 
-export default function LevelSelectScreen({
-  onPlay,
-  onBack,
-}) {
+export default function LevelSelectScreen({ onPlay, onBack }) {
 
   // ==========================================================
   // GAME STORE
   // ==========================================================
 
-  const highestLevelReached = useGameStore(
-    (state) => state.highestLevelReached
-  )
-
-  const isLevelUnlocked = useGameStore(
-    (state) => state.isLevelUnlocked
-  )
-
-  const startLevel = useGameStore(
-    (state) => state.startLevel
-  )
+  const highestLevelReached = useGameStore((state) => state.highestLevelReached)
+  const isLevelUnlocked = useGameStore((state) => state.isLevelUnlocked)
+  const startLevel = useGameStore((state) => state.startLevel)
 
   // ==========================================================
   // PROGRESSION
@@ -192,27 +167,14 @@ export default function LevelSelectScreen({
   // ==========================================================
 
   const safeHighestLevel = useMemo(() => {
-
-    return Math.max(
-      1,
-      Math.min(
-        Number(highestLevelReached) || 1,
-        totalLevels
-      )
-    )
-
-  }, [
-    highestLevelReached,
-    totalLevels,
-  ])
+    return Math.max( 1, Math.min(Number(highestLevelReached) || 1, totalLevels))
+  }, [highestLevelReached, totalLevels])
 
   // ==========================================================
   // SELECTED LEVEL
   // ==========================================================
 
-  const [selected, setSelected] = useState(
-    safeHighestLevel
-  )
+  const [selected, setSelected] = useState(safeHighestLevel)
 
   // ==========================================================
   // KEEP SELECTION VALID
@@ -222,28 +184,16 @@ export default function LevelSelectScreen({
 
     setSelected((previous) => {
 
-      const clamped = Math.max(
-        1,
-        Math.min(
-          Number(previous) || 1,
-          totalLevels
-        )
-      )
+      const clamped = Math.max(1, Math.min(Number(previous) || 1, totalLevels))
 
-      if (
-        isLevelUnlocked(clamped)
-      ) {
+      if (isLevelUnlocked(clamped)) {
         return clamped
       }
 
       return safeHighestLevel
     })
 
-  }, [
-    totalLevels,
-    safeHighestLevel,
-    isLevelUnlocked,
-  ])
+  }, [totalLevels, safeHighestLevel, isLevelUnlocked])
 
   // ==========================================================
   // SELECT LEVEL
@@ -252,25 +202,17 @@ export default function LevelSelectScreen({
   const select = useCallback(
     (level) => {
 
-      if (
-        level < 1 ||
-        level > totalLevels
-      ) {
+      if (level < 1 || level > totalLevels) {
         return
       }
 
-      if (
-        !isLevelUnlocked(level)
-      ) {
+      if (!isLevelUnlocked(level)) {
         return
       }
 
       setSelected(level)
     },
-    [
-      isLevelUnlocked,
-      totalLevels,
-    ]
+    [isLevelUnlocked, totalLevels]
   )
 
   // ==========================================================
@@ -279,30 +221,18 @@ export default function LevelSelectScreen({
 
   const play = useCallback(() => {
 
-    if (
-      selected < 1 ||
-      selected > totalLevels
-    ) {
+    if (selected < 1 || selected > totalLevels) {
       return
     }
 
-    if (
-      !isLevelUnlocked(selected)
-    ) {
+    if (!isLevelUnlocked(selected)) {
       return
     }
 
     startLevel(selected)
-
     onPlay?.(selected)
 
-  }, [
-    selected,
-    totalLevels,
-    isLevelUnlocked,
-    startLevel,
-    onPlay,
-  ])
+  }, [selected, totalLevels, isLevelUnlocked, startLevel, onPlay])
 
   // ==========================================================
   // BACK
@@ -330,55 +260,32 @@ export default function LevelSelectScreen({
 
     const onKey = (event) => {
 
-      if (
-        event.key === "Escape" ||
-        event.key === "Backspace"
-      ) {
-
+      if (event.key === "Escape" || event.key === "Backspace") {
         event.preventDefault()
-
         back()
-
         return
       }
 
-      if (
-        event.key === "Enter"
-      ) {
-
+      if (event.key === "Enter") {
         event.preventDefault()
-
         play()
       }
     }
 
-    window.addEventListener(
-      "keydown",
-      onKey
-    )
+    window.addEventListener("keydown", onKey)
 
     return () => {
-
-      window.removeEventListener(
-        "keydown",
-        onKey
-      )
+      window.removeEventListener("keydown", onKey)
     }
 
-  }, [
-    back,
-    play,
-  ])
+  }, [ back, play])
 
   // ==========================================================
   // SELECTED LEVEL STATE
   // ==========================================================
 
-  const selectedUnlocked =
-    isLevelUnlocked(selected)
-
-  const selectedIsBoss =
-    isBossLevel(selected)
+  const selectedUnlocked = isLevelUnlocked(selected)
+  const selectedIsBoss = isBossLevel(selected)
 
   // ==========================================================
   // RENDER
@@ -727,42 +634,41 @@ export default function LevelSelectScreen({
                         transition-all
                         duration-200
 
-                        ${
-                          active && unlocked
+                        ${active && unlocked
 
-                            ? boss
+                          ? boss
 
-                              ? `
+                            ? `
                                 border-yellow-300
                                 bg-yellow-400/8
                                 shadow-[0_0_30px_rgba(255,220,50,0.25)]
                               `
 
-                              : `
+                            : `
                                 border-cyan-300
                                 bg-cyan-400/8
                                 shadow-[0_0_30px_rgba(0,255,255,0.25)]
                               `
 
-                            : unlocked
+                          : unlocked
 
-                              ? boss
+                            ? boss
 
-                                ? `
+                              ? `
                                   border-yellow-400/40
                                   bg-black/70
                                   hover:border-yellow-300
                                   hover:bg-yellow-400/6
                                 `
 
-                                : `
+                              : `
                                   border-[#39ff14]/30
                                   bg-black/70
                                   hover:border-cyan-300/70
                                   hover:bg-cyan-400/4
                                 `
 
-                              : `
+                            : `
                                 cursor-not-allowed
                                 border-white/6
                                 bg-black/80
@@ -792,16 +698,15 @@ export default function LevelSelectScreen({
                             pointer-events-none
                             absolute inset-0
 
-                            ${
-                              boss
-                                ? `
+                            ${boss
+                              ? `
                                   bg-[radial-gradient(
                                     circle_at_center,
                                     rgba(255,220,50,0.14),
                                     transparent_65%
                                   )]
                                 `
-                                : `
+                              : `
                                   bg-[radial-gradient(
                                     circle_at_center,
                                     rgba(0,255,255,0.14),
@@ -841,14 +746,13 @@ export default function LevelSelectScreen({
                                 font-bold
                                 tracking-[0.25em]
 
-                                ${
-                                  active
-                                    ? boss
-                                      ? "text-yellow-300"
-                                      : "text-cyan-300"
-                                    : boss
-                                      ? "text-yellow-400/70"
-                                      : "text-[#39ff14]/70"
+                                ${active
+                                  ? boss
+                                    ? "text-yellow-300"
+                                    : "text-cyan-300"
+                                  : boss
+                                    ? "text-yellow-400/70"
+                                    : "text-[#39ff14]/70"
                                 }
                               `}
                             >
@@ -860,10 +764,9 @@ export default function LevelSelectScreen({
                                 text-[7px]
                                 tracking-[0.25em]
 
-                                ${
-                                  boss
-                                    ? "text-yellow-300/60"
-                                    : "text-white/30"
+                                ${boss
+                                  ? "text-yellow-300/60"
+                                  : "text-white/30"
                                 }
                               `}
                             >
@@ -910,13 +813,12 @@ export default function LevelSelectScreen({
                             h-1
                             w-full
 
-                            ${
-                              boss
-                                ? `
+                            ${boss
+                              ? `
                                   bg-yellow-300
                                   shadow-[0_0_12px_#ffe600]
                                 `
-                                : `
+                              : `
                                   bg-cyan-300
                                   shadow-[0_0_12px_#00ffff]
                                 `

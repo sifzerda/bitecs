@@ -21,10 +21,7 @@ import {
 } from "../constants/components.js"
 
 import { BOSSES } from "../constants/bosses.js"
-import {
-    useGameStore,
-    SCREEN,
-} from "../../../store/gameStore.js"
+import { useGameStore, SCREEN } from "../../../store/gameStore.js"
 import { simState } from "../../state/simState.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { damageTentacle, PHASE } from "./tentacleSystem.js"

@@ -502,9 +502,6 @@ export const BOSSES = [
 
     },
 
-
-
- 
 {
         key: "octopus",
         name: "The Kraken",

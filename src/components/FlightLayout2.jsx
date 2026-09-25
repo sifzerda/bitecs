@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 
-export default function FlightLayout2({ title, footer, children,
-  // layout controls
+export default function FlightLayout2({
+  title,
+  footer,
+  children,
   size = 'md',
   scrollable = false,
-  centered = true,
+  centered = true
 }) {
 
   const [typedTitle, setTypedTitle] = useState('');
@@ -18,15 +20,11 @@ export default function FlightLayout2({ title, footer, children,
     setTypedTitle('');
 
     const interval = setInterval(() => {
-
       setTypedTitle(title.slice(0, i + 1));
-
       i++;
-
       if (i >= title.length) {
         clearInterval(interval);
       }
-
     }, 60);
 
     return () => clearInterval(interval);
@@ -47,13 +45,10 @@ export default function FlightLayout2({ title, footer, children,
       {/* HUD OVERLAY */}
       {/* ========================================================= */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-
         {/* TOP ARC */}
         <div className="absolute left-1/2 top-6 h-px w-[65%] -translate-x-1/2 rounded-full bg-[#39ff14]/70 shadow-[0_0_12px_#39ff14]" />
-
         {/* BOTTOM ARC */}
         <div className="absolute bottom-6 left-1/2 h-px w-[45%] -translate-x-1/2 rounded-full bg-[#39ff14]/70 shadow-[0_0_12px_#39ff14]" />
-
         {/* ========================================================= */}
         {/* SIDE SCALES */}
         {/* ========================================================= */}
@@ -120,13 +115,10 @@ export default function FlightLayout2({ title, footer, children,
       {/* CONTENT PANEL */}
       {/* ========================================================= */}
       <section className={`relative z-10 w-[92%] ${sizes[size]} border border-[#39ff14]/50 bg-black/65 shadow-[0_0_24px_rgba(57,255,20,0.18)] backdrop-blur-sm`}>
-
         {/* TOP NOTCH */}
         <div className="absolute -top-px left-1/2 h-2 w-10 -translate-x-1/2 border border-[#39ff14]/60 bg-black" />
-
         {/* INNER FRAME */}
         <div className="absolute inset-3 border border-[#39ff14]/10" />
-
         {/* PANEL CONTENT */}
         <div className="relative z-10 p-6 md:p-8">
 
@@ -157,19 +149,11 @@ export default function FlightLayout2({ title, footer, children,
                 <div className="absolute inset-0 flex justify-center">
 
                   {/* RED */}
-                  <span aria-hidden="true" className="absolute font-audiowide text-2xl md:text-3xl uppercase whitespace-nowrap tracking-widest blur-[2px] text-red-500/80 -translate-x-1">
-                    {typedTitle}
-                  </span>
-
+                  <span aria-hidden="true" className="absolute font-audiowide text-2xl md:text-3xl uppercase whitespace-nowrap tracking-widest blur-[2px] text-red-500/80 -translate-x-1">{typedTitle}</span>
                   {/* BLUE */}
-                  <span aria-hidden="true" className="absolute font-audiowide text-2xl md:text-3xl uppercase whitespace-nowrap tracking-widest blur-[2px] text-cyan-400/80 translate-x-1">
-                    {typedTitle}
-                  </span>
-
+                  <span aria-hidden="true" className="absolute font-audiowide text-2xl md:text-3xl uppercase whitespace-nowrap tracking-widest blur-[2px] text-cyan-400/80 translate-x-1">{typedTitle}</span>
                   {/* WHITE */}
-                  <span aria-hidden="true" className="absolute font-audiowide text-2xl md:text-3xl uppercase whitespace-nowrap tracking-widest text-white">
-                    {typedTitle}
-                  </span>
+                  <span aria-hidden="true" className="absolute font-audiowide text-2xl md:text-3xl uppercase whitespace-nowrap tracking-widest text-white">{typedTitle}</span>
 
                 </div>
               </div>

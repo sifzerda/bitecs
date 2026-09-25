@@ -212,7 +212,7 @@ void main() {
 export function TentacleRenderer() {
 
     const cfg = useControls('Eldritch / Organic Tentacles', {
-        debugForceVisible: { value: true, label: '[DEBUG] Force Visible' },
+        debugForceVisible: { value: false, label: '[DEBUG] Force Visible' },
         bundleCount: { value: BUNDLE_COUNT_DEFAULT, min: 1, max: MAX_BUNDLES, step: 1 },
         tentaclesPerBundle: { value: TENTACLES_PER_BUNDLE_DEFAULT, min: 1, max: MAX_PER_BUNDLE, step: 1 },
         bundleSpread: { value: 0.30, min: 0, max: 0.3, step: 0.005, label: 'bundle fan spread' },

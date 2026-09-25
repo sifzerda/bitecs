@@ -28,14 +28,10 @@ import FlightLayout2 from "../components/FlightLayout2.jsx"
 
 
 export function GunsScreen({ onBack }) {
-  const unlockedWeapons = useGameStore(
-    (state) => state.unlockedWeapons
-  )
-
+  const unlockedWeapons = useGameStore((state) => state.unlockedWeapons)
   const pendingUnlockWeapon = useGameStore((state) => state.pendingUnlockWeapon)
   const [selected, setSelected] = useState(simState.currentWeapon)
   const [navSelected, setNavSelected] = useState(0)
-
 
   // ============================================================
   // CURRENT WEAPON
@@ -43,6 +39,7 @@ export function GunsScreen({ onBack }) {
 
   const weapon = getWeapon(selected)
   const selectedGun = getGunTypeByWeaponId(selected)
+  const selectedUnlocked = unlockedWeapons.includes(selected)
 
   // ============================================================
   // BACK
@@ -60,11 +57,8 @@ export function GunsScreen({ onBack }) {
       return
     }
 
-    useGameStore.setState({
-      screen: SCREEN.MENU,
-    })
+    useGameStore.setState({ screen: SCREEN.MENU })
   }, [onBack])
-
 
   // ============================================================
   // EQUIP
@@ -94,8 +88,7 @@ export function GunsScreen({ onBack }) {
   useEffect(() => {
     const onKey = (e) => {
       if (
-        e.key === "Escape" ||
-        e.key === "Backspace"
+        e.key === "Escape" || e.key === "Backspace"
       ) {
         e.preventDefault()
         handleBack()
@@ -113,27 +106,19 @@ export function GunsScreen({ onBack }) {
       }
     }
 
-    window.addEventListener(
-      "keydown",
-      onKey
-    )
+    window.addEventListener("keydown", onKey)
 
     return () => {
       window.removeEventListener("keydown", onKey)
     }
-  }, [
-    handleBack,
-    handleEquip,
-    navSelected,
-  ])
+  }, [ handleBack, handleEquip, navSelected ])
 
 
   // ============================================================
   // BUTTON STYLE
   // ============================================================
 
-  const btnClass = (active) => `
-    cursor-pointer
+  const btnClass = (active, disabled) => `
     relative
     w-40
     sm:w-56
@@ -144,19 +129,26 @@ export function GunsScreen({ onBack }) {
     border
     transition-all
     duration-200
-
     ${
-      active
+      disabled
         ? `
-          border-green-300
-          text-cyan-300
-          bg-cyan-500/10
-          shadow-[0_0_18px_rgba(0,255,255,0.35)]
+          cursor-not-allowed
+          border-white/10
+          text-white/30
+          bg-black/40
         `
         : `
-          border-[#39ff14]/40
-          text-[#39ff14]/70
-          bg-black/40
+          cursor-pointer
+          ${
+            active
+              ? `
+                border-green-300
+                text-cyan-300
+                bg-cyan-500/10
+                shadow-[0_0_18px_rgba(0,255,255,0.35)]
+              `
+              : `border-[#39ff14]/40 text-[#39ff14]/70 bg-black/40`
+          }
         `
     }
   `
@@ -222,32 +214,21 @@ export function GunsScreen({ onBack }) {
             >
 
               {WEAPONS.map((w) => {
-                const gun =
-                  getGunTypeByWeaponId(w.id)
+                const gun = getGunTypeByWeaponId(w.id)
 
-                const unlocked =
-                  unlockedWeapons.includes(w.id)
-
-                const isSelected =
-                  selected === w.id
-
-                const isNew =
-                  pendingUnlockWeapon === w.id
+                const unlocked = unlockedWeapons.includes(w.id)
+                const isSelected = selected === w.id
+                const isNew = pendingUnlockWeapon === w.id
 
                 return (
                   <button
                     key={w.id}
                     type="button"
-                    disabled={!unlocked}
                     onClick={() => {
-                      if (unlocked) {
-                        setSelected(w.id)
-                      }
+                      setSelected(w.id)
                     }}
                     onMouseEnter={() => {
-                      if (unlocked) {
-                        setSelected(w.id)
-                      }
+                      setSelected(w.id)
                     }}
                     className={`
                       relative
@@ -256,6 +237,7 @@ export function GunsScreen({ onBack }) {
                       border
                       text-left
                       p-1.5
+                      cursor-pointer
                       transition-all
                       duration-200
 
@@ -275,18 +257,10 @@ export function GunsScreen({ onBack }) {
                               hover:border-cyan-300/70
                             `
                             : `
-                              border-white/10
+                              border-red-500/60
                               bg-black/60
+                              hover:border-red-400/80
                             `
-                      }
-
-                      ${
-                        !unlocked
-                          ? `
-                            cursor-not-allowed
-                            opacity-60
-                          `
-                          : ""
                       }
                     `}
                   >
@@ -316,10 +290,7 @@ export function GunsScreen({ onBack }) {
                           ${
                             unlocked
                               ? ""
-                              : `
-                                brightness-0
-                                opacity-70
-                              `
+                              : "brightness-0"
                           }
                         `}
                       />
@@ -332,7 +303,7 @@ export function GunsScreen({ onBack }) {
                             flex
                             items-center
                             justify-center
-                            bg-black/50
+                            bg-red-950/40
                           "
                         >
                           <span
@@ -340,7 +311,8 @@ export function GunsScreen({ onBack }) {
                               font-bold
                               text-red-400
                               text-[7px]
-                              tracking-[0.2em]
+                              tracking-[0.25em]
+                              drop-shadow-[0_0_4px_rgba(239,68,68,0.8)]
                             "
                           >
                             LOCKED
@@ -350,63 +322,67 @@ export function GunsScreen({ onBack }) {
 
                     </div>
 
-                    {unlocked && (
-                      <>
-                        <div
-                          className="
-                            text-cyan-300/90
-                            text-[9px]
-                            truncate
-                            tracking-widest
-                          "
-                        >
-                          {gun.name}
-                        </div>
+                    <div
+                      className={`
+                        text-[9px]
+                        truncate
+                        tracking-widest
+                        ${
+                          unlocked
+                            ? "text-cyan-300/90"
+                            : "text-red-400/80"
+                        }
+                      `}
+                    >
+                      {gun.name}
+                    </div>
 
-                        <div
-                          className="
-                            text-white/40
-                            truncate
-                            text-[8px]
-                            tracking-widest
-                          "
-                        >
-                          {w.category}
-                        </div>
+                    <div
+                      className={`
+                        truncate
+                        text-[8px]
+                        tracking-widest
+                        ${
+                          unlocked
+                            ? "text-white/40"
+                            : "text-red-400/40"
+                        }
+                      `}
+                    >
+                      {w.category}
+                    </div>
 
-                        {isNew && (
-                          <div
-                            className="
-                              absolute
-                              top-0.5
-                              right-0.5
-                              text-yellow-300
-                              text-[7px]
-                              font-bold
-                              tracking-widest
-                              animate-pulse
-                            "
-                          >
-                            NEW
-                          </div>
-                        )}
+                    {unlocked && isNew && (
+                      <div
+                        className="
+                          absolute
+                          top-0.5
+                          right-0.5
+                          text-yellow-300
+                          text-[7px]
+                          font-bold
+                          tracking-widest
+                          animate-pulse
+                        "
+                      >
+                        NEW
+                      </div>
+                    )}
 
-                        {isSelected && (
-                          <span
-                            className="
-                              absolute
-                              -left-2.5
-                              top-1/2
-                              -translate-y-1/2
-                              text-cyan-300
-                              text-[10px]
-                              animate-pulse
-                            "
-                          >
-                            ▶
-                          </span>
-                        )}
-                      </>
+                    {isSelected && (
+                      <span
+                        className="
+                          absolute
+                          -left-2.5
+                          top-1/2
+                          -translate-y-1/2
+                          text-cyan-300
+                          text-[10px]
+                          animate-pulse
+                        "
+                      >
+                        ▶
+                      </span>
                     )}
 
                   </button>
@@ -464,15 +440,107 @@ export function GunsScreen({ onBack }) {
                 <img
                   src={`/gun_svgs/${selectedGun.id}.svg`}
                   alt={selectedGun.name}
-                  className="
+                  className={`
                     w-full
                     h-full
                     max-w-[70%]
                     max-h-[70%]
                     object-contain
                     animate-gun-recoil
-                  "
+
+                    ${
+                      selectedUnlocked
+                        ? ""
+                        : "brightness-0"
+                    }
+                  `}
                 />
+
+                {!selectedUnlocked && (
+                  <div
+                    className="
+                      absolute
+                      inset-0
+                      flex
+                      items-center
+                      justify-center
+                      bg-red-950/30
+                    "
+                  >
+                    <div
+                      className="
+                        relative
+                        w-24
+                        h-24
+                        sm:w-28
+                        sm:h-28
+                        flex
+                        items-center
+                        justify-center
+                      "
+                    >
+                      <div
+                        className="
+                          absolute
+                          inset-0
+                          bg-red-600/10
+                          border-2
+                          border-red-500/80
+                          shadow-[0_0_20px_rgba(239,68,68,0.5)]
+                        "
+                        style={{
+                          clipPath:
+                            "polygon(50% 4%, 96% 96%, 4% 96%)",
+                        }}
+                      />
+
+                      <div
+                        className="
+                          relative
+                          mt-4
+                          flex
+                          flex-col
+                          items-center
+                          gap-1
+                        "
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="
+                            w-5
+                            h-5
+                            sm:w-6
+                            sm:h-6
+                            fill-none
+                            stroke-red-400
+                          "
+                          strokeWidth="2"
+                        >
+                          <rect
+                            x="5"
+                            y="11"
+                            width="14"
+                            height="9"
+                            rx="1.5"
+                          />
+                          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                        </svg>
+
+                        <span
+                          className="
+                            text-red-400
+                            text-[9px]
+                            sm:text-[10px]
+                            font-bold
+                            tracking-[0.3em]
+                          "
+                        >
+                          LOCKED
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
               </div>
 
@@ -491,6 +559,20 @@ export function GunsScreen({ onBack }) {
                   "
                 >
                   {selectedGun.name}
+
+                  {!selectedUnlocked && (
+                    <span
+                      className="
+                        ml-3
+                        align-middle
+                        text-red-400
+                        text-[10px]
+                        tracking-[0.2em]
+                      "
+                    >
+                      LOCKED
+                    </span>
+                  )}
                 </h2>
 
                 {selectedGun.description && (
@@ -538,17 +620,16 @@ export function GunsScreen({ onBack }) {
 
                   <button
                     type="button"
+                    disabled={!selectedUnlocked}
                     onClick={handleEquip}
                     onMouseEnter={() =>
                       setNavSelected(0)
                     }
-                    className={`flex-1 ${btnClass(
-                      navSelected === 0
-                    )}`}
+                    className={`flex-1 ${btnClass(navSelected === 0, !selectedUnlocked)}`}
                   >
                     EQUIP
 
-                    {navSelected === 0 && (
+                    {navSelected === 0 && selectedUnlocked && (
                       <span
                         className="
                           absolute
@@ -571,9 +652,7 @@ export function GunsScreen({ onBack }) {
                     onMouseEnter={() =>
                       setNavSelected(1)
                     }
-                    className={`flex-1 ${btnClass(
-                      navSelected === 1
-                    )}`}
+                    className={`flex-1 ${btnClass(navSelected === 1, false)}`}
                   >
                     BACK
 

@@ -124,7 +124,6 @@ export const BossTag = {};
 
 export const TentacleTag = {};
 export const TentacleBossTag = {};
-export const OctopusTag = {};
 
 export const ARC_MAX_POINTS = 32
 

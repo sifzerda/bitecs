@@ -26,8 +26,6 @@ import {
     BossAI,
     BossType,
     StatusEffect,
-    Octopus,
-    OctopusTag,
 } from "./constants/components.js"
 
 import {
@@ -842,62 +840,6 @@ export function spawnBoss(
 
     BossType.typeIndex[id] =
         bossIndex
-
-
-    return id
-}
-
-
-// ============================================================
-// OCTOPUS
-// ============================================================
-
-export function spawnOctopus(
-    x = 0,
-    y = 0
-) {
-
-    const id =
-        addEntity(world)
-
-
-    addComponent(
-        world,
-        id,
-        Position
-    )
-
-    addComponent(
-        world,
-        id,
-        Velocity
-    )
-
-    addComponent(
-        world,
-        id,
-        Octopus
-    )
-
-    addComponent(
-        world,
-        id,
-        OctopusTag
-    )
-
-
-    Position.x[id] =
-        x
-
-    Position.y[id] =
-        y
-
-
-    Velocity.x[id] =
-        0
-
-    Velocity.y[id] =
-        0
 
 
     return id

@@ -19,7 +19,6 @@ import {
     Tentacle,
     TentacleTag,
     TentacleBossTag,
-    OctopusTag,
 } from "./components";
 
 export const playerQuery = () => query(world, [Position, PlayerTag])
@@ -28,4 +27,4 @@ export const movingQuery = () => query(world, [Position, Velocity])
 export const bossAIQuery = () => query(world, [Position, Velocity, BossAI, BossTag])
 export const tentacleQuery = () => query(world, [Position, Health, TentacleBossTag])
 export const tentacleBossQuery = () => query(world, [Position, Health, TentacleBossTag])
-export const octopusQuery = () => query(world, [Position, Velocity, OctopusTag])
+export const octopusQuery = () => query(world, [Position, Velocity])

@@ -40,8 +40,8 @@ import { ExplosionRenderer } from '../renderers/ExplosionRenderer.jsx'
 
 import { GunMount } from '../renderers/GunMount.jsx'
 
-//import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
-//import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
+import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
+import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
 
 import { DebrisRenderer } from '../renderers/DebrisRenderer.jsx'
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'

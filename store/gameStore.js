@@ -18,7 +18,6 @@ import {
     formatLevelLabel,
 } from "../src/ecs/constants/progression.js"
 
-
 // ============================================================
 // SCREEN
 // ============================================================
@@ -38,7 +37,6 @@ export const SCREEN = {
     DEBUG: "debug",
 }
 
-
 // ============================================================
 // PROGRESSION RE-EXPORTS
 //
@@ -56,22 +54,13 @@ export {
     formatLevelLabel,
 }
 
-
 // ============================================================
 // HELPERS
 // ============================================================
 
 function clampLevel(level) {
-
-    return Math.max(
-        1,
-        Math.min(
-            Number(level) || 1,
-            TOTAL_LEVELS
-        )
-    )
+    return Math.max(1, Math.min(Number(level) || 1, TOTAL_LEVELS))
 }
-
 
 // ============================================================
 // GAME STORE
@@ -84,13 +73,9 @@ export const useGameStore = create((set, get) => ({
     // ========================================================
 
     screen: SCREEN.MENU,
-
     level: 1,
-
     highestLevelReached: 1,
-
     paused: false,
-
 
     // ========================================================
     // WEAPON / CAMPAIGN STATE
@@ -99,9 +84,7 @@ export const useGameStore = create((set, get) => ({
     // ========================================================
 
     unlockedWeapons: [0],
-
     pendingUnlockWeapon: null,
-
 
     // ========================================================
     // START LEVEL
@@ -110,23 +93,16 @@ export const useGameStore = create((set, get) => ({
     // ========================================================
 
     startLevel: (level = 1) => {
-
-        const safeLevel =
-            clampLevel(level)
-
+        const safeLevel = clampLevel(level)
         resetSimStateForLevel()
 
         set({
             level: safeLevel,
-
             screen: SCREEN.PLAY,
-
             paused: false,
-
             pendingUnlockWeapon: null,
         })
     },
-
 
     // ========================================================
     // NEW GAME
@@ -143,11 +119,8 @@ export const useGameStore = create((set, get) => ({
         set({
 
             screen: SCREEN.MENU,
-
             level: 1,
-
             paused: false,
-
             pendingUnlockWeapon: null,
 
             // IMPORTANT:
@@ -155,7 +128,6 @@ export const useGameStore = create((set, get) => ({
             // highestLevelReached remains unchanged.
         })
     },
-
 
     // ========================================================
     // RESET CAMPAIGN
@@ -170,19 +142,13 @@ export const useGameStore = create((set, get) => ({
         set({
 
             screen: SCREEN.MENU,
-
             level: 1,
-
             highestLevelReached: 1,
-
             paused: false,
-
             unlockedWeapons: [0],
-
             pendingUnlockWeapon: null,
         })
     },
-
 
     // ========================================================
     // COMPLETE CURRENT ENCOUNTER
@@ -202,37 +168,16 @@ export const useGameStore = create((set, get) => ({
 
     completeLevel: () => {
 
-        const {
-            level,
-            highestLevelReached,
-        } = get()
-
-
-        const nextLevel =
-            level + 1
-
-
-        const unlockedLevel =
-            Math.min(
-                nextLevel,
-                TOTAL_LEVELS
-            )
-
+        const { level, highestLevelReached } = get()
+        const nextLevel = level + 1
+        const unlockedLevel = Math.min(nextLevel, TOTAL_LEVELS)
 
         set({
-
-            highestLevelReached:
-                Math.max(
-                    highestLevelReached,
-                    unlockedLevel
-                ),
-
+            highestLevelReached: Math.max(highestLevelReached, unlockedLevel),
             paused: true,
-
             screen: SCREEN.LEVEL_COMPLETE,
         })
     },
-
 
     // ========================================================
     // CONTINUE
@@ -244,12 +189,8 @@ export const useGameStore = create((set, get) => ({
 
     continueLevel: () => {
 
-        const currentLevel =
-            get().level
-
-        const nextLevel =
-            currentLevel + 1
-
+        const currentLevel = get().level
+        const nextLevel = currentLevel + 1
 
         // ----------------------------------------------------
         // CAMPAIGN COMPLETE
@@ -258,17 +199,13 @@ export const useGameStore = create((set, get) => ({
         if (nextLevel > TOTAL_LEVELS) {
 
             set({
-
                 screen: SCREEN.MENU,
-
                 paused: false,
-
                 pendingUnlockWeapon: null,
             })
 
             return
         }
-
 
         // ----------------------------------------------------
         // START NEXT ENCOUNTER
@@ -277,38 +214,21 @@ export const useGameStore = create((set, get) => ({
         resetSimStateForLevel()
 
         set(state => ({
-
             level: nextLevel,
-
-            highestLevelReached:
-                Math.max(
-                    state.highestLevelReached,
-                    nextLevel
-                ),
-
+            highestLevelReached: Math.max(state.highestLevelReached, nextLevel),
             screen: SCREEN.PLAY,
-
             paused: false,
-
             pendingUnlockWeapon: null,
         }))
     },
-
 
     // ========================================================
     // GAME OVER
     // ========================================================
 
     gameOver: () => {
-
-        set({
-
-            screen: SCREEN.GAME_OVER,
-
-            paused: true,
-        })
+        set({ screen: SCREEN.GAME_OVER, paused: true })
     },
-
 
     // ========================================================
     // UNLOCK WEAPON
@@ -320,46 +240,26 @@ export const useGameStore = create((set, get) => ({
             return false
         }
 
-
         let newlyUnlocked = false
-
 
         set(state => {
 
-            const alreadyUnlocked =
-                state.unlockedWeapons.includes(
-                    weaponId
-                )
-
+            const alreadyUnlocked = state.unlockedWeapons.includes(weaponId)
 
             if (alreadyUnlocked) {
 
                 return {
-
-                    unlockedWeapons:
-                        state.unlockedWeapons,
-
-                    pendingUnlockWeapon:
-                        null,
+                    unlockedWeapons: state.unlockedWeapons,
+                    pendingUnlockWeapon: null,
                 }
             }
-
-
             newlyUnlocked = true
 
-
             return {
-
-                unlockedWeapons: [
-                    ...state.unlockedWeapons,
-                    weaponId,
-                ],
-
-                pendingUnlockWeapon:
-                    weaponId,
+                unlockedWeapons: [...state.unlockedWeapons, weaponId],
+                pendingUnlockWeapon: weaponId,
             }
         })
-
 
         return newlyUnlocked
     },
@@ -369,52 +269,23 @@ export const useGameStore = create((set, get) => ({
     // CLEAR PENDING WEAPON
     // ========================================================
 
-    clearPendingUnlockWeapon: () => {
-
-        set({
-
-            pendingUnlockWeapon:
-                null,
-        })
-    },
-
+    clearPendingUnlockWeapon: () => { set({ pendingUnlockWeapon: null }) },
 
     // ========================================================
     // UI
     // ========================================================
 
-    setScreen: (screen) =>
-        set({ screen }),
-
-
-    setPaused: (paused) =>
-        set({ paused }),
-
-
-    togglePause: () =>
-        set(state => ({
-
-            paused:
-                !state.paused,
-        })),
-
+    setScreen: (screen) => set({ screen }),
+    setPaused: (paused) => set({ paused }),
+    togglePause: () => set(state => ({ paused: !state.paused })),
 
     // ========================================================
     // LEVEL ACCESS
     // ========================================================
 
     isLevelUnlocked: (level) => {
-
-        const safeLevel =
-            Number(level)
-
-        return (
-
-            safeLevel >= 1 &&
-
-            safeLevel <=
-                get().highestLevelReached
-        )
+        const safeLevel = Number(level)
+        return (safeLevel >= 1 && safeLevel <= get().highestLevelReached)
     },
 
 }))
