@@ -131,7 +131,7 @@ Asteroid damages ship a little if collides with it, boss destroys player on coll
 - [ ] optimize things
 - [ ] optimize starfield renderer, make milky way
 - [ ] fix emission configs for bosses
-- [ ] fix ship cockpit glass panel lines for player and boss
+- ~~[ ] fix ship cockpit glass panel lines for player and boss~~
 
 - level select screen play and back btns not showing.
 - octopus not rendering properly
