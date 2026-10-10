@@ -1,19 +1,10 @@
 // store/gameStore.js
 
 import { create } from "zustand"
-import { simState, resetSimState, resetSimStateForLevel } from "../src/state/simState.js"
-
-import {
-    TOTAL_LEVELS,
-    getProgression,
-    isBossLevel,
-    getZone,
-    getWave,
-    getBossKey,
-    formatLevelLabel,
-} from "../src/ecs/constants/progression.js"
-
+import { resetSimState, resetSimStateForLevel } from "../src/state/simState.js"
+import { TOTAL_LEVELS, getProgression, isBossLevel, getZone, getWave, getBossKey, formatLevelLabel } from "../src/ecs/constants/progression.js"
 import { resetLevelWorld } from "../src/state/resetLevel.js"
+import { resetWaveSystem } from "../src/ecs/systems/waveSystem.js"
 
 // ============================================================
 // SCREEN
@@ -90,10 +81,11 @@ export const useGameStore = create((set, get) => ({
     // ========================================================
 
     startLevel: (level = 1) => {
-        const safeLevel = clampLevel(level);
+        const safeLevel = clampLevel(level)
 
-        resetLevelWorld();
-        resetSimStateForLevel();
+        resetWaveSystem()
+        resetLevelWorld()
+        resetSimStateForLevel()
 
         set({
             level: safeLevel,
@@ -116,12 +108,10 @@ export const useGameStore = create((set, get) => ({
         resetSimState()
 
         set({
-
             screen: SCREEN.MENU,
             level: 1,
             paused: false,
             pendingUnlockWeapon: null,
-
             // IMPORTANT:
             // unlockedWeapons remains unchanged.
             // highestLevelReached remains unchanged.
@@ -211,15 +201,13 @@ export const useGameStore = create((set, get) => ({
         }
 
         // Start from a completely reset simulation.
-        resetLevelWorld();
-        resetSimStateForLevel();
+        resetWaveSystem()
+        resetLevelWorld()
+        resetSimStateForLevel()
 
         set({
             level: nextLevel,
-            highestLevelReached: Math.max(
-                state.highestLevelReached,
-                nextLevel
-            ),
+            highestLevelReached: Math.max(state.highestLevelReached, nextLevel),
             screen: SCREEN.PLAY,
             paused: false,
             pendingUnlockWeapon: null,

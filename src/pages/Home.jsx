@@ -108,34 +108,6 @@ export default function Home() {
     )
 
     // ========================================================
-    // RESTART CURRENT LEVEL
-    // ========================================================
-    //
-    // Used by the pause screen.
-    //
-    // This restarts the current level rather than
-    // resetting the entire run.
-    //
-    // ========================================================
-
-    const restartCurrentLevel = useCallback(() => {
-
-            const currentLevel = useGameStore
-                .getState()
-                .level
-
-            startLevel(currentLevel)
-
-            useGameStore.setState({
-                paused: false,
-                screen: SCREEN.PLAY,
-            })
-
-        },
-        [startLevel]
-    )
-
-    // ========================================================
     // BACK TO MENU
     // ========================================================
     //
@@ -167,8 +139,7 @@ export default function Home() {
     // PAUSE
     // ========================================================
 
-    const togglePause = useCallback(
-        () => {
+    const togglePause = useCallback(() => {
 
             if (useGameStore.getState().screen !== SCREEN.PLAY) {
                 return
