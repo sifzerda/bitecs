@@ -1,4 +1,4 @@
-// src/ecs/world.js
+// src/ecs/constants/world.js
 import { createWorld } from "bitecs";
 
 export const world = createWorld({

@@ -2,11 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 
-export default function PauseScreen({
-    onResume,
-    onRestart,
-    onMenu,
-}) {
+export default function PauseScreen({ onResume,  onMenu }) {
 
     const [selected, setSelected] = useState(0)
 
@@ -15,10 +11,7 @@ export default function PauseScreen({
             label: "RESUME",
             action: onResume,
         },
-        {
-            label: "RESTART LEVEL",
-            action: onRestart,
-        },
+
         {
             label: "END GAME",
             action: onMenu,
@@ -39,12 +32,7 @@ export default function PauseScreen({
 
         item.action?.()
 
-    }, [
-        selected,
-        onResume,
-        onRestart,
-        onMenu,
-    ])
+    }, [selected, onResume, onMenu,])
 
     // ========================================================
     // KEYBOARD
@@ -57,76 +45,47 @@ export default function PauseScreen({
             // ESC = RESUME
 
             if (event.key === "Escape") {
-
                 event.preventDefault()
-
                 onResume?.()
-
                 return
             }
 
             // ENTER = SELECT
 
             if (event.key === "Enter") {
-
                 event.preventDefault()
-
                 activate()
-
                 return
             }
 
             // UP
 
-            if (
-                event.key === "ArrowUp" ||
-                event.key === "ArrowLeft"
-            ) {
-
+            if ( event.key === "ArrowUp" || event.key === "ArrowLeft" ) {
                 event.preventDefault()
-
-                setSelected((current) =>
-                    (current - 1 + ITEMS.length) % ITEMS.length
+                setSelected((current) => (current - 1 + ITEMS.length) % ITEMS.length
                 )
 
                 return
             }
 
             // DOWN
-
-            if (
-                event.key === "ArrowDown" ||
-                event.key === "ArrowRight"
-            ) {
-
+            
+            if ( event.key === "ArrowDown" || event.key === "ArrowRight" ) {
                 event.preventDefault()
-
-                setSelected((current) =>
-                    (current + 1) % ITEMS.length
+                setSelected((current) => (current + 1) % ITEMS.length
                 )
 
             }
 
         }
 
-        window.addEventListener(
-            "keydown",
-            onKey
-        )
+        window.addEventListener("keydown", onKey)
 
         return () => {
-
-            window.removeEventListener(
-                "keydown",
-                onKey
-            )
-
+            window.removeEventListener("keydown", onKey)
         }
 
-    }, [
-        activate,
-        onResume,
-    ])
+    }, [activate, onResume])
 
     // ========================================================
     // BUTTON STYLE

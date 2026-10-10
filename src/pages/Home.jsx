@@ -298,7 +298,6 @@ export default function Home() {
 
                 <PauseScreen
                     onResume={resumeGame}
-                    onRestart={restartCurrentLevel}
                     onMenu={backToMenu}
                 />
 

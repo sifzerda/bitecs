@@ -1,12 +1,7 @@
 // store/gameStore.js
 
 import { create } from "zustand"
-
-import {
-    simState,
-    resetSimState,
-    resetSimStateForLevel,
-} from "../src/state/simState.js"
+import { simState, resetSimState, resetSimStateForLevel } from "../src/state/simState.js"
 
 import {
     TOTAL_LEVELS,
@@ -17,6 +12,8 @@ import {
     getBossKey,
     formatLevelLabel,
 } from "../src/ecs/constants/progression.js"
+
+import { resetLevelWorld } from "../src/state/resetLevel.js"
 
 // ============================================================
 // SCREEN
@@ -93,8 +90,10 @@ export const useGameStore = create((set, get) => ({
     // ========================================================
 
     startLevel: (level = 1) => {
-        const safeLevel = clampLevel(level)
-        resetSimStateForLevel()
+        const safeLevel = clampLevel(level);
+
+        resetLevelWorld();
+        resetSimStateForLevel();
 
         set({
             level: safeLevel,
@@ -167,13 +166,20 @@ export const useGameStore = create((set, get) => ({
     // ========================================================
 
     completeLevel: () => {
+        const { level, highestLevelReached, screen } = get()
 
-        const { level, highestLevelReached } = get()
-        const nextLevel = level + 1
-        const unlockedLevel = Math.min(nextLevel, TOTAL_LEVELS)
+        // Prevent duplicate completion events.
+        if (screen !== SCREEN.PLAY) return
+
+        resetLevelWorld()
+
+        const nextLevel = Math.min(level + 1, TOTAL_LEVELS)
 
         set({
-            highestLevelReached: Math.max(highestLevelReached, unlockedLevel),
+            highestLevelReached: Math.max(
+                highestLevelReached,
+                nextLevel
+            ),
             paused: true,
             screen: SCREEN.LEVEL_COMPLETE,
         })
@@ -188,38 +194,36 @@ export const useGameStore = create((set, get) => ({
     // ========================================================
 
     continueLevel: () => {
+        const state = get()
 
-        const currentLevel = get().level
-        const nextLevel = currentLevel + 1
+        // Continue is valid only from the completion screen.
+        if (state.screen !== SCREEN.LEVEL_COMPLETE) return
 
-        // ----------------------------------------------------
-        // CAMPAIGN COMPLETE
-        // ----------------------------------------------------
+        const nextLevel = state.level + 1
 
         if (nextLevel > TOTAL_LEVELS) {
-
             set({
                 screen: SCREEN.MENU,
                 paused: false,
                 pendingUnlockWeapon: null,
             })
-
             return
         }
 
-        // ----------------------------------------------------
-        // START NEXT ENCOUNTER
-        // ----------------------------------------------------
+        // Start from a completely reset simulation.
+        resetLevelWorld();
+        resetSimStateForLevel();
 
-        resetSimStateForLevel()
-
-        set(state => ({
+        set({
             level: nextLevel,
-            highestLevelReached: Math.max(state.highestLevelReached, nextLevel),
+            highestLevelReached: Math.max(
+                state.highestLevelReached,
+                nextLevel
+            ),
             screen: SCREEN.PLAY,
             paused: false,
             pendingUnlockWeapon: null,
-        }))
+        });
     },
 
     // ========================================================

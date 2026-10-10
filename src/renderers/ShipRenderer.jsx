@@ -37,7 +37,7 @@ const FALLBACK_BOSS_SVG = BOSS_SVG_BY_KEY.shotgun
 
 const PX_TO_WORLD = 1 / 35
 const PLAYER_SIZE = 80 * PX_TO_WORLD
-const BOSS_SIZE = 80 * PX_TO_WORLD
+const BOSS_SIZE = 90 * PX_TO_WORLD
 
 /* ============================================================
    SHARED SVG ELEMENT

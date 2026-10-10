@@ -1,31 +1,11 @@
 // src/screens/GunsScreen.jsx
 
-import {
-  useState,
-  useEffect,
-  useCallback,
-} from "react"
-
-import {
-  useGameStore,
-  SCREEN,
-} from "../../store/gameStore.js"
-
-import {
-  simState,
-} from "../state/simState.js"
-
-import {
-  WEAPONS,
-  getWeapon,
-} from "../ecs/weapons/config/weapons.js"
-
-import {
-  getGunTypeByWeaponId,
-} from "../ecs/weapons/config/gunConfigs.js"
-
+import { useState, useEffect, useCallback } from "react"
+import { useGameStore, SCREEN } from "../../store/gameStore.js"
+import { simState } from "../state/simState.js"
+import { WEAPONS, getWeapon } from "../ecs/weapons/config/weapons.js"
+import { getGunTypeByWeaponId } from "../ecs/weapons/config/gunConfigs.js"
 import FlightLayout2 from "../components/FlightLayout2.jsx"
-
 
 export function GunsScreen({ onBack }) {
   const unlockedWeapons = useGameStore((state) => state.unlockedWeapons)
