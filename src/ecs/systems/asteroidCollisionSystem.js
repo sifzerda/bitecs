@@ -2,42 +2,21 @@
 
 import { world } from "../constants/world.js"
 import { playerQuery } from "../constants/queries.js"
-
-import {
-    Asteroid,
-    Position,
-    Velocity,
-    Health,
-    Invulnerability,
-} from "../constants/components.js"
+import { Asteroid, Position, Velocity, Health, Invulnerability } from "../constants/components.js"
 
 import { activeAsteroids } from "../pools/asteroidPool.js"
-
-import {
-    useGameStore,
-    SCREEN,
-} from "../../../store/gameStore.js"
-
+import { useGameStore, SCREEN } from "../../../store/gameStore.js"
 import { simState } from "../../state/simState.js"
 
-
 const PLAYER_RADIUS = 0.6
-
 const ASTEROID_RESTITUTION = 1.0
-
 const PLAYER_BOUNCE = 0.35
-
 
 export function asteroidCollisionSystem() {
 
     const asteroids = activeAsteroids
     const players = playerQuery()
-
-    const pid =
-        players.length > 0
-            ? players[0]
-            : null
-
+    const pid = players.length > 0 ? players[0] : null
 
     // ============================================================
     // ASTEROID <-> ASTEROID
@@ -50,43 +29,25 @@ export function asteroidCollisionSystem() {
         for (let j = i + 1; j < asteroids.length; j++) {
 
             const b = asteroids[j]
-
-            let dx =
-                Position.x[b] -
-                Position.x[a]
-
-            let dy =
-                Position.y[b] -
-                Position.y[a]
-
-            let distSq =
-                dx * dx +
-                dy * dy
-
+            let dx = Position.x[b] - Position.x[a]
+            let dy = Position.y[b] - Position.y[a]
+            let distSq = dx * dx + dy * dy
             const radiusA = Asteroid.radius[a]
             const radiusB = Asteroid.radius[b]
+            const minDistance = radiusA + radiusB
 
-            const minDistance =
-                radiusA + radiusB
-
-            if (
-                distSq >=
-                minDistance * minDistance
-            ) {
+            if (distSq >= minDistance * minDistance) {
                 continue
             }
-
 
             let dist = Math.sqrt(distSq)
 
             let nx
             let ny
 
-
             if (dist < 0.0001) {
 
-                const angle =
-                    Math.random() * Math.PI * 2
+                const angle = Math.random() * Math.PI * 2
 
                 nx = Math.cos(angle)
                 ny = Math.sin(angle)
@@ -99,16 +60,12 @@ export function asteroidCollisionSystem() {
                 ny = dy / dist
             }
 
-
             // ----------------------------------------------------
             // Separate
             // ----------------------------------------------------
 
-            const overlap =
-                minDistance - dist
-
-            const correction =
-                overlap * 0.5
+            const overlap = minDistance - dist
+            const correction = overlap * 0.5
 
             Position.x[a] -= nx * correction
             Position.y[a] -= ny * correction
@@ -116,44 +73,22 @@ export function asteroidCollisionSystem() {
             Position.x[b] += nx * correction
             Position.y[b] += ny * correction
 
-
             // ----------------------------------------------------
             // Relative velocity
             // ----------------------------------------------------
 
-            const relativeVx =
-                Velocity.x[b] -
-                Velocity.x[a]
-
-            const relativeVy =
-                Velocity.y[b] -
-                Velocity.y[a]
-
-            const velocityAlongNormal =
-                relativeVx * nx +
-                relativeVy * ny
-
+            const relativeVx = Velocity.x[b] - Velocity.x[a]
+            const relativeVy = Velocity.y[b] - Velocity.y[a]
+            const velocityAlongNormal = relativeVx * nx + relativeVy * ny
 
             if (velocityAlongNormal > 0) {
                 continue
             }
 
-
             // Equal-mass collision.
-            const impulse =
-                -(
-                    1 +
-                    ASTEROID_RESTITUTION
-                ) *
-                velocityAlongNormal /
-                2
-
-            const impulseX =
-                impulse * nx
-
-            const impulseY =
-                impulse * ny
-
+            const impulse = -(1 + ASTEROID_RESTITUTION) * velocityAlongNormal / 2
+            const impulseX = impulse * nx
+            const impulseY = impulse * ny
 
             Velocity.x[a] -= impulseX
             Velocity.y[a] -= impulseY
@@ -162,7 +97,6 @@ export function asteroidCollisionSystem() {
             Velocity.y[b] += impulseY
         }
     }
-
 
     // ============================================================
     // ASTEROID <-> PLAYER
@@ -180,51 +114,31 @@ export function asteroidCollisionSystem() {
         return
     }
 
-
     for (let i = 0; i < asteroids.length; i++) {
 
         const aid = asteroids[i]
+        const asteroidRadius = Asteroid.radius[aid]
+        const collisionDistance = PLAYER_RADIUS + asteroidRadius
 
-        const asteroidRadius =
-            Asteroid.radius[aid]
+        const collisionDistanceSq = collisionDistance * collisionDistance
 
-        const collisionDistance =
-            PLAYER_RADIUS +
-            asteroidRadius
+        let dx = Position.x[pid] - Position.x[aid]
+        let dy = Position.y[pid] - Position.y[aid]
 
-        const collisionDistanceSq =
-            collisionDistance *
-            collisionDistance
-
-
-        let dx =
-            Position.x[pid] -
-            Position.x[aid]
-
-        let dy =
-            Position.y[pid] -
-            Position.y[aid]
-
-        const distSq =
-            dx * dx +
-            dy * dy
-
+        const distSq = dx * dx + dy * dy
 
         if (distSq >= collisionDistanceSq) {
             continue
         }
-
 
         let dist = Math.sqrt(distSq)
 
         let nx
         let ny
 
-
         if (dist < 0.0001) {
 
-            const angle =
-                Math.random() * Math.PI * 2
+            const angle = Math.random() * Math.PI * 2
 
             nx = Math.cos(angle)
             ny = Math.sin(angle)
@@ -237,79 +151,36 @@ export function asteroidCollisionSystem() {
             ny = dy / dist
         }
 
-
         // --------------------------------------------------------
         // Separate
         // --------------------------------------------------------
 
-        const overlap =
-            collisionDistance - dist
+        const overlap = collisionDistance - dist
+        const playerCorrection = overlap * 0.75
+        const asteroidCorrection = overlap * 0.25
 
-        const playerCorrection =
-            overlap * 0.75
-
-        const asteroidCorrection =
-            overlap * 0.25
-
-
-        Position.x[pid] +=
-            nx * playerCorrection
-
-        Position.y[pid] +=
-            ny * playerCorrection
-
-        Position.x[aid] -=
-            nx * asteroidCorrection
-
-        Position.y[aid] -=
-            ny * asteroidCorrection
-
+        Position.x[pid] += nx * playerCorrection
+        Position.y[pid] += ny * playerCorrection
+        Position.x[aid] -= nx * asteroidCorrection
+        Position.y[aid] -= ny * asteroidCorrection
 
         // --------------------------------------------------------
         // Bounce
         // --------------------------------------------------------
 
-        const relativeVx =
-            Velocity.x[aid] -
-            Velocity.x[pid]
-
-        const relativeVy =
-            Velocity.y[aid] -
-            Velocity.y[pid]
-
-        const velocityAlongNormal =
-            relativeVx * nx +
-            relativeVy * ny
-
+        const relativeVx = Velocity.x[aid] - Velocity.x[pid]
+        const relativeVy = Velocity.y[aid] - Velocity.y[pid]
+        const velocityAlongNormal = relativeVx * nx + relativeVy * ny
 
         if (velocityAlongNormal < 0) {
 
-            const impulse =
-                -(
-                    1 +
-                    ASTEROID_RESTITUTION
-                ) *
-                velocityAlongNormal
+            const impulse = -(1 + ASTEROID_RESTITUTION) * velocityAlongNormal
 
-
-            Velocity.x[aid] +=
-                nx * impulse
-
-            Velocity.y[aid] +=
-                ny * impulse
-
-
-            Velocity.x[pid] -=
-                nx *
-                impulse *
-                PLAYER_BOUNCE
-
-            Velocity.y[pid] -=
-                ny *
-                impulse *
-                PLAYER_BOUNCE
+            Velocity.x[aid] += nx * impulse
+            Velocity.y[aid] += ny * impulse
+            Velocity.x[pid] -= nx * impulse * PLAYER_BOUNCE
+            Velocity.y[pid] -= ny * impulse * PLAYER_BOUNCE
         }
-
 
         // --------------------------------------------------------
         // Player loses a life
@@ -318,7 +189,6 @@ export function asteroidCollisionSystem() {
         Health.current[pid] = 0
 
         simState.lives--
-
 
         if (simState.lives <= 0) {
 
@@ -329,16 +199,12 @@ export function asteroidCollisionSystem() {
             return
         }
 
-
         // --------------------------------------------------------
         // Player survived
         // --------------------------------------------------------
 
-        Health.current[pid] =
-            Health.max[pid]
-
-        Invulnerability.remaining[pid] =
-            2.0
+        Health.current[pid] = Health.max[pid]
+        Invulnerability.remaining[pid] = 2.0
 
         return
     }

@@ -1,31 +1,12 @@
 // src/ecs/systems/statusEffectSystem.js
 
 import { world } from "../constants/world.js"
-
-import {
-    StatusEffect,
-    Health,
-    Position,
-} from "../constants/components.js"
-
-import {
-    playerQuery,
-    bossQuery,
-} from "../constants/queries.js"
-
+import { StatusEffect, Health, Position } from "../constants/components.js"
+import { playerQuery, bossQuery } from "../constants/queries.js"
 import { activeAsteroids } from "../pools/asteroidPool.js"
-
-import {
-    killAsteroid,
-    killBoss,
-} from "./entityDeath.js"
-
-import {
-    useGameStore
-} from "../../../store/gameStore.js"
-
+import { killAsteroid, killBoss } from "./entityDeath.js"
+import { useGameStore } from "../../../store/gameStore.js"
 import { simState } from "../../state/simState.js"
-
 
 // ============================================================
 // Apply / refresh status effects
@@ -37,9 +18,7 @@ export function applyStatusEffects(targetId, weapon) {
     // Corrosion
     // --------------------------------------------------------
 
-    if (
-        weapon.corrosion && weapon.corrosionDamage > 0 && weapon.corrosionDuration > 0
-    ) {
+    if (weapon.corrosion && weapon.corrosionDamage > 0 && weapon.corrosionDuration > 0) {
         StatusEffect.corrosionDamage[targetId] = weapon.corrosionDamage
         // Refresh duration when hit again.
         StatusEffect.corrosionRemaining[targetId] = weapon.corrosionDuration
@@ -49,9 +28,7 @@ export function applyStatusEffects(targetId, weapon) {
     // Freeze
     // --------------------------------------------------------
 
-    if (
-        weapon.freezeDuration && weapon.freezeDuration > 0
-    ) {
+    if (weapon.freezeDuration && weapon.freezeDuration > 0) {
         StatusEffect.frozen[targetId] = weapon.freezeDuration
     }
 }
@@ -164,7 +141,6 @@ export function statusEffectSystem() {
                 continue
             }
 
-
             // ------------------------------------------------
             // Expired
             // ------------------------------------------------
@@ -177,7 +153,6 @@ export function statusEffectSystem() {
         }
     }
 
-
     // ========================================================
     // Player
     // ========================================================
@@ -189,7 +164,6 @@ export function statusEffectSystem() {
     }
 
     const pid = players[0]
-
 
     // --------------------------------------------------------
     // Freeze

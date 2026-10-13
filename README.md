@@ -78,7 +78,7 @@ Distributed under the MIT License. See LICENSE.txt for more information.
 
 ## Project Status
 
-This project is incomplete and requires further development.
+This project is incomplete and requires further development. In future games with multi-screen states and boss AI could use Xstate machine rather than zustand for screen management. Other directory structures than ECS may be explored.
 
 ## Config Options
 
@@ -218,3 +218,7 @@ some of these boss dropped weapons, some upgrades
 
 
  
+
+
+
+ - Spawn currently has some BOSS AI functions, maybe put all Boss AI into separate file/system

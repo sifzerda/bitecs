@@ -41,7 +41,6 @@ import { ExplosionRenderer } from '../renderers/ExplosionRenderer.jsx'
 import { GunMount } from '../renderers/GunMount.jsx'
 
 import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
-import { OctopusRenderer } from '../renderers/OctopusRenderer.jsx'
 
 import { DebrisRenderer } from '../renderers/DebrisRenderer.jsx'
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
@@ -68,11 +67,7 @@ export function GameLoop({ keysRef, paused }) {
     return null
 }
 
-export function PlayScreen({
-    keysRef,
-    paused,
-    onPause,
-}) {
+export function PlayScreen({ keysRef, paused, onPause }) {
     return (
         <div className="border-2 border-green-400 flex flex-col h-[calc(100vh-120px)]">
 
@@ -161,8 +156,7 @@ export function PlayScreen({
 
                     <BossRenderer />
 
-                             <TentacleRenderer />            
-                                 <OctopusRenderer />           
+                    <TentacleRenderer />
 
                     <EffectComposer multisampling={0}>
                         {/* === FIRE BLOOM SETUP === */}

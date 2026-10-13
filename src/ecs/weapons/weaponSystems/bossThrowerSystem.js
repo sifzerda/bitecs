@@ -3,7 +3,8 @@
 import { world } from "../../constants/world.js"
 import { getEmissionPoint, getBossEmissionConfig } from '../../constants/emission.js'
 import { bossAIQuery, playerQuery } from "../../constants/queries.js"
-import { Position, Rotation, BossAI, Health } from "../../constants/components.js"
+import { Position, Rotation, BossAI, Health, BossType } from "../../constants/components.js"
+import { BOSSES } from "../../constants/bosses.js"
 import { getWeapon } from "../config/weapons.js"
 import { bossThrowerState } from "../weaponState/bossThrowerState.js"
 import { applyStatusEffects } from "../../systems/statusEffectSystem.js"
@@ -37,6 +38,13 @@ export function bossThrowerSystem() {
     }
 
     const id = bosses[0]
+    const bossConfig = BOSSES[BossType.typeIndex[id]]
+
+    if (bossConfig?.key === "octopus") {
+        bossThrowerState.active = false
+        return
+    }
+
     const weapon = getWeapon(BossAI.weapon[id])
 
     if (weapon.category !== "thrower") {

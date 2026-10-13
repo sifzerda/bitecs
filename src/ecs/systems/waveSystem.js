@@ -10,6 +10,7 @@ import { bossQuery } from "../constants/queries.js"
 import { activeAsteroids, releaseAsteroidEntity } from "../pools/asteroidPool.js"
 
 const SPAWN_RADIUS = 16
+
 let encounterSpawned = false
 
 // ============================================================

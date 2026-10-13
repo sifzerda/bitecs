@@ -56,7 +56,9 @@ export function killAsteroid(id, x, y) {
     emitEffect(EFFECT.EXPLOSION, { x, y, size: 1.5 })
     emitEffect(EFFECT.SPARK_BURST, { x, y, count: 45, speed: 13, big: true })
     emitEffect(EFFECT.SMOKE, { x, y, direction, count: 14 })
-    emitEffect(EFFECT.DEBRIS, { x, y, count: 8, speed: 10, size: 0.5, kind: "rock", maxLife: 1.6 })
+    // Rock debris drifts: slow pieces that curve away and linger, so they need a little
+    // more size and count than the old quick pops to stay visible.
+    emitEffect(EFFECT.DEBRIS, { x, y, count: 10, speed: 10, size: 0.6, kind: "rock", maxLife: 1.2 })
 
     // --------------------------------------------------------
     // ENCOUNTER COMPLETE
@@ -76,7 +78,6 @@ export function killAsteroid(id, x, y) {
             .completeLevel()
     }
 }
-
 
 // ============================================================
 // BOSS DEATH
@@ -128,7 +129,6 @@ export function killBoss(id, x, y) {
         }
     )
 
-
     // ========================================================
     // REMOVE BOSS
     // ========================================================
@@ -152,7 +152,6 @@ export function killBoss(id, x, y) {
         console.log("[WEAPON REWARD]", { weaponId, newlyUnlocked })
     }
 
-
     // ========================================================
     // COMPLETE ENCOUNTER
     //
@@ -167,7 +166,9 @@ export function killBoss(id, x, y) {
     emitEffect(EFFECT.EXPLOSION, { x, y, size: 5 })
     emitEffect(EFFECT.SPARK_BURST, { x, y, count: 90, speed: 16, big: true })
     emitEffect(EFFECT.SMOKE, { x, y, direction, count: 40 })
-    emitEffect(EFFECT.DEBRIS, { x, y, count: 24, speed: 14, size: 1.0, kind: "metal", maxLife: 2.2 })
+    // Metal debris is ricochet shards. They are fast (their tiers run 1x to 3x the
+    // speed value), so the speed here is lower than the old 14 to keep them on screen.
+    emitEffect(EFFECT.DEBRIS, { x, y, count: 24, speed: 8, size: 1.0, kind: "metal", maxLife: 2.2 })
 
     // Keep the gameplay screen visible while the effects play.
     // Then transition to Level Complete, which clears the old level.
@@ -175,4 +176,16 @@ export function killBoss(id, x, y) {
         useGameStore.getState().completeLevel();
     }, 2800);
 
+}
+
+// ============================================================
+// PLAYER SHIP DEATH
+//
+// Shared by every path that costs the player a life, so the
+// look is tuned in one place.
+// ============================================================
+
+export function emitPlayerDeathDebris(x, y) {
+
+    emitEffect(EFFECT.DEBRIS, { x, y, count: 16, speed: 8, size: 0.6, kind: "metal", maxLife: 1.6 })
 }
