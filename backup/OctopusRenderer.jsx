@@ -4,8 +4,8 @@ import { useMemo, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import { useControls } from "leva"
 import * as THREE from "three"
-import { bossQuery } from "../ecs/constants/queries.js"
-import { Position, Velocity, Rotation, BossType } from "../ecs/constants/components.js"
+import { bossQuery, playerQuery, tentacleQuery } from "../ecs/constants/queries.js"
+import { Position, Velocity, Rotation, BossType, Tentacle } from "../ecs/constants/components.js"
 import { BOSS_INDEX_BY_KEY } from "../ecs/constants/bosses.js"
 
 // Must match the `key` used for the octopus entry in bosses.js.
@@ -88,8 +88,7 @@ function updateTentacle(
         const localT = lastIndex <= 0 ? 0 : i / lastIndex
         const wavePhase = time * waveSpeed - localT * waveFrequency * Math.PI * 2 + seed * 6.283
         const detailPhase = time * detailSpeed - localT * detailFrequency * Math.PI * 2 + seed * 11.0
-        const wave = Math.sin(wavePhase) * waveAmplitude * localT
-            + Math.sin(detailPhase) * detailAmplitude * localT
+        const wave = Math.sin(wavePhase) * waveAmplitude * localT + Math.sin(detailPhase) * detailAmplitude * localT
 
         node.vx += tangentX * wave
         node.vy += tangentY * wave
@@ -244,11 +243,7 @@ export function OctopusRenderer() {
     // persistent per-tentacle simulation state, plus one seed per octopus
     // slot (desyncs head-pulse phase if more than one is ever alive)
     const stateRef = useRef(null)
-    if (
-        !stateRef.current ||
-        stateRef.current.nodeCount !== cfg.nodeCount ||
-        stateRef.current.tentacles.length !== MAX_TENTACLES
-    ) {
+    if ( !stateRef.current || stateRef.current.nodeCount !== cfg.nodeCount || stateRef.current.tentacles.length !== MAX_TENTACLES ) {
         const tentacles = []
         for (let i = 0; i < MAX_TENTACLES; i++) {
             tentacles.push({
@@ -402,9 +397,7 @@ export function OctopusRenderer() {
             const vxCur = Velocity.x[eid]
             const vyCur = Velocity.y[eid]
 
-            const pulse = cfg.pulse
-                ? Math.pow(Math.sin(t * cfg.pulseSpeed + octopusSeeds[o] * 6.283), 18)
-                : 0
+            const pulse = cfg.pulse ? Math.pow(Math.sin(t * cfg.pulseSpeed + octopusSeeds[o] * 6.283), 18) : 0
             const headR = cfg.headRadius * (1 - cfg.pulseAmount * 0.5 + cfg.pulseAmount * 0.5 * pulse)
 
             // drag opposite velocity — tentacles trail behind the boss as

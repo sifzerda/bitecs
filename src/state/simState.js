@@ -40,11 +40,7 @@ export const simState = {
     // ============================================================
 
     gunSkinOverride: null,
-
-    tentaclesEnabled: true,
-    octopusEnabled: true,
 }
-
 
 // ============================================================
 // RESET RUN
@@ -64,7 +60,6 @@ export function resetSimState() {
     resetSimStateForLevel()
 }
 
-
 // ============================================================
 // RESET LEVEL
 //
@@ -82,6 +77,4 @@ export function resetSimStateForLevel() {
 
     simState.gunSkinOverride = null
 
-    simState.tentaclesEnabled = true
-    simState.octopusEnabled = true
 }

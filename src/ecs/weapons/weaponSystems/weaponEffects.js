@@ -1,116 +1,190 @@
 // src/ecs/weapons/weaponSystems/weaponEffects.js
 
-import { Position, Health } from "../../constants/components.js"
+import {
+    Position,
+    Health,
+} from "../../constants/components.js"
+
 import { spawnBullet } from "../../spawn.js"
-import { killAsteroid, killBoss } from "../../systems/entityDeath.js"
+
+import {
+    killAsteroid,
+    killBoss,
+} from "../../systems/entityDeath.js"
+
 import { getWeapon } from "../config/weapons.js"
 import { pushArc } from "../weaponState/arcState.js"
 
 import { emitEffect } from "../../../fx/effects.js"
 import { EFFECT } from "../../../fx/FXTypes.js"
 
-// -------------------------
-// Grenade launcher / any AOE explosive weapon
-// -------------------------
+// ============================================================
+// EXPLOSION
+// ============================================================
 
 export function explodeAt(x, y, weapon, asteroids, bosses) {
 
     const radius = weapon.explosionRadius ?? 1.5
     const radiusSq = radius * radius
 
+    const damage = weapon.directDamage
+
+    // --------------------------------------------------------
+    // Asteroids
+    // --------------------------------------------------------
+
     for (let j = 0; j < asteroids.length; j++) {
 
         const aid = asteroids[j]
+
         const dx = x - Position.x[aid]
         const dy = y - Position.y[aid]
 
         if (dx * dx + dy * dy <= radiusSq) {
 
-            Health.current[aid] -= weapon.directDamage
+            Health.current[aid] -= damage
 
             if (Health.current[aid] <= 0) {
-                killAsteroid(aid, Position.x[aid], Position.y[aid])
+
+                killAsteroid(
+                    aid,
+                    Position.x[aid],
+                    Position.y[aid]
+                )
             }
         }
     }
+
+    // --------------------------------------------------------
+    // Bosses
+    // --------------------------------------------------------
 
     for (let j = 0; j < bosses.length; j++) {
 
         const bossId = bosses[j]
+
         const dx = x - Position.x[bossId]
         const dy = y - Position.y[bossId]
+
+        // Bosses have a slightly larger explosion hit area.
         const bossRadius = radius + 1.0
 
         if (dx * dx + dy * dy <= bossRadius * bossRadius) {
 
-            Health.current[bossId] -= weapon.directDamage
+            Health.current[bossId] -= damage
 
             if (Health.current[bossId] <= 0) {
-                killBoss(bossId, Position.x[bossId], Position.y[bossId])
+
+                killBoss(
+                    bossId,
+                    Position.x[bossId],
+                    Position.y[bossId]
+                )
             }
         }
     }
 
+    // --------------------------------------------------------
+    // Explosion visual
+    // --------------------------------------------------------
+
     emitEffect(EFFECT.SPARK_BURST, {
-        type: EFFECT.SPARK_BURST,
+        x,        y,
         count: 40,
         speed: 14,
     })
-
 }
 
-// -------------------------
-// Arc gun — chains between nearby asteroids, excluding whatever it just hit
-// -------------------------
+// ============================================================
+// ARC GUN
+// Chains between nearby asteroids, excluding whatever it
+// just hit.
+// ============================================================
 
-export function chainLightning(startX, startY, weapon, asteroids, excludeId) {
+export function chainLightning(
+    startX,
+    startY,
+    weapon,
+    asteroids,
+    excludeId
+) {
 
     let hits = 0
-    let cx = startX, cy = startY
+
+    let cx = startX
+    let cy = startY
+
     const hitIds = new Set([excludeId])
-    const points = [{ x: startX, y: startY }]
+
+    const points = [
+        { x: startX, y: startY }
+    ]
+
 
     while (hits < weapon.chainCount) {
 
         let nearestId = -1
-        let nearestDistSq = weapon.chainRange * weapon.chainRange
+
+        let nearestDistSq =
+            weapon.chainRange * weapon.chainRange
+
 
         for (let j = 0; j < asteroids.length; j++) {
+
             const aid = asteroids[j]
+
             if (hitIds.has(aid)) continue
 
             const dx = cx - Position.x[aid]
             const dy = cy - Position.y[aid]
+
             const distSq = dx * dx + dy * dy
 
             if (distSq <= nearestDistSq) {
+
                 nearestDistSq = distSq
                 nearestId = aid
             }
         }
 
+
         if (nearestId === -1) break
+
 
         Health.current[nearestId] -= weapon.directDamage
 
+
         emitEffect(EFFECT.SPARK_BURST, {
-            type: EFFECT.SPARK_BURST,
             x: Position.x[nearestId],
             y: Position.y[nearestId],
             count: 12,
             speed: 6,
         })
 
+
         if (Health.current[nearestId] <= 0) {
-            killAsteroid(nearestId, Position.x[nearestId], Position.y[nearestId])
+
+            killAsteroid(
+                nearestId,
+                Position.x[nearestId],
+                Position.y[nearestId]
+            )
         }
 
+
         hitIds.add(nearestId)
+
         cx = Position.x[nearestId]
         cy = Position.y[nearestId]
-        points.push({ x: cx, y: cy })
+
+        points.push({
+            x: cx,
+            y: cy,
+        })
+
         hits++
     }
+
 
     if (points.length > 1) {
         pushArc(points)

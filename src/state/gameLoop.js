@@ -19,8 +19,6 @@ import { statusEffectSystem } from "../ecs/systems/statusEffectSystem.js"
 import { bossAISystem } from "../ecs/systems/bossAISystem"
 import { bossLaserSystem } from "../ecs/weapons/weaponSystems/bossLaserSystem"
 import { bossThrowerSystem } from "../ecs/weapons/weaponSystems/bossThrowerSystem"
-
-import { octoAISystem } from "../ecs/systems/octoAISystem"
 // fx
 import { updateSparkEmitter } from "../fx/gpu/SparkEmitter"
 import { exhaustEmitter } from "../fx/gpu/exhaustEmitter"
@@ -31,18 +29,13 @@ import { clearSpatialGrids, insertAsteroid, insertBoss } from "../ecs/constants/
 import { activeAsteroids } from "../ecs/pools/asteroidPool"
 import { bossQuery } from "../ecs/constants/queries"
 
- import { tentacleSystem } from "../ecs/systems/tentacleSystem"
-
 export function gameLoop(shootState, dt) {
 
     playerControlSystem(shootState)
 
     bossAISystem()
-    octoAISystem()
     bossLaserSystem()
     bossThrowerSystem()
-
-    tentacleSystem(dt)
 
     missileSystem()
 

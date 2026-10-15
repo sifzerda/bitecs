@@ -40,8 +40,6 @@ import { ExplosionRenderer } from '../renderers/ExplosionRenderer.jsx'
 
 import { GunMount } from '../renderers/GunMount.jsx'
 
-import { TentacleRenderer } from '../renderers/TentacleRenderer.jsx'
-
 import { DebrisRenderer } from '../renderers/DebrisRenderer.jsx'
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 import { SmokeRenderer } from '../renderers/SmokeRenderer.jsx'
@@ -71,10 +69,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
     return (
         <div className="border-2 border-green-400 flex flex-col h-[calc(100vh-120px)]">
 
-            <HUD
-                paused={paused}
-                onPause={onPause}
-            />
+            <HUD paused={paused} onPause={onPause} />
 
             <div className="relative flex-1 px-4">
 
@@ -95,10 +90,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                     <MouseWorldTracker />
 
-                    <GameLoop
-                        keysRef={keysRef}
-                        paused={paused}
-                    />
+                    <GameLoop keysRef={keysRef} paused={paused} />
 
                     <ambientLight intensity={1.1} />
                     <directionalLight position={[5, 8, 6]} intensity={2.0} />
@@ -155,8 +147,6 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <FlashRenderer />
 
                     <BossRenderer />
-
-                    <TentacleRenderer />
 
                     <EffectComposer multisampling={0}>
                         {/* === FIRE BLOOM SETUP === */}

@@ -68,22 +68,6 @@ export const BossType = {
     typeIndex: new Uint8Array(MAX),
 };
 
-// Phase: 0 = hidden, 1 = emerging, 2 = active, 3 = retracting
-export const Tentacle = {
-    phase: new Uint8Array(MAX),
-    timer: new Float32Array(MAX),
-    deployT: new Float32Array(MAX),      // 0 = fully retracted, 1 = fully emerged
-    edge: new Uint8Array(MAX),           // 0 = left, 1 = right, 2 = top, 3 = bottom
-    along: new Float32Array(MAX),        // -0.5..0.5 fraction along that edge
-    tipRadius: new Float32Array(MAX),    // hurtbox/hitbox radius at the tip
-    damage: new Float32Array(MAX),
-    hitCooldown: new Float32Array(MAX),  // seconds until this tentacle can hit the player again
-};
-
-export const Octopus = {
-    active: new Uint8Array(10000), // or whatever your MAX_ENTITIES is
-}
-
 export const Bullet = {
     type: new Uint8Array(MAX),
     owner: new Uint8Array(MAX),
@@ -121,9 +105,6 @@ export const PlayerTag = {};
 export const BulletTag = {};
 export const AsteroidTag = {};
 export const BossTag = {};
-
-export const TentacleTag = {};
-export const TentacleBossTag = {};
 
 export const ARC_MAX_POINTS = 32
 

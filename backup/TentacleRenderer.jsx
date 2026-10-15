@@ -8,7 +8,6 @@ import { playerQuery, tentacleQuery } from "../ecs/constants/queries.js"
 import { Position, Tentacle } from "../ecs/constants/components.js"
 
 // Must match the `key` used for the octopus entry in bosses.js.
-const OCTOPUS_KEY = "octopus"
 
 const PHASE = { HIDDEN: 0, EMERGING: 1, ACTIVE: 2, RETRACTING: 3 }
 

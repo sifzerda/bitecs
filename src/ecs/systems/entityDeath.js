@@ -7,6 +7,7 @@ import { simState } from "../../state/simState.js"
 import { getGunTypeByWeaponId, getGunTypeById } from "../weapons/config/gunConfigs.js"
 import { BossAI, BossType, Velocity } from "../constants/components.js"
 import { BOSSES } from "../constants/bosses.js"
+
 import { releaseAsteroidEntity } from "../pools/asteroidPool.js"
 import { emitEffect } from "../../fx/effects.js"
 import { EFFECT } from "../../fx/FXTypes.js"
@@ -145,12 +146,12 @@ export function killBoss(id, x, y) {
     // WEAPON REWARD
     // ========================================================
 
-    if (weaponId != null) {
+        if (weaponId != null) {
 
-        const gameStore = useGameStore.getState()
-        const newlyUnlocked = gameStore.unlockWeapon(weaponId)
-        console.log("[WEAPON REWARD]", { weaponId, newlyUnlocked })
-    }
+            const gameStore = useGameStore.getState()
+            const newlyUnlocked = gameStore.unlockWeapon(weaponId)
+            console.log("[WEAPON REWARD]", { weaponId, newlyUnlocked })
+        }
 
     // ========================================================
     // COMPLETE ENCOUNTER

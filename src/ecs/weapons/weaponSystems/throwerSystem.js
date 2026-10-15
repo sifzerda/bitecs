@@ -1,60 +1,27 @@
 // src/ecs/weapons/weaponSystems/throwerSystem.js
 
 import { world } from "../../constants/world.js"
-import {
-    getEmissionPoint,
-    PLAYER_CONFIG
-} from "../../constants/emission.js"
-
-import {
-    playerQuery,
-    bossQuery
-} from "../../constants/queries.js"
-
-import {
-    Position,
-    Rotation,
-    Health
-} from "../../constants/components.js"
-
+import { getEmissionPoint, PLAYER_CONFIG } from "../../constants/emission.js"
+import { playerQuery, bossQuery } from "../../constants/queries.js"
+import { Position, Rotation, Health } from "../../constants/components.js"
 import { applyStatusEffects } from "../../systems/statusEffectSystem.js"
-
 import { input } from "../../systems/input.js"
 import { simState } from "../../../state/simState.js"
-
 import { getWeapon } from "../config/weapons.js"
 import { throwerState } from "../weaponState/throwerState.js"
-
-import {
-    killAsteroid,
-    killBoss
-} from "../../systems/entityDeath.js"
-
+import { killAsteroid, killBoss } from "../../systems/entityDeath.js"
 import { activeAsteroids } from "../../pools/asteroidPool.js"
-
 import { emitEffect } from "../../../fx/effects.js"
 import { EFFECT } from "../../../fx/FXTypes.js"
 
-
 const ASTEROID_RADIUS = 0.7
 const BOSS_RADIUS = 2.0
-
 
 // ============================================================
 // Cone collision
 // ============================================================
 
-function inCone(
-    originX,
-    originY,
-    dirX,
-    dirY,
-    coneAngle,
-    range,
-    targetX,
-    targetY,
-    targetRadius
-) {
+function inCone(originX, originY, dirX, dirY, coneAngle, range, targetX, targetY, targetRadius) {
 
     const dx = targetX - originX
     const dy = targetY - originY
@@ -68,24 +35,12 @@ function inCone(
 
     const nx = dx / dist
     const ny = dy / dist
-
-    const dot = Math.min(
-        1,
-        Math.max(
-            -1,
-            nx * dirX + ny * dirY
-        )
-    )
-
+    const dot = Math.min(1, Math.max(-1, nx * dirX + ny * dirY))
     const angle = Math.acos(dot)
+    const angularRadius = Math.atan2(targetRadius, dist)
 
-    const angularRadius =
-        Math.atan2(targetRadius, dist)
-
-    return angle <=
-        coneAngle / 2 + angularRadius
+    return angle <= coneAngle / 2 + angularRadius
 }
-
 
 // ============================================================
 // Twin-gun muzzle offset
@@ -109,7 +64,6 @@ function getTwinOrigins(centerX, centerY, rot, gap) {
     }
 }
 
-
 // ============================================================
 // Thrower system
 // ============================================================
@@ -117,9 +71,7 @@ function getTwinOrigins(centerX, centerY, rot, gap) {
 export function throwerSystem() {
 
     const dt = world.time.delta
-
     const weapon = getWeapon(simState.currentWeapon)
-
 
     if (weapon.category !== "thrower") {
 
@@ -129,13 +81,9 @@ export function throwerSystem() {
         return
     }
 
-
     const players = playerQuery()
 
-    if (
-        players.length === 0 ||
-        !input.fire
-    ) {
+    if (players.length === 0 || !input.fire) {
 
         throwerState.active = false
         throwerState.hitIds = []
@@ -143,44 +91,23 @@ export function throwerSystem() {
         return
     }
 
-
     const pid = players[0]
-
 
     // --------------------------------------------------------
     // Emission point (centered — used for cone testing)
     // --------------------------------------------------------
 
     const emissionCfg = PLAYER_CONFIG.emission.thrower
-
-    const point = getEmissionPoint(
-        Position.x[pid],
-        Position.y[pid],
-        Rotation[pid],
-        emissionCfg
-    )
-
+    const point = getEmissionPoint(Position.x[pid], Position.y[pid], Rotation[pid], emissionCfg)
 
     throwerState.active = true
-
     throwerState.originX = point.x
     throwerState.originY = point.y
-
-    throwerState.dirX =
-        Math.sin(-Rotation[pid])
-
-    throwerState.dirY =
-        Math.cos(-Rotation[pid])
-
-    throwerState.coneAngle =
-        weapon.coneAngle ?? 0.5
-
-    throwerState.range =
-        weapon.range
-
-    throwerState.length =
-        weapon.range
-
+    throwerState.dirX = Math.sin(-Rotation[pid])
+    throwerState.dirY = Math.cos(-Rotation[pid])
+    throwerState.coneAngle = weapon.coneAngle ?? 0.5
+    throwerState.range = weapon.range
+    throwerState.length = weapon.range
 
     // --------------------------------------------------------
     // Twin visual muzzle points
@@ -197,19 +124,14 @@ export function throwerSystem() {
     throwerState.originBX = twin.bx
     throwerState.originBY = twin.by
 
-
     // --------------------------------------------------------
     // Targets
     // --------------------------------------------------------
 
     const asteroids = activeAsteroids
     const bosses = bossQuery()
-
-    const dps =
-        weapon.directDamage
-
+    const dps = weapon.directDamage
     const hitIds = []
-
 
     // ========================================================
     // Asteroids
@@ -219,45 +141,19 @@ export function throwerSystem() {
 
         const aid = asteroids[i]
 
-
-        if (!inCone(
-            throwerState.originX,
-            throwerState.originY,
-            throwerState.dirX,
-            throwerState.dirY,
-            throwerState.coneAngle,
-            weapon.range,
-            Position.x[aid],
-            Position.y[aid],
-            ASTEROID_RADIUS
-        )) {
+        if (!inCone(throwerState.originX, throwerState.originY, throwerState.dirX, throwerState.dirY, throwerState.coneAngle, weapon.range, Position.x[aid], Position.y[aid], ASTEROID_RADIUS)) {
             continue
         }
 
-
         hitIds.push(aid)
+        Health.current[aid] -= dps * dt
 
-
-        Health.current[aid] -=
-            dps * dt
-
-
-        applyStatusEffects(
-            aid,
-            weapon
-        )
-
+        applyStatusEffects(aid, weapon)
 
         if (Health.current[aid] <= 0) {
-
-            killAsteroid(
-                aid,
-                Position.x[aid],
-                Position.y[aid]
-            )
+            killAsteroid(aid, Position.x[aid], Position.y[aid])
         }
     }
-
 
     // ========================================================
     // Bosses
@@ -267,52 +163,25 @@ export function throwerSystem() {
 
         const bossId = bosses[i]
 
-
-        if (!inCone(
-            throwerState.originX,
-            throwerState.originY,
-            throwerState.dirX,
-            throwerState.dirY,
-            throwerState.coneAngle,
-            weapon.range,
-            Position.x[bossId],
-            Position.y[bossId],
-            BOSS_RADIUS
-        )) {
+        if (!inCone(throwerState.originX, throwerState.originY, throwerState.dirX, throwerState.dirY, throwerState.coneAngle, weapon.range, Position.x[bossId], Position.y[bossId], BOSS_RADIUS)) {
             continue
         }
 
-
         hitIds.push(bossId)
+        Health.current[bossId] -= dps * dt
 
-
-        Health.current[bossId] -=
-            dps * dt
-
-
-        applyStatusEffects(
-            bossId,
-            weapon
-        )
-
+        applyStatusEffects(bossId, weapon)
 
         if (Health.current[bossId] <= 0) {
-
-            killBoss(
-                bossId,
-                Position.x[bossId],
-                Position.y[bossId]
-            )
+            killBoss(bossId, Position.x[bossId], Position.y[bossId])
         }
     }
-
 
     // ========================================================
     // State
     // ========================================================
 
     throwerState.hitIds = hitIds
-
 
     // ========================================================
     // Sparks
@@ -323,19 +192,9 @@ export function throwerSystem() {
     if (throwerState.sparkTimer <= 0) {
 
         for (const eid of hitIds) {
-
-            emitEffect(
-                EFFECT.SPARK_BURST,
-                {
-                    x: Position.x[eid],
-                    y: Position.y[eid],
-                    count: 4,
-                    speed: 3,
-                }
-            )
+            emitEffect(EFFECT.SPARK_BURST, { x: Position.x[eid], y: Position.y[eid], count: 4, speed: 3 })
         }
 
-        throwerState.sparkTimer =
-            weapon.tickSparkInterval ?? 0.1
+        throwerState.sparkTimer = weapon.tickSparkInterval ?? 0.1
     }
 }
