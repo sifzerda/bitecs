@@ -51,6 +51,8 @@ npm install
 - [Leva](https://github.com/pmndrs/leva): config panel to create ship parts
 - [Muscular Hydrostats](https://github.com/soulwire/Muscular-Hydrostats): for tentacles
 
+- [Behaviour3JS](https://github.com/behavior3js/behavior3js): for boss AI
+
 ## Support
 
 For support, users can contact me through my portfolio contact form: [here](https://next-portfolio-sifzerdas-projects.vercel.app/contact)

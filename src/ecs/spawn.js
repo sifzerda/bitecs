@@ -352,6 +352,13 @@ export function spawnBoss(bossKey = "shotgun") {
     BossAI.targetRotation[id] = 0
 
     // ========================================================
+    // AIMING STATE
+    // ========================================================
+
+    BossAI.aimError[id] = 0
+    BossAI.aimErrorTimer[id] = 0.2 + Math.random() * 0.6
+
+    // ========================================================
     // BURST STATE
     // ========================================================
 

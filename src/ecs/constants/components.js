@@ -62,6 +62,9 @@ export const BossAI = {
     attackTimer: new Float32Array(MAX),
     // Prevents instant repeated state switching
     decisionCooldown: new Float32Array(MAX),
+
+    aimError: new Float32Array(MAX),
+    aimErrorTimer: new Float32Array(MAX),
 };
 
 export const BossType = {
