@@ -2,13 +2,23 @@
 
 import { playerQuery } from "../constants/queries.js"
 import { Asteroid, Position, Velocity, Health, Invulnerability } from "../constants/components.js"
-
+import { applyPlayerAngularImpulse } from "./playerMotion.js"
 import { activeAsteroids } from "../pools/asteroidPool.js"
 import { useGameStore } from "../../../store/gameStore.js"
 import { simState } from "../../state/simState.js"
 
 const PLAYER_RADIUS = 0.6
 const ASTEROID_RESTITUTION = 1.0
+const PLAYER_SPIN_FACTOR = 0.35
+
+// Collision tuning
+const PLAYER_MASS = 4.0
+const ASTEROID_MASS = 1.0
+const PLAYER_RESTITUTION = 1.0
+const PLAYER_KNOCKBACK = 2.0
+const TANGENTIAL_IMPULSE = 0.25
+
+const PLAYER_INERTIA = 0.5 * PLAYER_MASS * PLAYER_RADIUS * PLAYER_RADIUS
 
 export function asteroidCollisionSystem() {
 
@@ -104,13 +114,6 @@ export function asteroidCollisionSystem() {
     if (Health.current[pid] <= 0) return
     if (Invulnerability.remaining[pid] > 0) return
 
-    // Collision tuning
-    const PLAYER_MASS = 4.0
-    const ASTEROID_MASS = 1.0
-    const PLAYER_RESTITUTION = 1.0
-    const PLAYER_KNOCKBACK = 2.0
-    const TANGENTIAL_IMPULSE = 0.25
-
     for (let i = 0; i < asteroids.length; i++) {
 
         const aid = asteroids[i]
@@ -196,6 +199,11 @@ export function asteroidCollisionSystem() {
 
             const tangentialVelocity = relativeVx * tangentX + relativeVy * tangentY
             const tangentImpulse = tangentialVelocity * TANGENTIAL_IMPULSE
+
+            // Off-centre impact creates rotational momentum
+            const angularImpulse = -tangentImpulse * PLAYER_RADIUS * PLAYER_SPIN_FACTOR / PLAYER_INERTIA
+
+            applyPlayerAngularImpulse(angularImpulse)
 
             Velocity.x[pid] += tangentX * tangentImpulse / PLAYER_MASS
             Velocity.y[pid] += tangentY * tangentImpulse / PLAYER_MASS

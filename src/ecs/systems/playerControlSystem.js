@@ -1,42 +1,73 @@
 // src/ecs/systems/playerControlSystem.js
 
+
 import { playerQuery } from "../constants/queries.js"
 import { world } from "../constants/world.js"
-import { Position, Velocity, Rotation, BULLET_OWNER } from "../constants/components.js"
+import {
+    Position,
+    Velocity,
+    Rotation,
+    BULLET_OWNER
+} from "../constants/components.js"
+
 import { spawnPlayerBullet } from "../spawn.js"
 import { input, isMouseControlEnabled } from "./input.js"
 import { simState } from "../../state/simState.js"
+
 import { getWeapon } from "../weapons/config/weapons.js"
 import { getAction } from "../weapons/config/weaponActions.js"
 
 import { emitEffect } from "../../fx/effects.js"
 import { EFFECT } from "../../fx/FXTypes.js"
 
-const TURN_SPEED = 4.5
-const THRUST = 28
-const BRAKE = 18
-const MAX_SPEED = 24
-const DRAG = 0.995
+import { getAngularVelocity, setAngularVelocity, syncPlayerMotion } from "./playerMotion.js"
+
+// ============================================================
+// FLIGHT PHYSICS
+// ============================================================
+
+// Linear movement
+const THRUST = 20
+const BRAKE = 35
+const MAX_SPEED = 22
+// Passive space drag
+const LINEAR_DRAG = 0.8
+// Active braking
+const ACTIVE_BRAKE = 3.5
+// Rotational movement
+const MAX_TURN_SPEED = 8
+const TURN_ACCELERATION = 24
+const TURN_DAMPING = 5.5
+// Mouse steering
+const MOUSE_TURN_GAIN = 20
+// Keyboard steering
+const KEYBOARD_TURN_ACCELERATION = 22
+
+// ============================================================
+// OTHER SETTINGS
+// ============================================================
+
 const DEFLECT_BUFFER = 0.6
-
-// Mouse steering physics
-const MOUSE_MAX_TURN_SPEED = 5.5
-const MOUSE_TURN_ACCELERATION = 20
-const MOUSE_TURN_GAIN = 12
-const MOUSE_TURN_DAMPING = 2.0
-
-let mouseTurnVelocity = 0
 
 export default function playerControlSystem(shootState) {
 
-    const dt = world.time.delta
+    const dt = Math.min(world.time.delta, 0.05)
+
     const players = playerQuery()
+
     if (players.length === 0) return
+
     const pid = players[0]
 
-    //----------------------------------
-    // Turn
-    //----------------------------------
+    syncPlayerMotion(pid)
+
+    let angularVelocity = getAngularVelocity()
+
+    // ========================================================
+    // ROTATIONAL PHYSICS
+    // ========================================================
+
+    let angularAcceleration = 0
 
     if (isMouseControlEnabled()) {
 
@@ -48,107 +79,168 @@ export default function playerControlSystem(shootState) {
         // Shortest angular distance to target
         let delta = targetRot - Rotation[pid]
 
-        delta = Math.atan2(Math.sin(delta), Math.cos(delta))
+        delta = Math.atan2(
+            Math.sin(delta),
+            Math.cos(delta)
+        )
 
-        // Calculate desired angular velocity.
-        // Damping prevents excessive overshooting.
-        let desiredTurnVelocity = delta * MOUSE_TURN_GAIN - mouseTurnVelocity * MOUSE_TURN_DAMPING
-
-        // Maximum rotation speed
-        desiredTurnVelocity = Math.max(-MOUSE_MAX_TURN_SPEED, Math.min(MOUSE_MAX_TURN_SPEED, desiredTurnVelocity))
-
-        // Angular acceleration
-        const velocityDifference = desiredTurnVelocity - mouseTurnVelocity
-        const maxAcceleration = MOUSE_TURN_ACCELERATION * dt
-
-        mouseTurnVelocity += Math.max(-maxAcceleration, Math.min(maxAcceleration, velocityDifference))
-
-        // Apply rotational momentum
-        Rotation[pid] += mouseTurnVelocity * dt
+        // Proportional steering with rotational damping
+        angularAcceleration =
+            delta * MOUSE_TURN_GAIN -
+            angularVelocity * TURN_DAMPING
 
     } else {
 
-        // Keyboard-only rotation
-        mouseTurnVelocity = 0
+        // Keyboard rotation
+        const turnInput =
+            (input.left ? 1 : 0) -
+            (input.right ? 1 : 0)
 
-        if (input.left)
-            Rotation[pid] += TURN_SPEED * dt
-
-        if (input.right)
-            Rotation[pid] -= TURN_SPEED * dt
+        angularAcceleration =
+            turnInput * KEYBOARD_TURN_ACCELERATION -
+            angularVelocity * TURN_DAMPING
     }
 
-    //----------------------------------
-    // Thrust
-    //----------------------------------
+    // Limit angular acceleration
+    angularAcceleration = Math.max(
+        -TURN_ACCELERATION,
+        Math.min(TURN_ACCELERATION, angularAcceleration)
+    )
+
+    // Integrate angular velocity
+    angularVelocity += angularAcceleration * dt
+
+    // Limit maximum rotation speed
+    angularVelocity = Math.max(
+        -MAX_TURN_SPEED,
+        Math.min(MAX_TURN_SPEED, angularVelocity)
+    )
+
+    // Apply rotation
+    Rotation[pid] += angularVelocity * dt
+
+    setAngularVelocity(angularVelocity)
+
+    // ========================================================
+    // LINEAR THRUST
+    // ========================================================
+
+    const forwardX = Math.sin(-Rotation[pid])
+    const forwardY = Math.cos(-Rotation[pid])
 
     if (input.thrust) {
-        Velocity.x[pid] += Math.sin(-Rotation[pid]) * THRUST * dt
-        Velocity.y[pid] += Math.cos(-Rotation[pid]) * THRUST * dt
+
+        Velocity.x[pid] += forwardX * THRUST * dt
+        Velocity.y[pid] += forwardY * THRUST * dt
     }
 
-    //----------------------------------
+// ========================================================
+// REVERSE THRUST / BRAKING
+// ========================================================
+
+if (input.brake) {
+
     // Reverse thrust
-    //----------------------------------
+    Velocity.x[pid] -= forwardX * BRAKE * dt
+    Velocity.y[pid] -= forwardY * BRAKE * dt
 
-    if (input.brake) {
-        Velocity.x[pid] -= Math.sin(-Rotation[pid]) * BRAKE * dt
-        Velocity.y[pid] -= Math.cos(-Rotation[pid]) * BRAKE * dt
-    }
+    // Additional velocity damping
+    const brakeFactor = Math.exp(-ACTIVE_BRAKE * dt)
 
-    //----------------------------------
-    // Deflect
-    //----------------------------------
+    Velocity.x[pid] *= brakeFactor
+    Velocity.y[pid] *= brakeFactor
+}
 
-    simState.deflectBufferTime = Math.max(0, simState.deflectBufferTime - dt)
-    simState.deflectFlashTimer = Math.max(0, simState.deflectFlashTimer - dt)
+    // ========================================================
+    // LINEAR SPEED LIMIT
+    // ========================================================
 
-    if (input.deflect) {
-        simState.deflectBufferTime = DEFLECT_BUFFER
-        input.deflect = false
-    }
+    const speed = Math.hypot(
+        Velocity.x[pid],
+        Velocity.y[pid]
+    )
 
-    //----------------------------------
-    // Clamp speed
-    //----------------------------------
+    if (speed > MAX_SPEED) {
 
-    const speed = Math.hypot(Velocity.x[pid], Velocity.y[pid])
+        const scale = MAX_SPEED / speed
 
-   if (speed > MAX_SPEED) {
-    const scale = MAX_SPEED / speed
         Velocity.x[pid] *= scale
         Velocity.y[pid] *= scale
     }
 
-    //----------------------------------
-    // Drag
-    //----------------------------------
+// ========================================================
+// SPACE DRAG
+// ========================================================
 
-    Velocity.x[pid] *= DRAG
-    Velocity.y[pid] *= DRAG
+const drag = Math.exp(-LINEAR_DRAG * dt)
 
-    //----------------------------------
-    // Shooting
-    //----------------------------------
+Velocity.x[pid] *= drag
+Velocity.y[pid] *= drag
+
+    // ========================================================
+    // DEFLECT
+    // ========================================================
+
+    simState.deflectBufferTime = Math.max(
+        0,
+        simState.deflectBufferTime - dt
+    )
+
+    simState.deflectFlashTimer = Math.max(
+        0,
+        simState.deflectFlashTimer - dt
+    )
+
+    if (input.deflect) {
+
+        simState.deflectBufferTime = DEFLECT_BUFFER
+
+        input.deflect = false
+    }
+
+    // ========================================================
+    // SHOOTING
+    // ========================================================
 
     const weapon = getWeapon(simState.currentWeapon)
 
     if (!getAction(weapon).continuous) {
+
         shootState.timer -= dt
+
         if (input.fire && shootState.timer <= 0) {
 
             const rot = Rotation[pid]
-            const angle = Math.atan2(Math.cos(-rot), Math.sin(-rot)) // same fwd dir bullets use
-            const size = 0.8 + (weapon.hitRadius ?? 0.5) * 0.6
 
-            const { origins } = spawnPlayerBullet(Position.x[pid], Position.y[pid], rot, weapon.id, BULLET_OWNER.PLAYER, pid)
+            const angle = Math.atan2(
+                Math.cos(-rot),
+                Math.sin(-rot)
+            )
+
+            const size =
+                0.8 + (weapon.hitRadius ?? 0.5) * 0.6
+
+            const { origins } = spawnPlayerBullet(
+                Position.x[pid],
+                Position.y[pid],
+                rot,
+                weapon.id,
+                BULLET_OWNER.PLAYER,
+                pid
+            )
 
             for (const o of origins) {
-                emitEffect(EFFECT.FLASH, { x: o.x, y: o.y, angle, size, color: weapon.glowColor })
+
+                emitEffect(EFFECT.FLASH, {
+                    x: o.x,
+                    y: o.y,
+                    angle,
+                    size,
+                    color: weapon.glowColor
+                })
             }
 
             shootState.timer = weapon.fireRate
         }
     }
-
 }
