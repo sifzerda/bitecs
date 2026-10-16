@@ -15,6 +15,8 @@ import { resolveHit } from "../weapons/weaponSystems/hitTraits.js"
 import { emitEffect } from "../../fx/effects.js"
 import { EFFECT } from "../../fx/FXTypes.js"
 
+import { PLAYER_INVULNERABILITY_DURATION } from "./invulnerabilitySystem.js"
+
 // ============================================================
 // COLLISION SETTINGS
 // ============================================================
@@ -27,9 +29,6 @@ const BOSS_RADIUS = 2.0
 const DEFLECT_RADIUS = 4.0
 const DEFLECT_SPEED_MULT = 1.3
 const DEFLECT_FLASH_DURATION = 0.15
-
-// Player protection after taking damage
-const PLAYER_INVULNERABILITY_DURATION = 1.0
 
 // ============================================================
 // HELPERS
@@ -141,8 +140,7 @@ export function combatSystem() {
                 const dx = Position.x[bid] - Position.x[aid]
                 const dy = Position.y[bid] - Position.y[aid]
 
-                const hitDistance =
-                    weapon.hitRadius + ASTEROID_RADIUS
+                const hitDistance = weapon.hitRadius + ASTEROID_RADIUS
 
                 if (dx * dx + dy * dy <= hitDistance * hitDistance) {
 
@@ -221,8 +219,7 @@ export function combatSystem() {
             // ------------------------------------------------
 
             if (
-                simState.deflectBufferTime > 0 &&
-                distSq <= DEFLECT_RADIUS * DEFLECT_RADIUS
+                simState.deflectBufferTime > 0 && distSq <= DEFLECT_RADIUS * DEFLECT_RADIUS
             ) {
 
                 const dist = Math.sqrt(distSq) || 1

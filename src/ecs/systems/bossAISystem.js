@@ -10,32 +10,20 @@ import { getAction } from "../weapons/config/weaponActions.js"
 
 import { updateBossBehavior } from "./bossBehaviorTree.js"
 
+import {
+    updateBossSteering,
+    cleanupBossSteering,
+} from "./bossSteeringSystem.js"
+
 // ============================================================
 // CONFIGURATION
 // ============================================================
 
 const CONFIG = {
 
-    movement: {
-        thrust: 12,
-        maxSpeed: 7.5,
-        drag: 0.985,
-    },
-
     turning: {
         speed: 4.5,
         fireAngle: 0.28,
-    },
-
-    combat: {
-        minRange: 3.5,
-        idealRange: 8,
-        maxRange: 16,
-    },
-
-    decisions: {
-        minDuration: 1.5,
-        maxDuration: 2.8,
     },
 
     shooting: {
@@ -116,128 +104,6 @@ function getTargetInfo(id, pid) {
 // at the player, like a strafing spaceship.
 // ============================================================
 
-
-function chooseMovement(id, target, dt) {
-
-    const {
-        distance,
-        directionX,
-        directionY,
-        angle,
-    } = target
-
-    // The behaviour tree has already selected the state.
-    BossAI.stateTimer[id] -= dt
-
-    let moveX = 0
-    let moveY = 0
-
-    // --------------------------------------------------------
-    // APPROACH
-    // --------------------------------------------------------
-
-    if (BossAI.state[id] === 0) {
-
-        moveX = directionX
-        moveY = directionY
-
-    }
-
-    // --------------------------------------------------------
-    // RETREAT
-    // --------------------------------------------------------
-
-    else if (BossAI.state[id] === 1) {
-
-        moveX = -directionX
-        moveY = -directionY
-
-    }
-
-    // --------------------------------------------------------
-    // ORBIT / STRAFE
-    // --------------------------------------------------------
-
-    else {
-
-        const orbitAngle =
-            angle +
-            BossAI.strafeDirection[id] * Math.PI / 2
-
-        moveX = Math.cos(orbitAngle)
-        moveY = Math.sin(orbitAngle)
-
-        const rangeDifference =
-            distance - CONFIG.combat.idealRange
-
-        const correction = THREEClamp(
-            rangeDifference * 0.12,
-            -0.65,
-            0.65
-        )
-
-        moveX += directionX * correction
-        moveY += directionY * correction
-    }
-
-    // --------------------------------------------------------
-    // NORMALIZE
-    // --------------------------------------------------------
-
-    const length = Math.hypot(moveX, moveY) || 1
-
-    moveX /= length
-    moveY /= length
-
-    BossAI.moveRotation[id] = Math.atan2(moveY, moveX)
-
-    return { moveX, moveY }
-}
-
-
-function THREEClamp(value, min, max) {
-    return Math.max(min, Math.min(max, value))
-}
-
-// ============================================================
-// MOVEMENT PHYSICS
-// ============================================================
-
-function updateMovement(id, direction, dt) {
-
-    const { moveX, moveY } = direction
-
-    // Continuous thrust.
-
-    Velocity.x[id] += moveX * CONFIG.movement.thrust * dt
-    Velocity.y[id] += moveY * CONFIG.movement.thrust * dt
-
-    // Maximum speed.
-
-    const speed = Math.hypot(
-        Velocity.x[id],
-        Velocity.y[id]
-    )
-
-    if (speed > CONFIG.movement.maxSpeed) {
-
-        const scale =
-            CONFIG.movement.maxSpeed / speed
-
-        Velocity.x[id] *= scale
-        Velocity.y[id] *= scale
-    }
-
-    // Frame-rate-independent drag.
-
-    const drag = Math.pow(
-        CONFIG.movement.drag,
-        dt * 60
-    )
-
-    Velocity.x[id] *= drag
-    Velocity.y[id] *= drag
-}
 
 // ============================================================
 // AIMING
@@ -456,23 +322,38 @@ function updateBoss(id, pid, dt) {
 
     const target = getTargetInfo(id, pid)
 
+    // Behaviour state timer.
+    // Previously handled by chooseMovement(), which was removed
+    // when Yuka took over movement.
+    BossAI.stateTimer[id] = Math.max(
+        0,
+        BossAI.stateTimer[id] - dt
+    )
+
     updateBossBehavior(id, target, BossAI)
 
     // --------------------------------------------------------
-    // Movement
+    // YUKA STEERING
     // --------------------------------------------------------
 
-    const movementDirection = chooseMovement(
+    updateBossSteering(
         id,
+        pid,
         target,
-        dt
+        dt,
+        BossAI.state[id],
+        BossAI.strafeDirection[id]
     )
 
-    updateMovement(
-        id,
-        movementDirection,
-        dt
-    )
+    if (
+        Velocity.x[id] !== 0 ||
+        Velocity.y[id] !== 0
+    ) {
+        BossAI.moveRotation[id] = Math.atan2(
+            Velocity.y[id],
+            Velocity.x[id]
+        )
+    }
 
     // --------------------------------------------------------
     // Aiming
@@ -518,6 +399,10 @@ export function bossAISystem() {
     if (dt <= 0) return
 
     const bosses = bossAIQuery()
+
+    // Remove steering agents belonging to destroyed bosses.
+    cleanupBossSteering(bosses)
+
     const players = playerQuery()
 
     if (bosses.length === 0 || players.length === 0) {

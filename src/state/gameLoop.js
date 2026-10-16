@@ -2,7 +2,7 @@
 
 import playerControlSystem from "../ecs/systems/playerControlSystem"
 import { movementSystem } from "../ecs/systems/movement"
-import { asteroidCollisionSystem } from "../ecs/systems/asteroidCollisionSystem"
+import { collisionSystem } from "../ecs/systems/collisionSystem"
 import { boundsSystem } from "../ecs/systems/bounds"
 import { combatSystem } from "../ecs/systems/combat"
 import { waveSystem } from "../ecs/systems/waveSystem"
@@ -43,7 +43,7 @@ export function gameLoop(shootState, dt) {
     movementSystem()
 
     // Resolve physical asteroid collisions
-    asteroidCollisionSystem()
+    collisionSystem()
     invulnerabilitySystem()
 
     exhaustEmitter()

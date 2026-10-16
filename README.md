@@ -52,6 +52,7 @@ npm install
 - [Muscular Hydrostats](https://github.com/soulwire/Muscular-Hydrostats): for tentacles
 
 - [Behaviour3JS](https://github.com/behavior3js/behavior3js): for boss AI
+- [Yuka](https://github.com/mrdoob/yuka): for boss AI
 
 ## Support
 

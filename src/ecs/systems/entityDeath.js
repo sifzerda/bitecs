@@ -12,6 +12,8 @@ import { releaseAsteroidEntity } from "../pools/asteroidPool.js"
 import { emitEffect } from "../../fx/effects.js"
 import { EFFECT } from "../../fx/FXTypes.js"
 
+import { PLAYER_INVULNERABILITY_DURATION } from "./invulnerabilitySystem.js"
+
 // ============================================================
 // SMOKE DIRECTION
 // ============================================================
