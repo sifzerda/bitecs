@@ -13,10 +13,8 @@ const GUN_DIRECTION = Math.PI / 2
 export const RENDER_ORDER = {
     ship: 0,
     shipDetail: 10,
-    cockpitGlass: 20,
     gun: 30,
     gunGlow: 35,
-    propeller: 40,
 }
 
 // ------------------------------------------------------------
