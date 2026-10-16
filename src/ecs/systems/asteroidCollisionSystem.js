@@ -2,7 +2,7 @@
 
 import { playerQuery } from "../constants/queries.js"
 import { Asteroid, Position, Velocity, Health, Invulnerability } from "../constants/components.js"
-import { applyPlayerAngularImpulse } from "./playerMotion.js"
+import { applyPlayerAngularImpulse } from "./playerControlSystem.js"
 import { activeAsteroids } from "../pools/asteroidPool.js"
 import { useGameStore } from "../../../store/gameStore.js"
 import { simState } from "../../state/simState.js"

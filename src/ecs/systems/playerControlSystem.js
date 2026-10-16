@@ -20,7 +20,36 @@ import { getAction } from "../weapons/config/weaponActions.js"
 import { emitEffect } from "../../fx/effects.js"
 import { EFFECT } from "../../fx/FXTypes.js"
 
-import { getAngularVelocity, setAngularVelocity, syncPlayerMotion } from "./playerMotion.js"
+// ============================================================
+// HELPER
+// ============================================================
+
+let angularVelocity = 0
+let activePlayerId = null
+
+export function getAngularVelocity() {
+    return angularVelocity
+}
+
+export function setAngularVelocity(value) {
+    angularVelocity = value
+}
+
+export function applyPlayerAngularImpulse(value) {
+    angularVelocity += value
+}
+
+export function resetPlayerMotion(playerId = null) {
+    angularVelocity = 0
+    activePlayerId = playerId
+}
+
+export function syncPlayerMotion(playerId) {
+    if (activePlayerId !== playerId) {
+        angularVelocity = 0
+        activePlayerId = playerId
+    }
+}
 
 // ============================================================
 // FLIGHT PHYSICS
