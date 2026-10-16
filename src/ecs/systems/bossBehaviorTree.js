@@ -1,6 +1,5 @@
 //src/ecs/systems/bossBehaviorTree.js
 
-
 import * as b3 from "behavior3js/src"
 
 // ============================================================
@@ -79,7 +78,6 @@ class ApproachIfTooFar extends b3.Action {
         }
 
         tick.target.BossAI.state[id] = 0
-
         tick.target.BossAI.stateTimer[id] = 0.25
 
         return b3.SUCCESS
@@ -114,10 +112,7 @@ class ChooseOrbit extends b3.Action {
             BossAI.strafeDirection[id] *= -1
         }
 
-        BossAI.stateTimer[id] = randomRange(
-            MIN_DECISION_DURATION,
-            MAX_DECISION_DURATION
-        )
+        BossAI.stateTimer[id] = randomRange(MIN_DECISION_DURATION, MAX_DECISION_DURATION)
 
         return b3.SUCCESS
     }
@@ -147,23 +142,14 @@ const bossBehaviorTree = new b3.BehaviorTree()
 bossBehaviorTree.root = new b3.Priority({
 
     children: [
-
         // Highest priority: avoid the player.
-
         new RetreatIfTooClose(),
-
         // Next: close the distance.
-
         new ApproachIfTooFar(),
-
         // Otherwise choose a new orbit when necessary.
-
         new ChooseOrbit(),
-
         // Continue current movement.
-
         new MaintainMovement(),
-
     ],
 
 })
@@ -188,15 +174,6 @@ function getBlackboard(id) {
 // ============================================================
 
 export function updateBossBehavior(id, target, BossAI) {
-
     const blackboard = getBlackboard(id)
-
-    bossBehaviorTree.tick(
-        {
-            id,
-            target,
-            BossAI,
-        },
-        blackboard
-    )
+    bossBehaviorTree.tick({ id, target, BossAI, }, blackboard)
 }
