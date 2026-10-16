@@ -267,7 +267,6 @@ export function combatSystem() {
             if (distSq <= PLAYER_HIT_RADIUS * PLAYER_HIT_RADIUS) {
 
                 damagePlayer(pid, weapon.directDamage)
-
                 releaseBulletEntity(bid)
             }
         }

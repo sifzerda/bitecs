@@ -98,36 +98,35 @@ export function asteroidCollisionSystem() {
         }
     }
 
+
     // ============================================================
     // ASTEROID <-> PLAYER
     // ============================================================
 
-    if (pid === null) {
-        return
-    }
+    if (pid === null) return
+    if (Health.current[pid] <= 0) return
+    if (Invulnerability.remaining[pid] > 0) return
 
-    if (Health.current[pid] <= 0) {
-        return
-    }
-
-    if (Invulnerability.remaining[pid] > 0) {
-        return
-    }
+    // Collision tuning
+    const PLAYER_MASS = 4.0
+    const ASTEROID_MASS = 1.0
+    const PLAYER_RESTITUTION = 1.0
+    const PLAYER_KNOCKBACK = 2.0
+    const TANGENTIAL_IMPULSE = 0.25
 
     for (let i = 0; i < asteroids.length; i++) {
 
         const aid = asteroids[i]
+
         const asteroidRadius = Asteroid.radius[aid]
         const collisionDistance = PLAYER_RADIUS + asteroidRadius
-
-        const collisionDistanceSq = collisionDistance * collisionDistance
 
         let dx = Position.x[pid] - Position.x[aid]
         let dy = Position.y[pid] - Position.y[aid]
 
         const distSq = dx * dx + dy * dy
 
-        if (distSq >= collisionDistanceSq) {
+        if (distSq >= collisionDistance * collisionDistance) {
             continue
         }
 
@@ -137,49 +136,79 @@ export function asteroidCollisionSystem() {
         let ny
 
         if (dist < 0.0001) {
-
-            const angle = Math.random() * Math.PI * 2
-
-            nx = Math.cos(angle)
-            ny = Math.sin(angle)
-
+            nx = 1
+            ny = 0
             dist = 0.0001
-
         } else {
-
             nx = dx / dist
             ny = dy / dist
         }
 
         // --------------------------------------------------------
-        // Separate
+        // Separate objects
         // --------------------------------------------------------
 
         const overlap = collisionDistance - dist
-        const playerCorrection = overlap * 0.75
-        const asteroidCorrection = overlap * 0.25
+
+        const totalMass = PLAYER_MASS + ASTEROID_MASS
+
+        const playerCorrection = overlap * (ASTEROID_MASS / totalMass)
+
+        const asteroidCorrection = overlap * (PLAYER_MASS / totalMass)
 
         Position.x[pid] += nx * playerCorrection
         Position.y[pid] += ny * playerCorrection
+
         Position.x[aid] -= nx * asteroidCorrection
         Position.y[aid] -= ny * asteroidCorrection
 
         // --------------------------------------------------------
-        // Bounce
+        // Relative velocity
         // --------------------------------------------------------
 
-        const relativeVx = Velocity.x[aid] - Velocity.x[pid]
-        const relativeVy = Velocity.y[aid] - Velocity.y[pid]
+        const relativeVx = Velocity.x[pid] - Velocity.x[aid]
+        const relativeVy = Velocity.y[pid] - Velocity.y[aid]
+
         const velocityAlongNormal = relativeVx * nx + relativeVy * ny
+
+        // --------------------------------------------------------
+        // Collision impulse
+        // --------------------------------------------------------
 
         if (velocityAlongNormal < 0) {
 
-            const impulse = -(1 + ASTEROID_RESTITUTION) * velocityAlongNormal
+            const restitution = Math.min(
+                PLAYER_RESTITUTION,
+                ASTEROID_RESTITUTION
+            )
 
-            Velocity.x[aid] += nx * impulse
-            Velocity.y[aid] += ny * impulse
-            Velocity.x[pid] -= nx * impulse * PLAYER_BOUNCE
-            Velocity.y[pid] -= ny * impulse * PLAYER_BOUNCE
+            const impulse = -(1 + restitution) * velocityAlongNormal / (1 / PLAYER_MASS + 1 / ASTEROID_MASS)
+
+            const impulseX = impulse * nx
+            const impulseY = impulse * ny
+
+            // Asteroid gets propelled away from ship
+            Velocity.x[aid] -= impulseX / ASTEROID_MASS
+            Velocity.y[aid] -= impulseY / ASTEROID_MASS
+
+            // Ship gets knocked backwards
+            Velocity.x[pid] += impulseX / PLAYER_MASS * PLAYER_KNOCKBACK
+            Velocity.y[pid] += impulseY / PLAYER_MASS * PLAYER_KNOCKBACK
+
+            // ----------------------------------------------------
+            // Tangential impact (sideways deviation)
+            // ----------------------------------------------------
+
+            const tangentX = -ny
+            const tangentY = nx
+
+            const tangentialVelocity = relativeVx * tangentX + relativeVy * tangentY
+            const tangentImpulse = tangentialVelocity * TANGENTIAL_IMPULSE
+
+            Velocity.x[pid] += tangentX * tangentImpulse / PLAYER_MASS
+            Velocity.y[pid] += tangentY * tangentImpulse / PLAYER_MASS
+            Velocity.x[aid] -= tangentX * tangentImpulse / ASTEROID_MASS
+            Velocity.y[aid] -= tangentY * tangentImpulse / ASTEROID_MASS
         }
 
         // --------------------------------------------------------
@@ -191,11 +220,7 @@ export function asteroidCollisionSystem() {
         simState.lives--
 
         if (simState.lives <= 0) {
-
-            useGameStore
-                .getState()
-                .gameOver()
-
+            useGameStore.getState().gameOver()
             return
         }
 
@@ -208,4 +233,5 @@ export function asteroidCollisionSystem() {
 
         return
     }
+
 }

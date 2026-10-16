@@ -18,7 +18,6 @@ import { GunsScreen } from "../screens/GunsScreen.jsx"
 import { GameOverScreen } from "../screens/GameOverScreen"
 import HighscoresScreen from "../screens/HighscoresScreen"
 import PauseScreen from "../screens/PauseScreen.jsx"
-import { DebugScreen } from "../screens/DebugScreen.jsx"
 
 import {
     useGameStore,
@@ -78,7 +77,6 @@ export default function Home() {
             howtoplay: SCREEN.HOW_TO_PLAY,
             guns: SCREEN.GUNS,
             levelcomplete: SCREEN.LEVEL_COMPLETE,
-            debug: SCREEN.DEBUG,
 
         }
 
@@ -227,7 +225,6 @@ export default function Home() {
                     onSettings={() => go("settings")}
                     onHowToPlay={() => go("howtoplay")}
                     onHighscores={() => go("highscores")}
-                    onDebug={() => go("debug")}
                 />
             )}
 
@@ -336,14 +333,6 @@ export default function Home() {
 
             {screen === SCREEN.HIGHSCORES && (
                 <HighscoresScreen onBack={() => go("menu")} />
-            )}
-
-            {/* ================================================= */}
-            {/* DEBUG */}
-            {/* ================================================= */}
-
-            {screen === SCREEN.DEBUG && (
-                <DebugScreen onBack={() => go("menu")} />
             )}
 
         </div>

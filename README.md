@@ -129,8 +129,8 @@ Inside combat.js at end of file lives = 0
 Asteroid damages ship a little if collides with it, boss destroys player on collision
 
 - [ ] collision between ship and asteroids, ship and asteroid should bounce off each other 
-- [ ] make small octopuses (octo renderer) tentacles longer, remove their gun, they hurt by impact, and remove their exhaust. Spawn octopuses in groups in waves as tentacle boss exists
-- [ ] make fighting logic for tentacle renderer (big tentacles) so one tentacle is hittable, and can attack player. Give Big tentacles some different attacks (e.g. firing a laser like thing that travels across screen)
+- ~~[ ] make small octopuses (octo renderer) tentacles longer, remove their gun, they hurt by impact, and remove their exhaust. Spawn octopuses in groups in waves as tentacle boss exists~~
+-~~ [ ] make fighting logic for tentacle renderer (big tentacles) so one tentacle is hittable, and can attack player. Give Big tentacles some different attacks (e.g. firing a laser like thing that travels across screen)~~
 
 - [ ] optimize things
 - [ ] optimize starfield renderer, make milky way
