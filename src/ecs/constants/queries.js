@@ -3,6 +3,7 @@
 import { query } from "bitecs";
 import { world } from "./world";
 import { Position, Velocity, Lifetime, Health, PlayerTag, Bullet, BulletTag, AsteroidTag, BossTag, BossAI, BossType } from "./components";
+
 export const playerQuery = () => query(world, [Position, PlayerTag])
 export const bossQuery = () => query(world, [Position, Health, BossTag])
 export const movingQuery = () => query(world, [Position, Velocity])

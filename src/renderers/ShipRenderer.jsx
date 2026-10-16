@@ -35,15 +35,16 @@ const FALLBACK_BOSS_SVG = BOSS_SVG_BY_KEY.shotgun
    SIZE
    ============================================================ */
 
+// Every ship is sized the same way: the SVG file's own width/height are the
+// ship's size in game pixels x TEXTURE_SCALE. 
 const PX_TO_WORLD = 1 / 35
-const PLAYER_SIZE = 80 * PX_TO_WORLD
-const BOSS_SIZE = 90 * PX_TO_WORLD
+const TEXTURE_SCALE = 8 
 
 /* ============================================================
    SHARED SVG ELEMENT
    ============================================================ */
 
-function ShipImage({ src, size }) {
+function ShipImage({ src }) {
     const texture = useTexture(src)
 
     useEffect(() => {
@@ -54,9 +55,15 @@ function ShipImage({ src, size }) {
         texture.__configured = true
     }, [texture])
 
+    const img = texture.image
+    const pxW = img?.naturalWidth || img?.width || 80 * TEXTURE_SCALE
+    const pxH = img?.naturalHeight || img?.height || 80 * TEXTURE_SCALE
+    const planeW = (pxW / TEXTURE_SCALE) * PX_TO_WORLD
+    const planeH = (pxH / TEXTURE_SCALE) * PX_TO_WORLD
+
     return (
         <mesh renderOrder={RENDER_ORDER.ship}>
-            <planeGeometry args={[size, size]} />
+            <planeGeometry args={[planeW, planeH]} />
             <meshBasicMaterial
                 map={texture}
                 transparent
@@ -143,8 +150,8 @@ export function PlayerRenderer() {
         <group ref={groupRef}>
             {hasPlayer && (
                 <>
-                    <ShipImage src={PLAYER_SVG} size={PLAYER_SIZE} />
-                    
+                    <ShipImage src={PLAYER_SVG} />
+
                 </>
             )}
         </group>
@@ -262,7 +269,7 @@ export function BossRenderer() {
         <group ref={groupRef} visible={false}>
             {hasBoss && isShipBoss && (
                 <>
-                    <ShipImage src={svgSrc} size={BOSS_SIZE} />
+                    <ShipImage src={svgSrc} />
                 </>
             )}
         </group>

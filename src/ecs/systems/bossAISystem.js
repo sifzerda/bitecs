@@ -2,66 +2,71 @@
 
 import { world } from "../constants/world.js"
 import { bossAIQuery, playerQuery } from "../constants/queries.js"
-import { Position, Velocity, Rotation, BossAI, BossType, BULLET_OWNER } from "../constants/components.js"
+import { Position, Velocity, Rotation, BossAI, BossType } from "../constants/components.js"
+import { BOSS_INDEX_BY_KEY } from "../constants/bosses.js"
 import { spawnBossBullet } from "../spawn.js"
 import { getWeapon } from "../weapons/config/weapons.js"
 import { getAction } from "../weapons/config/weaponActions.js"
 
 // ============================================================
-// Tuning
+// CONFIGURATION
 // ============================================================
 
-const TURN_SPEED = 3.8
-const THRUST = 16
-const MAX_SPEED = 9
-const DRAG = 0.985
-// How close the boss tries to remain to the player
-const MIN_COMBAT_RANGE = 5.5
-const IDEAL_COMBAT_RANGE = 9.0
-const MAX_COMBAT_RANGE = 14.0
-// If player is moving toward boss faster than this,
-// boss considers it an aggressive approach.
-const PLAYER_APPROACH_SPEED = 3.0
-// How accurately the boss needs to face the player before shooting.
-const FIRE_ANGLE = 0.22
-// Random behavior changes
-const DECISION_MIN = 0.45
-const DECISION_MAX = 1.35
-// Evade strength
-const EVADE_BIAS = 0.85
-// Strafing
-const STRAFE_BIAS = 0.9
-// Boss doesn't constantly shoot even when aligned.
-const OPPORTUNITY_FIRE_CHANCE = 0.82
-const SHOOT_INTERVAL = 1.4
+const CONFIG = {
 
-// ============================================================
-// Helpers
-// ============================================================
+    movement: {
+        thrust: 12,
+        maxSpeed: 7.5,
+        drag: 0.985,
+    },
 
-function normalizeAngle(a) {
+    turning: {
+        speed: 4.5,
+        fireAngle: 0.16,
+    },
 
-    while (a > Math.PI)
-        a -= Math.PI * 2
+    combat: {
+        minRange: 5.5,
+        idealRange: 9,
+        maxRange: 14,
+    },
 
-    while (a < -Math.PI)
-        a += Math.PI * 2
+    decisions: {
+        minDuration: 1.5,
+        maxDuration: 2.8,
+    },
 
-    return a
+    shooting: {
+        defaultInterval: 0.45,
+        minInterval: 0.12,
+    },
 }
 
-function angleDifference(a, b) {
-    return normalizeAngle(a - b)
+// ============================================================
+// ANGLE HELPERS
+// ============================================================
+
+function normalizeAngle(angle) {
+
+    while (angle > Math.PI) angle -= Math.PI * 2
+    while (angle < -Math.PI) angle += Math.PI * 2
+
+    return angle
+}
+
+function angleDifference(target, current) {
+    return normalizeAngle(target - current)
 }
 
 function rotateToward(current, target, maxStep) {
 
-    const diff = angleDifference(target, current)
+    const difference = angleDifference(target, current)
 
-    if (Math.abs(diff) <= maxStep)
+    if (Math.abs(difference) <= maxStep) {
         return target
+    }
 
-    return current + Math.sign(diff) * maxStep
+    return current + Math.sign(difference) * maxStep
 }
 
 function randomRange(min, max) {
@@ -73,156 +78,444 @@ function randomSign() {
 }
 
 // ============================================================
-// Tactical decision
+// TARGET INFORMATION
 // ============================================================
 
-function chooseTacticalState(id, pid) {
+function getTargetInfo(id, pid) {
 
     const dx = Position.x[pid] - Position.x[id]
     const dy = Position.y[pid] - Position.y[id]
 
-    const dist = Math.hypot(dx, dy) || 1
+    const distance = Math.hypot(dx, dy) || 0.001
 
-    const toPlayerX = dx / dist
-    const toPlayerY = dy / dist
-
-    const playerVX = Velocity.x[pid]
-    const playerVY = Velocity.y[pid]
-
-    const playerSpeed = Math.hypot(playerVX, playerVY)
-
-    // --------------------------------------------------------
-    // Is player moving toward the boss?
-    // --------------------------------------------------------
-
-    const playerTowardBoss = (playerVX * -toPlayerX) + (playerVY * -toPlayerY)
-    const aggressiveApproach = playerTowardBoss > PLAYER_APPROACH_SPEED
-
-    // --------------------------------------------------------
-    // Distance pressure
-    // --------------------------------------------------------
-
-    const tooClose = dist < MIN_COMBAT_RANGE
-    const tooFar = dist > MAX_COMBAT_RANGE
-
-    // --------------------------------------------------------
-    // Boss personality
-    // --------------------------------------------------------
-
-    const aggression = BossAI.aggression[id]
-
-    // --------------------------------------------------------
-    // --------------------------------------------------------
-
-    if (aggressiveApproach && dist < IDEAL_COMBAT_RANGE + 4) {
-
-        BossAI.state[id] = 1
-        BossAI.stateTimer[id] = randomRange(0.6, 1.4)
-        // Face away from player.
-        const awayAngle = Math.atan2(-toPlayerY, -toPlayerX)
-        // Add some random lateral escape.
-        const lateral = randomSign() * randomRange(0.25, 0.8)
-        BossAI.moveRotation[id] = awayAngle + lateral
-
-        return
+    return {
+        dx,
+        dy,
+        distance,
+        directionX: dx / distance,
+        directionY: dy / distance,
+        angle: Math.atan2(dy, dx),
     }
+}
+
+// ============================================================
+// MOVEMENT AI
+//
+// The boss has independent movement and aiming.
+//
+// It can move sideways while keeping its weapons aimed
+// at the player, like a strafing spaceship.
+// ============================================================
+
+function chooseMovement(id, target, dt) {
+
+    const {
+        distance,
+        directionX,
+        directionY,
+        angle,
+    } = target
+
+    BossAI.stateTimer[id] -= dt
+
+    const tooClose = distance < CONFIG.combat.minRange
+    const tooFar = distance > CONFIG.combat.maxRange
 
     // --------------------------------------------------------
-    // Too close = escape
+    // Choose a new movement state
     // --------------------------------------------------------
 
     if (tooClose) {
 
         BossAI.state[id] = 1
-        BossAI.stateTimer[id] = randomRange(0.5, 1.1)
-        BossAI.moveRotation[id] = Math.atan2(-toPlayerY, -toPlayerX)
 
-        return
-    }
-
-    // --------------------------------------------------------
-    // Too far = approach
-    // --------------------------------------------------------
-
-    if (tooFar) {
+    } else if (tooFar) {
 
         BossAI.state[id] = 0
-        BossAI.stateTimer[id] = randomRange(0.7, 1.4)
-        BossAI.moveRotation[id] = Math.atan2(toPlayerY, toPlayerX)
 
-        return
-    }
-
-    // ========================================================
-    // Combat range
-    //
-    // Now choose something less predictable.
-    // ========================================================
-
-    const roll = Math.random()
-
-    // Aggressive bosses attack more often.
-    const attackChance = 0.35 + aggression * 0.30
-
-    if (roll < attackChance) {
-
-        // ----------------------------------------------
-        // Attack
-        // ----------------------------------------------
-
-        BossAI.state[id] = 0
-        BossAI.stateTimer[id] = randomRange(0.45, 1.0)
-        BossAI.moveRotation[id] = Math.atan2(toPlayerY, toPlayerX)
-
-        return
-    }
-
-    if (roll < attackChance + 0.35) {
-
-        // ----------------------------------------------
-        // Strafe
-        // ----------------------------------------------
+    } else if (BossAI.stateTimer[id] <= 0) {
 
         BossAI.state[id] = 2
-        BossAI.stateTimer[id] = randomRange(0.7, 1.6)
 
-        const towardAngle = Math.atan2(toPlayerY, toPlayerX)
+        // Occasionally reverse orbit direction.
+        if (Math.random() < 0.3) {
+            BossAI.strafeDirection[id] *= -1
+        }
 
-        BossAI.strafeDirection[id] = randomSign()
-        BossAI.moveRotation[id] = towardAngle + BossAI.strafeDirection[id] * Math.PI / 2
-
-        return
+        BossAI.stateTimer[id] = randomRange(
+            CONFIG.decisions.minDuration,
+            CONFIG.decisions.maxDuration
+        )
     }
 
-    // ----------------------------------------------
-    // Reposition
+    // --------------------------------------------------------
+    // Determine movement direction
     //
-    // Move diagonally around the player.
-    // ----------------------------------------------
+    // 0 = approach
+    // 1 = retreat
+    // 2 = orbit / strafe
+    // --------------------------------------------------------
 
-    BossAI.state[id] = 3
-    BossAI.stateTimer[id] = randomRange(0.8, 1.8)
-    const playerAngle = Math.atan2(toPlayerY, toPlayerX)
-    BossAI.moveRotation[id] = playerAngle + randomSign() * randomRange(0.8, 1.5)
+    let moveX = 0
+    let moveY = 0
+
+    if (BossAI.state[id] === 0) {
+
+        // Move towards player.
+
+        moveX = directionX
+        moveY = directionY
+
+    } else if (BossAI.state[id] === 1) {
+
+        // Move away from player.
+
+        moveX = -directionX
+        moveY = -directionY
+
+    } else {
+
+        // Circle around the player.
+
+        const orbitAngle =
+            angle +
+            BossAI.strafeDirection[id] * Math.PI / 2
+
+        moveX = Math.cos(orbitAngle)
+        moveY = Math.sin(orbitAngle)
+
+        // Correct the orbit radius.
+        // Approach slightly if too far away.
+        // Retreat slightly if too close.
+
+        const rangeDifference =
+            distance - CONFIG.combat.idealRange
+
+        const correction = THREEClamp(
+            rangeDifference * 0.12,
+            -0.65,
+            0.65
+        )
+
+        moveX += directionX * correction
+        moveY += directionY * correction
+    }
+
+    // --------------------------------------------------------
+    // Normalize movement direction
+    // --------------------------------------------------------
+
+    const length = Math.hypot(moveX, moveY) || 1
+
+    moveX /= length
+    moveY /= length
+
+    BossAI.moveRotation[id] = Math.atan2(moveY, moveX)
+
+    return { moveX, moveY }
+}
+
+function THREEClamp(value, min, max) {
+    return Math.max(min, Math.min(max, value))
 }
 
 // ============================================================
-// Main system
+// MOVEMENT PHYSICS
+// ============================================================
+
+function updateMovement(id, direction, dt) {
+
+    const { moveX, moveY } = direction
+
+    // Continuous thrust.
+
+    Velocity.x[id] += moveX * CONFIG.movement.thrust * dt
+    Velocity.y[id] += moveY * CONFIG.movement.thrust * dt
+
+    // Maximum speed.
+
+    const speed = Math.hypot(
+        Velocity.x[id],
+        Velocity.y[id]
+    )
+
+    if (speed > CONFIG.movement.maxSpeed) {
+
+        const scale =
+            CONFIG.movement.maxSpeed / speed
+
+        Velocity.x[id] *= scale
+        Velocity.y[id] *= scale
+    }
+
+    // Frame-rate-independent drag.
+
+    const drag = Math.pow(
+        CONFIG.movement.drag,
+        dt * 60
+    )
+
+    Velocity.x[id] *= drag
+    Velocity.y[id] *= drag
+}
+
+// ============================================================
+// AIMING
+// ============================================================
+
+function calculateAim(id, pid, weapon, action) {
+
+    let aimX = Position.x[pid]
+    let aimY = Position.y[pid]
+
+    const dx = aimX - Position.x[id]
+    const dy = aimY - Position.y[id]
+
+    // Predict player movement for projectile weapons.
+
+    const leadTarget = action?.ai?.leadTarget
+
+    if (leadTarget && weapon.speed > 0) {
+
+        const distance = Math.hypot(dx, dy)
+
+        const travelTime = Math.min(
+            distance / weapon.speed,
+            1.2
+        )
+
+        aimX += Velocity.x[pid] * travelTime
+        aimY += Velocity.y[pid] * travelTime
+    }
+
+    // Ship rotation convention:
+    // Rotation 0 points upwards (+Y).
+
+    return -Math.atan2(
+        aimX - Position.x[id],
+        aimY - Position.y[id]
+    )
+}
+
+function updateAiming(id, aimRotation, dt) {
+
+    BossAI.targetRotation[id] = aimRotation
+
+    Rotation[id] = rotateToward(
+        Rotation[id],
+        aimRotation,
+        CONFIG.turning.speed * dt
+    )
+
+    const error = Math.abs(
+        angleDifference(aimRotation, Rotation[id])
+    )
+
+    return error <= CONFIG.turning.fireAngle
+}
+
+// ============================================================
+// SHOOTING
+// ============================================================
+
+function fireProjectile(id, weapon, aimRotation, action) {
+
+    const ai = action?.ai ?? {}
+
+    const jitter =
+        weapon.aiSpreadJitter ??
+        ai.spreadJitter ??
+        0
+
+    const fireRotation =
+        aimRotation +
+        (Math.random() - 0.5) * 2 * jitter
+
+    spawnBossBullet(
+        Position.x[id],
+        Position.y[id],
+        fireRotation,
+        weapon.id,
+        id
+    )
+}
+
+function updateShooting(id, weapon, action, aligned, dt) {
+
+    // Beam and thrower weapons use their own systems.
+
+    if (
+        !action ||
+        action.continuous ||
+        weapon.category === "beam" ||
+        weapon.category === "thrower"
+    ) {
+        return
+    }
+
+    // Keep the firing timer running.
+
+    BossAI.shootTimer[id] -= dt
+
+    // Do not fire until properly aimed.
+
+    if (!aligned) {
+        return
+    }
+
+    // --------------------------------------------------------
+    // Start a new burst
+    // --------------------------------------------------------
+
+    if (BossAI.burstRemaining[id] === 0) {
+
+        if (BossAI.shootTimer[id] > 0) {
+            return
+        }
+
+        const ai = action.ai ?? {}
+
+        const burstCount =
+            weapon.aiBurstCount ??
+            ai.burstCount ??
+            1
+
+        BossAI.burstRemaining[id] = burstCount
+        BossAI.burstGapTimer[id] = 0
+    }
+
+    // --------------------------------------------------------
+    // Fire burst
+    // --------------------------------------------------------
+
+    BossAI.burstGapTimer[id] -= dt
+
+    if (BossAI.burstGapTimer[id] > 0) {
+        return
+    }
+
+    fireProjectile(
+        id,
+        weapon,
+        BossAI.targetRotation[id],
+        action
+    )
+
+    BossAI.burstRemaining[id]--
+
+    const ai = action.ai ?? {}
+
+    const burstGap =
+        weapon.aiBurstGap ??
+        ai.burstGap ??
+        0.08
+
+    BossAI.burstGapTimer[id] = burstGap
+
+    // --------------------------------------------------------
+    // Finish burst
+    // --------------------------------------------------------
+
+    if (BossAI.burstRemaining[id] <= 0) {
+
+        BossAI.burstRemaining[id] = 0
+
+        BossAI.shootTimer[id] = Math.max(
+            CONFIG.shooting.minInterval,
+            weapon.fireRate ??
+            CONFIG.shooting.defaultInterval
+        )
+    }
+}
+
+// ============================================================
+// BOSS UPDATE
+// ============================================================
+
+function updateBoss(id, pid, dt) {
+
+    // --------------------------------------------------------
+    // Identify weapon
+    // --------------------------------------------------------
+
+    const weapon = getWeapon(BossAI.weapon[id])
+
+    if (!weapon) {
+        return
+    }
+
+    const action = getAction(weapon)
+
+    // --------------------------------------------------------
+    // Target information
+    // --------------------------------------------------------
+
+    const target = getTargetInfo(id, pid)
+
+    // --------------------------------------------------------
+    // Movement
+    // --------------------------------------------------------
+
+    const movementDirection = chooseMovement(
+        id,
+        target,
+        dt
+    )
+
+    updateMovement(
+        id,
+        movementDirection,
+        dt
+    )
+
+    // --------------------------------------------------------
+    // Aiming
+    // --------------------------------------------------------
+
+    const aimRotation = calculateAim(
+        id,
+        pid,
+        weapon,
+        action
+    )
+
+    const aligned = updateAiming(
+        id,
+        aimRotation,
+        dt
+    )
+
+    // --------------------------------------------------------
+    // Shooting
+    // --------------------------------------------------------
+
+    updateShooting(
+        id,
+        weapon,
+        action,
+        aligned,
+        dt
+    )
+
+    BossAI.attackTimer[id] += dt
+}
+
+// ============================================================
+// MAIN SYSTEM
 // ============================================================
 
 export function bossAISystem() {
 
-    const dt = world.time.delta
+    const dt = Math.min(world.time.delta, 0.05)
+
+    if (dt <= 0) return
 
     const bosses = bossAIQuery()
-
-    if (bosses.length === 0)
-        return
-
     const players = playerQuery()
 
-    if (players.length === 0)
+    if (bosses.length === 0 || players.length === 0) {
         return
+    }
 
     const pid = players[0]
 
@@ -230,201 +523,14 @@ export function bossAISystem() {
 
         const id = bosses[i]
 
-        // ====================================================
-        // Player information
-        // ====================================================
-
-        const dx = Position.x[pid] - Position.x[id]
-        const dy = Position.y[pid] - Position.y[id]
-
-        const distance = Math.hypot(dx, dy) || 1
-        const toPlayerAngle = Math.atan2(dy, dx)
-
-        // ====================================================
-        // Tactical state timer
-        // ====================================================
-
-        BossAI.stateTimer[id] -= dt
-        BossAI.decisionCooldown[id] -= dt
-
+        // The central octopus has its own dedicated AI.
         if (
-            BossAI.stateTimer[id] <= 0 && BossAI.decisionCooldown[id] <= 0
+            BossType.typeIndex[id] ===
+            BOSS_INDEX_BY_KEY.octopus
         ) {
-            chooseTacticalState(id, pid)
-            BossAI.decisionCooldown[id] = randomRange(0.15, 0.35)
-        }
-
-        // ====================================================
-        // Movement
-        // ====================================================
-
-        const movementAngle = BossAI.moveRotation[id]
-        const movementDiff = angleDifference(movementAngle, Rotation[id])
-        const turnAmount = TURN_SPEED * dt
-
-        if (Math.abs(movementDiff) <= turnAmount) {
-            Rotation[id] = movementAngle
-        } else {
-            Rotation[id] += Math.sign(movementDiff) * turnAmount
-        }
-
-        // ====================================================
-        // Thrust
-        // ====================================================
-
-        Velocity.x[id] += Math.sin(-Rotation[id]) * THRUST * dt
-        Velocity.y[id] += Math.cos(-Rotation[id]) * THRUST * dt
-
-        // ====================================================
-        // Speed clamp
-        // ====================================================
-
-        const speed = Math.hypot(Velocity.x[id], Velocity.y[id])
-
-        if (speed > MAX_SPEED) {
-
-            const scale = MAX_SPEED / speed
-
-            Velocity.x[id] *= scale
-            Velocity.y[id] *= scale
-        }
-
-        Velocity.x[id] *= DRAG
-        Velocity.y[id] *= DRAG
-
-        // ====================================================
-        // SHOOTING
-        // ====================================================
-
-        BossAI.shootTimer[id] -= dt
-
-        if (BossAI.shootTimer[id] > 0)
-            continue
-
-        const weapon = getWeapon(BossAI.weapon[id])
-
-        if (!weapon)
-            continue
-
-        const action = getAction(weapon)
-
-        if (!action || action.continuous)
-            continue
-
-        const ai = action.ai ?? {}
-
-        // ====================================================
-        // Calculate predicted player position
-        // ====================================================
-
-        let aimX = Position.x[pid]
-        let aimY = Position.y[pid]
-
-
-        if (ai.leadTarget && weapon.speed) {
-
-            const dist = Math.hypot(dx, dy)
-
-            // Don't over-lead at extreme distances.
-            const travelTime = Math.min(dist / weapon.speed, 1.2)
-            aimX += Velocity.x[pid] * travelTime
-            aimY += Velocity.y[pid] * travelTime
-        }
-
-        const aimDX = aimX - Position.x[id]
-        const aimDY = aimY - Position.y[id]
-
-        const aimRotation = -Math.atan2(aimDX, aimDY)
-
-        // ====================================================
-        // How well is the boss currently lined up?
-        // ====================================================
-
-        const aimError = Math.abs(angleDifference(aimRotation, Rotation[id]))
-
-        // ====================================================
-        // The boss has a firing opportunity.
-        //
-        // Don't force it to shoot every time it faces the
-        // player. It should feel like a human choosing when
-        // to pull the trigger.
-        // ====================================================
-
-        const aligned = aimError <= FIRE_ANGLE
-
-        if (!aligned) {
-
-            // Wait briefly while turning.
-            BossAI.shootTimer[id] = 0.04
-
             continue
         }
 
-        // ====================================================
-        // Tactical firing chance
-        //
-        // Attack states are much more willing to fire.
-        // During evasive movement the boss may occasionally
-        // get a shot off if the player crosses its nose.
-        // ====================================================
-
-        let fireChance = OPPORTUNITY_FIRE_CHANCE
-
-        if (BossAI.state[id] === 1)
-            fireChance *= 0.35
-
-        if (BossAI.state[id] === 2)
-            fireChance *= 0.75
-
-        // Very close combat becomes more desperate.
-        if (distance < MIN_COMBAT_RANGE)
-            fireChance *= 1.15
-
-        fireChance = Math.min(1, fireChance)
-
-        if (Math.random() > fireChance) {
-
-            BossAI.shootTimer[id] =
-                randomRange(0.08, 0.25)
-
-            continue
-        }
-
-        // ====================================================
-        // Fire burst
-        // ====================================================
-
-        const burstCount = weapon.aiBurstCount ?? ai.burstCount ?? 1
-        const burstGap = weapon.aiBurstGap ?? ai.burstGap ?? 0.08
-
-        if (BossAI.burstRemaining[id] === 0) {
-            BossAI.burstRemaining[id] =
-                burstCount
-        }
-
-        BossAI.burstGapTimer[id] -= dt
-
-        if (BossAI.burstGapTimer[id] <= 0) {
-
-            const jitter = weapon.aiSpreadJitter ?? ai.spreadJitter ?? 0
-            const fireRotation = aimRotation + (Math.random() - 0.5) * 2 * jitter
-
-            spawnBossBullet(Position.x[id], Position.y[id], fireRotation, weapon.id, id)
-
-            BossAI.burstRemaining[id]--
-            BossAI.burstGapTimer[id] = burstGap
-        }
-
-        // ====================================================
-        // Burst continuation
-        // ====================================================
-
-        if (BossAI.burstRemaining[id] > 0) {
-            BossAI.shootTimer[id] = 0.01
-
-        } else {
-
-            BossAI.shootTimer[id] = weapon.fireRate ?? SHOOT_INTERVAL
-        }
+        updateBoss(id, pid, dt)
     }
 }

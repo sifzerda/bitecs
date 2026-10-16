@@ -346,7 +346,7 @@ export function spawnBoss(bossKey = "shotgun") {
     // ========================================================
 
     BossAI.moveTimer[id] = 0
-    BossAI.shootTimer[id] = 0.7 + Math.random() * 0.6
+    BossAI.shootTimer[id] = 0.5 + Math.random() * 0.5
     BossAI.beamCycleTimer[id] = 3.0
     BossAI.beamActive[id] = 1
     BossAI.targetRotation[id] = 0
@@ -368,7 +368,7 @@ export function spawnBoss(bossKey = "shotgun") {
     // ========================================================
 
     BossAI.state[id] = 0
-    BossAI.stateTimer[id] = 0.5 + Math.random() * 0.8
+    BossAI.stateTimer[id] = 1.5 + Math.random() * 1.3
     BossAI.moveRotation[id] = 0
     BossAI.strafeDirection[id] = Math.random() < 0.5 ? -1 : 1
 
