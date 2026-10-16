@@ -1,16 +1,14 @@
 // src/ecs/systems/asteroidCollisionSystem.js
 
-import { world } from "../constants/world.js"
 import { playerQuery } from "../constants/queries.js"
 import { Asteroid, Position, Velocity, Health, Invulnerability } from "../constants/components.js"
 
 import { activeAsteroids } from "../pools/asteroidPool.js"
-import { useGameStore, SCREEN } from "../../../store/gameStore.js"
+import { useGameStore } from "../../../store/gameStore.js"
 import { simState } from "../../state/simState.js"
 
 const PLAYER_RADIUS = 0.6
 const ASTEROID_RESTITUTION = 1.0
-const PLAYER_BOUNCE = 0.35
 
 export function asteroidCollisionSystem() {
 
@@ -98,7 +96,6 @@ export function asteroidCollisionSystem() {
         }
     }
 
-
     // ============================================================
     // ASTEROID <-> PLAYER
     // ============================================================
@@ -149,11 +146,9 @@ export function asteroidCollisionSystem() {
         // --------------------------------------------------------
 
         const overlap = collisionDistance - dist
-
         const totalMass = PLAYER_MASS + ASTEROID_MASS
 
         const playerCorrection = overlap * (ASTEROID_MASS / totalMass)
-
         const asteroidCorrection = overlap * (PLAYER_MASS / totalMass)
 
         Position.x[pid] += nx * playerCorrection
@@ -177,10 +172,7 @@ export function asteroidCollisionSystem() {
 
         if (velocityAlongNormal < 0) {
 
-            const restitution = Math.min(
-                PLAYER_RESTITUTION,
-                ASTEROID_RESTITUTION
-            )
+            const restitution = Math.min(PLAYER_RESTITUTION, ASTEROID_RESTITUTION)
 
             const impulse = -(1 + restitution) * velocityAlongNormal / (1 / PLAYER_MASS + 1 / ASTEROID_MASS)
 

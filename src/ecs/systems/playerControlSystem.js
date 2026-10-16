@@ -17,10 +17,15 @@ const THRUST = 28
 const BRAKE = 18
 const MAX_SPEED = 24
 const DRAG = 0.995
-
 const DEFLECT_BUFFER = 0.6
-// how quickly the ship turns toward the mouse (rad/s scale factor)
-const MOUSE_TURN_SPEED = 8
+
+// Mouse steering physics
+const MOUSE_MAX_TURN_SPEED = 5.5
+const MOUSE_TURN_ACCELERATION = 20
+const MOUSE_TURN_GAIN = 12
+const MOUSE_TURN_DAMPING = 2.0
+
+let mouseTurnVelocity = 0
 
 export default function playerControlSystem(shootState) {
 
@@ -34,28 +39,38 @@ export default function playerControlSystem(shootState) {
     //----------------------------------
 
     if (isMouseControlEnabled()) {
-        // aim toward mouse world position
+
         const dx = input.worldX - Position.x[pid]
         const dy = input.worldY - Position.y[pid]
 
-        // target angle matching the ship's Rotation convention
-        // (same basis used by thrust: sin(-rot), cos(-rot))
         const targetRot = -Math.atan2(dx, dy)
 
-        // shortest-path delta into [-PI, PI]
+        // Shortest angular distance to target
         let delta = targetRot - Rotation[pid]
-        delta = ((delta + Math.PI) % (Math.PI * 2)) - Math.PI
-        if (delta < -Math.PI) delta += Math.PI * 2
 
-        // smooth turn toward target
-        const maxStep = MOUSE_TURN_SPEED * dt
-        if (Math.abs(delta) <= maxStep) {
-            Rotation[pid] = targetRot
-        } else {
-            Rotation[pid] += Math.sign(delta) * maxStep
-        }
+        delta = Math.atan2(Math.sin(delta), Math.cos(delta))
+
+        // Calculate desired angular velocity.
+        // Damping prevents excessive overshooting.
+        let desiredTurnVelocity = delta * MOUSE_TURN_GAIN - mouseTurnVelocity * MOUSE_TURN_DAMPING
+
+        // Maximum rotation speed
+        desiredTurnVelocity = Math.max(-MOUSE_MAX_TURN_SPEED, Math.min(MOUSE_MAX_TURN_SPEED, desiredTurnVelocity))
+
+        // Angular acceleration
+        const velocityDifference = desiredTurnVelocity - mouseTurnVelocity
+        const maxAcceleration = MOUSE_TURN_ACCELERATION * dt
+
+        mouseTurnVelocity += Math.max(-maxAcceleration, Math.min(maxAcceleration, velocityDifference))
+
+        // Apply rotational momentum
+        Rotation[pid] += mouseTurnVelocity * dt
+
     } else {
-        // keyboard-only rotation
+
+        // Keyboard-only rotation
+        mouseTurnVelocity = 0
+
         if (input.left)
             Rotation[pid] += TURN_SPEED * dt
 
