@@ -224,4 +224,4 @@ some of these boss dropped weapons, some upgrades
 
 
 
- - Spawn currently has some BOSS AI functions, maybe put all Boss AI into separate file/system
+ - [ ] weaponActions and Spawn currently has some BOSS AI functions, maybe put all Boss AI into separate file/system. maybe other files have boss AI scattered, need to be centralized 

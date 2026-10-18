@@ -15,6 +15,7 @@ const pool = createPool({
         Lifetime.remaining[id] = 0
         Bullet.type[id] = 0
         Bullet.owner[id] = 0
+        Bullet.deflected[id] = 0  // Reset deflect flag
         Bullet.colorR[id] = 0
         Bullet.colorG[id] = 0
         Bullet.colorB[id] = 0

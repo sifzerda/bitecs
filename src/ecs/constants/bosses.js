@@ -9,38 +9,38 @@ export const BOSSES = [
     {
         key: "shotgun",
         name: "Space Cowboy",
-        gun: { typeId: "01_shotgun" }, 
+        gun: { typeId: "01_shotgun", offsetX: 0.7, offsetY: 0.1, scale: 1.0, rotation: 0 },
 
         emission: {
             exhaust: {
                 offsetX: 0,
-                offsetY: -0.60,
-                engineGap: 0.15,
+                offsetY: -0.6,
+                engineGap: 0.3,
                 nozzleOffset: 0,
             },
 
             projectile: {
                 offsetX: 0,
-                offsetY: 0.60,
-                gunGap: 0.5,
+                offsetY: 0.6,
+                gunGap: 0.7,
             },
 
             beam: {
                 offsetX: 0,
-                offsetY: 0.60,
-                gunGap: 0.5,
+                offsetY: 0.6,
+                gunGap: 0.7,
             },
 
             missile: {
                 offsetX: 0,
-                offsetY: 0.60,
-                gunGap: 0.5,
+                offsetY: 0.6,
+                gunGap: 0.7,
             },
 
             thrower: {
                 offsetX: 0,
-                offsetY: 0.60,
-                gunGap: 0.5,
+                offsetY: 0.6,
+                gunGap: 0.7,
             },
         },
 
@@ -49,38 +49,38 @@ export const BOSSES = [
     {
         key: "machinegun",
         name: "Rambo The Space Copter",
-        gun: { typeId: "02_machinegun" }, // mount.offsetX = 0.48
+        gun: { typeId: "02_machinegun", offsetX: 0.7, offsetY: 0.58, scale: 1.0, rotation: 0 }, // mount.offsetX = 0.48
 
         emission: {
             exhaust: {
                 offsetX: 0,
-                offsetY: -0.62,
-                engineGap: 0.08,
+                offsetY: -1.3,
+                engineGap: 0.44,
                 nozzleOffset: 0,
             },
 
             projectile: {
                 offsetX: 0,
-                offsetY: 0.62,
-                gunGap: 0.48,
+                offsetY: 1.39,
+                gunGap: 0.71,
             },
 
             beam: {
                 offsetX: 0,
-                offsetY: 0.62,
-                gunGap: 0.48,
+                offsetY: 1.39,
+                gunGap: 0.71,
             },
 
             missile: {
                 offsetX: 0,
-                offsetY: 0.62,
-                gunGap: 0.48,
+                offsetY: 1.39,
+                gunGap: 0.71,
             },
 
             thrower: {
                 offsetX: 0,
-                offsetY: 0.62,
-                gunGap: 0.48,
+                offsetY: 1.39,
+                gunGap: 0.71,
             },
         },
 
@@ -89,37 +89,37 @@ export const BOSSES = [
     {
         key: "cryogun",
         name: "The Flying Refrigerator",
-        gun: { typeId: "03_cryogun" }, // mount.offsetX = 0.8
+        gun: { typeId: "03_cryogun", offsetX: 0.8, offsetY: -0.1, scale: 0.75, rotation: 0 }, // mount.offsetX = 0.48
 
         emission: {
             exhaust: {
                 offsetX: 0,
-                offsetY: -0.58,
-                engineGap: 0.22,
+                offsetY: -0.94,
+                engineGap: 0.23,
                 nozzleOffset: 0,
             },
 
             projectile: {
                 offsetX: 0,
-                offsetY: 0.60,
+                offsetY: 0.95,
                 gunGap: 0.8,
             },
 
             beam: {
                 offsetX: 0,
-                offsetY: 0.60,
+                offsetY: 0.95,
                 gunGap: 0.8,
             },
 
             missile: {
                 offsetX: 0,
-                offsetY: 0.60,
+                offsetY: 0.95,
                 gunGap: 0.8,
             },
 
             thrower: {
                 offsetX: 0,
-                offsetY: 0.60,
+                offsetY: 0.95,
                 gunGap: 0.8,
             },
         },
@@ -129,37 +129,37 @@ export const BOSSES = [
     {
         key: "grenadegun",
         name: "War Machine",
-        gun: { typeId: "04_grenadelauncher" }, // mount.offsetX = 0.8
+        gun: { typeId: "04_grenadelauncher", offsetX: 0.8, offsetY: -0.31, scale: 1.0, rotation: 0 }, // mount.offsetX = 0.48
 
         emission: {
             exhaust: {
                 offsetX: 0,
-                offsetY: -0.70,
-                engineGap: 0.16,
+                offsetY: -1.35,
+                engineGap: 0.25,
                 nozzleOffset: 0,
             },
 
             projectile: {
                 offsetX: 0,
-                offsetY: 0.75,
+                offsetY: 0.67,
                 gunGap: 0.8,
             },
 
             beam: {
                 offsetX: 0,
-                offsetY: 0.75,
+                offsetY: 0.67,
                 gunGap: 0.8,
             },
 
             missile: {
                 offsetX: 0,
-                offsetY: 0.75,
+                offsetY: 0.67,
                 gunGap: 0.8,
             },
 
             thrower: {
                 offsetX: 0,
-                offsetY: 0.75,
+                offsetY: 0.67,
                 gunGap: 0.8,
             },
         },
@@ -169,38 +169,38 @@ export const BOSSES = [
     {
         key: "acidthrowergun",
         name: "Space Tractor",
-        gun: { typeId: "05_acidthrower" }, // mount.offsetX = 0.9
+        gun: { typeId: "05_acidthrower", offsetX: 0.96, offsetY: -0.01, scale: 0.9, rotation: 0 }, // mount.offsetX = 0.48
 
         emission: {
             exhaust: {
                 offsetX: 0,
-                offsetY: -0.55,
-                engineGap: 0.14,
+                offsetY: -1.04,
+                engineGap: 0.4,
                 nozzleOffset: 0,
             },
 
             projectile: {
                 offsetX: 0,
-                offsetY: 0.50,
-                gunGap: 0.9,
+                offsetY: 0.7,
+                engineGap: 0.96,
             },
 
             beam: {
                 offsetX: 0,
-                offsetY: 0.50,
-                gunGap: 0.9,
+                offsetY: 0.7,
+                engineGap: 0.96,
             },
 
             missile: {
                 offsetX: 0,
-                offsetY: 0.50,
-                gunGap: 0.9,
+                offsetY: 0.7,
+                engineGap: 0.96,
             },
 
             thrower: {
                 offsetX: 0,
-                offsetY: 0.50,
-                gunGap: 0.9,
+                offsetY: 0.7,
+                engineGap: 0.96,
             },
         },
 
@@ -209,13 +209,14 @@ export const BOSSES = [
     {
         key: "missilegun",
         name: "Rogue Mars Missiler",
-        gun: { typeId: "06_missilelauncher" }, // mount.offsetX = 0.8
+        gun: { typeId: "06_missilelauncher" , offsetX: 0.93, offsetY: -0.01, scale: 0.9, rotation: 0 }, // mount.offsetX = 0.48
+
 
         emission: {
             exhaust: {
                 offsetX: 0,
-                offsetY: -0.65,
-                engineGap: 0.15,
+                offsetY: -1.63,
+                engineGap: 0.12,
                 nozzleOffset: 0,
             },
 
@@ -249,38 +250,38 @@ export const BOSSES = [
     {
         key: "flamethrowergun",
         name: "X-10 Space Dragon",
-        gun: { typeId: "07_flamethrower" }, // mount.offsetX = 0.5
+        gun: { typeId: "07_flamethrower", offsetX: 0.73, offsetY: -0.33, scale: 1.0, rotation: 0 }, // mount.offsetX = 0.48
 
         emission: {
             exhaust: {
                 offsetX: 0,
-                offsetY: -0.65,
-                engineGap: 0.15,
+                offsetY: -1.23,
+                engineGap: 0.23,
                 nozzleOffset: 0,
             },
 
             projectile: {
                 offsetX: 0,
-                offsetY: 0.60,
-                gunGap: 0.5,
+                offsetY: 0.69,
+                gunGap: 0.73,
             },
 
             beam: {
                 offsetX: 0,
-                offsetY: 0.60,
-                gunGap: 0.5,
+                offsetY: 0.69,
+                gunGap: 0.73,
             },
 
             missile: {
                 offsetX: 0,
-                offsetY: 0.60,
-                gunGap: 0.5,
+                offsetY: 0.69,
+                gunGap: 0.73,
             },
 
             thrower: {
                 offsetX: 0,
-                offsetY: 0.60,
-                gunGap: 0.5,
+                offsetY: 0.69,
+                gunGap: 0.73,
             },
         },
 
@@ -289,40 +290,40 @@ export const BOSSES = [
     {
         key: "lasergun",
         name: "UFO",
-        gun: { typeId: "08_lasergun" }, // mount.offsetX = 0.8
+        gun: { typeId: "08_lasergun", offsetX: 0.72, offsetY: -0.7, scale: 1.0, rotation: 0 }, // mount.offsetX = 0.48
 
         emission: {
             exhaust: {
                 offsetX: 0,
                 // flat wide saucer, near-zero cockpit offset — no pronounced
                 // nose/tail, so pulled these in toward center vs the others
-                offsetY: -0.45,
-                engineGap: 0.22,
+                offsetY: -1.56,
+                engineGap: 0.23,
                 nozzleOffset: 0,
             },
 
             projectile: {
                 offsetX: 0,
                 offsetY: 0.45,
-                gunGap: 0.8,
+                gunGap: 0.72,
             },
 
             beam: {
                 offsetX: 0,
                 offsetY: 0.45,
-                gunGap: 0.8,
+                gunGap: 0.72,
             },
 
             missile: {
                 offsetX: 0,
                 offsetY: 0.45,
-                gunGap: 0.8,
+                gunGap: 0.72,
             },
 
             thrower: {
                 offsetX: 0,
                 offsetY: 0.45,
-                gunGap: 0.8,
+                gunGap: 0.72,
             },
         },
 
@@ -331,38 +332,38 @@ export const BOSSES = [
     {
         key: "arcgun",
         name: "Electric SpaceProbe",
-        gun: { typeId: "09_arcgun" }, // mount.offsetX = 0.4 (narrowest)
+        gun: { typeId: "09_arcgun", offsetX: 1.24, offsetY: 0.44, scale: 1.5, rotation: 0 }, // mount.offsetX = 0.48
 
         emission: {
             exhaust: {
                 offsetX: 0,
-                offsetY: -0.55,
-                engineGap: 0.12,
+                offsetY: -1.17,
+                engineGap: 0.48,
                 nozzleOffset: 0,
             },
 
             projectile: {
                 offsetX: 0,
-                offsetY: 0.55,
-                gunGap: 0.4,
+                offsetY: 1.82,
+                gunGap: 1.23,
             },
 
             beam: {
                 offsetX: 0,
-                offsetY: 0.55,
-                gunGap: 0.4,
+                offsetY: 1.82,
+                gunGap: 1.23,
             },
 
             missile: {
                 offsetX: 0,
-                offsetY: 0.55,
-                gunGap: 0.4,
+                offsetY: 1.82,
+                gunGap: 1.23,
             },
 
             thrower: {
                 offsetX: 0,
-                offsetY: 0.55,
-                gunGap: 0.4,
+                offsetY: 1.82,
+                gunGap: 1.23,
             },
         },
 
@@ -376,7 +377,7 @@ export const BOSSES = [
         emission: {
             exhaust: {
                 offsetX: 0,
-                offsetY: -0.65,
+                offsetY: -1.35,
                 engineGap: 0.16,
                 nozzleOffset: 0,
             },

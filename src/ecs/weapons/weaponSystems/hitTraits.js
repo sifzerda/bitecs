@@ -6,7 +6,6 @@ import { applyStatusEffects } from "../../systems/statusEffectSystem.js"
 import { emitEffect } from "../../../fx/effects.js"
 import { EFFECT } from "../../../fx/FXTypes.js"
 
-
 // Each trait: (present on weapon?) -> apply(ctx).
 // ctx = {
 //     x,
@@ -31,43 +30,17 @@ export const HIT_TRAITS = [
 
     {
         applies: w => w.explosive,
-
-        apply: ({
-            x,
-            y,
-            weapon,
-            asteroids,
-            bosses
-        }) =>
-            explodeAt(
-                x,
-                y,
-                weapon,
-                asteroids,
-                bosses
-            ),
+        apply: ({ x, y, weapon, asteroids, bosses }) => explodeAt(x, y, weapon, asteroids, bosses),
     },
-
 
     // --------------------------------------------------------
     // Status effects
     // --------------------------------------------------------
 
     {
-        applies: w =>
-            w.corrosion ||
-            w.freezeDuration,
-
-        apply: ({
-            targetId,
-            weapon
-        }) =>
-            applyStatusEffects(
-                targetId,
-                weapon
-            ),
+        applies: w => w.corrosion || w.freezeDuration,
+        apply: ({ targetId, weapon }) => applyStatusEffects(targetId, weapon),
     },
-
 
     // --------------------------------------------------------
     // Chain lightning
@@ -75,23 +48,8 @@ export const HIT_TRAITS = [
 
     {
         applies: w => w.chainCount,
-
-        apply: ({
-            x,
-            y,
-            weapon,
-            asteroids,
-            targetId
-        }) =>
-            chainLightning(
-                x,
-                y,
-                weapon,
-                asteroids,
-                targetId
-            ),
+        apply: ({ x, y, weapon, asteroids, targetId }) => chainLightning(x, y, weapon, asteroids, targetId),
     },
-
 
     // --------------------------------------------------------
     // Impact spark
@@ -99,58 +57,21 @@ export const HIT_TRAITS = [
 
     {
         applies: w => !w.explosive,
-
-        apply: ({
-            x,
-            y,
-            big
-        }) =>
-            emitEffect(
-                EFFECT.SPARK_BURST,
-                {
-                    x,
-                    y,
-                    count: big ? 26 : 20,
-                    speed: big ? 10 : 8,
-                    big: !!big,
-                }
-            ),
+        apply: ({ x, y, big }) => emitEffect(EFFECT.SPARK_BURST, { x, y, count: big ? 26 : 20, speed: big ? 10 : 8, big: !!big }),
     },
 ]
-
 
 // ============================================================
 // Resolve hit
 // ============================================================
 
-export function resolveHit({
-    x,
-    y,
-    targetId,
-    weapon,
-    owner,
-    kill,
-    asteroids,
-    bosses,
-    big = false
-}) {
+export function resolveHit({ x, y, targetId, weapon, owner, kill, asteroids, bosses, big = false }) {
 
     if (weapon.directDamage > 0) {
         Health.current[targetId] -= weapon.directDamage
     }
 
-
-    const ctx = {
-        x,
-        y,
-        targetId,
-        weapon,
-        owner,
-        asteroids,
-        bosses,
-        big
-    }
-
+    const ctx = { x, y, targetId, weapon, owner, asteroids, bosses, big }
 
     for (const trait of HIT_TRAITS) {
 
@@ -159,18 +80,10 @@ export function resolveHit({
         }
     }
 
-
     if (Health.current[targetId] <= 0) {
-
-        kill(
-            targetId,
-            x,
-            y
-        )
-
+        kill(targetId, x, y)
         return true
     }
-
 
     return false
 }

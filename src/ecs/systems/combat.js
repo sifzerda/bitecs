@@ -168,33 +168,37 @@ export function combatSystem() {
             // Bosses
             // ------------------------------------------------
 
-            for (let j = 0; j < bosses.length; j++) {
+            if (Bullet.deflected[bid] === 0) {
 
-                const bossId = bosses[j]
+                for (let j = 0; j < bosses.length; j++) {
 
-                const dx = Position.x[bid] - Position.x[bossId]
-                const dy = Position.y[bid] - Position.y[bossId]
+                    const bossId = bosses[j]
 
-                const hitDistance = weapon.hitRadius + getBossHitRadius(bossId)
+                    const dx = Position.x[bid] - Position.x[bossId]
+                    const dy = Position.y[bid] - Position.y[bossId]
 
-                if (dx * dx + dy * dy <= hitDistance * hitDistance) {
+                    const hitDistance = weapon.hitRadius + getBossHitRadius(bossId)
 
-                    resolveHit({
-                        x: Position.x[bid],
-                        y: Position.y[bid],
-                        targetId: bossId,
-                        weapon,
-                        owner: Bullet.owner[bid],
-                        kill: killBoss,
-                        asteroids,
-                        bosses,
-                        big: true,
-                    })
+                    if (dx * dx + dy * dy <= hitDistance * hitDistance) {
 
-                    releaseBulletEntity(bid)
-                    break
+                        resolveHit({
+                            x: Position.x[bid],
+                            y: Position.y[bid],
+                            targetId: bossId,
+                            weapon,
+                            owner: Bullet.owner[bid],
+                            kill: killBoss,
+                            asteroids,
+                            bosses,
+                            big: true,
+                        })
+
+                        releaseBulletEntity(bid)
+                        break
+                    }
                 }
             }
+
         }
 
         // ====================================================
@@ -218,9 +222,7 @@ export function combatSystem() {
             // Deflect
             // ------------------------------------------------
 
-            if (
-                simState.deflectBufferTime > 0 && distSq <= DEFLECT_RADIUS * DEFLECT_RADIUS
-            ) {
+            if (simState.deflectBufferTime > 0 && distSq <= DEFLECT_RADIUS * DEFLECT_RADIUS) {
 
                 const dist = Math.sqrt(distSq) || 1
 
@@ -249,6 +251,7 @@ export function combatSystem() {
                 Velocity.y[bid] = (rvy / rLen) * outSpeed
 
                 Bullet.owner[bid] = BULLET_OWNER.PLAYER
+                Bullet.deflected[bid] = 1
 
                 simState.deflectFlashTimer = DEFLECT_FLASH_DURATION
                 simState.deflectFlashX = Position.x[pid]

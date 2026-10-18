@@ -79,7 +79,9 @@ export const Bullet = {
     colorG: new Float32Array(MAX),
     colorB: new Float32Array(MAX),
 
-    active: new Uint8Array(MAX)
+    active: new Uint8Array(MAX),
+
+     deflected: new Uint8Array(MAX), // 0 = normal, 1 = deflected
 }
 
 export const Arc = {
