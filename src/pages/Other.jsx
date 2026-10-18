@@ -506,26 +506,14 @@ export default function Other() {
 
                                         <div className="flex justify-between items-center mb-1">
 
-                                            <label className="text-[10px] tracking-widest text-white/80">
-                                                {item.label}
-                                            </label>
-
-                                            <span className="text-[9px] text-white/30">
-                                                {item.description}
-                                            </span>
+                                            <label className="text-[10px] tracking-widest text-white/80">{item.label}</label>
+                                            <span className="text-[9px] text-white/30">{item.description}</span>
 
                                         </div>
 
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            value={config[item.field] ?? 0}
-                                            onChange={e => updateValue(
-                                                item.field,
-                                                Number(e.target.value)
-                                            )}
-                                            className="w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-sm text-cyan-300 font-mono outline-none focus:border-cyan-400"
-                                        />
+                                        <input type="number" step="0.01" value={config[item.field] ?? 0}
+                                            onChange={e => updateValue(item.field, Number(e.target.value))}
+                                            className="w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-sm text-cyan-300 font-mono outline-none focus:border-cyan-400" />
 
                                     </div>
 
@@ -542,17 +530,8 @@ export default function Other() {
                             <div className="bg-[#0b101b] border border-white/10 rounded-lg p-4">
 
                                 <div className="flex justify-between items-center mb-4">
-
-                                    <h2 className="text-xs font-bold tracking-widest">
-                                        GUN POSITION
-                                    </h2>
-
-                                    <button
-                                        onClick={resetGun}
-                                        className="px-2 py-1 text-[9px] tracking-widest border border-white/20 text-white/60 hover:border-white/50 rounded"
-                                    >
-                                        RESET TO MOUNT
-                                    </button>
+                                    <h2 className="text-xs font-bold tracking-widest">GUN POSITION</h2>
+                                    <button onClick={resetGun} className="px-2 py-1 text-[9px] tracking-widest border border-white/20 text-white/60 hover:border-white/50 rounded">RESET TO MOUNT</button>
 
                                 </div>
 
@@ -597,36 +576,20 @@ export default function Other() {
 
                                             <div className="flex justify-between items-center mb-1">
 
-                                                <label className="text-[10px] tracking-widest text-white/80">
-                                                    {item.label}
-                                                </label>
+                                                <label className="text-[10px] tracking-widest text-white/80">{item.label}</label>
 
-                                                <span className="text-[9px] text-white/30">
-                                                    {item.description}
-                                                </span>
+                                                <span className="text-[9px] text-white/30">{item.description}</span>
 
                                             </div>
 
-                                            <input
-                                                type="number"
-                                                step={item.step}
-                                                value={item.value}
-                                                onChange={e => item.onChange(Number(e.target.value))}
-                                                className="w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-sm text-yellow-300 font-mono outline-none focus:border-yellow-300"
-                                            />
+                                            <input type="number" step={item.step} value={item.value} onChange={e => item.onChange(Number(e.target.value))} className="w-full bg-black/40 border border-white/15 rounded px-3 py-2 text-sm text-yellow-300 font-mono outline-none focus:border-yellow-300" />
 
                                         </div>
 
                                     ))}
 
                                     <label className="flex items-center gap-2 text-[10px] text-white/70 tracking-widest cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={boss.gun.mirrored !== false}
-                                            onChange={e => updateGun('mirrored', e.target.checked)}
-                                        />
-                                        MIRRORED (TWO GUNS)
-                                    </label>
+                                        <input type="checkbox" checked={boss.gun.mirrored !== false} onChange={e => updateGun('mirrored', e.target.checked)} />MIRRORED (TWO GUNS)</label>
 
                                 </div>
 
@@ -640,18 +603,10 @@ export default function Other() {
 
                             <div className="flex justify-between items-center mb-3">
 
-                                <h2 className="text-xs font-bold tracking-widest">
-                                    BOSS GUN DEBUG
-                                </h2>
+                                <h2 className="text-xs font-bold tracking-widest">BOSS GUN DEBUG</h2>
 
                                 <label className="flex items-center gap-2 text-[9px] text-white/60 tracking-widest cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={showBounds}
-                                        onChange={e => setShowBounds(e.target.checked)}
-                                    />
-                                    SHOW BOUNDS
-                                </label>
+                                    <input type="checkbox" checked={showBounds} onChange={e => setShowBounds(e.target.checked)} />SHOW BOUNDS</label>
 
                             </div>
 
@@ -672,34 +627,20 @@ export default function Other() {
 
                         <div className="bg-[#0b101b] border border-white/10 rounded-lg p-4">
 
-                            <h2 className="text-xs font-bold tracking-widest mb-3">
-                                EMISSION POINT READOUT
-                            </h2>
+                            <h2 className="text-xs font-bold tracking-widest mb-3">EMISSION POINT READOUT</h2>
 
                             {getPoints(config).map(point => (
 
-                                <div
-                                    key={point.side}
-                                    className="flex justify-between items-center py-2 border-b border-white/5 last:border-0"
-                                >
+                                <div key={point.side} className="flex justify-between items-center py-2 border-b border-white/5 last:border-0">
 
-                                    <span className="text-[10px] text-white/60">
-                                        {point.side}
-                                    </span>
-
-                                    <span className="text-xs font-mono text-orange-300">
-                                        X: {point.x.toFixed(3)}
-                                        {' / '}
-                                        Y: {point.y.toFixed(3)}
-                                    </span>
+                                    <span className="text-[10px] text-white/60">{point.side}</span>
+                                    <span className="text-xs font-mono text-orange-300"> X: {point.x.toFixed(3)} {' / '} Y: {point.y.toFixed(3)}</span>
 
                                 </div>
 
                             ))}
 
-                            <div className="text-[9px] text-white/30 mt-3">
-                                Coordinates are relative to the boss centre.
-                            </div>
+                            <div className="text-[9px] text-white/30 mt-3">Coordinates are relative to the boss centre.</div>
 
                         </div>
 
@@ -713,13 +654,9 @@ export default function Other() {
 
                     <div className="flex justify-between items-center mb-3">
 
-                        <h2 className="text-xs font-bold tracking-widest">
-                            CURRENT BOSS EMISSION CONFIG
-                        </h2>
+                        <h2 className="text-xs font-bold tracking-widest">CURRENT BOSS EMISSION CONFIG</h2>
 
-                        <span className="text-[9px] text-cyan-300">
-                            {boss.key.toUpperCase()}
-                        </span>
+                        <span className="text-[9px] text-cyan-300">{boss.key.toUpperCase()}</span>
 
                     </div>
 

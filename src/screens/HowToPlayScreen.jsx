@@ -8,7 +8,8 @@ const PAGES = ['mouse', 'keyboard'];
 export default function HowToPlayScreen({ onBack }) {
   const [selected, setSelected] = useState(0);
   const [pressedKeys, setPressedKeys] = useState(() => new Set());
-  const [mouseDown, setMouseDown] = useState(false);
+  const [leftMouseDown, setLeftMouseDown] = useState(false);
+  const [rightMouseDown, setRightMouseDown] = useState(false);
   const [mouseMoving, setMouseMoving] = useState(false);
   const mouseMoveTimeout = useRef(null);
 
@@ -66,9 +67,7 @@ export default function HowToPlayScreen({ onBack }) {
         setPageDirect(nextPageIndex);
       }
 
-      if (
-        e.key === 'Enter' || e.key === 'Escape' || e.key === 'Backspace'
-      ) {
+      if (e.key === 'Enter' || e.key === 'Escape' || e.key === 'Backspace') {
         e.preventDefault();
         handleBack();
       }
@@ -86,16 +85,26 @@ export default function HowToPlayScreen({ onBack }) {
       });
     };
 
+    // button 0 = left, button 2 = right
     const onMouseDown = (e) => {
       if (e.button === 0) {
-        setMouseDown(true);
+        setLeftMouseDown(true);
+      } else if (e.button === 2) {
+        setRightMouseDown(true);
       }
     };
 
     const onMouseUp = (e) => {
       if (e.button === 0) {
-        setMouseDown(false);
+        setLeftMouseDown(false);
+      } else if (e.button === 2) {
+        setRightMouseDown(false);
       }
+    };
+
+    // Stop the browser context menu so right-click can be demoed
+    const onContextMenu = (e) => {
+      e.preventDefault();
     };
 
     const onMouseMove = () => {
@@ -112,7 +121,8 @@ export default function HowToPlayScreen({ onBack }) {
 
     const onBlur = () => {
       setPressedKeys(new Set());
-      setMouseDown(false);
+      setLeftMouseDown(false);
+      setRightMouseDown(false);
       setMouseMoving(false);
       if (mouseMoveTimeout.current) {
         clearTimeout(mouseMoveTimeout.current);
@@ -123,6 +133,7 @@ export default function HowToPlayScreen({ onBack }) {
     window.addEventListener('keyup', onKeyUp);
     window.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('contextmenu', onContextMenu);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('blur', onBlur);
 
@@ -131,6 +142,7 @@ export default function HowToPlayScreen({ onBack }) {
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('contextmenu', onContextMenu);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('blur', onBlur);
       if (mouseMoveTimeout.current) {
@@ -139,48 +151,31 @@ export default function HowToPlayScreen({ onBack }) {
     };
   }, [handleBack, nextPageIndex, setPageDirect]);
 
-  const isPressed = (key) =>
-    pressedKeys.has(key.toLowerCase());
+  const isPressed = (key) => pressedKeys.has(key.toLowerCase());
 
   const activeClass = `border-cyan-300 text-cyan-200 bg-cyan-400/20 shadow-[0_0_14px_rgba(0,255,255,0.75),inset_0_0_10px_rgba(0,255,255,0.18)]`;
   const inactiveClass = `border-white/40 text-white bg-transparent`;
 
-  const keyClass = (key) => `flex h-8 w-8 items-center justify-center border text-xs transition-all duration-75
-    ${isPressed(key) ? activeClass : inactiveClass}
-  `;
-
-  const arrowKeyClass = (key) => `flex h-8 w-8 items-center justify-center border text-base leading-none transition-all duration-75
-    ${isPressed(key) ? activeClass : inactiveClass}
-  `;
-
-  const wideKeyClass = (key) => `flex h-7 w-14 items-center justify-center border text-[10px] transition-all duration-75
-    ${isPressed(key) ? activeClass : inactiveClass}
-  `;
+  const keyClass = (key) => `flex h-8 w-8 items-center justify-center border text-xs transition-all duration-75 ${isPressed(key) ? activeClass : inactiveClass}`;
+  const arrowKeyClass = (key) => `flex h-8 w-8 items-center justify-center border text-base leading-none transition-all duration-75 ${isPressed(key) ? activeClass : inactiveClass}`;
+  const wideKeyClass = (key) => `flex h-7 w-14 items-center justify-center border text-[10px] transition-all duration-75 ${isPressed(key) ? activeClass : inactiveClass}`;
 
   // Mouse body/parts glow while moving
-  const mouseBodyClass = `relative h-11 w-7 rounded-[45%] border bg-black/30 overflow-hidden transition-all duration-75
-    ${mouseMoving
-      ? 'border-cyan-300 shadow-[0_0_14px_rgba(0,255,255,0.75),inset_0_0_10px_rgba(0,255,255,0.18)]'
-      : 'border-white/50'
-    }
-  `;
-
-  const mouseDividerClass = `absolute left-1/2 top-0 h-5 w-px -translate-x-1/2 z-10 transition-all duration-75
-    ${mouseMoving ? 'bg-cyan-300/70' : 'bg-white/30'}
-  `;
-
-  const mouseWheelClass = `absolute left-1/2 top-2 h-2.5 w-1 -translate-x-1/2 border rounded-full z-10 transition-all duration-75
-    ${mouseMoving ? 'border-cyan-300' : 'border-white/50'}
-  `;
-
-  const mouseArrowClass = `text-[9px] transition-all duration-75
-    ${mouseMoving ? 'text-cyan-300' : 'text-cyan-300/60'}
-  `;
+  const mouseBodyClass = `relative h-11 w-7 rounded-[45%] border bg-black/30 overflow-hidden transition-all duration-75 ${mouseMoving ? 'border-cyan-300 shadow-[0_0_14px_rgba(0,255,255,0.75),inset_0_0_10px_rgba(0,255,255,0.18)]' : 'border-white/50'}`;
+  const mouseDividerClass = `absolute left-1/2 top-0 h-5 w-px -translate-x-1/2 z-10 transition-all duration-75 ${mouseMoving ? 'bg-cyan-300/70' : 'bg-white/30'}`;
+  const mouseWheelClass = `absolute left-1/2 top-2 h-2.5 w-1 -translate-x-1/2 border rounded-full z-10 transition-all duration-75 ${mouseMoving ? 'border-cyan-300' : 'border-white/50'}`;
+  const mouseArrowClass = `text-[9px] transition-all duration-75 ${mouseMoving ? 'text-cyan-300' : 'text-cyan-300/60'}`;
+  const buttonLitClass = 'bg-cyan-400/30 shadow-[inset_0_0_8px_rgba(0,255,255,0.75)]';
 
   // Left button = top-left quarter of the mouse body, highlights on left-click
-  const mouseLeftButtonClass = `absolute left-0 top-0 h-5 w-1/2 rounded-tl-[45%] transition-all duration-75
-    ${mouseDown ? 'bg-cyan-400/30 shadow-[inset_0_0_8px_rgba(0,255,255,0.75)]' : 'bg-transparent'}
-  `;
+  const mouseLeftButtonClass = `absolute left-0 top-0 h-5 w-1/2 rounded-tl-[45%] transition-all duration-75 ${leftMouseDown ? buttonLitClass : 'bg-transparent'}`;
+
+  // Right button = top-right quarter of the mouse body, highlights on right-click
+  const mouseRightButtonClass = `absolute right-0 top-0 h-5 w-1/2 rounded-tr-[45%] transition-all duration-75 ${rightMouseDown ? buttonLitClass : 'bg-transparent'}`;
+
+  // Small LEFT / RIGHT click badges next to the labels
+  const clickBadgeClass = (down) => `flex h-5 w-12 items-center justify-center border text-[8px] tracking-[0.15em] transition-all duration-75
+    ${down ? activeClass : inactiveClass}`;
 
   const pageLabel = PAGES[page] === 'mouse' ? 'MOUSE + KEYBOARD' : 'KEYBOARD ONLY';
 
@@ -195,43 +190,21 @@ export default function HowToPlayScreen({ onBack }) {
 
         <div className="mb-6 flex items-center justify-center gap-4">
 
-          <button
-            type="button"
-            onClick={() => setPageDirect(prevPageIndex)}
-            aria-label="Previous controls page"
-            className="cursor-pointer flex h-7 w-7 items-center justify-center border border-[#39ff14]/40 text-[#39ff14]/70 hover:border-cyan-300 hover:text-cyan-300 transition-all duration-150"
-          >
-            ‹
-          </button>
+          <button type="button" onClick={() => setPageDirect(prevPageIndex)}
+            aria-label="Previous controls page" className="cursor-pointer flex h-7 w-7 items-center justify-center border border-[#39ff14]/40 text-[#39ff14]/70 hover:border-cyan-300 hover:text-cyan-300 transition-all duration-150">‹</button>
 
-          <button
-            type="button"
-            onClick={() => setPageDirect(nextPageIndex)}
-            className="cursor-pointer min-w-55 border border-[#39ff14]/40 bg-black/40 px-4 py-2 text-center uppercase tracking-[0.3em] text-cyan-300 hover:border-cyan-300 hover:shadow-[0_0_14px_rgba(0,255,255,0.35)] transition-all duration-150"
-          >
-            {pageLabel}
-          </button>
+          <button type="button" onClick={() => setPageDirect(nextPageIndex)}
+            className="cursor-pointer min-w-55 border border-[#39ff14]/40 bg-black/40 px-4 py-2 text-center uppercase tracking-[0.3em] text-cyan-300 hover:border-cyan-300 hover:shadow-[0_0_14px_rgba(0,255,255,0.35)] transition-all duration-150">
+            {pageLabel}</button>
 
-          <button
-            type="button"
-            onClick={() => setPageDirect(nextPageIndex)}
-            aria-label="Next controls page"
-            className="cursor-pointer flex h-7 w-7 items-center justify-center border border-[#39ff14]/40 text-[#39ff14]/70 hover:border-cyan-300 hover:text-cyan-300 transition-all duration-150"
-          >
-            ›
-          </button>
+          <button type="button" onClick={() => setPageDirect(nextPageIndex)} aria-label="Next controls page"
+            className="cursor-pointer flex h-7 w-7 items-center justify-center border border-[#39ff14]/40 text-[#39ff14]/70 hover:border-cyan-300 hover:text-cyan-300 transition-all duration-150">›</button>
 
         </div>
 
         {/* page dots */}
         <div className="mb-6 flex items-center justify-center gap-2">
-          {PAGES.map((p, i) => (
-            <span
-              key={p}
-              className={`h-1.5 w-1.5 rounded-full transition-all duration-150 ${i === page ? 'bg-cyan-300 shadow-[0_0_6px_rgba(0,255,255,0.8)]' : 'bg-white/20'
-                }`}
-            />
-          ))}
+          {PAGES.map((p, i) => (<span key={p} className={`h-1.5 w-1.5 rounded-full transition-all duration-150 ${i === page ? 'bg-cyan-300 shadow-[0_0_6px_rgba(0,255,255,0.8)]' : 'bg-white/20'}`} />))}
         </div>
 
         {/* ================================================= */}
@@ -246,7 +219,7 @@ export default function HowToPlayScreen({ onBack }) {
 
               <div className="space-y-3">
 
-                {/* MOUSE MOVEMENT + LEFT BUTTON (highlighted on the icon itself) */}
+                {/* MOUSE MOVEMENT (icon lights up for movement and for both buttons) */}
                 <div className="flex items-center gap-4">
 
                   {/* Mouse icon */}
@@ -257,6 +230,9 @@ export default function HowToPlayScreen({ onBack }) {
                       {/* left button highlight */}
                       <div className={mouseLeftButtonClass} />
 
+                      {/* right button highlight */}
+                      <div className={mouseRightButtonClass} />
+
                       {/* centre divider */}
                       <div className={mouseDividerClass} />
 
@@ -264,13 +240,8 @@ export default function HowToPlayScreen({ onBack }) {
                       <div className={mouseWheelClass} />
 
                       {/* movement arrows */}
-                      <span className={`absolute -left-4 top-1/2 -translate-y-1/2 ${mouseArrowClass}`}>
-                        ‹
-                      </span>
-
-                      <span className={`absolute -right-4 top-1/2 -translate-y-1/2 ${mouseArrowClass}`}>
-                        ›
-                      </span>
+                      <span className={`absolute -left-4 top-1/2 -translate-y-1/2 ${mouseArrowClass}`}>‹</span>
+                      <span className={`absolute -right-4 top-1/2 -translate-y-1/2 ${mouseArrowClass}`}>›</span>
 
                     </div>
 
@@ -285,21 +256,33 @@ export default function HowToPlayScreen({ onBack }) {
 
                 </div>
 
-
-                {/* LEFT MOUSE BUTTON (label only — the icon above lights up now) */}
+                {/* LEFT MOUSE BUTTON */}
                 <div className="flex items-center gap-4">
 
-                  <div className="relative flex h-12 w-8 items-center justify-center" />
+                  <div className="flex h-8 w-8 items-center justify-center">
+                    <div className={clickBadgeClass(leftMouseDown)}>LEFT</div>
+                  </div>
 
                   <div>
-
                     <div className="text-green-400 text-md tracking-[0.3em]">Left Mouse Button</div>
                     <div className="mt-0.5 text-md text-white/90">Fire gun</div>
-
                   </div>
 
                 </div>
 
+                {/* RIGHT MOUSE BUTTON */}
+                <div className="flex items-center gap-4">
+
+                  <div className="flex h-8 w-8 items-center justify-center">
+                    <div className={clickBadgeClass(rightMouseDown)}>RIGHT</div>
+                  </div>
+
+                  <div>
+                    <div className="text-green-400 text-md tracking-[0.3em]">Right Mouse Button</div>
+                    <div className="mt-0.5 text-md text-white/90">Deflect gunfire</div>
+                  </div>
+
+                </div>
 
                 {/* ACCELERATE / REVERSE */}
                 <div className="flex items-center gap-4">
@@ -318,16 +301,15 @@ export default function HowToPlayScreen({ onBack }) {
 
                 </div>
 
-
-                {/* BLOCK */}
+                {/* DEFLECT */}
                 <div className="flex items-center gap-4">
 
-                  <div className={keyClass('b')}>B</div>
+                  <div className={keyClass('x')}>X</div>
 
                   <div>
 
-                    <div className="text-green-400 text-md tracking-[0.3em]">B key</div>
-                    <div className="mt-0.5 text-md text-white/90">Block</div>
+                    <div className="text-green-400 text-md tracking-[0.3em]">X key</div>
+                    <div className="mt-0.5 text-md text-white/90">Deflect gunfire</div>
 
                   </div>
 
@@ -380,23 +362,13 @@ export default function HowToPlayScreen({ onBack }) {
 
                         <div />
 
-                        <div className={arrowKeyClass('arrowup')}>
-                          ↑
-                        </div>
+                        <div className={arrowKeyClass('arrowup')}> ↑ </div>
 
                         <div />
 
-                        <div className={arrowKeyClass('arrowleft')}>
-                          ←
-                        </div>
-
-                        <div className={arrowKeyClass('arrowdown')}>
-                          ↓
-                        </div>
-
-                        <div className={arrowKeyClass('arrowright')}>
-                          →
-                        </div>
+                        <div className={arrowKeyClass('arrowleft')}> ← </div>
+                        <div className={arrowKeyClass('arrowdown')}> ↓ </div>
+                        <div className={arrowKeyClass('arrowright')}> → </div>
 
                       </div>
 
@@ -413,14 +385,13 @@ export default function HowToPlayScreen({ onBack }) {
 
                 </div>
 
-
                 {/* ============================================= */}
                 {/* SHOOTING */}
                 {/* ============================================= */}
 
                 <div>
 
-                   <div className="mb-2 text-green-400 text-md tracking-[0.3em]">SHOOTING</div>
+                  <div className="mb-2 text-green-400 text-md tracking-[0.3em]">SHOOTING</div>
                   <div className="flex items-center gap-3">
                     <div className={wideKeyClass(' ')}>SPACE</div>
                     <span className="text-md text-white/90">Fire gun</span>
@@ -429,20 +400,19 @@ export default function HowToPlayScreen({ onBack }) {
 
                 </div>
 
-
                 {/* ============================================= */}
                 {/* OTHER */}
                 {/* ============================================= */}
 
                 <div>
 
-                   <div className="mb-2 text-green-400 text-md tracking-[0.3em]">OTHER</div>
+                  <div className="mb-2 text-green-400 text-md tracking-[0.3em]">OTHER</div>
                   <div className="space-y-2">
 
-                    {/* BLOCK */}
+                    {/* DEFLECT */}
                     <div className="flex items-center gap-3">
-                      <div className={keyClass('b')}>B</div>
-                      <span className="text-md text-white/90">Block</span>
+                      <div className={keyClass('x')}>X</div>
+                      <span className="text-md text-white/90">Deflect gunfire</span>
 
                     </div>
 
@@ -465,17 +435,13 @@ export default function HowToPlayScreen({ onBack }) {
 
         </div>
 
-
         {/* ================================================= */}
         {/* BACK */}
         {/* ================================================= */}
 
         <div className="mt-10 flex justify-center">
 
-          <button
-            type="button"
-            onClick={handleBack}
-            onMouseEnter={() => setSelected(0)}
+          <button type="button" onClick={handleBack} onMouseEnter={() => setSelected(0)}
             className={`cursor-pointer relative w-56 py-3 uppercase tracking-[0.45em] text-sm border transition-all duration-200
 
               ${selected === 0

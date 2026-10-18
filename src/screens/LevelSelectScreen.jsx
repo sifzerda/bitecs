@@ -1,27 +1,10 @@
 // src/screens/LevelSelectScreen.jsx
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react"
-
-import {
-  useGameStore,
-  SCREEN,
-  isBossLevel,
-  getWave,
-  formatLevelLabel,
-} from "../../store/gameStore.js"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { useGameStore, SCREEN, isBossLevel, getWave, formatLevelLabel } from "../../store/gameStore.js"
+import { ZONES, ENCOUNTERS_PER_ZONE, TOTAL_LEVELS } from "../ecs/constants/progression.js"
 
 import FlightLayout2 from "../components/FlightLayout2.jsx"
-
-import {
-  ZONES,
-  ENCOUNTERS_PER_ZONE,
-  TOTAL_LEVELS,
-} from "../ecs/constants/progression.js"
 
 // ============================================================
 // HELPERS
@@ -38,8 +21,7 @@ function levelLabel(level) {
 
 function levelSubLabel(level) {
 
-  return isBossLevel(level)
-    ? "BOSS // CORE" : "ASTEROID FIELD"
+  return isBossLevel(level) ? "BOSS // CORE" : "ASTEROID FIELD"
 }
 
 // ============================================================
@@ -56,38 +38,16 @@ function StageIcon({ boss, locked, active }) {
   if (boss) {
 
     return (
-      <div
-        className={`
-          relative flex h-10 w-10
-          rotate-45 items-center justify-center
-          border-2
+      <div className={`relative flex h-10 w-10 rotate-45 items-center justify-center border-2
 
-          ${active
-            ? `
-                border-yellow-300
-                bg-yellow-400/10
-                shadow-[0_0_24px_rgba(255,220,50,0.6)]
-              `
-            : `
-                border-yellow-400/60
-                bg-yellow-400/5
-              `
-          }
-        `}
-      >
-        <span className="-rotate-45 text-lg text-yellow-300">
-          ☠
-        </span>
+          ${active? `border-yellow-300 bg-yellow-400/10 shadow-[0_0_24px_rgba(255,220,50,0.6)]` : `border-yellow-400/60 bg-yellow-400/5`}`}>
+        <span className="-rotate-45 text-lg text-yellow-300">☠</span>
       </div>
     )
   }
 
   return (
-    <div
-      className={`
-        relative flex h-10 w-10
-        items-center justify-center
-        rounded-full border-2
+    <div className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2
 
         ${active
           ? `
@@ -98,14 +58,10 @@ function StageIcon({ boss, locked, active }) {
           : `
               border-[#39ff14]/50
               bg-[#39ff14]/5
-            `
-        }
-      `}
-    >
+            `}`}>
       <div className="h-3.5 w-3.5 rounded-full border border-current" />
 
       <div className="absolute h-6 w-px bg-current/60" />
-
       <div className="absolute h-px w-6 bg-current/60" />
     </div>
   )
@@ -721,57 +677,16 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
 
                       {/* CONTENT */}
 
-                      <div className="
-                        relative
-                        flex h-full
-                        flex-col
-                        items-center
-                        justify-center
-                        gap-1
-                      ">
+                      <div className="relative flex h-full flex-col items-center justify-center gap-1">
 
-                        <StageIcon
-                          boss={boss}
-                          locked={!unlocked}
-                          active={active}
-                        />
+                        <StageIcon boss={boss} locked={!unlocked} active={active} />
 
                         {unlocked ? (
 
                           <>
 
-                            <div
-                              className={`
-                                text-xs
-                                font-bold
-                                tracking-[0.25em]
-
-                                ${active
-                                  ? boss
-                                    ? "text-yellow-300"
-                                    : "text-cyan-300"
-                                  : boss
-                                    ? "text-yellow-400/70"
-                                    : "text-[#39ff14]/70"
-                                }
-                              `}
-                            >
-                              {levelLabel(level)}
-                            </div>
-
-                            <div
-                              className={`
-                                text-[7px]
-                                tracking-[0.25em]
-
-                                ${boss
-                                  ? "text-yellow-300/60"
-                                  : "text-white/30"
-                                }
-                              `}
-                            >
-                              {levelSubLabel(level)}
-                            </div>
+                            <div className={`text-xs font-bold tracking-[0.25em] ${active ? boss ? "text-yellow-300" : "text-cyan-300" : boss ? "text-yellow-400/70" : "text-[#39ff14]/70"}`}>{levelLabel(level)}</div>
+                            <div className={`text-[7px] tracking-[0.25em]${boss ? "text-yellow-300/60" : "text-white/30"}`}>{levelSubLabel(level)}</div>
 
                           </>
 
@@ -779,21 +694,8 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
 
                           <>
 
-                            <div className="
-                              text-[10px]
-                              tracking-[0.3em]
-                              text-white/20
-                            ">
-                              LOCKED
-                            </div>
-
-                            <div className="
-                              text-[7px]
-                              tracking-[0.2em]
-                              text-red-400/30
-                            ">
-                              UNREACHED
-                            </div>
+                            <div className="text-[10px] tracking-[0.3em] text-white/20">LOCKED</div>
+                            <div className="text-[7px] tracking-[0.2em] text-red-400/30">UNREACHED</div>
 
                           </>
 
@@ -803,61 +705,15 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
 
                       {/* SELECT INDICATOR */}
 
-                      {active && unlocked && (
-
-                        <div
-                          className={`
-                            absolute
-                            bottom-0
-                            left-0
-                            h-1
-                            w-full
-
-                            ${boss
-                              ? `
-                                  bg-yellow-300
-                                  shadow-[0_0_12px_#ffe600]
-                                `
-                              : `
-                                  bg-cyan-300
-                                  shadow-[0_0_12px_#00ffff]
-                                `
-                            }
-                          `}
-                        />
-
-                      )}
+                      {active && unlocked && (<div className={`absolute bottom-0 left-0 h-1 w-full ${boss ? ` bg-yellow-300 shadow-[0_0_12px_#ffe600]` : ` bg-cyan-300 shadow-[0_0_12px_#00ffff]`}`} />)}
 
                       {/* STAGE NUMBER */}
 
-                      <div className="
-                        absolute
-                        left-2
-                        top-2
-                        text-[8px]
-                        tracking-widest
-                        text-white/20
-                      ">
-                        {String(level).padStart(2, "0")}
-                      </div>
+                      <div className="absolute left-2 top-2 text-[8px] tracking-widest text-white/20">{String(level).padStart(2, "0")}</div>
 
                       {/* BOSS LABEL */}
 
-                      {boss && unlocked && (
-
-                        <div className="
-                          absolute
-                          right-2
-                          top-2
-                          text-[7px]
-                          font-bold
-                          tracking-[0.2em]
-                          text-yellow-400/60
-                        ">
-                          BOSS
-                        </div>
-
-                      )}
+                      {boss && unlocked && (<div className="absolute right-2 top-2 text-[7px] font-bold tracking-[0.2em] text-yellow-400/60">BOSS</div>)}
 
                     </button>
                   )
@@ -867,31 +723,12 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
 
               {/* ZONE STATUS */}
 
-              <div className="
-                mt-2
-                flex
-                items-center
-                justify-between
-                px-1
-                text-[7px]
-                tracking-[0.25em]
-              ">
+              <div className="mt-2 flex items-center justify-between px-1 text-[7px] tracking-[0.25em]">
 
-                <span
-                  className={
-                    zoneUnlocked
-                      ? "text-[#39ff14]/30"
-                      : "text-white/10"
-                  }
-                >
-                  {zoneUnlocked
-                    ? "ACCESS GRANTED"
-                    : "ACCESS RESTRICTED"}
-                </span>
+                <span className={zoneUnlocked ? "text-[#39ff14]/30" : "text-white/10"}>
+                  {zoneUnlocked ? "ACCESS GRANTED" : "ACCESS RESTRICTED"}</span>
 
-                <span className="text-white/10">
-                  LEVELS {firstLevel}–{lastLevel}
-                </span>
+                <span className="text-white/10">LEVELS {firstLevel}–{lastLevel}</span>
 
               </div>
 

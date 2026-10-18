@@ -7,7 +7,7 @@ export function Header() {
     { to: '/', label: 'GAME' },
     { to: '/about', label: 'ABOUT' },
     { to: '/contact', label: 'CONTACT' },
-    { to: '/other', label: 'OTHER' },
+    //{ to: '/other', label: 'OTHER' },
   ];
 
   const linkClass = ({ isActive }) =>

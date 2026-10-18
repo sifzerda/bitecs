@@ -32,17 +32,9 @@ export function LevelCompleteScreen({
   // STATE
   // ========================================================
 
-  const level = useGameStore(
-    (state) => state.level
-  )
-
-  const pendingUnlockWeapon = useGameStore(
-    (state) => state.pendingUnlockWeapon
-  )
-
-  const clearedLabel =
-    formatLevelLabel(level)
-
+  const level = useGameStore((state) => state.level)
+  const pendingUnlockWeapon = useGameStore((state) => state.pendingUnlockWeapon)
+  const clearedLabel = formatLevelLabel(level)
 
   // ========================================================
   // NEW WEAPON
@@ -54,27 +46,12 @@ export function LevelCompleteScreen({
       return null
     }
 
-    const weapon =
-      getWeapon(pendingUnlockWeapon)
+    const weapon = getWeapon(pendingUnlockWeapon)
+    const gun = getGunTypeByWeaponId(pendingUnlockWeapon)
 
-    const gun =
-      getGunTypeByWeaponId(
-        pendingUnlockWeapon
-      )
+    return { weapon, gun, name: gun?.name ?? weapon?.name ?? `WEAPON ${pendingUnlockWeapon}` }
 
-    return {
-      weapon,
-      gun,
-      name:
-        gun?.name ??
-        weapon?.name ??
-        `WEAPON ${pendingUnlockWeapon}`,
-    }
-
-  }, [
-    pendingUnlockWeapon,
-  ])
-
+  }, [ pendingUnlockWeapon ])
 
   // ========================================================
   // KEYBOARD
@@ -89,41 +66,24 @@ export function LevelCompleteScreen({
         onContinue?.()
       }
 
-      if (
-        event.key === "g" ||
-        event.key === "G"
-      ) {
+      if (event.key === "g" || event.key === "G") {
         event.preventDefault()
         onGuns?.()
       }
 
-      if (
-        event.key === "Escape" ||
-        event.key === "Backspace"
-      ) {
+      if ( event.key === "Escape" || event.key === "Backspace") {
         event.preventDefault()
         onMenu?.()
       }
     }
 
-    window.addEventListener(
-      "keydown",
-      onKey
-    )
+    window.addEventListener("keydown", onKey)
 
     return () => {
-      window.removeEventListener(
-        "keydown",
-        onKey
-      )
+      window.removeEventListener("keydown", onKey)
     }
 
-  }, [
-    onContinue,
-    onGuns,
-    onMenu,
-  ])
-
+  }, [ onContinue, onGuns, onMenu ])
 
   // ========================================================
   // RENDER
@@ -131,38 +91,15 @@ export function LevelCompleteScreen({
 
   return (
 
-    <FlightLayout2
-      title="LEVEL COMPLETE"
-      footer={`${clearedLabel} CLEARED`}
-    >
+    <FlightLayout2 title="LEVEL COMPLETE" footer={`${clearedLabel} CLEARED`}>
 
-      <div
-        className="
-          mt-10
-          flex
-          flex-col
-          items-center
-          gap-6
-          text-center
-          font-mono
-        "
-      >
+      <div className="mt-10 flex flex-col items-center gap-6 text-center font-mono">
 
         {/* ================================================== */}
         {/* CLEAR */}
         {/* ================================================== */}
 
-        <div
-          className="
-            text-lg
-            tracking-[0.3em]
-            text-cyan-300
-            drop-shadow-[0_0_10px_rgba(0,255,255,0.5)]
-          "
-        >
-          {clearedLabel} CLEARED
-        </div>
-
+        <div className="text-lg tracking-[0.3em] text-cyan-300 drop-shadow-[0_0_10px_rgba(0,255,255,0.5)]">{clearedLabel} CLEARED</div>
 
         {/* ================================================== */}
         {/* NEW WEAPON */}
