@@ -8,12 +8,16 @@ import FlightLayout from '../components/FlightLayout';
 // Web3Forms verifies the captcha on its side, so on the free plan the widget
 // must use THEIR public sitekey, not one from your own hCaptcha account.
 // Read from .env, with the Web3Forms key as a fallback so it never goes missing.
-const WEB3FORMS_HCAPTCHA_SITEKEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY || '50b2fe65-b00b-4b9e-ad62-3ba471098be2';
+const WEB3FORMS_HCAPTCHA_SITEKEY =
+    import.meta.env.VITE_HCAPTCHA_SITE_KEY || '50b2fe65-b00b-4b9e-ad62-3ba471098be2';
 
 export default function Contact() {
     const [status, setStatus] = useState('');
     const [captchaToken, setCaptchaToken] = useState('');
     const [sending, setSending] = useState(false);
+    // Resets automatically when the user leaves the page and comes back,
+    // because the component unmounts and remounts.
+    const [sent, setSent] = useState(false);
     const captchaRef = useRef(null);
 
     function resetCaptcha() {
@@ -52,8 +56,8 @@ export default function Contact() {
             const data = await response.json();
 
             if (data.success) {
-                setStatus('MESSAGE TRANSMITTED');
-                form.reset();
+                setStatus('');
+                setSent(true);
             } else {
                 console.error(data);
                 setStatus(data.message || 'TRANSMISSION FAILED');
@@ -75,6 +79,14 @@ export default function Contact() {
             <FlightLayout title="CONTACT ME" footer="SYSTEM ONLINE">
 
                 <div className="mt-3 mx-auto max-w-md font-mono text-center">
+
+                    {sent ? (
+
+                        <p className="mt-10 text-sm tracking-[0.3em] text-[#39ff14] drop-shadow-[0_0_10px_rgba(57,255,20,0.5)]">
+                            MESSAGE TRANSMITTED
+                        </p>
+
+                    ) : (
 
                     <form onSubmit={handleSubmit} className="space-y-4 flex flex-col items-center">
 
@@ -120,7 +132,9 @@ export default function Contact() {
 
                     </form>
 
-                    {status && (
+                    )}
+
+                    {!sent && status && (
                         <p className="mt-4 text-xs tracking-[0.2em] text-[#39ff14]">
                             {status}
                         </p>
