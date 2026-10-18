@@ -8,8 +8,7 @@ import FlightLayout from '../components/FlightLayout';
 // Web3Forms verifies the captcha on its side, so on the free plan the widget
 // must use THEIR public sitekey, not one from your own hCaptcha account.
 // Read from .env, with the Web3Forms key as a fallback so it never goes missing.
-const WEB3FORMS_HCAPTCHA_SITEKEY =
-    import.meta.env.VITE_HCAPTCHA_SITE_KEY || '50b2fe65-b00b-4b9e-ad62-3ba471098be2';
+const WEB3FORMS_HCAPTCHA_SITEKEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY || '50b2fe65-b00b-4b9e-ad62-3ba471098be2';
 
 export default function Contact() {
     const [status, setStatus] = useState('');
@@ -39,8 +38,11 @@ export default function Contact() {
         try {
             const formData = new FormData(form);
 
-            formData.append('access_key', import.meta.env.VITE_WEB3FORMS_ACCESS_KEY);
-            formData.append('h-captcha-response', captchaToken);
+            // Use set(), not append(): the hCaptcha widget already injects its own
+            // hidden "h-captcha-response" field into the form, so append() would send
+            // the token twice and Web3Forms would fail to validate it.
+            formData.set('access_key', import.meta.env.VITE_WEB3FORMS_ACCESS_KEY);
+            formData.set('h-captcha-response', captchaToken);
 
             const response = await fetch('https://api.web3forms.com/submit', {
                 method: 'POST',
