@@ -43,12 +43,23 @@ export const simState = {
 }
 
 // ============================================================
+// DEFAULT WEAPON
+//
+// Weapon 0 is the raygun and is always unlocked.
+// A new run always starts with it equipped.
+// ============================================================
+
+export const DEFAULT_WEAPON = 0
+
+// ============================================================
 // RESET RUN
 //
 // Resets temporary run state.
 //
 // IMPORTANT:
-// Weapon progression is persistent and belongs to gameStore.
+// Weapon progression (unlocks) is persistent and belongs to
+// gameStore. The EQUIPPED weapon, however, is reset to the
+// default so every new game starts with the raygun.
 // ============================================================
 
 export function resetSimState() {
@@ -57,6 +68,8 @@ export function resetSimState() {
     simState.lives = 3
     simState.health = 100
 
+    simState.currentWeapon = DEFAULT_WEAPON
+
     resetSimStateForLevel()
 }
 
@@ -64,6 +77,8 @@ export function resetSimState() {
 // RESET LEVEL
 //
 // Clears everything that belongs to the current encounter.
+// Does NOT touch the equipped weapon, so it carries between
+// levels.
 // ============================================================
 
 export function resetSimStateForLevel() {

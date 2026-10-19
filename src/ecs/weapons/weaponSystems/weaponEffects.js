@@ -1,20 +1,8 @@
 // src/ecs/weapons/weaponSystems/weaponEffects.js
 
-import {
-    Position,
-    Health,
-} from "../../constants/components.js"
-
-import { spawnBullet } from "../../spawn.js"
-
-import {
-    killAsteroid,
-    killBoss,
-} from "../../systems/entityDeath.js"
-
-import { getWeapon } from "../config/weapons.js"
+import { Position, Health } from "../../constants/components.js"
+import { killAsteroid, killBoss } from "../../systems/entityDeath.js"
 import { pushArc } from "../weaponState/arcState.js"
-
 import { emitEffect } from "../../../fx/effects.js"
 import { EFFECT } from "../../../fx/FXTypes.js"
 
@@ -26,7 +14,6 @@ export function explodeAt(x, y, weapon, asteroids, bosses) {
 
     const radius = weapon.explosionRadius ?? 1.5
     const radiusSq = radius * radius
-
     const damage = weapon.directDamage
 
     // --------------------------------------------------------
@@ -46,11 +33,7 @@ export function explodeAt(x, y, weapon, asteroids, bosses) {
 
             if (Health.current[aid] <= 0) {
 
-                killAsteroid(
-                    aid,
-                    Position.x[aid],
-                    Position.y[aid]
-                )
+                killAsteroid(aid, Position.x[aid], Position.y[aid])
             }
         }
     }
@@ -75,11 +58,7 @@ export function explodeAt(x, y, weapon, asteroids, bosses) {
 
             if (Health.current[bossId] <= 0) {
 
-                killBoss(
-                    bossId,
-                    Position.x[bossId],
-                    Position.y[bossId]
-                )
+                killBoss(bossId, Position.x[bossId], Position.y[bossId])
             }
         }
     }
@@ -89,7 +68,8 @@ export function explodeAt(x, y, weapon, asteroids, bosses) {
     // --------------------------------------------------------
 
     emitEffect(EFFECT.SPARK_BURST, {
-        x,        y,
+        x,        
+        y,
         count: 40,
         speed: 14,
     })
@@ -101,13 +81,7 @@ export function explodeAt(x, y, weapon, asteroids, bosses) {
 // just hit.
 // ============================================================
 
-export function chainLightning(
-    startX,
-    startY,
-    weapon,
-    asteroids,
-    excludeId
-) {
+export function chainLightning( startX, startY, weapon, asteroids, excludeId ) {
 
     let hits = 0
 
@@ -120,14 +94,11 @@ export function chainLightning(
         { x: startX, y: startY }
     ]
 
-
     while (hits < weapon.chainCount) {
 
         let nearestId = -1
 
-        let nearestDistSq =
-            weapon.chainRange * weapon.chainRange
-
+        let nearestDistSq = weapon.chainRange * weapon.chainRange
 
         for (let j = 0; j < asteroids.length; j++) {
 
@@ -147,12 +118,9 @@ export function chainLightning(
             }
         }
 
-
         if (nearestId === -1) break
 
-
         Health.current[nearestId] -= weapon.directDamage
-
 
         emitEffect(EFFECT.SPARK_BURST, {
             x: Position.x[nearestId],
@@ -164,13 +132,8 @@ export function chainLightning(
 
         if (Health.current[nearestId] <= 0) {
 
-            killAsteroid(
-                nearestId,
-                Position.x[nearestId],
-                Position.y[nearestId]
-            )
+            killAsteroid(nearestId, Position.x[nearestId], Position.y[nearestId])
         }
-
 
         hitIds.add(nearestId)
 

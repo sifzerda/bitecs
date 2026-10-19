@@ -4,6 +4,9 @@ import { simState } from "../../state/simState.js"
 import { WEAPONS } from "../weapons/config/weapons.js"
 import { settings } from "../systems/settings.js"
 
+// Debug weapon switching: dev server only, never in production builds.
+const DEBUG_WEAPON_SWITCH = import.meta.env.DEV
+
 export const input = {
   left: false,
   right: false,
@@ -108,6 +111,8 @@ export function initializeInput(onPause) {
       currentOnPause?.()
       return
     }
+
+    if (!DEBUG_WEAPON_SWITCH) return
 
     if (e.code === 'KeyQ') {
       cycleWeapon(-1)
@@ -221,9 +226,11 @@ export function initializeInput(onPause) {
   window.addEventListener('mousedown', mouseDown)
   window.addEventListener('mouseup', mouseUp)
   window.addEventListener('contextmenu', contextMenu)
-  window.addEventListener('wheel', wheel, wheelOptions)
+  if (DEBUG_WEAPON_SWITCH) {
+    window.addEventListener('wheel', wheel, wheelOptions)
+  }
   window.addEventListener('blur', onBlur)
-
+  
   document.addEventListener('visibilitychange', onVisibilityChange)
 
   listenersAttached = true

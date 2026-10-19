@@ -76,9 +76,9 @@ export function killAsteroid(id, x, y) {
     // --------------------------------------------------------
 
     if (simState.asteroidsRemaining === 0) {
-        useGameStore
-            .getState()
-            .completeLevel()
+        setTimeout(() => {
+            useGameStore.getState().completeLevel()
+        }, 2800)
     }
 }
 

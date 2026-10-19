@@ -59,12 +59,8 @@ export default function Other() {
     // BOSS GUN (mirrors WeaponMount.jsx logic)
     // --------------------------------------------------------
 
-    const gunType = boss.gun?.typeId
-        ? getGunTypeById(boss.gun.typeId)
-        : null
-
+    const gunType = boss.gun?.typeId ? getGunTypeById(boss.gun.typeId) : null
     const gunMount = gunType?.config?.mount
-
     const gunScale = boss.gun?.scale ?? gunMount?.scale ?? 1
 
     // Fall back to the gun type's mount offsets, same as WeaponMount.
@@ -74,14 +70,8 @@ export default function Other() {
     // three.js rotation.z is counter-clockwise; CSS rotate() is clockwise,
     // so the angle is negated to match the in-game orientation.
     const gunRotation = -(90 + (boss.gun?.rotation ?? 0) * (180 / Math.PI))
-
-    const gunWidth = gunMount
-        ? gunMount.width * 3 * gunScale * SCALE
-        : 0
-
-    const gunHeight = gunMount
-        ? gunMount.height * 3 * gunScale * SCALE
-        : 0
+    const gunWidth = gunMount ? gunMount.width * 3 * gunScale * SCALE : 0
+    const gunHeight = gunMount ? gunMount.height * 3 * gunScale * SCALE : 0
 
     // --------------------------------------------------------
     // UPDATE CONFIG
@@ -90,7 +80,6 @@ export default function Other() {
     function updateValue(field, value) {
 
         config[field] = value
-
         // BOSSES is the live configuration object.
         // Updating it also updates consumers of this module.
         setRefresh(v => v + 1)
@@ -130,11 +119,7 @@ export default function Other() {
 
     async function copyConfig() {
 
-        const output = JSON.stringify(
-            { gun: boss.gun, emission: boss.emission },
-            null,
-            4
-        )
+        const output = JSON.stringify({ gun: boss.gun, emission: boss.emission }, null, 4)
 
         try {
             await navigator.clipboard.writeText(output)
@@ -158,18 +143,10 @@ export default function Other() {
             const top = `calc(50% - ${point.y * SCALE}px)`
 
             return (
-                <div
-                    key={`${label}-${point.side}`}
+                <div key={`${label}-${point.side}`}
                     className="absolute z-20 pointer-events-none"
-                    style={{
-                        left,
-                        top,
-                        transform: 'translate(-50%, -50%)',
-                    }}
-                >
-                    <div
-                        className={`w-4 h-4 rounded-full border-2 border-white ${color} shadow-[0_0_15px_currentColor]`}
-                    />
+                    style={{ left, top, transform: 'translate(-50%, -50%)' }}>
+                    <div className={`w-4 h-4 rounded-full border-2 border-white ${color} shadow-[0_0_15px_currentColor]`} />
 
                     <div className="absolute top-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-bold tracking-widest text-white bg-black/80 px-1.5 py-1 rounded">
                         {label} {point.side}
@@ -188,28 +165,18 @@ export default function Other() {
     return (
         <div className="w-full min-h-screen bg-[#080b12] text-white p-4 md:p-6 overflow-y-auto">
 
-            <div className="max-w-[1400px] mx-auto space-y-5">
+            <div className="max-w-350 mx-auto space-y-5">
 
                 {/* HEADER */}
 
                 <div className="flex flex-wrap justify-between items-center gap-4">
 
                     <div>
-                        <h1 className="text-xl font-bold tracking-[0.2em]">
-                            BOSS EMISSION EDITOR
-                        </h1>
-
-                        <p className="text-xs text-white/40 mt-1 tracking-widest">
-                            EMISSION COORDINATES / VISUAL DEBUGGER
-                        </p>
+                        <h1 className="text-xl font-bold tracking-[0.2em]">BOSS EMISSION EDITOR</h1>
+                        <p className="text-xs text-white/40 mt-1 tracking-widest">EMISSION COORDINATES / VISUAL DEBUGGER</p>
                     </div>
 
-                    <button
-                        onClick={copyConfig}
-                        className="px-4 py-2 bg-cyan-500/10 border border-cyan-400/40 hover:bg-cyan-500/20 text-cyan-300 text-xs tracking-widest rounded"
-                    >
-                        {copied ? 'COPIED!' : 'COPY BOSS CONFIG'}
-                    </button>
+                    <button onClick={copyConfig} className="px-4 py-2 bg-cyan-500/10 border border-cyan-400/40 hover:bg-cyan-500/20 text-cyan-300 text-xs tracking-widest rounded">{copied ? 'COPIED!' : 'COPY BOSS CONFIG'}</button>
 
                 </div>
 
@@ -219,21 +186,12 @@ export default function Other() {
 
                     {BOSSES.map((item, index) => (
 
-                        <button
-                            key={item.key}
-                            onClick={() => {
+                        <button key={item.key} onClick={() => {
                                 setBossIndex(index)
                                 setImageSize(null)
                                 setGunStatus('loading')
                             }}
-                            className={`px-3 py-2 text-[10px] tracking-widest border rounded transition-colors ${bossIndex === index
-                                ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
-                                : 'bg-white/5 border-white/10 text-white/50 hover:border-white/40'
-                                }`}
-                        >
-                            {item.name}
-                        </button>
-
+                            className={`px-3 py-2 text-[10px] tracking-widest border rounded transition-colors ${bossIndex === index ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300' : 'bg-white/5 border-white/10 text-white/50 hover:border-white/40'}`}>{item.name}</button>
                     ))}
 
                 </div>
@@ -249,36 +207,23 @@ export default function Other() {
                         <div className="flex justify-between items-center px-4 py-3 border-b border-white/10">
 
                             <div>
-                                <div className="text-xs font-bold tracking-widest text-white/90">
-                                    {boss.name}
-                                </div>
-
-                                <div className="text-[9px] text-white/40 tracking-widest mt-1">
-                                    TOP-DOWN EMISSION PREVIEW
-                                </div>
+                                <div className="text-xs font-bold tracking-widest text-white/90">{boss.name}</div>
+                                <div className="text-[9px] text-white/40 tracking-widest mt-1">TOP-DOWN EMISSION PREVIEW</div>
                             </div>
 
-                            <div className="text-[9px] text-cyan-300 tracking-widest">
-                                SCALE: 100 PX / UNIT
-                            </div>
+                            <div className="text-[9px] text-cyan-300 tracking-widest">SCALE: 100 PX / UNIT</div>
 
                         </div>
 
                         {/* STAGE */}
 
-                        <div
-                            className="relative w-full overflow-hidden"
+                        <div className="relative w-full overflow-hidden"
                             style={{
                                 height: 'min(70vw, 560px)',
                                 minHeight: '360px',
-                                backgroundImage: `
-                                    linear-gradient(rgba(40,120,160,0.07) 1px, transparent 1px),
-                                    linear-gradient(90deg, rgba(40,120,160,0.07) 1px, transparent 1px),
-                                    radial-gradient(ellipse at center, #172334 0%, #080d17 75%)
-                                `,
+                                backgroundImage: `linear-gradient(rgba(40,120,160,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(40,120,160,0.07) 1px, transparent 1px), radial-gradient(ellipse at center, #172334 0%, #080d17 75%)`,
                                 backgroundSize: '25px 25px, 25px 25px, 100% 100%',
-                            }}
-                        >
+                            }}>
 
                             {/* CENTRE AXES */}
 
@@ -287,25 +232,10 @@ export default function Other() {
 
                             {/* BOSS SVG */}
 
-                            <img
-                                key={boss.key}
-                                src={BOSS_SVGS[boss.key]}
-                                alt={boss.name}
-                                onLoad={e => {
-                                    setImageSize({
-                                        width: e.currentTarget.naturalWidth,
-                                    })
-                                }}
+                            <img key={boss.key} src={BOSS_SVGS[boss.key]} alt={boss.name}
+                                onLoad={e => { setImageSize({ width: e.currentTarget.naturalWidth })}}
                                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none"
-                                style={{
-                                    width: imageSize
-                                        ? `${imageSize.width / 2.8}px`
-                                        : '360px',
-                                    maxWidth: 'none',
-                                    height: 'auto',
-                                    opacity: 0.95,
-                                }}
-                            />
+                                style={{ width: imageSize ? `${imageSize.width / 2.8}px` : '360px', maxWidth: 'none', height: 'auto', opacity: 0.95 }} />
 
                             {/* BOSS GUNS */}
 
@@ -315,43 +245,15 @@ export default function Other() {
                                 // the emission markers (z-20).
                                 <div className="absolute inset-0 z-[15] pointer-events-none">
 
-                                    {(boss.gun.mirrored === false
-                                        ? [gunOffsetX]
-                                        : [-gunOffsetX, gunOffsetX]
-                                    ).map((x, index) => (
+                                    {(boss.gun.mirrored === false ? [gunOffsetX] : [-gunOffsetX, gunOffsetX]).map((x, index) => (
 
-                                        <div
-                                            key={`gun-${boss.key}-${index}`}
-                                            className="absolute"
-                                            style={{
-                                                left: `calc(50% + ${x * SCALE}px)`,
-                                                top: `calc(50% - ${gunOffsetY * SCALE}px)`,
-                                                width: `${gunWidth}px`,
-                                                height: `${gunHeight}px`,
-                                                transform: `translate(-50%, -50%) rotate(${gunRotation}deg)`,
-                                            }}
-                                        >
+                                        <div key={`gun-${boss.key}-${index}`} className="absolute"
+                                            style={{ left: `calc(50% + ${x * SCALE}px)`, top: `calc(50% - ${gunOffsetY * SCALE}px)`, width: `${gunWidth}px`, height: `${gunHeight}px`, transform: `translate(-50%, -50%) rotate(${gunRotation}deg)` }}>
 
-                                            <img
-                                                src={gunType.svg}
-                                                alt={`${gunType.name} gun`}
-                                                draggable={false}
-                                                onLoad={e => setGunStatus(
-                                                    `LOADED (${e.currentTarget.naturalWidth}x${e.currentTarget.naturalHeight})`
-                                                )}
-                                                onError={() => setGunStatus('FAILED TO LOAD')}
-                                                className="block select-none"
-                                                style={{
-                                                    width: '100%',
-                                                    height: '100%',
-                                                    maxWidth: 'none',
-                                                    objectFit: 'fill',
-                                                }}
-                                            />
+                                            <img src={gunType.svg} alt={`${gunType.name} gun`} draggable={false} onLoad={e => setGunStatus(`LOADED (${e.currentTarget.naturalWidth}x${e.currentTarget.naturalHeight})`
+                                                )} onError={() => setGunStatus('FAILED TO LOAD')} className="block select-none" style={{ width: '100%', height: '100%', maxWidth: 'none', objectFit: 'fill', }} />
 
-                                            {showBounds && (
-                                                <div className="absolute inset-0 border border-dashed border-yellow-300/80" />
-                                            )}
+                                            {showBounds && (<div className="absolute inset-0 border border-dashed border-yellow-300/80" />)}
 
                                         </div>
 
@@ -367,27 +269,15 @@ export default function Other() {
 
                             {/* EXHAUST POINTS */}
 
-                            {renderPoints(
-                                emission.exhaust,
-                                'bg-cyan-400 text-cyan-400',
-                                'EXHAUST'
-                            )}
+                            {renderPoints(emission.exhaust, 'bg-cyan-400 text-cyan-400', 'EXHAUST')}
 
                             {/* SELECTED EMISSION POINTS */}
 
-                            {emissionType !== 'exhaust' && renderPoints(
-                                config,
-                                'bg-orange-400 text-orange-400',
-                                emissionType === 'projectile'
-                                    ? 'BULLET'
-                                    : emissionType.toUpperCase()
-                            )}
+                            {emissionType !== 'exhaust' && renderPoints(config, 'bg-orange-400 text-orange-400', emissionType === 'projectile' ? 'BULLET' : emissionType.toUpperCase())}
 
                             {/* SCALE INDICATOR */}
 
-                            <div className="absolute bottom-4 left-4 text-[9px] text-white/40 tracking-widest">
-                                ORIGIN: BOSS CENTRE
-                            </div>
+                            <div className="absolute bottom-4 left-4 text-[9px] text-white/40 tracking-widest">ORIGIN: BOSS CENTRE</div>
 
                         </div>
 
@@ -397,27 +287,19 @@ export default function Other() {
 
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full bg-cyan-400" />
-                                <span className="text-[9px] text-white/60 tracking-widest">
-                                    EXHAUST
-                                </span>
+                                <span className="text-[9px] text-white/60 tracking-widest">EXHAUST</span>
                             </div>
 
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 rounded-full bg-orange-400" />
-                                <span className="text-[9px] text-white/60 tracking-widest">
-                                    SELECTED EMISSION
-                                </span>
+                                <span className="text-[9px] text-white/60 tracking-widest">SELECTED EMISSION</span>
                             </div>
 
-                            <div className="text-[9px] text-white/30 ml-auto">
-                                L = LEFT / R = RIGHT
-                            </div>
+                            <div className="text-[9px] text-white/30 ml-auto">L = LEFT / R = RIGHT</div>
 
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 border border-white bg-white/50" />
-                                <span className="text-[9px] text-white/60 tracking-widest">
-                                    BOSS GUN
-                                </span>
+                                <span className="text-[9px] text-white/60 tracking-widest">BOSS GUN</span>
                             </div>
 
                         </div>
@@ -432,24 +314,11 @@ export default function Other() {
 
                         <div className="bg-[#0b101b] border border-white/10 rounded-lg p-4">
 
-                            <h2 className="text-xs font-bold tracking-widest mb-3">
-                                EMISSION TYPE
-                            </h2>
+                            <h2 className="text-xs font-bold tracking-widest mb-3">EMISSION TYPE</h2>
 
                             <div className="grid grid-cols-1 gap-2">
 
-                                {EMISSION_TYPES.map(type => (
-
-                                    <button
-                                        key={type.id}
-                                        onClick={() => setEmissionType(type.id)}
-                                        className={`text-left px-3 py-3 text-[10px] tracking-widest border rounded ${emissionType === type.id
-                                            ? 'border-orange-400/70 bg-orange-400/10 text-orange-300'
-                                            : 'border-white/10 bg-white/[0.02] text-white/50 hover:border-white/30'
-                                            }`}
-                                    >
-                                        {type.label}
-                                    </button>
+                                {EMISSION_TYPES.map(type => (<button key={type.id} onClick={() => setEmissionType(type.id)} className={`text-left px-3 py-3 text-[10px] tracking-widest border rounded ${emissionType === type.id ? 'border-orange-400/70 bg-orange-400/10 text-orange-300' : 'border-white/10 bg-white/2 text-white/50 hover:border-white/30'}`}> {type.label}</button>
 
                                 ))}
 
@@ -463,13 +332,9 @@ export default function Other() {
 
                             <div className="flex justify-between items-center mb-4">
 
-                                <h2 className="text-xs font-bold tracking-widest">
-                                    COORDINATES
-                                </h2>
+                                <h2 className="text-xs font-bold tracking-widest">COORDINATES</h2>
 
-                                <span className="text-[9px] text-orange-300 tracking-widest">
-                                    LIVE EDIT
-                                </span>
+                                <span className="text-[9px] text-orange-300 tracking-widest">LIVE EDIT</span>
 
                             </div>
 

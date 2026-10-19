@@ -6,7 +6,7 @@ import App from './App.jsx';
 import Home from './pages/Home.jsx';
 import Error from './pages/Error.jsx';
 import About from './pages/About.jsx';
-import Other from './pages/Other.jsx';
+//import Other from './pages/Other.jsx';
 import Contact from './pages/Contact.jsx';
 
 // Define the accessible routes, and which components respond to which URL
@@ -18,7 +18,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: 'about', element: <About /> },
-      { path: 'other', element: <Other /> },
+     // { path: 'other', element: <Other /> },
       { path: 'contact', element: <Contact /> },
     ],
   },

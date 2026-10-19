@@ -1,6 +1,6 @@
 // src/screens/PlayScreen.jsx
 
-import { useFrame, useThree } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
 import {
     EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
     // ShockWave,
