@@ -226,11 +226,9 @@ export function initializeInput(onPause) {
   window.addEventListener('mousedown', mouseDown)
   window.addEventListener('mouseup', mouseUp)
   window.addEventListener('contextmenu', contextMenu)
-  if (DEBUG_WEAPON_SWITCH) {
-    window.addEventListener('wheel', wheel, wheelOptions)
-  }
+  if (DEBUG_WEAPON_SWITCH) { window.addEventListener('wheel', wheel, wheelOptions) }
   window.addEventListener('blur', onBlur)
-  
+
   document.addEventListener('visibilitychange', onVisibilityChange)
 
   listenersAttached = true
