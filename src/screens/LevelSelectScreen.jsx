@@ -32,7 +32,7 @@ function StageIcon({ boss, locked, active }) {
 
   if (locked) {
 
-    return ( <div className="text-2xl text-white/20">🔒</div> )
+    return (<div className="text-2xl text-white/20">🔒</div>)
   }
 
   if (boss) {
@@ -40,7 +40,7 @@ function StageIcon({ boss, locked, active }) {
     return (
       <div className={`relative flex h-10 w-10 rotate-45 items-center justify-center border-2
 
-          ${active? `border-yellow-300 bg-yellow-400/10 shadow-[0_0_24px_rgba(255,220,50,0.6)]` : `border-yellow-400/60 bg-yellow-400/5`}`}>
+          ${active ? `border-yellow-300 bg-yellow-400/10 shadow-[0_0_24px_rgba(255,220,50,0.6)]` : `border-yellow-400/60 bg-yellow-400/5`}`}>
         <span className="-rotate-45 text-lg text-yellow-300">☠</span>
       </div>
     )
@@ -50,12 +50,12 @@ function StageIcon({ boss, locked, active }) {
     <div className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2
 
         ${active
-          ? `
+        ? `
               border-cyan-300
               bg-cyan-400/10
               shadow-[0_0_22px_rgba(0,255,255,0.55)]
             `
-          : `
+        : `
               border-[#39ff14]/50
               bg-[#39ff14]/5
             `}`}>
@@ -123,7 +123,7 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
   // ==========================================================
 
   const safeHighestLevel = useMemo(() => {
-    return Math.max( 1, Math.min(Number(highestLevelReached) || 1, totalLevels))
+    return Math.max(1, Math.min(Number(highestLevelReached) || 1, totalLevels))
   }, [highestLevelReached, totalLevels])
 
   // ==========================================================
@@ -234,7 +234,7 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
       window.removeEventListener("keydown", onKey)
     }
 
-  }, [ back, play])
+  }, [back, play])
 
   // ==========================================================
   // SELECTED LEVEL STATE
@@ -357,7 +357,7 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
                 tracking-[0.3em]
                 text-[#39ff14]/70
                 transition-all
-
+                cursor-pointer
                 hover:border-[#39ff14]
                 hover:bg-[#39ff14]/6
                 hover:text-[#39ff14]
@@ -383,6 +383,7 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
                 text-cyan-300
                 shadow-[0_0_12px_rgba(0,255,255,0.15)]
                 transition-all
+                cursor-pointer
 
                 hover:bg-cyan-400/18
                 hover:shadow-[0_0_20px_rgba(0,255,255,0.3)]
@@ -420,12 +421,9 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
             ZONES
         ==================================================== */}
 
-        {Array.from({
-          length: zoneCount,
-        }).map((_, zoneIndex) => {
+        {Array.from({ length: zoneCount }).map((_, zoneIndex) => {
 
-          const zoneNumber =
-            zoneIndex + 1
+          const zoneNumber = zoneIndex + 1
 
           // IMPORTANT:
           //
@@ -441,80 +439,35 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
           // Zone 3 → levels 9-12
           // Zone 4 → levels 13-16
 
-          const base =
-            zoneIndex *
-            ENCOUNTERS_PER_ZONE
-
-          const firstLevel =
-            base + 1
-
-          const lastLevel =
-            Math.min(
-              base + ENCOUNTERS_PER_ZONE,
-              totalLevels
-            )
-
-          const zoneUnlocked =
-            firstLevel <= totalLevels &&
-            isLevelUnlocked(firstLevel)
-
-          const zoneReached =
-            safeHighestLevel >= firstLevel
+          const base = zoneIndex * ENCOUNTERS_PER_ZONE
+          const firstLevel = base + 1
+          const lastLevel = Math.min(base + ENCOUNTERS_PER_ZONE, totalLevels)
+          const zoneUnlocked = firstLevel <= totalLevels && isLevelUnlocked(firstLevel)
+          const zoneReached = safeHighestLevel >= firstLevel
 
           return (
-            <section
-              key={zoneNumber}
-              className="relative mb-10"
-            >
+            <section key={zoneNumber} className="relative mb-10">
 
               {/* ==================================================
                   ZONE HEADER
               ================================================== */}
 
-              <div className="
-                mb-4
-                flex items-center gap-4
-              ">
+              <div className="mb-4 flex items-center gap-4">
 
-                <div className="
-                  flex items-center gap-3
-                  text-[11px]
-                  font-bold
-                  tracking-[0.35em]
-                ">
+                <div className="flex items-center gap-3 text-[11px] font-bold tracking-[0.35em]">
 
-                  <span className="
-                    text-cyan-300
-                    drop-shadow-[0_0_8px_rgba(0,255,255,0.8)]
-                  ">
-                    ZONE {String(zoneNumber).padStart(2, "0")}
-                  </span>
+                  <span className="text-cyan-300 drop-shadow-[0_0_8px_rgba(0,255,255,0.8)]">ZONE {String(zoneNumber).padStart(2, "0")}</span>
 
                   <span className="text-white/20">
                     //
                   </span>
 
-                  <span
-                    className={
-                      zoneReached
-                        ? "text-[#39ff14]/70"
-                        : "text-white/20"
-                    }
-                  >
-                    {zoneReached
-                      ? "SECTOR ACTIVE"
-                      : "SECTOR LOCKED"}
-                  </span>
+                  <span className={zoneReached ? "text-[#39ff14]/70" : "text-white/20"}>
+                    {zoneReached ? "SECTOR ACTIVE" : "SECTOR LOCKED"}</span>
 
                 </div>
 
-                <div className="
-                  h-px
-                  flex-1
-                  bg-linear-to-r
-                  from-cyan-400/30
-                  to-transparent
-                " />
+                <div className="h-px flex-1 bg-linear-to-r from-cyan-400/30 to-transparent" />
 
               </div>
 
@@ -522,156 +475,60 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
                   STAGE MAP
               ================================================== */}
 
-              <div className="
-                relative
-                grid
-                grid-cols-3
-                gap-2
-                sm:grid-cols-4
-              ">
+              <div className="relative grid grid-cols-3 gap-2 sm:grid-cols-4">
 
                 {/* CONNECTING ROUTE */}
 
-                <div className="
-                  pointer-events-none
-                  absolute
-                  left-[12%]
-                  right-[12%]
-                  top-1/2
-                  hidden
-                  h-px
-                  -translate-y-1/2
-                  bg-linear-to-r
-                  from-[#39ff14]/20
-                  via-cyan-400/50
-                  to-yellow-400/30
-                  sm:block
-                " />
+                <div className="pointer-events-none absolute left-[12%] right-[12%] top-1/2 hidden h-px -translate-y-1/2 bg-linear-to-r from-[#39ff14]/20 via-cyan-400/50 to-yellow-400/30 sm:block" />
 
                 {/* LEVELS */}
 
-                {Array.from({
-                  length:
-                    lastLevel - base,
-                }).map((_, levelIndex) => {
+                {Array.from({ length: lastLevel - base }).map((_, levelIndex) => {
 
-                  const level =
-                    base +
-                    levelIndex +
-                    1
-
-                  const unlocked =
-                    isLevelUnlocked(level)
-
-                  const active =
-                    selected === level
-
-                  const boss =
-                    isBossLevel(level)
+                  const level = base + levelIndex + 1
+                  const unlocked = isLevelUnlocked(level)
+                  const active = selected === level
+                  const boss = isBossLevel(level)
 
                   return (
-                    <button
-                      key={level}
-                      type="button"
-                      disabled={!unlocked}
-                      onClick={() => select(level)}
-                      aria-label={
-                        unlocked
-                          ? `Select ${formatLevelLabel(level)}`
-                          : `${formatLevelLabel(level)} locked`
-                      }
-                      className={`
-                        group
-                        relative
-                        h-24
-                        overflow-hidden
-                        border
-                        text-left
-                        transition-all
-                        duration-200
+                    <button key={level} type="button" disabled={!unlocked} onClick={() => select(level)}
+                      aria-label={unlocked ? `Select ${formatLevelLabel(level)}` : `${formatLevelLabel(level)} locked`}
+                      className={`group relative h-24 overflow-hidden border text-left transition-all duration-200
 
-                        ${active && unlocked
-
-                          ? boss
-
-                            ? `
-                                border-yellow-300
-                                bg-yellow-400/8
-                                shadow-[0_0_30px_rgba(255,220,50,0.25)]
-                              `
-
-                            : `
-                                border-cyan-300
-                                bg-cyan-400/8
-                                shadow-[0_0_30px_rgba(0,255,255,0.25)]
-                              `
-
-                          : unlocked
-
-                            ? boss
-
-                              ? `
-                                  border-yellow-400/40
-                                  bg-black/70
-                                  hover:border-yellow-300
-                                  hover:bg-yellow-400/6
-                                `
-
-                              : `
-                                  border-[#39ff14]/30
-                                  bg-black/70
-                                  hover:border-cyan-300/70
-                                  hover:bg-cyan-400/4
-                                `
-
-                            : `
-                                cursor-not-allowed
-                                border-white/6
-                                bg-black/80
-                              `
-                        }
-                      `}
-                    >
+                        ${active && unlocked ? boss
+                          ? `border-yellow-300 bg-yellow-400/8 shadow-[0_0_30px_rgba(255,220,50,0.25)]`
+                          : `border-cyan-300 bg-cyan-400/8 shadow-[0_0_30px_rgba(0,255,255,0.25)]`
+                          : unlocked ? boss ? `border-yellow-400/40 bg-black/70 hover:border-yellow-300 hover:bg-yellow-400/6`
+                            : `border-[#39ff14]/30 bg-black/70 hover:border-cyan-300/70 hover:bg-cyan-400/4 cursor-pointer`
+                            : `cursor-not-allowed border-white/6 bg-black/80`}`}>
 
                       <CornerBrackets />
 
                       {/* SCANLINES */}
 
-                      <div className="
-                        pointer-events-none
-                        absolute inset-0
-                        opacity-20
-                        bg-[linear-gradient(to_bottom,transparent_50%,rgba(255,255,255,0.04)_51%)]
-                        bg-size-[100%_4px]
-                      " />
+                      <div className="pointer-events-none absolute inset-0 opacity-20 bg-[linear-gradient(to_bottom,transparent_50%,rgba(255,255,255,0.04)_51%)] bg-size-[100%_4px]" />
 
                       {/* ACTIVE GLOW */}
 
                       {active && unlocked && (
 
-                        <div
-                          className={`
-                            pointer-events-none
-                            absolute inset-0
+                        <div className={`pointer-events-none absolute inset-0
 
                             ${boss
-                              ? `
+                            ? `
                                   bg-[radial-gradient(
                                     circle_at_center,
                                     rgba(255,220,50,0.14),
                                     transparent_65%
                                   )]
                                 `
-                              : `
+                            : `
                                   bg-[radial-gradient(
                                     circle_at_center,
                                     rgba(0,255,255,0.14),
                                     transparent_65%
                                   )]
-                                `
-                            }
-                          `}
-                        />
+                                `}`} />
 
                       )}
 
@@ -684,19 +541,14 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
                         {unlocked ? (
 
                           <>
-
                             <div className={`text-xs font-bold tracking-[0.25em] ${active ? boss ? "text-yellow-300" : "text-cyan-300" : boss ? "text-yellow-400/70" : "text-[#39ff14]/70"}`}>{levelLabel(level)}</div>
                             <div className={`text-[7px] tracking-[0.25em]${boss ? "text-yellow-300/60" : "text-white/30"}`}>{levelSubLabel(level)}</div>
-
                           </>
 
                         ) : (
-
                           <>
-
                             <div className="text-[10px] tracking-[0.3em] text-white/20">LOCKED</div>
                             <div className="text-[7px] tracking-[0.2em] text-red-400/30">UNREACHED</div>
-
                           </>
 
                         )}

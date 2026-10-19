@@ -81,7 +81,7 @@ Distributed under the MIT License. See LICENSE.txt for more information.
 
 ## Project Status
 
-This project is incomplete and requires further development. In future games with multi-screen states and boss AI could use Xstate machine rather than zustand for screen management. Other directory structures than ECS may be explored.
+This project is incomplete and requires further development. 
 
 ## Config Options
 
@@ -89,6 +89,7 @@ This project is incomplete and requires further development. In future games wit
 - weapon order in weapons.js
 - Position of bullet emission and gun flash currently set in spawn.js const MUZZLE_OFFSET = 0.4 
 export const GUN_GAP = 0.45 // distance between twin guns
+- damage in 'resolveHit'
 
 ### Make a new gun:
 
@@ -127,101 +128,19 @@ src/weapons/weaponSystems/hitTraits.js
 
 Inside combat.js at end of file lives = 0
 
+defeat of entities inside entityDeath.js
+
 ## Tasks
-
-Asteroid damages ship a little if collides with it, boss destroys player on collision
-
-- [x] collision between ship and asteroids, ship and asteroid should bounce off each other 
-- ~~[ ] make small octopuses (octo renderer) tentacles longer, remove their gun, they hurt by impact, and remove their exhaust. Spawn octopuses in groups in waves as tentacle boss exists~~
--~~ [ ] make fighting logic for tentacle renderer (big tentacles) so one tentacle is hittable, and can attack player. Give Big tentacles some different attacks (e.g. firing a laser like thing that travels across screen)~~
-
-- [ ] optimize things
-- [ ] optimize starfield renderer, make milky way
-- [ ] fix emission configs for bosses
-- ~~[ ] fix ship cockpit glass panel lines for player and boss~~
-
-- level select screen play and back btns not showing.
-- octopus not rendering properly
 
 PLAYER EMISSION POINTS CONFIG IN emission.js, 
 BOSS EMISSION CONFIG IN bosses.js
 
 Make config screen for emission point, using a dot to show emission points on ship svg, not actual bullets/exhaust
 
-- [ ] optimize starfield renderer
-
-OPTIMIZE RENDERERS:
-- [x] ArcRenderer
-- [x] BulletRenderer
-- [x] DeflectRenderer
-- [x] TrailRenderer 
-- [x] effectPool
-- [x] all Emitter files
-- [x] SmokeRenderer
-- [x] SparkRenderer
-- [x] ShockwaveRenderer
-- [x] ExplosionRenderer
-- [x] DebrisRenderer
-- [x] FlashRenderer
-
-~~- [ ] reduce gun related renderers: weaponmount, gunmount, gunrenderer, bossmount~~
-- [ ] consolidate fx and renderers: debris, exhaust, explosion, fire, flash, shockwave, spark, trail
-- [x] re-do/update pools
-
-Priority:
-- [x] gameloop difficulty scaling
-- [ ] optimize components
-
-Post: 
-- [x] exhaust rendering
-- [x] gun types/ bullet types
-- [ ] floating health packs, powerups, weapon upgrades
-- [ ] collision, damage, death
-- [ ] Enhance and Optimize Renderers
-- [ ] Enhance HUD vfx
-- [x] Add game screens
-- [ ] Score
-- [x] settings, mouse control support/toggling
-- [x] modular ship parts for upgrade and modular gun parts for upgrade
-- [x] general game progression: n asteroid waves, then boss with new gun.
-Defeating boss drops/awards gun. Gun can be applied. N1 asteroid wave and next boss with new gun etc.
-
-////// 
-
-some of these boss dropped weapons, some upgrades 
-
- - [x] if add bosses, make one kind and swap out guns, probably after gun system
- - [ ] make one kind of boss behaviour and logic, and switch renderer (ship appearance) and gun type
- ~~- [ ] also potentially later boss has satelites that orbit it and help, or shield etc~~
- - [x] add in shockwave effect for explosive weapons
- - [x] Adapt missile and lasersystem for boss use: missiles dont target player and need to not hurt boss, and laser needs to be held down not fired (boss never fires it)
-- [x] change boss renderer to make enemy ship/ufo
-- [x] add a leva menu to configure guns which can be applied to the ship and bosses
-- [x] make each gun, it will look the same for boss as player
-
  -  Verlet mesh, chain etc physics, or engine
 
- ~~## Move effects into GPU particle system API:~~
-
- - [x] sparks
- - [x] exhaust
- - [x] explosion on entity destruction
-    - explosion rendering needs improving
- - [x] debris (asteroid, player, boss) debris upon destruction
- - [x] smoke 
-
- - [ ] bullets (?)
- - [x] fire
- - [x] flash (or glow)
-
-
-- [x] add pool for sparks, exhaust, etc
-
-- [x] trailrenderer needs to replace smoke in missile renderer
-
-
- 
-
-
-
  - [ ] weaponActions and Spawn currently has some BOSS AI functions, maybe put all Boss AI into separate file/system. maybe other files have boss AI scattered, need to be centralized 
+
+ - [ ] remove boost from hud
+
+ - restyle and format pages to remove gaps and extra space, scrolling

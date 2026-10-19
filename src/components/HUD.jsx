@@ -73,16 +73,6 @@ export function HUD({ onPause, paused }) {
         <span>{Math.max(0, Math.round(hud.health))}</span>
       </div>
 
-      {/* BOOST */}
-
-      <div className="flex items-center gap-2 text-xs">
-        <span>BOOST</span>
-
-        <div className="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
-          {/* Boost bar can be connected to simState later */}
-        </div>
-      </div>
-
       {/* SCORE */}
 
       <span className="text-xs text-yellow-300 whitespace-nowrap">SCORE {hud.score}</span>
