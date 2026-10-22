@@ -1,6 +1,6 @@
-// src/state/simState.js
+// src/state/startState.js
 
-export const simState = {
+export const startState = {
 
     // ============================================================
     // RUN STATE
@@ -62,15 +62,15 @@ export const DEFAULT_WEAPON = 0
 // default so every new game starts with the raygun.
 // ============================================================
 
-export function resetSimState() {
+export function resetstartState() {
 
-    simState.score = 0
-    simState.lives = 3
-    simState.health = 100
+    startState.score = 0
+    startState.lives = 3
+    startState.health = 100
 
-    simState.currentWeapon = DEFAULT_WEAPON
+    startState.currentWeapon = DEFAULT_WEAPON
 
-    resetSimStateForLevel()
+    resetstartStateForLevel()
 }
 
 // ============================================================
@@ -81,15 +81,15 @@ export function resetSimState() {
 // levels.
 // ============================================================
 
-export function resetSimStateForLevel() {
+export function resetstartStateForLevel() {
 
-    simState.asteroidsRemaining = 0
+    startState.asteroidsRemaining = 0
 
-    simState.deflectBufferTime = 0
-    simState.deflectFlashTimer = 0
-    simState.deflectFlashX = 0
-    simState.deflectFlashY = 0
+    startState.deflectBufferTime = 0
+    startState.deflectFlashTimer = 0
+    startState.deflectFlashX = 0
+    startState.deflectFlashY = 0
 
-    simState.gunSkinOverride = null
+    startState.gunSkinOverride = null
 
 }

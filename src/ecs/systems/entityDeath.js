@@ -3,7 +3,7 @@
 import { removeEntity } from "bitecs"
 import { world } from "../constants/world.js"
 import { useGameStore } from "../../../store/gameStore.js"
-import { simState } from "../../state/simState.js"
+import { startState } from "../../state/startState.js"
 import { getGunTypeByWeaponId, getGunTypeById } from "../weapons/config/gunConfigs.js"
 import { BossAI, BossType, Velocity } from "../constants/components.js"
 import { BOSSES } from "../constants/bosses.js"
@@ -49,8 +49,8 @@ export function killAsteroid(id, x, y) {
     // Runtime state
     // --------------------------------------------------------
 
-    simState.asteroidsRemaining = Math.max(0, simState.asteroidsRemaining - 1)
-    simState.score += 100
+    startState.asteroidsRemaining = Math.max(0, startState.asteroidsRemaining - 1)
+    startState.score += 100
 
     // --------------------------------------------------------
     // Death effects
@@ -75,7 +75,7 @@ export function killAsteroid(id, x, y) {
     // CONTINUE and continueLevel() is called.
     // --------------------------------------------------------
 
-    if (simState.asteroidsRemaining === 0) {
+    if (startState.asteroidsRemaining === 0) {
         setTimeout(() => {
             useGameStore.getState().completeLevel()
         }, 2800)
@@ -142,7 +142,7 @@ export function killBoss(id, x, y) {
     // SCORE
     // ========================================================
 
-    simState.score += 1000
+    startState.score += 1000
 
     // ========================================================
     // WEAPON REWARD

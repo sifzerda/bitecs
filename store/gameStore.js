@@ -1,7 +1,7 @@
 // store/gameStore.js
 
 import { create } from "zustand"
-import { resetSimState, resetSimStateForLevel } from "../src/state/simState.js"
+import { resetstartState, resetstartStateForLevel } from "../src/state/startState.js"
 import { TOTAL_LEVELS, getProgression, isBossLevel, getZone, getWave, getBossKey, formatLevelLabel } from "../src/ecs/constants/progression.js"
 import { resetLevelWorld } from "../src/state/resetLevel.js"
 import { resetWaveSystem } from "../src/ecs/systems/waveSystem.js"
@@ -22,7 +22,7 @@ export const SCREEN = {
     GUNS: "guns",
     LEVEL_COMPLETE: "levelcomplete",
 
-    DEBUG: "debug",
+    //DEBUG: "debug",
 }
 
 // ============================================================
@@ -85,7 +85,7 @@ export const useGameStore = create((set, get) => ({
 
         resetWaveSystem()
         resetLevelWorld()
-        resetSimStateForLevel()
+        resetstartStateForLevel()
 
         set({
             level: safeLevel,
@@ -105,7 +105,7 @@ export const useGameStore = create((set, get) => ({
 
     resetRun: () => {
 
-        resetSimState()
+        resetstartState()
 
         set({
             screen: SCREEN.MENU,
@@ -126,7 +126,7 @@ export const useGameStore = create((set, get) => ({
 
     resetProgress: () => {
 
-        resetSimState()
+        resetstartState()
 
         set({
 
@@ -166,10 +166,7 @@ export const useGameStore = create((set, get) => ({
         const nextLevel = Math.min(level + 1, TOTAL_LEVELS)
 
         set({
-            highestLevelReached: Math.max(
-                highestLevelReached,
-                nextLevel
-            ),
+            highestLevelReached: Math.max(highestLevelReached, nextLevel),
             paused: true,
             screen: SCREEN.LEVEL_COMPLETE,
         })
@@ -203,7 +200,7 @@ export const useGameStore = create((set, get) => ({
         // Start from a completely reset simulation.
         resetWaveSystem()
         resetLevelWorld()
-        resetSimStateForLevel()
+        resetstartStateForLevel()
 
         set({
             level: nextLevel,

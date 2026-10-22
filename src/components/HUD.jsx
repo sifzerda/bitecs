@@ -1,7 +1,7 @@
 // src/components/HUD.jsx
 
 import { useEffect, useState } from "react"
-import { simState } from "../state/simState.js"
+import { startState } from "../state/startState.js"
 import { skipWave } from "../ecs/systems/waveSystem.js"
 import { useGameStore, formatLevelLabel, isBossLevel } from "../../store/gameStore.js"
 
@@ -9,10 +9,10 @@ export function HUD({ onPause, paused }) {
   const level = useGameStore((s) => s.level)
 
   const [hud, setHud] = useState({
-    score: simState.score,
-    health: simState.health,
-    lives: simState.lives,
-    asteroidsRemaining: simState.asteroidsRemaining,
+    score: startState.score,
+    health: startState.health,
+    lives: startState.lives,
+    asteroidsRemaining: startState.asteroidsRemaining,
   })
 
   useEffect(() => {
@@ -21,10 +21,10 @@ export function HUD({ onPause, paused }) {
     const update = () => {
       setHud((prev) => {
         const next = {
-          score: simState.score,
-          health: simState.health,
-          lives: simState.lives,
-          asteroidsRemaining: simState.asteroidsRemaining,
+          score: startState.score,
+          health: startState.health,
+          lives: startState.lives,
+          asteroidsRemaining: startState.asteroidsRemaining,
         }
 
         if (

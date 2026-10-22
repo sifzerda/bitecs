@@ -1,8 +1,9 @@
 // src/ecs/systems/input.js
 
-import { simState } from "../../state/simState.js"
+import { startState } from "../../state/startState.js"
 import { WEAPONS } from "../weapons/config/weapons.js"
 import { settings } from "../systems/settings.js"
+import { useGameStore, SCREEN } from "../../../store/gameStore.js"
 
 // Debug weapon switching: dev server only, never in production builds.
 const DEBUG_WEAPON_SWITCH = import.meta.env.DEV
@@ -59,7 +60,7 @@ const weaponKeys = {
 const wheelOptions = { passive: false }
 
 function cycleWeapon(direction) {
-  simState.currentWeapon = (simState.currentWeapon + direction + WEAPONS.length) % WEAPONS.length
+  startState.currentWeapon = (startState.currentWeapon + direction + WEAPONS.length) % WEAPONS.length
 }
 
 export function clearInput() {
@@ -127,7 +128,7 @@ export function initializeInput(onPause) {
     const weaponIndex = weaponKeys[e.code]
 
     if (weaponIndex !== undefined && weaponIndex < WEAPONS.length) {
-      simState.currentWeapon = weaponIndex
+      startState.currentWeapon = weaponIndex
     }
   }
 
@@ -150,7 +151,9 @@ export function initializeInput(onPause) {
   }
 
   function mouseDown(e) {
-    if (!isMouseControlEnabled()) return
+    const { screen, paused } = useGameStore.getState()
+
+    if (screen !== SCREEN.PLAY || paused || !isMouseControlEnabled()) return
 
     // Right mouse button = deflect
     if (e.button === 2) {
@@ -181,7 +184,10 @@ export function initializeInput(onPause) {
   // ----------------------------------------------------------
 
   function contextMenu(e) {
-    if (isMouseControlEnabled()) {
+    const { screen, paused } = useGameStore.getState()
+
+    // Only disable right-click during active gameplay.
+    if (screen === SCREEN.PLAY && !paused && isMouseControlEnabled()) {
       e.preventDefault()
     }
   }

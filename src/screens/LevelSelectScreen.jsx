@@ -39,7 +39,6 @@ function StageIcon({ boss, locked, active }) {
 
     return (
       <div className={`relative flex h-10 w-10 rotate-45 items-center justify-center border-2
-
           ${active ? `border-yellow-300 bg-yellow-400/10 shadow-[0_0_24px_rgba(255,220,50,0.6)]` : `border-yellow-400/60 bg-yellow-400/5`}`}>
         <span className="-rotate-45 text-lg text-yellow-300">☠</span>
       </div>
@@ -50,17 +49,10 @@ function StageIcon({ boss, locked, active }) {
     <div className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2
 
         ${active
-        ? `
-              border-cyan-300
-              bg-cyan-400/10
-              shadow-[0_0_22px_rgba(0,255,255,0.55)]
-            `
-        : `
-              border-[#39ff14]/50
-              bg-[#39ff14]/5
-            `}`}>
+        ? `border-cyan-300 bg-cyan-400/10 shadow-[0_0_22px_rgba(0,255,255,0.55)]`
+        : `border-[#39ff14]/50 bg-[#39ff14]/5
+        `}`}>
       <div className="h-3.5 w-3.5 rounded-full border border-current" />
-
       <div className="absolute h-6 w-px bg-current/60" />
       <div className="absolute h-px w-6 bg-current/60" />
     </div>
@@ -248,13 +240,7 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
   // ==========================================================
 
   return (
-    <FlightLayout2
-      title="LEVEL SELECT"
-      footer={`REACHED: ${formatLevelLabel(safeHighestLevel)}`}
-      size="2xl"
-      centered={false}
-      scrollable
-    >
+    <FlightLayout2 title="LEVEL SELECT" footer={`REACHED: ${formatLevelLabel(safeHighestLevel)}`} size="2xl" centered={false} scrollable>
 
       <div className="mx-auto w-full max-w-5xl pb-22 font-mono">
 
@@ -262,43 +248,22 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
             TOP STATUS BAR
         ==================================================== */}
 
-        <div className="
-          mb-6 flex flex-wrap
-          items-center gap-x-6 gap-y-2
-          border-y border-cyan-400/20
-          bg-black/50
-          px-4 py-3
-          text-[9px]
-          tracking-[0.3em]
-        ">
+        <div className="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-y border-cyan-400/20 bg-black/50 px-4 py-3 text-[9px] tracking-[0.3em]">
 
           {/* SECTOR MAP */}
 
           <div className="flex items-center gap-3">
 
-            <span className="text-cyan-300">
-              SECTOR MAP
-            </span>
-
-            <span className="
-              h-2 w-2
-              animate-pulse
-              rounded-full
-              bg-cyan-400
-              shadow-[0_0_8px_#00ffff]
-            " />
+            <span className="text-cyan-300">SECTOR MAP</span>
+            <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-400 shadow-[0_0_8px_#00ffff]" />
 
           </div>
 
           {/* PROGRESS */}
 
           <div className="text-[#39ff14]/60">
-
             PROGRESS
-
-            <span className="ml-2 text-[#39ff14]">
-              {safeHighestLevel}/{totalLevels}
-            </span>
+            <span className="ml-2 text-[#39ff14]">{safeHighestLevel}/{totalLevels}</span>
 
           </div>
 
@@ -306,47 +271,24 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
 
           <div className="flex items-center gap-2">
 
-            <span className="text-white/30">
-              MISSION
-            </span>
-
-            <span className="
-              text-cyan-300
-              drop-shadow-[0_0_8px_rgba(0,255,255,0.6)]
-            ">
-              {formatLevelLabel(selected)}
-            </span>
+            <span className="text-white/30">MISSION</span>
+            <span className="text-cyan-300 drop-shadow-[0_0_8px_rgba(0,255,255,0.6)]">{formatLevelLabel(selected)}</span>
 
           </div>
 
           {/* ACCESS */}
 
-          <div
-            className={
-              selectedUnlocked
-                ? "text-[#39ff14]"
-                : "text-red-400/60"
-            }
-          >
+          <div className={selectedUnlocked ? "text-[#39ff14]" : "text-red-400/60"}>
 
-            {selectedUnlocked
-              ? selectedIsBoss
-                ? "BOSS READY"
-                : "READY"
-              : "ACCESS DENIED"}
+            {selectedUnlocked ? selectedIsBoss ? "BOSS READY" : "READY" : "ACCESS DENIED"}
 
           </div>
 
           {/* ACTIONS */}
 
-          <div className="
-            ml-auto
-            flex items-center gap-2
-          ">
+          <div className="ml-auto flex items-center gap-2">
 
-            <button
-              type="button"
-              onClick={back}
+            <button type="button" onClick={back}
               className="
                 border
                 border-[#39ff14]/40
@@ -361,15 +303,9 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
                 hover:border-[#39ff14]
                 hover:bg-[#39ff14]/6
                 hover:text-[#39ff14]
-              "
-            >
-              BACK
-            </button>
+              ">BACK</button>
 
-            <button
-              type="button"
-              onClick={play}
-              disabled={!selectedUnlocked}
+            <button type="button" onClick={play} disabled={!selectedUnlocked}
               className="
                 group relative
                 overflow-hidden
@@ -392,24 +328,11 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
                 disabled:border-white/10
                 disabled:text-white/20
                 disabled:shadow-none
-              "
-            >
+              ">
 
-              <span className="relative z-10">
-                ▶ PLAY
-              </span>
+              <span className="relative z-10">▶ PLAY</span>
 
-              <div className="
-                absolute
-                inset-y-0
-                -left-full
-                w-1/2
-                skew-x-[-20deg]
-                bg-white/10
-                transition-all
-                duration-500
-                group-hover:left-[120%]
-              " />
+              <div className="absolute inset-y-0 -left-full w-1/2 skew-x-[-20deg] bg-white/10 transition-all duration-500 group-hover:left-[120%]" />
 
             </button>
 
@@ -458,12 +381,9 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
 
                   <span className="text-cyan-300 drop-shadow-[0_0_8px_rgba(0,255,255,0.8)]">ZONE {String(zoneNumber).padStart(2, "0")}</span>
 
-                  <span className="text-white/20">
-                    //
-                  </span>
+                  <span className="text-white/20">//</span>
 
-                  <span className={zoneReached ? "text-[#39ff14]/70" : "text-white/20"}>
-                    {zoneReached ? "SECTOR ACTIVE" : "SECTOR LOCKED"}</span>
+                  <span className={zoneReached ? "text-[#39ff14]/70" : "text-white/20"}>{zoneReached ? "SECTOR ACTIVE" : "SECTOR LOCKED"}</span>
 
                 </div>
 
@@ -514,22 +434,7 @@ export default function LevelSelectScreen({ onPlay, onBack }) {
 
                         <div className={`pointer-events-none absolute inset-0
 
-                            ${boss
-                            ? `
-                                  bg-[radial-gradient(
-                                    circle_at_center,
-                                    rgba(255,220,50,0.14),
-                                    transparent_65%
-                                  )]
-                                `
-                            : `
-                                  bg-[radial-gradient(
-                                    circle_at_center,
-                                    rgba(0,255,255,0.14),
-                                    transparent_65%
-                                  )]
-                                `}`} />
-
+                            ${boss ? `bg-[radial-gradient( circle_at_center, rgba(255,220,50,0.14), transparent_65%)]`: ` bg-[radial-gradient(circle_at_center, rgba(0,255,255,0.14), transparent_65%)]`}`} />
                       )}
 
                       {/* CONTENT */}

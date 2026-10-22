@@ -6,7 +6,7 @@ import { playerQuery, bossQuery } from "../constants/queries.js"
 import { activeAsteroids } from "../pools/asteroidPool.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { useGameStore } from "../../../store/gameStore.js"
-import { simState } from "../../state/simState.js"
+import { startState } from "../../state/startState.js"
 
 // ============================================================
 // Apply / refresh status effects
@@ -195,9 +195,9 @@ export function statusEffectSystem() {
 
     if (Health.current[pid] <= 0) {
 
-        simState.lives--
+        startState.lives--
 
-        if (simState.lives <= 0) {
+        if (startState.lives <= 0) {
 
             useGameStore.setState({ screen: SCREEN.GAME_OVER })
 

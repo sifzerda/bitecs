@@ -12,7 +12,7 @@ import {
 
 import { spawnPlayerBullet } from "../spawn.js"
 import { input, isMouseControlEnabled } from "./input.js"
-import { simState } from "../../state/simState.js"
+import { startState } from "../../state/startState.js"
 
 import { getWeapon } from "../weapons/config/weapons.js"
 import { getAction } from "../weapons/config/weaponActions.js"
@@ -210,19 +210,19 @@ Velocity.y[pid] *= drag
     // DEFLECT
     // ========================================================
 
-    simState.deflectBufferTime = Math.max(
+    startState.deflectBufferTime = Math.max(
         0,
-        simState.deflectBufferTime - dt
+        startState.deflectBufferTime - dt
     )
 
-    simState.deflectFlashTimer = Math.max(
+    startState.deflectFlashTimer = Math.max(
         0,
-        simState.deflectFlashTimer - dt
+        startState.deflectFlashTimer - dt
     )
 
     if (input.deflect) {
 
-        simState.deflectBufferTime = DEFLECT_BUFFER
+        startState.deflectBufferTime = DEFLECT_BUFFER
 
         input.deflect = false
     }
@@ -231,7 +231,7 @@ Velocity.y[pid] *= drag
     // SHOOTING
     // ========================================================
 
-    const weapon = getWeapon(simState.currentWeapon)
+    const weapon = getWeapon(startState.currentWeapon)
 
     if (!getAction(weapon).continuous) {
 

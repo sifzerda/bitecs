@@ -10,7 +10,7 @@ import { activeArcs } from '../ecs/pools/arcPool.js'
 
 import { Arc, ArcPointsX, ArcPointsY, BossAI } from '../ecs/constants/components.js'
 
-import { simState } from '../state/simState.js'
+import { startState } from '../state/startState.js'
 import { getWeapon } from '../ecs/weapons/config/weapons.js'
 import { bossAIQuery } from '../ecs/constants/queries.js'
 
@@ -564,7 +564,7 @@ export function ArcRenderer({
     const updatePlayerData = () => {
 
         const cache = weaponCache.current
-        const weaponId = simState.currentWeapon
+        const weaponId = startState.currentWeapon
 
         if (cache.id !== weaponId) {
             cache.id = weaponId

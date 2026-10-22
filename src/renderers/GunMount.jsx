@@ -5,7 +5,7 @@ import { useFrame } from '@react-three/fiber'
 import { playerQuery, bossQuery } from '../ecs/constants/queries.js'
 import { Position, Rotation, BossType } from '../ecs/constants/components.js'
 import { BOSSES } from '../ecs/constants/bosses.js'
-import { simState } from '../state/simState.js'
+import { startState } from '../state/startState.js'
 import { getGunTypeByWeaponId, getGunTypeById } from '../ecs/weapons/config/gunConfigs.js'
 import { WeaponMount } from './WeaponMount.jsx'
 
@@ -57,9 +57,9 @@ export function GunMount() {
         }
     })
 
-    const gunType = simState.gunSkinOverride
-        ? getGunTypeById(simState.gunSkinOverride)
-        : getGunTypeByWeaponId(simState.currentWeapon)
+    const gunType = startState.gunSkinOverride
+        ? getGunTypeById(startState.gunSkinOverride)
+        : getGunTypeByWeaponId(startState.currentWeapon)
 
     const { mount } = gunType.config
     const playerGunCfg = {

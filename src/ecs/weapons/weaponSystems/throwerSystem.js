@@ -6,7 +6,7 @@ import { playerQuery, bossQuery } from "../../constants/queries.js"
 import { Position, Rotation, Health } from "../../constants/components.js"
 import { applyStatusEffects } from "../../systems/statusEffectSystem.js"
 import { input } from "../../systems/input.js"
-import { simState } from "../../../state/simState.js"
+import { startState } from "../../../state/startState.js"
 import { getWeapon } from "../config/weapons.js"
 import { throwerState } from "../weaponState/throwerState.js"
 import { killAsteroid, killBoss } from "../../systems/entityDeath.js"
@@ -71,7 +71,7 @@ function getTwinOrigins(centerX, centerY, rot, gap) {
 export function throwerSystem() {
 
     const dt = world.time.delta
-    const weapon = getWeapon(simState.currentWeapon)
+    const weapon = getWeapon(startState.currentWeapon)
 
     if (weapon.category !== "thrower") {
 

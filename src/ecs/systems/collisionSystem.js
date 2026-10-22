@@ -8,7 +8,7 @@ import { applyPlayerAngularImpulse } from "./playerControlSystem.js"
 import { killBoss } from "./entityDeath.js"
 import { activeAsteroids } from "../pools/asteroidPool.js"
 import { useGameStore } from "../../../store/gameStore.js"
-import { simState } from "../../state/simState.js"
+import { startState } from "../../state/startState.js"
 
 // ============================================================
 // COLLISION CONFIGURATION
@@ -149,9 +149,9 @@ function resolveAsteroidCollisions(asteroids) {
 
 function losePlayerLife(pid) {
 
-    simState.lives--
+    startState.lives--
 
-    if (simState.lives <= 0) {
+    if (startState.lives <= 0) {
 
         useGameStore
             .getState()

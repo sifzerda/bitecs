@@ -1,32 +1,12 @@
 // src/screens/LevelCompleteScreen.jsx
 
-import {
-  useEffect,
-  useMemo,
-} from "react"
+import { useEffect, useMemo } from "react"
+import { useGameStore, formatLevelLabel } from "../../store/gameStore.js"
+import { getWeapon } from "../ecs/weapons/config/weapons.js"
+import { getGunTypeByWeaponId } from "../ecs/weapons/config/gunConfigs.js"
+import FlightLayout2 from "../components/FlightLayout2.jsx"
 
-import {
-  useGameStore,
-  formatLevelLabel,
-} from "../../store/gameStore.js"
-
-import {
-  getWeapon,
-} from "../ecs/weapons/config/weapons.js"
-
-import {
-  getGunTypeByWeaponId,
-} from "../ecs/weapons/config/gunConfigs.js"
-
-import FlightLayout2
-  from "../components/FlightLayout2.jsx"
-
-
-export function LevelCompleteScreen({
-  onContinue,
-  onGuns,
-  onMenu,
-}) {
+export function LevelCompleteScreen({ onContinue, onGuns, onMenu }) {
 
   // ========================================================
   // STATE

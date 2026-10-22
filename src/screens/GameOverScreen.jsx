@@ -1,7 +1,7 @@
 // src/screens/GameOverScreen.jsx
 
 import { useEffect } from "react"
-import { simState } from "../state/simState.js"
+import { startState } from "../state/startState.js"
 import FlightLayout2 from "../components/FlightLayout2.jsx"
 
 export function GameOverScreen({ onRestart, onMenu }) {
@@ -10,7 +10,7 @@ export function GameOverScreen({ onRestart, onMenu }) {
     // STATE
     // ========================================================
 
-    const score = simState.score ?? 0
+    const score = startState.score ?? 0
 
     // ========================================================
     // KEYBOARD

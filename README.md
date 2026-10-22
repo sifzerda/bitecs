@@ -141,6 +141,4 @@ Make config screen for emission point, using a dot to show emission points on sh
 
  - [ ] weaponActions and Spawn currently has some BOSS AI functions, maybe put all Boss AI into separate file/system. maybe other files have boss AI scattered, need to be centralized 
 
- - [ ] remove boost from hud
-
  - restyle and format pages to remove gaps and extra space, scrolling

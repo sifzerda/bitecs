@@ -5,7 +5,7 @@ import { bossQuery, playerQuery } from "../constants/queries.js"
 import { Position, Health, Invulnerability, Lifetime, Velocity, Bullet, BossType, BULLET_OWNER } from "../constants/components.js"
 import { BOSSES } from "../constants/bosses.js"
 import { useGameStore } from "../../../store/gameStore.js"
-import { simState } from "../../state/simState.js"
+import { startState } from "../../state/startState.js"
 import { killAsteroid, killBoss } from "./entityDeath.js"
 import { explodeAt } from "../weapons/weaponSystems/weaponEffects.js"
 import { releaseBulletEntity, activeBullets } from "../pools/bulletPool.js"
@@ -56,9 +56,9 @@ function damagePlayer(pid, amount) {
 
     if (Health.current[pid] <= 0) {
 
-        simState.lives--
+        startState.lives--
 
-        if (simState.lives <= 0) {
+        if (startState.lives <= 0) {
 
             useGameStore
                 .getState()
@@ -222,7 +222,7 @@ export function combatSystem() {
             // Deflect
             // ------------------------------------------------
 
-            if (simState.deflectBufferTime > 0 && distSq <= DEFLECT_RADIUS * DEFLECT_RADIUS) {
+            if (startState.deflectBufferTime > 0 && distSq <= DEFLECT_RADIUS * DEFLECT_RADIUS) {
 
                 const dist = Math.sqrt(distSq) || 1
 
@@ -253,9 +253,9 @@ export function combatSystem() {
                 Bullet.owner[bid] = BULLET_OWNER.PLAYER
                 Bullet.deflected[bid] = 1
 
-                simState.deflectFlashTimer = DEFLECT_FLASH_DURATION
-                simState.deflectFlashX = Position.x[pid]
-                simState.deflectFlashY = Position.y[pid]
+                startState.deflectFlashTimer = DEFLECT_FLASH_DURATION
+                startState.deflectFlashX = Position.x[pid]
+                startState.deflectFlashY = Position.y[pid]
 
                 continue
             }

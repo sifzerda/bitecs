@@ -4,7 +4,7 @@ import { removeEntity } from "bitecs"
 import { world } from "../constants/world.js"
 import { useGameStore } from "../../../store/gameStore.js"
 import { getProgression } from "../constants/progression.js"
-import { simState } from "../../state/simState.js"
+import { startState } from "../../state/startState.js"
 import { spawnAsteroid, spawnBoss } from "../spawn.js"
 import { bossQuery } from "../constants/queries.js"
 import { activeAsteroids, releaseAsteroidEntity } from "../pools/asteroidPool.js"
@@ -19,7 +19,7 @@ let encounterSpawned = false
 
 export function waveSystem() {
     // Wait until the current encounter has been cleared.
-    if (simState.asteroidsRemaining > 0) {
+    if (startState.asteroidsRemaining > 0) {
         return
     }
 
@@ -65,7 +65,7 @@ export function waveSystem() {
 
 function spawnAsteroidWave(count) {
 
-    simState.asteroidsRemaining = count
+    startState.asteroidsRemaining = count
 
     for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2
@@ -99,7 +99,7 @@ export function skipWave() {
     // Clear runtime encounter state
     // --------------------------------------------------------
 
-    simState.asteroidsRemaining = 0
+    startState.asteroidsRemaining = 0
 
     // --------------------------------------------------------
     // Complete encounter

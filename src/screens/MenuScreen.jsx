@@ -12,14 +12,7 @@ const ITEMS = [
   { label: 'HIGHSCORES', action: 'onHighscores' },
 ]
 
-export default function MenuScreen({
-  onPlay,
-  onLevelSelect,
-  onGuns,
-  onSettings,
-  onHowToPlay,
-  onHighscores,
-}) {
+export default function MenuScreen({ onPlay, onLevelSelect, onGuns, onSettings, onHowToPlay, onHighscores }) {
 
   const [selected, setSelected] = useState(0);
 
@@ -42,14 +35,7 @@ export default function MenuScreen({
 
       callbacks[item.action]?.()
     },
-    [
-      onPlay,
-      onLevelSelect,
-      onGuns,
-      onSettings,
-      onHowToPlay,
-      onHighscores,
-    ]
+    [ onPlay, onLevelSelect, onGuns, onSettings, onHowToPlay, onHighscores ]
   )
 
   useEffect(() => {
@@ -108,19 +94,12 @@ export default function MenuScreen({
         {ITEMS.map((item, i) => {
           const active = selected === i;
           return (
-            <button
-              key={item.label}
-              type="button"
+            <button key={item.label} type="button"
               onClick={() => activate(i)}
               onMouseEnter={() => setSelected(i)}
-              className={btnClass(active)}
-            >
+              className={btnClass(active)}>
               {item.label}
-              {active && (
-                <span className="absolute -left-4 top-1/2 -translate-y-1/2 text-cyan-300 animate-pulse">
-                  ▶
-                </span>
-              )}
+              {active && (<span className="absolute -left-4 top-1/2 -translate-y-1/2 text-cyan-300 animate-pulse">▶</span>)}
             </button>
           );
         })}

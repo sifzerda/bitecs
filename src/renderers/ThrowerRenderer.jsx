@@ -15,7 +15,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { throwerState } from '../ecs/weapons/weaponState/throwerState.js'
 import { bossThrowerState } from '../ecs/weapons/weaponState/bossThrowerState.js'
-import { simState } from '../state/simState.js'
+import { startState } from '../state/startState.js'
 import { getWeapon } from '../ecs/weapons/config/weapons.js'
 import { bossAIQuery } from '../ecs/constants/queries.js'
 import { BossAI } from '../ecs/constants/components.js'
@@ -27,7 +27,7 @@ const PARTICLE_SIZE = 64
 // -------------------------
 
 function getPlayerThrowerData() {
-    const weapon = getWeapon(simState.currentWeapon)
+    const weapon = getWeapon(startState.currentWeapon)
     const active = weapon?.category === 'thrower' && throwerState.active
     return {
         active,

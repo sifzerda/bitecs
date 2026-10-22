@@ -44,9 +44,6 @@ import { DebrisRenderer } from '../renderers/DebrisRenderer.jsx'
 import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
 import { SmokeRenderer } from '../renderers/SmokeRenderer.jsx'
 import { TrailRenderer } from '../renderers/TrailRenderer.jsx'
-// debug
-
-import { updateEffects } from "../fx"
 
 export function GameLoop({ keysRef, paused }) {
     const shootState = useRef({ timer: 0 })
@@ -75,18 +72,9 @@ export function PlayScreen({ keysRef, paused, onPause }) {
 
                 <Canvas
                     orthographic
-                    camera={{
-                        zoom: 60,
-                        position: [0, 0, 10],
-                        near: 0.1,
-                        far: 100,
-                    }}
-                    gl={{
-                        antialias: false,
-                        powerPreference: "high-performance",
-                    }}
-                    dpr={[1, 2]}
-                >
+                    camera={{ zoom: 60, position: [0, 0, 10], near: 0.1, far: 100 }}
+                    gl={{ antialias: false, powerPreference: "high-performance" }}
+                    dpr={[1, 2]}>
 
                     <MouseWorldTracker />
 
@@ -126,7 +114,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                     <LaserRenderer source="player" />
                     <LaserRenderer source="boss" />
 
-                    <ArcRenderer source="player" />                          {/* renderChainLinks defaults true */}
+                    <ArcRenderer source="player" />   {/* renderChainLinks defaults true */}
                     <ArcRenderer source="boss" renderChainLinks={false} />    {/* avoid drawing the shared chain pool twice */}
 
                     <ThrowerRenderer source="player" />
@@ -159,11 +147,7 @@ export function PlayScreen({ keysRef, paused, onPause }) {
                         />
 
                         {/* Optional */}
-                        <Vignette
-                            eskil={false}
-                            offset={0.25}
-                            darkness={0.45}
-                        />
+                        <Vignette eskil={false} offset={0.25} darkness={0.45} />
                         <Noise opacity={0.018} />
 
                         {/* <ChromaticAberration offset={[0.001, 0.001]} /> */}
