@@ -49,13 +49,10 @@ export function HUD({ onPause, paused }) {
   const boss = isBossLevel(level)
 
   return (
-    <div
-      className="w-full h-12 flex items-center justify-between px-4 gap-3 bg-[#0a0a14] border-b border-green-400/30 font-mono text-green-400">
+    <div className="w-full h-12 flex items-center justify-between px-4 gap-3 bg-[#0a0a14] border-b border-green-400/30 font-mono text-green-400">
       {/* GAME TITLE */}
 
-      <span className="text-sm tracking-widest uppercase">
-        Asteroids
-      </span>
+      <span className="text-sm tracking-widest uppercase">Asteroids</span>
 
       {/* LIVES */}
 
