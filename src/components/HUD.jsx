@@ -78,7 +78,6 @@ export function HUD({ onPause, paused }) {
 
       <div className="flex flex-col leading-none text-right">
         <span className={boss ? "text-yellow-300" : "text-cyan-300"}>{formatLevelLabel(level)}</span>
-
         {!boss && (<span className="text-[10px] text-cyan-300">ASTEROIDS {hud.asteroidsRemaining}</span>)}
         {boss && (<span className="text-[10px] text-yellow-400/80">BOSS</span>)}
       </div>
