@@ -1,5 +1,9 @@
 // src/renderers/StarfieldRenderer.jsx
 
+// src/renderers/StarfieldRenderer.jsx
+
+import { world } from "../ecs/constants/world.js"
+import { useGameStore, SCREEN } from "../../store/gameStore.js"
 import { useMemo, useRef, useEffect } from "react"
 import { useThree, useFrame } from "@react-three/fiber"
 import * as THREE from "three"
@@ -33,7 +37,7 @@ const COLORS = {
 }
 
 // ============================================================
-// SHARED NOISE
+// SHARED NOISE (2D simplex)
 // Reduced from 6 FBM octaves to 4.
 // ============================================================
 
@@ -51,7 +55,7 @@ vec3 permute(vec3 x) {
 }
 
 float snoise(vec2 v) {
-    const vec4 C = vec4(0.21, 0.36, -0.57, 0.024);
+    const vec4 C = vec4(0.21, 0.36, -0.58, 0.024);
 
     vec2 i = floor(v + dot(v, C.yy));
     vec2 x0 = v - i + dot(i, C.xx);
@@ -63,7 +67,6 @@ float snoise(vec2 v) {
     i = mod289(i);
 
     vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
-
     vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
 
     m *= m;
@@ -74,13 +77,12 @@ float snoise(vec2 v) {
     vec3 ox = floor(x + 0.5);
     vec3 a0 = x - ox;
 
-    m *= 1.8 - 0.9 * (a0 * a0 + h * h);
+    m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
 
     vec3 g;
 
     g.x = a0.x * x0.x + h.x * x0.y;
-    g.y = a0.y * x12.x + h.y * x12.y;
-    g.z = a0.z * x12.z + h.z * x12.w;
+    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
 
     return 130.0 * dot(m, g);
 }
@@ -213,18 +215,16 @@ function DustBand() {
 
             uniforms: {
                 uTime: { value: 0 },
-                uColorAmber: { value: new THREE.Color("#b0fcff"), },
-                uColorPink: { value: new THREE.Color("#00e1ff"), },
-                uColorViolet: { value: new THREE.Color("#0077ff"), },
-                uColorCyan: { value: new THREE.Color("#0077ff"), },
+                uColorAmber: { value: new THREE.Color("#b0fcff") },
+                uColorPink: { value: new THREE.Color("#00e1ff") },
+                uColorViolet: { value: new THREE.Color("#0077ff") },
+                uColorCyan: { value: new THREE.Color("#0077ff") },
             },
 
             transparent: true,
             depthWrite: false,
-            // Was false — with depthTest off this layer painted over every
-            // opaque object in front of it (asteroids, ships) regardless of
-            // actual depth, since transparent objects render after the
-            // opaque pass and this skipped checking what was already there.
+            // depthTest on so this layer doesn't paint over opaque objects
+            // (asteroids, ships) that are actually in front of it.
             depthTest: true,
             blending: THREE.AdditiveBlending,
         })
@@ -235,6 +235,10 @@ function DustBand() {
     }, [material])
 
     useFrame((_, delta) => {
+        const game = useGameStore.getState()
+        if (game.screen === SCREEN.PLAY && game.paused) return
+        delta = Math.min(delta, 0.05)
+
         material.uniforms.uTime.value += delta
     })
 
@@ -249,6 +253,7 @@ function DustBand() {
 }
 
 // ============================================================
+// STAR PARTICLES
 // ============================================================
 
 const starVertexShader = /* glsl */ `
@@ -299,7 +304,7 @@ void main() {
         vAlpha = twinkle * 0.85;
     }
     else {
-        vAlpha = 0.3 + 0.3 * sin( uTime * 0.25 + aPhase);
+        vAlpha = 0.3 + 0.3 * sin(uTime * 0.25 + aPhase);
     }
 
     vHue = aHue;
@@ -327,7 +332,7 @@ void main() {
     vec2 uv = gl_PointCoord - 0.5;
 
     float d = length(uv) * 2.0;
-    float glow = smoothstep(1.0, 0.0, d);
+    float glow = (1.0 - smoothstep(0.0, 1.0, d));
 
     glow = pow(glow, 1.65);
 
@@ -377,9 +382,7 @@ function gaussianRandom() {
         v = Math.random()
     }
 
-    return (
-        Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
-    )
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
 }
 
 // ============================================================
@@ -557,19 +560,8 @@ function StarParticles() {
         geometry.setAttribute("position", new THREE.BufferAttribute(data.positions, 3))
         geometry.setAttribute("aPhase", new THREE.BufferAttribute(data.phases, 1))
         geometry.setAttribute("aSpeed", new THREE.BufferAttribute(data.speeds, 1))
-
-        geometry.setAttribute("aSize",
-            new THREE.BufferAttribute(data.sizes,
-                1
-            )
-        )
-
-        geometry.setAttribute("aHue",
-            new THREE.BufferAttribute(data.hues,
-                1
-            )
-        )
-
+        geometry.setAttribute("aSize", new THREE.BufferAttribute(data.sizes, 1))
+        geometry.setAttribute("aHue", new THREE.BufferAttribute(data.hues, 1))
         geometry.setAttribute("aKind", new THREE.BufferAttribute(data.kinds, 1))
         geometry.setAttribute("aSeed", new THREE.BufferAttribute(data.seeds, 1))
 
@@ -579,7 +571,7 @@ function StarParticles() {
             fragmentShader: starFragmentShader,
 
             uniforms: {
-                uTime: { value: 0, },
+                uTime: { value: 0 },
                 uPixelRatio: { value: pixelRatio },
                 uBaseSize: { value: 18 },
                 uColorWhite: { value: new THREE.Color(COLORS.white) },
@@ -591,24 +583,14 @@ function StarParticles() {
 
             transparent: true,
             depthWrite: false,
-            // Was false — this is the main star layer, and with depth
-            // testing off it drew on top of asteroids/ships every frame
-            // no matter which was actually closer to the camera.
             depthTest: true,
             blending: THREE.AdditiveBlending,
             toneMapped: false,
         })
 
-        return {
-            geometry,
-            material,
-        }
+        return { geometry, material }
 
-    }, [
-        viewport.width,
-        viewport.height,
-        pixelRatio,
-    ])
+    }, [viewport.width, viewport.height, pixelRatio])
 
     materialRef.current = material
 
@@ -622,12 +604,13 @@ function StarParticles() {
     }, [geometry, material])
 
     useFrame((_, delta) => {
+        const game = useGameStore.getState()
+        if (game.screen === SCREEN.PLAY && game.paused) return
+        delta = Math.min(delta, 0.05)
 
-        if (!materialRef.current)
-            return
+        if (!materialRef.current) return
 
         materialRef.current.uniforms.uTime.value += delta
-
     })
 
     return (
@@ -833,9 +816,7 @@ function BrightStars() {
         const sizes = new Float32Array(BRIGHT_STAR_COUNT)
         const hues = new Float32Array(BRIGHT_STAR_COUNT)
 
-        for (
-            let i = 0; i < BRIGHT_STAR_COUNT; i++
-        ) {
+        for (let i = 0; i < BRIGHT_STAR_COUNT; i++) {
 
             positions[i * 3] = (Math.random() - 0.5) * w
             positions[i * 3 + 1] = (Math.random() - 0.5) * h
@@ -854,20 +835,19 @@ function BrightStars() {
 
         const sparkleTex = makeSparkleTexture()
         const haloTex = makeHaloTexture()
+
         const sparkleMaterial = new THREE.ShaderMaterial({
             vertexShader: sparkleVertexShader,
             fragmentShader: sparkleFragmentShader,
             uniforms: {
                 uTime: { value: 0 },
-                uPixelRatio: { value: Math.min(gl.getPixelRatio(), DPR_LIMIT), },
+                uPixelRatio: { value: Math.min(gl.getPixelRatio(), DPR_LIMIT) },
                 uBaseSize: { value: 16 },
                 uMap: { value: sparkleTex },
             },
 
             transparent: true,
             depthWrite: false,
-            // Was false — same issue as the other layers: bright stars
-            // were painting over asteroids/ships regardless of depth.
             depthTest: true,
             blending: THREE.AdditiveBlending,
             toneMapped: false,
@@ -879,15 +859,14 @@ function BrightStars() {
             fragmentShader: haloFragmentShader,
 
             uniforms: {
-
                 uTime: { value: 0 },
                 uPixelRatio: { value: Math.min(gl.getPixelRatio(), DPR_LIMIT) },
                 uBaseSize: { value: 58 },
                 uMap: { value: haloTex },
                 uColorAmber: { value: new THREE.Color(COLORS.amber) },
-                uColorPink: { value: new THREE.Color(COLORS.pink), },
-                uColorViolet: {  value: new THREE.Color(COLORS.violet) },
-                uColorCyan: { value: new THREE.Color(COLORS.cyan), },
+                uColorPink: { value: new THREE.Color(COLORS.pink) },
+                uColorViolet: { value: new THREE.Color(COLORS.violet) },
+                uColorCyan: { value: new THREE.Color(COLORS.cyan) },
             },
 
             transparent: true,
@@ -905,20 +884,14 @@ function BrightStars() {
             haloTex,
         }
 
-    }, [
-        viewport.width,
-        viewport.height,
-        gl,
-    ])
+    }, [viewport.width, viewport.height, gl])
 
     sparkleMatRef.current = sparkleMaterial
-
     haloMatRef.current = haloMaterial
 
     useEffect(() => {
 
         return () => {
-
             geometry.dispose()
             sparkleMaterial.dispose()
             haloMaterial.dispose()
@@ -926,21 +899,14 @@ function BrightStars() {
             haloTex.dispose()
         }
 
-    }, [
-        geometry,
-        sparkleMaterial,
-        haloMaterial,
-        sparkleTex,
-        haloTex,
-    ])
+    }, [geometry, sparkleMaterial, haloMaterial, sparkleTex, haloTex])
 
     useFrame((_, delta) => {
+        const game = useGameStore.getState()
+        if (game.screen === SCREEN.PLAY && game.paused) return
+        delta = Math.min(delta, 0.05)
 
-        if (
-            !sparkleMatRef.current || !haloMatRef.current
-        ) {
-            return
-        }
+        if (!sparkleMatRef.current || !haloMatRef.current) return
 
         sparkleMatRef.current.uniforms.uTime.value += delta
         haloMatRef.current.uniforms.uTime.value += delta
@@ -966,6 +932,7 @@ function BrightStars() {
 }
 
 // ============================================================
+// SHOOTING STARS
 // ============================================================
 
 const shootingStarVertexShader = /* glsl */ `
@@ -979,6 +946,7 @@ attribute vec3 aColor;
 
 varying float vOpacity;
 varying vec3 vColor;
+varying vec2 vUv;
 
 void main() {
 
@@ -987,15 +955,19 @@ void main() {
     float c = cos(aRotation);
     float s = sin(aRotation);
 
-    vec2 rotated = vec2(p.x * c - p.y * s, p.x * s + p.y * c);
+    // Scale first (length along local x, thickness along local y), then
+    // rotate, so the quad is a thin streak aligned with its travel direction.
+    vec2 scaled = p.xy * aScale;
+    vec2 rotated = vec2(scaled.x * c - scaled.y * s, scaled.x * s + scaled.y * c);
 
-    p.xy = rotated * aScale;
+    p.xy = rotated;
     p += aOffset;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
 
     vOpacity = aOpacity;
     vColor = aColor;
+    vUv = uv;
 }
 `
 
@@ -1004,11 +976,15 @@ precision highp float;
 
 varying float vOpacity;
 varying vec3 vColor;
+varying vec2 vUv;
 
 void main() {
 
-    float head = smoothstep(0.25, 0.5, gl_FragCoord.x);
-    float alpha = vOpacity * head;
+    // uv.x runs 0 (tail) -> 1 (head, the direction of travel).
+    // Tail fades out, head is bright, edges soften across the thickness.
+    float trail = smoothstep(0.0, 0.9, vUv.x);
+    float edge = 1.0 - smoothstep(0.25, 0.5, abs(vUv.y - 0.5));
+    float alpha = vOpacity * trail * edge;
 
     gl_FragColor = vec4(vColor, alpha);
 }
@@ -1019,6 +995,9 @@ function ShootingStars() {
     const viewport = useThree((s) => s.viewport)
     const meshRef = useRef(null)
     const stateRef = useRef([])
+    // Shower stars waiting for their delay to elapse. Kept separate from the
+    // active pool so pending entries can't occupy or be overwritten by slots.
+    const pendingRef = useRef([])
 
     const nextSpawnRef = useRef(1.5 + Math.random() * 2.5)
     const nextShowerRef = useRef(10 + Math.random() * 12)
@@ -1028,8 +1007,11 @@ function ShootingStars() {
         const base = new THREE.PlaneGeometry(1, 1)
         const geo = new THREE.InstancedBufferGeometry()
 
-        geo.index = base.index
-        geo.attributes = base.attributes
+        geo.setIndex(base.index)
+        geo.setAttribute("position", base.attributes.position)
+        geo.setAttribute("uv", base.attributes.uv)
+
+        base.dispose()
 
         return geo
 
@@ -1053,13 +1035,7 @@ function ShootingStars() {
 
         geometry.instanceCount = MAX_SHOOTING_STARS
 
-        return {
-            offsets,
-            scales,
-            rotations,
-            opacities,
-            colors,
-        }
+        return { offsets, scales, rotations, opacities, colors }
 
     }, [geometry])
 
@@ -1071,11 +1047,10 @@ function ShootingStars() {
             fragmentShader: shootingStarFragmentShader,
             transparent: true,
             depthWrite: false,
-            // Was false — shooting stars would streak across in front of
-            // asteroids/ships even when those were actually closer to camera.
             depthTest: true,
             blending: THREE.AdditiveBlending,
             toneMapped: false,
+            side: THREE.DoubleSide,
         })
 
     }, [])
@@ -1102,9 +1077,7 @@ function ShootingStars() {
             }
         }
 
-        if (slot === -1) {
-            return
-        }
+        if (slot === -1) return
 
         const w = viewport.width * PADDING
         const h = viewport.height * PADDING
@@ -1135,10 +1108,10 @@ function ShootingStars() {
             length,
             travel: 0,
             maxTravel: w + margin * 2,
-            peakOpacity:
-                dim ? 0.6 : 1.0,
+            peakOpacity: dim ? 0.6 : 1.0,
             dirX: Math.cos(angle),
-            dirY: Math.sin(angle), color,
+            dirY: Math.sin(angle),
+            color,
         }
 
         existing[slot] = star
@@ -1153,12 +1126,18 @@ function ShootingStars() {
         attributes.colors[slot * 3 + 1] = color[1]
         attributes.colors[slot * 3 + 2] = color[2]
         attributes.opacities[slot] = 0
+
+        geometry.attributes.aRotation.needsUpdate = true
+        geometry.attributes.aScale.needsUpdate = true
+        geometry.attributes.aColor.needsUpdate = true
     }
 
     useFrame((_, delta) => {
+        const game = useGameStore.getState()
+        if (game.screen === SCREEN.PLAY && game.paused) return
+        delta = Math.min(delta, 0.05)
 
-        if (!meshRef.current)
-            return
+        if (!meshRef.current) return
 
         nextSpawnRef.current -= delta
 
@@ -1178,26 +1157,22 @@ function ShootingStars() {
             for (let i = 0; i < count; i++) {
 
                 const delay = i * (0.07 + Math.random() * 0.12)
-                stateRef.current.push({ active: false, pending: true, delay, })
+                pendingRef.current.push({ delay })
             }
 
             nextShowerRef.current = 16 + Math.random() * 18
         }
 
-        for (let i = stateRef.current.length - 1; i >= 0; i--) {
+        const pending = pendingRef.current
 
-            const star = stateRef.current[i]
+        for (let i = pending.length - 1; i >= 0; i--) {
 
-            if (star && star.pending) {
+            pending[i].delay -= delta
 
-                star.delay -= delta
+            if (pending[i].delay <= 0) {
 
-                if (star.delay <= 0) {
-
-                    stateRef.current[i] = null
-
-                    createStar(true)
-                }
+                pending.splice(i, 1)
+                createStar(true)
             }
         }
 

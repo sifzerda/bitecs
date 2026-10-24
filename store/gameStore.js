@@ -47,7 +47,17 @@ export {
 // ============================================================
 
 function clampLevel(level) {
-    return Math.max(1, Math.min(Number(level) || 1, TOTAL_LEVELS))
+    const value = Number(level)
+
+    if (!Number.isFinite(value)) return 1
+
+    return Math.max(
+        1,
+        Math.min(
+            Math.trunc(value),
+            TOTAL_LEVELS
+        )
+    )
 }
 
 // ============================================================
@@ -106,6 +116,8 @@ export const useGameStore = create((set, get) => ({
     resetRun: () => {
 
         resetstartState()
+        resetWaveSystem()
+        resetLevelWorld()
 
         set({
             screen: SCREEN.MENU,
@@ -127,6 +139,9 @@ export const useGameStore = create((set, get) => ({
     resetProgress: () => {
 
         resetstartState()
+        resetWaveSystem()
+        resetLevelWorld()
+
 
         set({
 
@@ -224,35 +239,27 @@ export const useGameStore = create((set, get) => ({
     // ========================================================
 
     unlockWeapon: (weaponId) => {
-
-        if (weaponId == null) {
+        if (!Number.isInteger(weaponId) || weaponId < 0) {
             return false
         }
 
-        let newlyUnlocked = false
+        const state = get()
 
-        set(state => {
+        if (state.unlockedWeapons.includes(weaponId)) {
+            return false
+        }
 
-            const alreadyUnlocked = state.unlockedWeapons.includes(weaponId)
+        set({
+            unlockedWeapons: [
+                ...state.unlockedWeapons,
+                weaponId,
+            ],
 
-            if (alreadyUnlocked) {
-
-                return {
-                    unlockedWeapons: state.unlockedWeapons,
-                    pendingUnlockWeapon: null,
-                }
-            }
-            newlyUnlocked = true
-
-            return {
-                unlockedWeapons: [...state.unlockedWeapons, weaponId],
-                pendingUnlockWeapon: weaponId,
-            }
+            pendingUnlockWeapon: weaponId,
         })
 
-        return newlyUnlocked
+        return true
     },
-
 
     // ========================================================
     // CLEAR PENDING WEAPON
@@ -273,8 +280,11 @@ export const useGameStore = create((set, get) => ({
     // ========================================================
 
     isLevelUnlocked: (level) => {
-        const safeLevel = Number(level)
-        return (safeLevel >= 1 && safeLevel <= get().highestLevelReached)
+        const value = Number(level)
+
+        return (
+            Number.isInteger(value) && value >= 1 && value <= TOTAL_LEVELS && value <= get().highestLevelReached
+        )
     },
 
 }))

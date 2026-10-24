@@ -1,79 +1,74 @@
 // src/ecs/pools/createPool.js
 
-import { addEntity, addComponent, removeEntity } from 'bitecs'
-import { world } from '../constants/world'
+import { addEntity, addComponent, removeEntity } from "bitecs"
+import { world } from "../constants/world.js"
 
 export function createPool({ size, components, activeField, resetFields }) {
 
-    const [ActiveComponent, activeKey] = activeField
+    const [component, key] = activeField
 
     const pool = []
     const active = []
+    const free = []
+    const slotById = new Map()
+    const indexById = new Map()
 
-    // free-list: stack of currently-unused pool indices.
-    // acquire() pops, release() pushes — both O(1)
-    // regardless of how full the pool is.
-    const freeList = []
     let initialized = false
 
     function initialize() {
-        if (initialized) return
-        initialized = true
+
+        if (initialized)
+            return
 
         for (let i = 0; i < size; i++) {
             const id = addEntity(world)
             for (const c of components) addComponent(world, id, c)
-            ActiveComponent[activeKey][id] = 0
-            pool.push(id)
-            freeList.push(i)
+            component[key][id] = 0; resetFields?.(id)
+            pool.push(id); free.push(i); slotById.set(id, i)
         }
-    }
-
-    function dispose() {
-        if (!initialized) return
-
-        for (const id of pool) {
-            removeEntity(world, id)
-        }
-
-        pool.length = 0
-        active.length = 0
-        freeList.length = 0
-        initialized = false
+        initialized = true
     }
 
     function acquire() {
-        if (freeList.length === 0) {
+
+        if (!free.length)
             return -1
-        }
 
-        const poolIndex = freeList.pop()
-        const id = pool[poolIndex]
+        const id = pool[free.pop()]
 
-        ActiveComponent[activeKey][id] = 1
-        active.push(id)
+        resetFields?.(id); component[key][id] = 1
+        indexById.set(id, active.length); active.push(id)
 
         return id
     }
 
     function release(id) {
-        if (!ActiveComponent[activeKey][id]) return
+        const index = indexById.get(id)
 
-        ActiveComponent[activeKey][id] = 0
+        if (index === undefined)
+            return
 
-        const index = active.indexOf(id)
-        if (index !== -1) {
-            active[index] = active[active.length - 1]
-            active.pop()
+        const moved = active.pop()
+        if (index < active.length) {
+            active[index] = moved;
+            indexById.set(moved, index)
         }
-
-        resetFields?.(id)
-
-        // return this id's pool slot to the free list.
-        // pool[] never reorders, so the slot index is just
-        // this id's position in pool[].
-        freeList.push(pool.indexOf(id))
+        indexById.delete(id);
+        component[key][id] = 0; resetFields?.(id);
+        free.push(slotById.get(id))
     }
 
+    function dispose() {
+        
+        if (!initialized)
+            return
+        for (const id of pool) removeEntity(world, id)
+
+        pool.length = active.length = free.length = 0;
+
+        slotById.clear();
+        indexById.clear();
+        initialized = false
+    }
     return { initialize, dispose, acquire, release, active, pool }
 }

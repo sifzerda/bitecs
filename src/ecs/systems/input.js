@@ -1,17 +1,23 @@
 // src/ecs/systems/input.js
 
 import { startState } from "../../state/startState.js"
-import { WEAPONS } from "../weapons/config/weapons.js"
-import { settings } from "../systems/settings.js"
-import { useGameStore, SCREEN } from "../../../store/gameStore.js"
 
-// Debug weapon switching: dev server only, never in production builds.
+import {
+  WEAPONS,
+} from "../weapons/config/weapons.js"
+
+import { settings } from "./settings.js"
+
+import {
+  useGameStore,
+  SCREEN,
+} from "../../../store/gameStore.js"
+
 const DEBUG_WEAPON_SWITCH = import.meta.env.DEV
 
 export const input = {
   left: false,
   right: false,
-
   thrust: false,
   brake: false,
 
@@ -27,24 +33,20 @@ export const input = {
 
 export const mouse = input
 
-const bindings = {
-  ArrowLeft: 'left',
-  ArrowRight: 'right',
-  ArrowUp: 'thrust',
-  ArrowDown: 'brake',
-
-  KeyA: 'left',
-  KeyD: 'right',
-  KeyW: 'thrust',
-  KeyS: 'brake',
-
-  Space: 'fire',
-  Spacebar: 'fire',
-
-  KeyX: 'deflect',
+const ACTION_KEYS = {
+  left: ["ArrowLeft", "KeyA"],
+  right: ["ArrowRight", "KeyD"],
+  thrust: ["ArrowUp", "KeyW"],
+  brake: ["ArrowDown", "KeyS"],
+  fire: ["Space"],
 }
 
-const weaponKeys = {
+const GAME_KEYS = new Set([
+  ...Object.values(ACTION_KEYS).flat(),
+  "KeyX",
+])
+
+const WEAPON_KEYS = {
   Digit1: 0,
   Digit2: 1,
   Digit3: 2,
@@ -57,221 +59,273 @@ const weaponKeys = {
   Digit0: 9,
 }
 
-const wheelOptions = { passive: false }
+const heldKeys = new Set()
 
-function cycleWeapon(direction) {
-  startState.currentWeapon = (startState.currentWeapon + direction + WEAPONS.length) % WEAPONS.length
+let mouseFire = false
+let cleanup = null
+
+function isPlaying() {
+  const { screen, paused } = useGameStore.getState()
+
+  return screen === SCREEN.PLAY && !paused
+}
+
+function isEditable(target) {
+  return (
+    target instanceof Element &&
+    (
+      target.closest(
+        "input, textarea, select, [contenteditable]"
+      ) !== null
+    )
+  )
+}
+
+function syncActions() {
+  for (const [action, codes] of Object.entries(ACTION_KEYS)) {
+    input[action] = codes.some(
+      code => heldKeys.has(code)
+    )
+  }
+
+  input.fire ||= mouseFire
 }
 
 export function clearInput() {
-  for (const action of new Set(Object.values(bindings))) {
-    input[action] = false
-  }
+  heldKeys.clear()
+  mouseFire = false
 
+  input.left = false
+  input.right = false
+  input.thrust = false
+  input.brake = false
   input.fire = false
   input.deflect = false
 }
 
 export function isMouseControlEnabled() {
-  return settings.controlScheme === 'keyboardMouse'
+  return settings.controlScheme === "keyboardMouse"
 }
 
-// ------------------------------------------------------------
-// MODULE STATE
-// ------------------------------------------------------------
+function cycleWeapon(direction) {
+  if (WEAPONS.length === 0) return
 
-let listenersAttached = false
-let currentOnPause = null
-let handlers = null
-
-// ------------------------------------------------------------
-// INITIALIZE INPUT
-// ------------------------------------------------------------
+  startState.currentWeapon =
+    (
+      startState.currentWeapon +
+      direction +
+      WEAPONS.length
+    ) % WEAPONS.length
+}
 
 export function initializeInput(onPause) {
-  // Always refresh the latest pause callback.
-  currentOnPause = onPause
+  disposeInput()
 
-  if (listenersAttached) return disposeInput
+  function keyDown(event) {
+    if (isEditable(event.target)) return
 
-  // ----------------------------------------------------------
-  // KEYBOARD
-  // ----------------------------------------------------------
+    const code = event.code || event.key
+    const { screen } = useGameStore.getState()
 
-  function keyDown(e) {
-    const key = e.code || e.key
-    const action = bindings[key]
+    if (
+      (code === "KeyP" || code === "Escape") &&
+      screen === SCREEN.PLAY
+    ) {
+      event.preventDefault()
 
-    if (action) {
-      input[action] = true
-    }
+      if (!event.repeat) {
+        clearInput()
+        onPause?.()
+      }
 
-    if (e.repeat) return
-
-    if (e.code === 'KeyP') {
-      currentOnPause?.()
       return
     }
 
-    if (!DEBUG_WEAPON_SWITCH) return
+    if (!isPlaying()) return
 
-    if (e.code === 'KeyQ') {
+    if (GAME_KEYS.has(code)) {
+      event.preventDefault()
+
+      if (code === "KeyX") {
+        if (!event.repeat) {
+          input.deflect = true
+        }
+      } else {
+        heldKeys.add(code)
+        syncActions()
+      }
+
+      return
+    }
+
+    if (
+      !DEBUG_WEAPON_SWITCH ||
+      event.repeat
+    ) {
+      return
+    }
+
+    if (code === "KeyQ") {
       cycleWeapon(-1)
-      return
-    }
-
-    if (e.code === 'KeyE') {
-      cycleWeapon(1)
-      return
-    }
-
-    const weaponIndex = weaponKeys[e.code]
-
-    if (weaponIndex !== undefined && weaponIndex < WEAPONS.length) {
-      startState.currentWeapon = weaponIndex
-    }
-  }
-
-  function keyUp(e) {
-    const key = e.code || e.key
-    const action = bindings[key]
-
-    if (action) {
-      input[action] = false
-    }
-  }
-
-  // ----------------------------------------------------------
-  // MOUSE
-  // ----------------------------------------------------------
-
-  function mouseMove(e) {
-    input.mouseX = e.clientX
-    input.mouseY = e.clientY
-  }
-
-  function mouseDown(e) {
-    const { screen, paused } = useGameStore.getState()
-
-    if (screen !== SCREEN.PLAY || paused || !isMouseControlEnabled()) return
-
-    // Right mouse button = deflect
-    if (e.button === 2) {
-      e.preventDefault()
-      input.deflect = true
-      return
-    }
-
-    // Left mouse button = fire
-    if (e.button === 0) {
-      input.fire = true
-    }
-  }
-
-  function mouseUp(e) {
-    if (e.button === 2) {
-      input.deflect = false
-      return
-    }
-
-    if (e.button === 0) {
-      input.fire = false
-    }
-  }
-
-  // ----------------------------------------------------------
-  // PREVENT BROWSER CONTEXT MENU
-  // ----------------------------------------------------------
-
-  function contextMenu(e) {
-    const { screen, paused } = useGameStore.getState()
-
-    // Only disable right-click during active gameplay.
-    if (screen === SCREEN.PLAY && !paused && isMouseControlEnabled()) {
-      e.preventDefault()
-    }
-  }
-
-  // ----------------------------------------------------------
-  // MOUSE WHEEL = WEAPON SWITCHING
-  // ----------------------------------------------------------
-
-  function wheel(e) {
-    e.preventDefault()
-
-    if (e.deltaY > 0) {
+    } else if (code === "KeyE") {
       cycleWeapon(1)
     } else {
-      cycleWeapon(-1)
+      const index = WEAPON_KEYS[code]
+
+      if (
+        index !== undefined &&
+        index < WEAPONS.length
+      ) {
+        startState.currentWeapon = index
+      }
     }
   }
 
-  // ----------------------------------------------------------
-  // CLEANUP
-  // ----------------------------------------------------------
+  function keyUp(event) {
+    heldKeys.delete(event.code || event.key)
+    syncActions()
+  }
+
+  function mouseMove(event) {
+    input.mouseX = event.clientX
+    input.mouseY = event.clientY
+  }
+
+  function mouseDown(event) {
+    if (
+      !isPlaying() ||
+      !isMouseControlEnabled() ||
+      isEditable(event.target)
+    ) {
+      return
+    }
+
+    // Ignore HUD buttons and other page controls.
+    if (
+      !(event.target instanceof Element) ||
+      event.target.tagName !== "CANVAS"
+    ) {
+      return
+    }
+
+    if (event.button === 0) {
+      mouseFire = true
+      syncActions()
+    } else if (event.button === 2) {
+      event.preventDefault()
+      input.deflect = true
+    }
+  }
+
+  function mouseUp(event) {
+    if (event.button === 0) {
+      mouseFire = false
+      syncActions()
+    }
+  }
+
+  function contextMenu(event) {
+    if (
+      isPlaying() &&
+      isMouseControlEnabled() &&
+      event.target instanceof Element &&
+      event.target.tagName === "CANVAS"
+    ) {
+      event.preventDefault()
+    }
+  }
+
+  function wheel(event) {
+    if (
+      !DEBUG_WEAPON_SWITCH ||
+      !isPlaying() ||
+      event.deltaY === 0 ||
+      !(event.target instanceof Element) ||
+      event.target.tagName !== "CANVAS"
+    ) {
+      return
+    }
+
+    event.preventDefault()
+
+    cycleWeapon(event.deltaY > 0 ? 1 : -1)
+  }
 
   function onBlur() {
     clearInput()
-  }
 
-  function onVisibilityChange() {
-    if (document.hidden) {
-      clearInput()
+    const state = useGameStore.getState()
+
+    if (
+      state.screen === SCREEN.PLAY &&
+      !state.paused
+    ) {
+      state.setPaused(true)
     }
   }
 
-  // ----------------------------------------------------------
-  // EVENT HANDLERS
-  // ----------------------------------------------------------
+  function visibilityChange() {
+    if (document.hidden) onBlur()
+  }
 
-  handlers = { keyDown, keyUp, mouseMove, mouseDown, mouseUp, contextMenu, wheel, onBlur, onVisibilityChange }
+  const unsubscribe = useGameStore.subscribe(
+    (state, previous) => {
+      if (
+        state.screen !== previous.screen ||
+        state.paused !== previous.paused
+      ) {
+        clearInput()
+      }
+    }
+  )
 
-  window.addEventListener('keydown', keyDown)
-  window.addEventListener('keyup', keyUp)
-  window.addEventListener('mousemove', mouseMove)
-  window.addEventListener('mousedown', mouseDown)
-  window.addEventListener('mouseup', mouseUp)
-  window.addEventListener('contextmenu', contextMenu)
-  if (DEBUG_WEAPON_SWITCH) { window.addEventListener('wheel', wheel, wheelOptions) }
-  window.addEventListener('blur', onBlur)
+  window.addEventListener("keydown", keyDown)
+  window.addEventListener("keyup", keyUp)
+  window.addEventListener("mousemove", mouseMove)
+  window.addEventListener("mousedown", mouseDown)
+  window.addEventListener("mouseup", mouseUp)
+  window.addEventListener("contextmenu", contextMenu)
+  window.addEventListener("blur", onBlur)
 
-  document.addEventListener('visibilitychange', onVisibilityChange)
+  window.addEventListener(
+    "wheel",
+    wheel,
+    { passive: false }
+  )
 
-  listenersAttached = true
+  document.addEventListener(
+    "visibilitychange",
+    visibilityChange
+  )
+
+  cleanup = () => {
+    window.removeEventListener("keydown", keyDown)
+    window.removeEventListener("keyup", keyUp)
+    window.removeEventListener("mousemove", mouseMove)
+    window.removeEventListener("mousedown", mouseDown)
+    window.removeEventListener("mouseup", mouseUp)
+    window.removeEventListener("contextmenu", contextMenu)
+    window.removeEventListener("blur", onBlur)
+    window.removeEventListener("wheel", wheel)
+
+    document.removeEventListener(
+      "visibilitychange",
+      visibilityChange
+    )
+
+    unsubscribe()
+    clearInput()
+  }
 
   return disposeInput
 }
 
-// ------------------------------------------------------------
-// DISPOSE INPUT
-// ------------------------------------------------------------
-
 export function disposeInput() {
-  if (!listenersAttached || !handlers) return
-
-  window.removeEventListener('keydown', handlers.keyDown)
-  window.removeEventListener('keyup', handlers.keyUp)
-  window.removeEventListener('mousemove', handlers.mouseMove)
-  window.removeEventListener('mousedown', handlers.mouseDown)
-  window.removeEventListener('mouseup', handlers.mouseUp)
-  window.removeEventListener('contextmenu', handlers.contextMenu)
-  window.removeEventListener('wheel', handlers.wheel, wheelOptions)
-  window.removeEventListener('blur', handlers.onBlur)
-
-  document.removeEventListener('visibilitychange', handlers.onVisibilityChange)
-
-  handlers = null
-  listenersAttached = false
-
-  clearInput()
+  const dispose = cleanup
+  cleanup = null
+  dispose?.()
 }
 
-// ------------------------------------------------------------
-// VITE HOT MODULE REPLACEMENT
-// ------------------------------------------------------------
-
 if (import.meta.hot) {
-  import.meta.hot.dispose(() => {
-    disposeInput()
-  })
+  import.meta.hot.dispose(disposeInput)
 }

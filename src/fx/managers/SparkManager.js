@@ -1,33 +1,7 @@
 // src/fx/managers/SparkManager.js
 
-import { registerEffect } from "../effects.js"
+import { registerParticleEffect } from "./registerParticleEffect.js"
 import { EFFECT } from "../FXTypes.js"
-import { emitSparkBurst } from "../gpu/SparkEmitter.js"
+import { emitSparkBurst, updateSparkEmitter, sparkPool } from "../gpu/SparkEmitter.js"
 
-const pending = []
-
-const sparkManager = {
-
-    emit(effect) {
-        pending.push(effect)
-    },
-
-    update() {
-
-        while (pending.length) {
-
-            const effect = pending.pop()
-
-            emitSparkBurst(effect)
-
-        }
-
-    },
-
-    clear() {
-        pending.length = 0
-    }
-
-}
-
-registerEffect(EFFECT.SPARK_BURST, sparkManager)
+registerParticleEffect(EFFECT.SPARK_BURST, emitSparkBurst, updateSparkEmitter, sparkPool)

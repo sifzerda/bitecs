@@ -1,37 +1,7 @@
 //src/fx/managers/ExplosionManager.js
 
-import { registerEffect } from "../effects"
-import { EFFECT } from "../FXTypes"
-import { emitExplosion } from "../gpu/ExplosionEmitter"
+import { registerParticleEffect } from "./registerParticleEffect.js"
+import { EFFECT } from "../FXTypes.js"
+import { emitExplosion, updateExplosionEmitter, explosionPool } from "../gpu/ExplosionEmitter.js"
 
-const pending = []
-
-const manager = {
-
-    emit(effect) {
-
-        pending.push(effect)
-
-    },
-
-    update() {
-
-        while (pending.length) {
-
-            emitExplosion(
-                pending.pop()
-            )
-
-        }
-
-    },
-
-    clear() {
-
-        pending.length = 0
-
-    }
-
-}
-
-registerEffect( EFFECT.EXPLOSION, manager )
+registerParticleEffect(EFFECT.EXPLOSION, emitExplosion, updateExplosionEmitter, explosionPool)

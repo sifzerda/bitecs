@@ -1,48 +1,7 @@
 // src/fx/managers/TrailManager.js
 
-import { registerEffect } from "../effects"
-import { EFFECT } from "../FXTypes"
+import { registerParticleEffect } from "./registerParticleEffect.js"
+import { EFFECT } from "../FXTypes.js"
+import { spawnTrailPuff, updateTrailEmitter, trailPool } from "../gpu/TrailEmitter.js"
 
-import {
-    spawnTrailPuff
-} from "../gpu/TrailEmitter.js"
-
-
-const pending = []
-
-
-const manager = {
-
-    emit(effect) {
-
-        pending.push(effect)
-
-    },
-
-
-    update() {
-
-        while (pending.length) {
-
-            const effect = pending.pop()
-
-            spawnTrailPuff(effect)
-
-        }
-
-    },
-
-
-    clear() {
-
-        pending.length = 0
-
-    }
-
-}
-
-
-registerEffect(
-    EFFECT.TRAIL,
-    manager
-)
+registerParticleEffect(EFFECT.TRAIL, spawnTrailPuff, updateTrailEmitter, trailPool)

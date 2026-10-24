@@ -81,18 +81,19 @@ export const Bullet = {
 
     active: new Uint8Array(MAX),
 
-     deflected: new Uint8Array(MAX), // 0 = normal, 1 = deflected
+    deflected: new Uint8Array(MAX), // 0 = normal, 1 = deflected
 }
 
 export const Arc = {
     active: new Uint8Array(MAX),
     life: new Float32Array(MAX),
     maxLife: new Float32Array(MAX),
+    intensity: new Float32Array(MAX),   // new
     colorR: new Float32Array(MAX),
     colorG: new Float32Array(MAX),
     colorB: new Float32Array(MAX),
     pointCount: new Uint8Array(MAX),
-    version: new Uint8Array(MAX),
+    version: new Uint16Array(MAX),      // was Uint8Array
 }
 
 export const BULLET_OWNER = {

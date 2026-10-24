@@ -1,44 +1,7 @@
 // src/fx/managers/FlashManager.js
 
-import { registerEffect } from "../effects"
-import { EFFECT } from "../FXTypes"
+import { registerParticleEffect } from "./registerParticleEffect.js"
+import { EFFECT } from "../FXTypes.js"
+import { emitFlash, updateFlashEmitter, flashPool } from "../gpu/FlashEmitter.js"
 
-import {
-    emitFlash
-}
-from "../gpu/FlashEmitter"
-
-const pending = []
-
-const manager = {
-
-    emit(effect) {
-
-        pending.push(effect)
-
-    },
-
-    update() {
-
-        while (pending.length) {
-
-            emitFlash(
-                pending.pop()
-            )
-
-        }
-
-    },
-
-    clear() {
-
-        pending.length = 0
-
-    }
-
-}
-
-registerEffect(
-    EFFECT.FLASH,
-    manager
-)
+registerParticleEffect(EFFECT.FLASH, emitFlash, updateFlashEmitter, flashPool)

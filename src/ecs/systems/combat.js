@@ -1,275 +1,297 @@
 // src/ecs/systems/combat.js
 
 import { world } from "../constants/world.js"
-import { bossQuery, playerQuery } from "../constants/queries.js"
-import { Position, Health, Invulnerability, Lifetime, Velocity, Bullet, BossType, BULLET_OWNER } from "../constants/components.js"
+
+import {
+  bossQuery,
+  playerQuery,
+} from "../constants/queries.js"
+
+import {
+  Position,
+  Velocity,
+  Lifetime,
+  Invulnerability,
+  Asteroid,
+  Bullet,
+  BossType,
+  BULLET_OWNER,
+} from "../constants/components.js"
+
 import { BOSSES } from "../constants/bosses.js"
-import { useGameStore } from "../../../store/gameStore.js"
+
+import {
+  useGameStore,
+  SCREEN,
+} from "../../../store/gameStore.js"
+
 import { startState } from "../../state/startState.js"
-import { killAsteroid, killBoss } from "./entityDeath.js"
-import { explodeAt } from "../weapons/weaponSystems/weaponEffects.js"
-import { releaseBulletEntity, activeBullets } from "../pools/bulletPool.js"
-import { activeAsteroids } from "../pools/asteroidPool.js"
-import { getWeapon } from "../weapons/config/weapons.js"
-import { resolveHit } from "../weapons/weaponSystems/hitTraits.js"
-import { emitEffect } from "../../fx/effects.js"
-import { EFFECT } from "../../fx/FXTypes.js"
 
-import { PLAYER_INVULNERABILITY_DURATION } from "./invulnerabilitySystem.js"
+import {
+  killAsteroid,
+  killBoss,
+} from "./entityDeath.js"
 
-// ============================================================
-// COLLISION SETTINGS
-// ============================================================
+import {
+  explodeAt,
+} from "../weapons/weaponSystems/weaponEffects.js"
 
-const PLAYER_HIT_RADIUS = 0.6
-const ASTEROID_RADIUS = 0.7
+import {
+  releaseBulletEntity,
+  activeBullets,
+} from "../pools/bulletPool.js"
 
-const BOSS_RADIUS = 2.0
+import {
+  activeAsteroids,
+} from "../pools/asteroidPool.js"
 
-const DEFLECT_RADIUS = 4.0
+import {
+  getWeapon,
+} from "../weapons/config/weapons.js"
+
+import {
+  resolveHit,
+} from "../weapons/weaponSystems/hitTraits.js"
+
+import { damagePlayer } from "./playerDamage.js"
+
+const PLAYER_RADIUS = 0.6
+const DEFAULT_BOSS_RADIUS = 2
+
+const DEFLECT_RADIUS = 4
+const DEFLECT_RADIUS_SQ =
+  DEFLECT_RADIUS * DEFLECT_RADIUS
+
 const DEFLECT_SPEED_MULT = 1.3
 const DEFLECT_FLASH_DURATION = 0.15
 
-// ============================================================
-// HELPERS
-// ============================================================
-
-function getBossHitRadius(bossId) {
-    return BOSSES[BossType.typeIndex[bossId]]?.hitRadius ?? BOSS_RADIUS
+function bossRadius(id) {
+  return (
+    BOSSES[BossType.typeIndex[id]]?.hitRadius ??
+    DEFAULT_BOSS_RADIUS
+  )
 }
 
-// ============================================================
-// PLAYER DAMAGE
-// ============================================================
+function overlaps(a, b, radius) {
+  const dx = Position.x[a] - Position.x[b]
+  const dy = Position.y[a] - Position.y[b]
 
-function damagePlayer(pid, amount) {
+  return dx * dx + dy * dy <= radius * radius
+}
 
-    // Already protected from damage.
-    if (Invulnerability.remaining[pid] > 0) {
-        return false
+function reflectBullet(bid, pid) {
+  const dx = Position.x[bid] - Position.x[pid]
+  const dy = Position.y[bid] - Position.y[pid]
+
+  const distanceSq = dx * dx + dy * dy
+
+  if (distanceSq > DEFLECT_RADIUS_SQ) {
+    return false
+  }
+
+  const vx = Velocity.x[bid]
+  const vy = Velocity.y[bid]
+
+  const speed = Math.hypot(vx, vy)
+
+  let nx
+  let ny
+
+  if (distanceSq > 1e-10) {
+    const inverseDistance = 1 / Math.sqrt(distanceSq)
+
+    nx = dx * inverseDistance
+    ny = dy * inverseDistance
+  } else if (speed > 1e-6) {
+    nx = -vx / speed
+    ny = -vy / speed
+  } else {
+    nx = 1
+    ny = 0
+  }
+
+  const dot = vx * nx + vy * ny
+
+  let reflectedX = vx - 2 * dot * nx
+  let reflectedY = vy - 2 * dot * ny
+
+  // Already travelling away: keep it travelling outward.
+  if (dot >= 0) {
+    reflectedX = nx
+    reflectedY = ny
+  }
+
+  const reflectedLength = Math.hypot(
+    reflectedX,
+    reflectedY
+  ) || 1
+
+  const outputSpeed =
+    Math.max(speed, 1) * DEFLECT_SPEED_MULT
+
+  Velocity.x[bid] =
+    (reflectedX / reflectedLength) * outputSpeed
+
+  Velocity.y[bid] =
+    (reflectedY / reflectedLength) * outputSpeed
+
+  Bullet.owner[bid] = BULLET_OWNER.PLAYER
+  Bullet.deflected[bid] = 1
+  Bullet.source[bid] = pid
+
+  startState.deflectFlashTimer =
+    DEFLECT_FLASH_DURATION
+
+  startState.deflectFlashX = Position.x[pid]
+  startState.deflectFlashY = Position.y[pid]
+
+  return true
+}
+
+function hitPlayerTarget(bid, weapon) {
+  const projectileRadius = weapon.hitRadius ?? 0
+
+  for (let j = 0; j < activeAsteroids.length; j++) {
+    const aid = activeAsteroids[j]
+
+    if (
+      !overlaps(
+        bid,
+        aid,
+        projectileRadius + Asteroid.radius[aid]
+      )
+    ) {
+      continue
     }
 
-    Health.current[pid] -= amount
+    resolveHit({
+      x: Position.x[bid],
+      y: Position.y[bid],
 
-    // Prevent another hit for one second.
-    Invulnerability.remaining[pid] = PLAYER_INVULNERABILITY_DURATION
+      targetId: aid,
+      weapon,
+      owner: Bullet.owner[bid],
 
-    if (Health.current[pid] <= 0) {
+      kill: killAsteroid,
 
-        startState.lives--
-
-        if (startState.lives <= 0) {
-
-            useGameStore
-                .getState()
-                .gameOver()
-
-            return true
-        }
-
-        // Existing life system: restore health on respawn.
-        Health.current[pid] = Health.max[pid]
-    }
+      asteroids: activeAsteroids,
+      bosses: bossQuery(),
+    })
 
     return true
-}
+  }
 
-// ============================================================
-// MAIN COMBAT SYSTEM
-// ============================================================
+  const bosses = bossQuery()
 
-export function combatSystem() {
+  for (let j = 0; j < bosses.length; j++) {
+    const id = bosses[j]
 
-    const dt = world.time.delta
-
-    const bullets = activeBullets
-    const asteroids = activeAsteroids
-
-    const bosses = bossQuery()
-    const players = playerQuery()
-
-    const pid = players.length > 0 ? players[0] : null
-
-    // ========================================================
-    // BULLET COLLISIONS
-    // ========================================================
-
-    for (let i = 0; i < bullets.length; i++) {
-
-        const bid = bullets[i]
-        const weapon = getWeapon(Bullet.type[bid])
-
-        if (!weapon) {
-            releaseBulletEntity(bid)
-            continue
-        }
-
-        // ----------------------------------------------------
-        // Lifetime
-        // ----------------------------------------------------
-
-        Lifetime.remaining[bid] -= dt
-
-        if (Lifetime.remaining[bid] <= 0) {
-
-            if (weapon.explosive) {
-
-                explodeAt(Position.x[bid], Position.y[bid], weapon, asteroids, bosses)
-            }
-
-            releaseBulletEntity(bid)
-            continue
-        }
-
-        // ====================================================
-        // PLAYER BULLETS
-        // ====================================================
-
-        if (Bullet.owner[bid] === BULLET_OWNER.PLAYER) {
-
-            let hit = false
-
-            // ------------------------------------------------
-            // Asteroids
-            // ------------------------------------------------
-
-            for (let j = 0; j < asteroids.length; j++) {
-
-                const aid = asteroids[j]
-
-                const dx = Position.x[bid] - Position.x[aid]
-                const dy = Position.y[bid] - Position.y[aid]
-
-                const hitDistance = weapon.hitRadius + ASTEROID_RADIUS
-
-                if (dx * dx + dy * dy <= hitDistance * hitDistance) {
-
-                    resolveHit({
-                        x: Position.x[bid],
-                        y: Position.y[bid],
-                        targetId: aid,
-                        weapon,
-                        owner: Bullet.owner[bid],
-                        kill: killAsteroid,
-                        asteroids,
-                        bosses,
-                    })
-
-                    releaseBulletEntity(bid)
-
-                    hit = true
-                    break
-                }
-            }
-
-            if (hit) continue
-
-            // ------------------------------------------------
-            // Bosses
-            // ------------------------------------------------
-
-            if (Bullet.deflected[bid] === 0) {
-
-                for (let j = 0; j < bosses.length; j++) {
-
-                    const bossId = bosses[j]
-
-                    const dx = Position.x[bid] - Position.x[bossId]
-                    const dy = Position.y[bid] - Position.y[bossId]
-
-                    const hitDistance = weapon.hitRadius + getBossHitRadius(bossId)
-
-                    if (dx * dx + dy * dy <= hitDistance * hitDistance) {
-
-                        resolveHit({
-                            x: Position.x[bid],
-                            y: Position.y[bid],
-                            targetId: bossId,
-                            weapon,
-                            owner: Bullet.owner[bid],
-                            kill: killBoss,
-                            asteroids,
-                            bosses,
-                            big: true,
-                        })
-
-                        releaseBulletEntity(bid)
-                        break
-                    }
-                }
-            }
-
-        }
-
-        // ====================================================
-        // ENEMY BULLETS
-        // ====================================================
-
-        else {
-
-            if (pid === null) continue
-
-            if (Invulnerability.remaining[pid] > 0) {
-                continue
-            }
-
-            const dx = Position.x[bid] - Position.x[pid]
-            const dy = Position.y[bid] - Position.y[pid]
-
-            const distSq = dx * dx + dy * dy
-
-            // ------------------------------------------------
-            // Deflect
-            // ------------------------------------------------
-
-            if (startState.deflectBufferTime > 0 && distSq <= DEFLECT_RADIUS * DEFLECT_RADIUS) {
-
-                const dist = Math.sqrt(distSq) || 1
-
-                const nx = dx / dist
-                const ny = dy / dist
-
-                const vx = Velocity.x[bid]
-                const vy = Velocity.y[bid]
-
-                const dot = vx * nx + vy * ny
-
-                let rvx = vx - 2 * dot * nx
-                let rvy = vy - 2 * dot * ny
-
-                if (dot > 0) {
-                    rvx = nx
-                    rvy = ny
-                }
-
-                const speed = Math.hypot(vx, vy) || 1
-                const outSpeed = speed * DEFLECT_SPEED_MULT
-
-                const rLen = Math.hypot(rvx, rvy) || 1
-
-                Velocity.x[bid] = (rvx / rLen) * outSpeed
-                Velocity.y[bid] = (rvy / rLen) * outSpeed
-
-                Bullet.owner[bid] = BULLET_OWNER.PLAYER
-                Bullet.deflected[bid] = 1
-
-                startState.deflectFlashTimer = DEFLECT_FLASH_DURATION
-                startState.deflectFlashX = Position.x[pid]
-                startState.deflectFlashY = Position.y[pid]
-
-                continue
-            }
-
-            // ------------------------------------------------
-            // Player hit
-            // ------------------------------------------------
-
-            if (distSq <= PLAYER_HIT_RADIUS * PLAYER_HIT_RADIUS) {
-
-                damagePlayer(pid, weapon.directDamage)
-                releaseBulletEntity(bid)
-            }
-        }
+    if (
+      !overlaps(
+        bid,
+        id,
+        projectileRadius + bossRadius(id)
+      )
+    ) {
+      continue
     }
 
+    resolveHit({
+      x: Position.x[bid],
+      y: Position.y[bid],
+
+      targetId: id,
+      weapon,
+      owner: Bullet.owner[bid],
+
+      kill: killBoss,
+
+      asteroids: activeAsteroids,
+      bosses,
+      big: true,
+    })
+
+    return true
+  }
+
+  return false
+}
+
+export function combatSystem() {
+  const dt = world.time.delta
+  const pid = playerQuery()[0]
+
+  let i = 0
+
+  while (i < activeBullets.length) {
+    const state = useGameStore.getState()
+
+    if (
+      state.screen !== SCREEN.PLAY ||
+      state.paused ||
+      startState.encounterPhase !== "active"
+    ) {
+      return
+    }
+
+    const bid = activeBullets[i]
+    const weapon = getWeapon(Bullet.type[bid])
+
+    if (!weapon) {
+      releaseBulletEntity(bid)
+      continue
+    }
+
+    Lifetime.remaining[bid] -= dt
+
+    if (Lifetime.remaining[bid] <= 0) {
+      if (weapon.explosive) {
+        explodeAt(
+          Position.x[bid],
+          Position.y[bid],
+          weapon,
+          activeAsteroids,
+          bossQuery()
+        )
+      }
+
+      releaseBulletEntity(bid)
+      continue
+    }
+
+    if (Bullet.owner[bid] === BULLET_OWNER.PLAYER) {
+      if (hitPlayerTarget(bid, weapon)) {
+        releaseBulletEntity(bid)
+        continue
+      }
+    } else if (pid !== undefined) {
+      // Deflection remains available while invulnerable.
+      if (
+        startState.deflectBufferTime > 0 &&
+        reflectBullet(bid, pid)
+      ) {
+        i++
+        continue
+      }
+
+      if (
+        Invulnerability.remaining[pid] <= 0 &&
+        overlaps(
+          bid,
+          pid,
+          PLAYER_RADIUS + (weapon.hitRadius ?? 0)
+        )
+      ) {
+        damagePlayer(
+          pid,
+          weapon.directDamage ?? 0
+        )
+
+        releaseBulletEntity(bid)
+        continue
+      }
+    }
+
+    i++
+  }
 }

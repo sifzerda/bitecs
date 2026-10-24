@@ -1,6 +1,9 @@
 // src/ecs/weapons/weaponSystems/weaponEffects.js
 
-import { Position, Health } from "../../constants/components.js"
+import { entityExists } from "bitecs"
+import { world } from "../../constants/world.js"
+import { Position, Health, Asteroid, BossType } from "../../constants/components.js"
+import { BOSSES } from "../../constants/bosses.js"
 import { killAsteroid, killBoss } from "../../systems/entityDeath.js"
 import { pushArc } from "../weaponState/arcState.js"
 import { emitEffect } from "../../../fx/effects.js"
@@ -13,143 +16,75 @@ import { EFFECT } from "../../../fx/FXTypes.js"
 export function explodeAt(x, y, weapon, asteroids, bosses) {
 
     const radius = weapon.explosionRadius ?? 1.5
-    const radiusSq = radius * radius
-    const damage = weapon.directDamage
+    const damage = weapon.explosionDamage ?? weapon.directDamage ?? 0
 
-    // --------------------------------------------------------
-    // Asteroids
-    // --------------------------------------------------------
+    // Snapshot because deaths swap-remove active array entries.
+    for (const id of [...asteroids]) {
+        if (!Asteroid.active[id] || Health.current[id] <= 0)
+            continue
 
-    for (let j = 0; j < asteroids.length; j++) {
+        const r = radius + Asteroid.radius[id]
+        const dx = x - Position.x[id]
+        const dy = y - Position.y[id]
 
-        const aid = asteroids[j]
+        if (dx * dx + dy * dy > r * r)
+            continue
 
-        const dx = x - Position.x[aid]
-        const dy = y - Position.y[aid]
-
-        if (dx * dx + dy * dy <= radiusSq) {
-
-            Health.current[aid] -= damage
-
-            if (Health.current[aid] <= 0) {
-
-                killAsteroid(aid, Position.x[aid], Position.y[aid])
-            }
-        }
+        Health.current[id] -= damage
+        if (Health.current[id] <= 0) killAsteroid(id, Position.x[id], Position.y[id])
     }
 
-    // --------------------------------------------------------
-    // Bosses
-    // --------------------------------------------------------
+    for (const id of [...bosses]) {
 
-    for (let j = 0; j < bosses.length; j++) {
+        if (!entityExists(world, id) || Health.current[id] <= 0)
+            continue
 
-        const bossId = bosses[j]
+        const r = radius + (BOSSES[BossType.typeIndex[id]]?.hitRadius ?? 2)
+        const dx = x - Position.x[id], dy = y - Position.y[id]
 
-        const dx = x - Position.x[bossId]
-        const dy = y - Position.y[bossId]
+        if (dx * dx + dy * dy > r * r)
+            continue
 
-        // Bosses have a slightly larger explosion hit area.
-        const bossRadius = radius + 1.0
-
-        if (dx * dx + dy * dy <= bossRadius * bossRadius) {
-
-            Health.current[bossId] -= damage
-
-            if (Health.current[bossId] <= 0) {
-
-                killBoss(bossId, Position.x[bossId], Position.y[bossId])
-            }
-        }
+        Health.current[id] -= damage
+        if (Health.current[id] <= 0) killBoss(id, Position.x[id], Position.y[id])
     }
 
-    // --------------------------------------------------------
-    // Explosion visual
-    // --------------------------------------------------------
-
-    emitEffect(EFFECT.SPARK_BURST, {
-        x,        
-        y,
-        count: 40,
-        speed: 14,
-    })
+    emitEffect(EFFECT.SPARK_BURST, { x, y, count: 40, speed: 14 })
 }
 
-// ============================================================
-// ARC GUN
-// Chains between nearby asteroids, excluding whatever it
-// just hit.
-// ============================================================
+export function chainLightning(x, y, weapon, asteroids, excludeId, damageScale = 1) {
 
-export function chainLightning( startX, startY, weapon, asteroids, excludeId ) {
+    const used = new Set([excludeId]), points = [{ x, y }]
+    const damage = (weapon.chainDamage ?? weapon.directDamage ?? 0) * damageScale
 
-    let hits = 0
+    for (let hop = 0; hop < (weapon.chainCount ?? 0);
+        hop++) {
+        let target = -1,
+            best = (weapon.chainRange ?? 5) ** 2
 
-    let cx = startX
-    let cy = startY
+        for (const id of asteroids) {
+            if (used.has(id) || !Asteroid.active[id] || Health.current[id] <= 0)
+                continue
 
-    const hitIds = new Set([excludeId])
+            const dx = Position.x[id] - x
+            const dy = Position.y[id] - y
+            const d = dx * dx + dy * dy
 
-    const points = [
-        { x: startX, y: startY }
-    ]
-
-    while (hits < weapon.chainCount) {
-
-        let nearestId = -1
-
-        let nearestDistSq = weapon.chainRange * weapon.chainRange
-
-        for (let j = 0; j < asteroids.length; j++) {
-
-            const aid = asteroids[j]
-
-            if (hitIds.has(aid)) continue
-
-            const dx = cx - Position.x[aid]
-            const dy = cy - Position.y[aid]
-
-            const distSq = dx * dx + dy * dy
-
-            if (distSq <= nearestDistSq) {
-
-                nearestDistSq = distSq
-                nearestId = aid
-            }
+            if (d < best) { best = d; target = id }
         }
+        if (target === -1)
+            break
 
-        if (nearestId === -1) break
+        used.add(target);
 
-        Health.current[nearestId] -= weapon.directDamage
+        const x = Position.x[target];
+        const y = Position.y[target];
 
-        emitEffect(EFFECT.SPARK_BURST, {
-            x: Position.x[nearestId],
-            y: Position.y[nearestId],
-            count: 12,
-            speed: 6,
-        })
-
-
-        if (Health.current[nearestId] <= 0) {
-
-            killAsteroid(nearestId, Position.x[nearestId], Position.y[nearestId])
-        }
-
-        hitIds.add(nearestId)
-
-        cx = Position.x[nearestId]
-        cy = Position.y[nearestId]
-
-        points.push({
-            x: cx,
-            y: cy,
-        })
-
-        hits++
+        points.push({ x, y })
+        Health.current[target] -= damage
+        if (Health.current[target] <= 0)
+            killAsteroid(target, x, y)
     }
 
-
-    if (points.length > 1) {
-        pushArc(points)
-    }
+    if (points.length > 1) pushArc(points)
 }

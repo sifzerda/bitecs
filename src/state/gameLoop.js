@@ -1,79 +1,51 @@
 // src/ecs/state/gameLoop.js
 
-import playerControlSystem from "../ecs/systems/playerControlSystem"
-import { movementSystem } from "../ecs/systems/movement"
-import { collisionSystem } from "../ecs/systems/collisionSystem"
-import { boundsSystem } from "../ecs/systems/bounds"
-import { combatSystem } from "../ecs/systems/combat"
-import { waveSystem } from "../ecs/systems/waveSystem"
-import { trailSystem } from "../ecs/systems/trailSystem"
-
-import { invulnerabilitySystem } from "../ecs/systems/invulnerabilitySystem"
-
-import { laserSystem } from "../ecs/weapons/weaponSystems/laserSystem"
-import { missileSystem } from "../ecs/weapons/weaponSystems/missileSystem"
-import { throwerSystem } from "../ecs/weapons/weaponSystems/throwerSystem"
-import { updateArcs } from "../ecs/weapons/weaponState/arcState"
+import playerControlSystem from "../ecs/systems/playerControlSystem.js"
+import { movementSystem } from "../ecs/systems/movement.js"
+import { collisionSystem } from "../ecs/systems/collisionSystem.js"
+import { boundsSystem } from "../ecs/systems/bounds.js"
+import { combatSystem } from "../ecs/systems/combat.js"
+import { waveSystem } from "../ecs/systems/waveSystem.js"
+import { trailSystem } from "../ecs/systems/trailSystem.js"
+import { invulnerabilitySystem } from "../ecs/systems/invulnerabilitySystem.js"
+import { laserSystem } from "../ecs/weapons/weaponSystems/laserSystem.js"
+import { missileSystem } from "../ecs/weapons/weaponSystems/missileSystem.js"
+import { throwerSystem } from "../ecs/weapons/weaponSystems/throwerSystem.js"
+import { updateArcs } from "../ecs/weapons/weaponState/arcState.js"
 import { statusEffectSystem } from "../ecs/systems/statusEffectSystem.js"
+import { bossAISystem } from "../ecs/systems/bossAISystem.js"
+import { bossLaserSystem } from "../ecs/weapons/weaponSystems/bossLaserSystem.js"
+import { bossThrowerSystem } from "../ecs/weapons/weaponSystems/bossThrowerSystem.js"
+import { exhaustEmitter } from "../fx/gpu/exhaustEmitter.js"
+import { updateEffects } from "../fx/index.js"
+import { clearSpatialGrids, insertAsteroid, insertBoss } from "../ecs/constants/spatialGrid.js"
+import { activeAsteroids } from "../ecs/pools/asteroidPool.js"
+import { bossQuery } from "../ecs/constants/queries.js"
+import { useGameStore, SCREEN } from "../../store/gameStore.js"
+import { startState } from "./startState.js"
+import { encounterSystem } from "../ecs/systems/encounterSystem.js"
+import { resetWeaponVisuals } from "./resetWeaponVisuals.js"
 
-import { bossAISystem } from "../ecs/systems/bossAISystem"
-import { bossLaserSystem } from "../ecs/weapons/weaponSystems/bossLaserSystem"
-import { bossThrowerSystem } from "../ecs/weapons/weaponSystems/bossThrowerSystem"
-// fx
-import { updateSparkEmitter } from "../fx/gpu/SparkEmitter"
-import { exhaustEmitter } from "../fx/gpu/exhaustEmitter"
-import { updateEffects } from "../fx/index"
-
-import { clearSpatialGrids, insertAsteroid, insertBoss } from "../ecs/constants/spatialGrid"
-
-import { activeAsteroids } from "../ecs/pools/asteroidPool"
-import { bossQuery } from "../ecs/constants/queries"
-
-export function gameLoop(shootState, dt) {
-
-    playerControlSystem(shootState)
-
-    bossAISystem()
-    bossLaserSystem()
-    bossThrowerSystem()
-
-    missileSystem()
-
-    // Move entities
-    movementSystem()
-
-    // Resolve physical asteroid collisions
-    collisionSystem()
-    invulnerabilitySystem()
-
-    exhaustEmitter()
-    boundsSystem()
-    waveSystem()
-
-    // spatial grid ------------ //
-
-    clearSpatialGrids()
-
-    for (let i = 0; i < activeAsteroids.length; i++) {
-        insertAsteroid(activeAsteroids[i])
-    }
-
-    const bosses = bossQuery()
-
-    for (let i = 0; i < bosses.length; i++) {
-        insertBoss(bosses[i])
-    }
-
-    // ------------------------- //
-
-    combatSystem()
-    laserSystem()
-    throwerSystem()
-    statusEffectSystem()
-
-    trailSystem()
-    updateArcs(dt)
-
-    updateEffects()
-    updateSparkEmitter(dt)
+function playing(){const s=useGameStore.getState();return s.screen===SCREEN.PLAY&&!s.paused}
+function fighting(){return playing()&&startState.encounterPhase==="active"}
+function grid(){clearSpatialGrids();for(const id of activeAsteroids)insertAsteroid(id);for(const id of bossQuery())insertBoss(id)}
+function effects(dt){trailSystem();updateArcs(dt);exhaustEmitter();updateEffects(dt)}
+export function gameLoop(shootState,dt){
+ if(!playing())return
+ waveSystem()
+ if(startState.encounterPhase==="clearing"){
+  resetWeaponVisuals();movementSystem();boundsSystem();effects(dt);encounterSystem(dt);return
+ }
+ if(!fighting())return
+ invulnerabilitySystem();playerControlSystem(shootState)
+ bossAISystem();bossLaserSystem();if(!fighting())return
+ bossThrowerSystem();if(!fighting())return
+ // Homing must see a current grid, not targets killed last tick.
+ grid();missileSystem();movementSystem();collisionSystem()
+ if(!fighting())return
+ boundsSystem();grid();combatSystem()
+ if(fighting())laserSystem()
+ if(fighting())throwerSystem()
+ if(fighting())statusEffectSystem()
+ if(playing())effects(dt)
 }

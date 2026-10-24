@@ -1,84 +1,51 @@
 // src/fx/gpu/ExplosionEmitter.js
 
-import * as THREE from "three"
 import { createTypedEffectPool } from "../effectPool.js"
 
-const MAX_EXPLOSIONS = 512
-
-export const explosionPool = createTypedEffectPool(MAX_EXPLOSIONS, ["size", "seed", "age", "rotAngle"], ["axis"])
-
-const _axis = new THREE.Vector3()
+export const explosionPool = createTypedEffectPool(512, ["size", "seed", "age", "rotAngle"], ["axis"])
 
 export function emitExplosion({ x, y, size = 1, maxLife = 1.2 }) {
 
-    const id = explosionPool.allocate()
+    const p = explosionPool
+    const id = p.allocate();
 
     if (id < 0)
         return
 
-    explosionPool.x[id] = x
-    explosionPool.y[id] = y
-    explosionPool.size[id] = size
+    p.x[id] = x;
+    p.y[id] = y;
+    p.size[id] = size;
+    p.seed[id] = Math.random()
+    p.life[id] = p.maxLife[id] = Math.max(0.001, maxLife)
 
-    const seed = Math.random()
-    explosionPool.seed[id] = seed
-
-    explosionPool.life[id] = maxLife
-    explosionPool.maxLife[id] = maxLife
-
-    // rotation axis is static per explosion — derived once from seed, matches
-    // the original renderer's seedAngle-based axis exactly
-    const seedAngle = seed * Math.PI * 2
-    _axis.set(Math.sin(seedAngle), Math.cos(seedAngle), 0.4).normalize()
-
-    const ax = id * 3
-    explosionPool.axis[ax] = _axis.x
-    explosionPool.axis[ax + 1] = _axis.y
-    explosionPool.axis[ax + 2] = _axis.z
-
-    explosionPool.age[id] = 0
-    explosionPool.rotAngle[id] = seedAngle
-
-    const pos = id * 3
-    explosionPool.instancePosition[pos] = x
-    explosionPool.instancePosition[pos + 1] = y
-    explosionPool.instancePosition[pos + 2] = 0.2
-
-    explosionPool.instanceScale[id] = size * 0.25 // t=0 burst scale floor
-
+    const a = p.seed[id] * Math.PI * 2
+    const k = 1 / Math.sqrt(1.16)
+    const j = id * 3
+    p.axis.set([Math.sin(a) * k, Math.cos(a) * k, 0.4 * k], j)
+    p.rotAngle[id] = a;
+    p.instancePosition.set([x, y, 0.2], j);
+    p.instanceScale[id] = size * 0.25
 }
 
 export function updateExplosionEmitter(dt) {
 
     const p = explosionPool
 
-for (let n = 0; n < p.activeCount; n++) {
+    for (let n = p.activeCount - 1; n >= 0; n--) {
 
-    const i = p.activeIds[n]
+        const id = p.activeIds[n]; p.life[id] -= dt
 
-        p.life[i] -= dt
-
-        if (p.life[i] <= 0) {
-            p.kill(i)
+        if (p.life[id] <= 0) {
+            p.kill(id);
             continue
         }
 
-        const t = 1 - p.life[i] / p.maxLife[i]
-
-        const burstT = Math.min(t / 0.25, 1)
-        const burstEase = 1 - Math.pow(1 - burstT, 3)
-        const burstScale = 0.25 + burstEase * (1.3 - 0.25)
-        const lingerScale = 1 + t * 0.45
-
-        p.instanceScale[i] = p.size[i] * burstScale * lingerScale
-
-        const seedAngle = p.seed[i] * Math.PI * 2
-        p.rotAngle[i] = t * 1.5 + seedAngle
-
-        p.age[i] = t
-
-        p.dirty = true
-
+        const t = 1 - p.life[id] / p.maxLife[id]
+        const b = Math.min(t / 0.25, 1)
+        
+        p.instanceScale[id] = p.size[id] * (0.25 + (1 - Math.pow(1 - b, 3)) * 1.05) * (1 + t * 0.45)
+        p.rotAngle[id] = t * 1.5 + p.seed[id] * Math.PI * 2;
+        p.age[id] = t
     }
-
+    p.dirty = true
 }

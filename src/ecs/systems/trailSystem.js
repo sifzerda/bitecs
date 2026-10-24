@@ -1,99 +1,62 @@
 // src/ecs/systems/trailSystem.js
 
-import { Position, Velocity, Bullet } from "../constants/components.js"
+import * as THREE from "three"
+import { Position, Velocity, Bullet, Lifetime } from "../constants/components.js"
 import { WEAPONS } from "../weapons/config/weapons.js"
 import { activeBullets } from "../pools/bulletPool.js"
 import { emitEffect } from "../../fx/effects.js"
 import { EFFECT } from "../../fx/FXTypes.js"
 
-const TRAIL_BACK_OFFSET = 0.22
-const TRAIL_SIZE_MIN = 0.08
-const TRAIL_SIZE_MAX = 0.14
-const TRAIL_LIFE = 0.85
+const states = new Map(), colors = new Map(), seen = new Set()
+const SPACING = 0.1, MAX_PUFFS = 24
 
-// Distance between consecutive puffs (world units). Smaller = denser.
-const SPAWN_SPACING = 0.10
-
-// Per-bullet state: previous position + leftover distance
-const trailState = new Map() // eid -> { prevX, prevY, accum }
-
-function hexToRgb(hex) {
-    const n = parseInt(hex.replace('#', ''), 16)
-    return {
-        r: ((n >> 16) & 255) / 255,
-        g: ((n >> 8) & 255) / 255,
-        b: (n & 255) / 255,
-    }
+export function resetTrails() {
+    states.clear();
+    seen.clear()
 }
 
 export function trailSystem() {
-    const bullets = activeBullets
-    const seen = new Set()
+    seen.clear()
 
-    for (let i = 0; i < bullets.length; i++) {
-        const eid = bullets[i]
-        const weapon = WEAPONS[Bullet.type[eid]]
+    for (const id of activeBullets) {
+        const weapon = WEAPONS[Bullet.type[id]];
+        if (!weapon?.trail)
+            continue
+        seen.add(id)
+        const x = Position.x[id]
+        const y = Position.y[id]
+        const life = Lifetime.remaining[id]
 
-        if (!weapon || !weapon.trail) continue
+        let s = states.get(id)
 
-        seen.add(eid)
-
-        const x = Position.x[eid]
-        const y = Position.y[eid]
-        const vx = Velocity.x[eid]
-        const vy = Velocity.y[eid]
-        const speed = Math.hypot(vx, vy) || 1
-
-        const dx = vx / speed
-        const dy = vy / speed
-
-        let state = trailState.get(eid)
-
-        if (!state) {
-            // first frame for this projectile – just record position, no emit yet
-            trailState.set(eid, { prevX: x, prevY: y, accum: 0 })
+        if (!s || s.type !== weapon.id || life > s.life) {
+            states.set(id, { x, y, life, type: weapon.id, left: 0 });
             continue
         }
 
-        // actual distance travelled since last frame
-        const movedX = x - state.prevX
-        const movedY = y - state.prevY
-        const dist = Math.hypot(movedX, movedY)
-
-        state.accum += dist
-        state.prevX = x
-        state.prevY = y
-
-        const { r, g, b } = hexToRgb(weapon.trailColor ?? weapon.glowColor ?? "#ff6600")
-
-        // emit one puff for every SPAWN_SPACING units travelled
-        while (state.accum >= SPAWN_SPACING) {
-            state.accum -= SPAWN_SPACING
-
-            const backX = -dx * TRAIL_BACK_OFFSET
-            const backY = -dy * TRAIL_BACK_OFFSET
-
-            // tiny jitter only
-            const jx = (Math.random() - 0.5) * 0.03
-            const jy = (Math.random() - 0.5) * 0.03
-
-            emitEffect(EFFECT.TRAIL, {
-                x: x + backX + jx,
-                y: y + backY + jy,
-
-                vx: vx * 0.18 + (Math.random() - 0.5) * 0.12,
-                vy: vy * 0.18 + (Math.random() - 0.5) * 0.12,
-
-                size: TRAIL_SIZE_MIN + Math.random() * (TRAIL_SIZE_MAX - TRAIL_SIZE_MIN),
-                maxLife: TRAIL_LIFE * (0.85 + Math.random() * 0.25),
-
-                r, g, b,
-            })
+        const mx = x - s.x, my = y - s.y, d = Math.hypot(mx, my)
+        // Ignore teleports/wraps rather than drawing across the arena.
+        if (d > 4) {
+            s.x = x; s.y = y; s.life = life; s.left = 0;
+            continue
         }
-    }
 
-    // remove state for projectiles that no longer exist
-    for (const eid of trailState.keys()) {
-        if (!seen.has(eid)) trailState.delete(eid)
+        let color = colors.get(weapon.id)
+       
+        if (!color) { color = new THREE.Color(weapon.trailColor ?? weapon.glowColor ?? "#ff6600"); colors.set(weapon.id, color) }
+       
+        let distance = SPACING - s.left, count = 0
+        const speed = Math.hypot(Velocity.x[id], Velocity.y[id]) || 1
+
+        while (distance <= d && count++ < MAX_PUFFS) {
+
+            const t = distance / Math.max(d, 1e-8)
+
+            emitEffect(EFFECT.TRAIL, { x: s.x + mx * t - Velocity.x[id] / speed * 0.22, y: s.y + my * t - Velocity.y[id] / speed * 0.22, vx: Velocity.x[id] * 0.18, vy: Velocity.y[id] * 0.18, size: 0.08 + Math.random() * 0.06, maxLife: 0.85, r: color.r, g: color.g, b: color.b })
+            distance += SPACING
+        }
+
+        s.left = (s.left + d) % SPACING; s.x = x; s.y = y; s.life = life
     }
+    for (const id of states.keys()) if (!seen.has(id)) states.delete(id)
 }

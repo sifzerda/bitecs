@@ -1,98 +1,73 @@
 // src/renderers/GunMount.jsx
 
+import { world } from '../ecs/constants/world.js'
 import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { playerQuery, bossQuery } from '../ecs/constants/queries.js'
-import { Position, Rotation, BossType } from '../ecs/constants/components.js'
+import { Position, Rotation, BossType, Invulnerability } from '../ecs/constants/components.js'
 import { BOSSES } from '../ecs/constants/bosses.js'
 import { startState } from '../state/startState.js'
 import { getGunTypeByWeaponId, getGunTypeById } from '../ecs/weapons/config/gunConfigs.js'
 import { WeaponMount } from './WeaponMount.jsx'
 
-const MAX_BOSSES = 4
+function FollowingGuns({ eid, gunCfg, player = false }) {
 
-export function GunMount() {
-
-    const playerGroupRef = useRef()
-    const bossRefsByEid = useRef(new Map())
-    const [activeBosses, setActiveBosses] = useState([])
+    const ref = useRef()
 
     useFrame(() => {
-        const pGroup = playerGroupRef.current
-        if (pGroup) {
-            const players = playerQuery()
-            if (players.length === 0) {
-                pGroup.visible = false
-            } else {
-                const pid = players[0]
-                pGroup.visible = true
-                pGroup.position.set(Position.x[pid], Position.y[pid], 0)
-                pGroup.rotation.set(0, 0, Rotation[pid])
-            }
+
+        const g = ref.current; if (!g) return
+        const ids = player ? playerQuery() : bossQuery()
+        const id = player ? ids[0] : eid
+
+        if (id === undefined || (!player && !ids.includes(id))) {
+            g.visible = false; return
         }
 
-        const bosses = bossQuery()
-        const currentEids = bosses.slice(0, MAX_BOSSES)
-
-        for (const eid of currentEids) {
-            const group = bossRefsByEid.current.get(eid)
-            if (group?.current) {
-                group.current.visible = true
-                group.current.position.set(Position.x[eid], Position.y[eid], 0.15)
-                group.current.rotation.set(0, 0, Rotation[eid])
-            }
-        }
-
-        const prevKey = activeBosses.map(b => `${b.eid}:${b.type}`).sort().join(',')
-        const nextKey = currentEids.map(eid => `${eid}:${BossType.typeIndex[eid]}`).sort().join(',')
-
-        if (prevKey !== nextKey) {
-            const next = currentEids.map(eid => ({ eid, type: BossType.typeIndex[eid] }))
-            setActiveBosses(next)
-
-            const nextEidSet = new Set(currentEids)
-            for (const staleEid of bossRefsByEid.current.keys()) {
-                if (!nextEidSet.has(staleEid)) bossRefsByEid.current.delete(staleEid)
-            }
-        }
+        g.visible = !player
+            || Invulnerability.remaining[id] <= 0
+            || Math.floor(world.time.elapsed * 10) % 2 === 0
+        g.position.set(Position.x[id], Position.y[id], player ? 0 : 0.15)
+        g.rotation.z = Rotation[id]
     })
 
-    const gunType = startState.gunSkinOverride
-        ? getGunTypeById(startState.gunSkinOverride)
-        : getGunTypeByWeaponId(startState.currentWeapon)
+    return <group ref={ref} visible={false}>
+        <WeaponMount gunCfg={gunCfg} />
 
-    const { mount } = gunType.config
-    const playerGunCfg = {
-        enabled: true,
-        typeId: gunType.id,
-        offsetX: mount.offsetX,
-        offsetY: mount.offsetY,
-        scale: mount.scale,
-        mirrored: true,
-    }
+    </group>
+}
 
+export function GunMount() {
+    const [weapon, setWeapon] = useState(() => ({
+        id: startState.currentWeapon,
+        skin: startState.gunSkinOverride
+    }))
+
+    const [bosses, setBosses] = useState([])
+    const cache = useRef({ id: weapon.id, skin: weapon.skin, bosses: "" })
+
+    useFrame(() => {
+        const c = cache.current
+        if (c.id !== startState.currentWeapon || c.skin !== startState.gunSkinOverride) {
+            c.id = startState.currentWeapon; c.skin = startState.gunSkinOverride; setWeapon({ id: c.id, skin: c.skin })
+        }
+        const ids = bossQuery(), key = ids.map(id => `${id}:${BossType.typeIndex[id]}`).join(",")
+        if (key !== c.bosses) { c.bosses = key; setBosses(ids.map(eid => ({ eid, type: BossType.typeIndex[eid] }))) }
+    })
+
+    const type = weapon.skin != null ? getGunTypeById(weapon.skin) : getGunTypeByWeaponId(weapon.id)
     return (
         <>
-            <group ref={playerGroupRef}>
-                <WeaponMount gunCfg={playerGunCfg} />
-            </group>
-
-            {activeBosses.map(({ eid, type }) => {
-                const bossCfg = BOSSES[type]
-                if (!bossRefsByEid.current.has(eid)) {
-                    bossRefsByEid.current.set(eid, { current: null })
-                }
-                const ref = bossRefsByEid.current.get(eid)
-
-                // Skip mounting a visible gun for bosses that opt out
-                // (the octopus — its "gun" only exists to derive a
-                // weaponId, not to be rendered as a held weapon).
-                const showGun = bossCfg?.gun && bossCfg.gunVisible !== false
+            {type &&
+                <FollowingGuns player gunCfg={{ typeId: type.id, enabled: true, mirrored: true }} />
+            }
+            {bosses.map(({ eid, type }) => {
+                const cfg = BOSSES[type];
 
                 return (
-                    <group key={eid} ref={ref} visible={false}>
-                        {showGun && <WeaponMount gunCfg={bossCfg.gun} />}
-                    </group>
+                    cfg?.isShip !== false && cfg?.gunVisible !== false && cfg?.gun ?
+                        <FollowingGuns key={`${eid}:${type}`} eid={eid} gunCfg={cfg.gun} />
+                        : null
                 )
             })}
         </>

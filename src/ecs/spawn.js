@@ -11,6 +11,26 @@ import { getGunTypeById } from "./weapons/config/gunConfigs.js"
 import { getWeapon } from "./weapons/config/weapons.js"
 import { getBossEmissionConfig, PLAYER_CONFIG } from "./constants/emission.js"
 
+// Cache projectile colours helper
+
+const projectileColors = new Map()
+
+function getProjectileColor(weapon) {
+  let color = projectileColors.get(weapon.id)
+
+  if (!color) {
+    color = new THREE.Color(
+      weapon.glowColor ?? weapon.color
+    )
+
+    color.offsetHSL(0, 0.3, 0)
+
+    projectileColors.set(weapon.id, color)
+  }
+
+  return color
+}
+
 // ============================================================
 // HELPERS
 // ============================================================
@@ -43,6 +63,10 @@ export function spawnPlayer(x, y) {
     addComponent(world, id, PlayerTag)
     addComponent(world, id, Invulnerability)
     setHealth(id, 100)
+
+    Velocity.x[id] = 0
+    Velocity.y[id] = 0
+    Rotation[id] = 0
 
     Invulnerability.remaining[id] = 0
 
@@ -171,13 +195,13 @@ export function spawnBullet(
         Bullet.type[id] = weapon.id
         Bullet.owner[id] = owner
         Bullet.source[id] = sourceId
+        Bullet.deflected[id] = 0
 
         // ----------------------------------------------------
         // Cached render color
         // ----------------------------------------------------
 
-        const color = new THREE.Color(weapon.glowColor ?? weapon.color)
-        color.offsetHSL(0, 0.30, 0.00)
+        const color = getProjectileColor(weapon)
         Bullet.colorR[id] = color.r
         Bullet.colorG[id] = color.g
         Bullet.colorB[id] = color.b

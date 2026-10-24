@@ -1,117 +1,182 @@
 // src/ecs/systems/waveSystem.js
 
 import { removeEntity } from "bitecs"
+
 import { world } from "../constants/world.js"
-import { useGameStore } from "../../../store/gameStore.js"
-import { getProgression } from "../constants/progression.js"
+
+import {
+  Position,
+  BossAI,
+} from "../constants/components.js"
+
+import {
+  bossQuery,
+  playerQuery,
+} from "../constants/queries.js"
+
+import {
+  useGameStore,
+  SCREEN,
+} from "../../../store/gameStore.js"
+
+import {
+  getProgression,
+} from "../constants/progression.js"
+
 import { startState } from "../../state/startState.js"
-import { spawnAsteroid, spawnBoss } from "../spawn.js"
-import { bossQuery } from "../constants/queries.js"
-import { activeAsteroids, releaseAsteroidEntity } from "../pools/asteroidPool.js"
+
+import {
+  spawnAsteroid,
+  spawnBoss,
+} from "../spawn.js"
+
+import {
+  activeAsteroids,
+  releaseAsteroidEntity,
+} from "../pools/asteroidPool.js"
+
+import {
+  beginEncounterClear,
+} from "./encounterSystem.js"
 
 const SPAWN_RADIUS = 16
+const BOSS_SPAWN_DISTANCE = 10
+const BOSS_ENTRANCE_DELAY = 1.5
 
 let encounterSpawned = false
 
-// ============================================================
-// ENCOUNTER SYSTEM
-// ============================================================
+function spawnAsteroidWave(count) {
+  startState.asteroidsRemaining = 0
+
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2
+
+    const id = spawnAsteroid(
+      Math.cos(angle) * SPAWN_RADIUS,
+      Math.sin(angle) * SPAWN_RADIUS
+    )
+
+    if (id !== -1) {
+      startState.asteroidsRemaining++
+    }
+  }
+
+  if (startState.asteroidsRemaining === 0) {
+    console.error(
+      "[waveSystem] No asteroids could be spawned."
+    )
+
+    beginEncounterClear()
+  }
+}
+
+function spawnBossEncounter(key) {
+  const id = spawnBoss(key)
+
+  if (id == null || id === -1) {
+    console.error(
+      "[waveSystem] Boss could not be spawned:",
+      key
+    )
+
+    beginEncounterClear()
+    return
+  }
+
+  const pid = playerQuery()[0]
+
+  const playerX =
+    pid === undefined ? 0 : Position.x[pid]
+
+  const playerY =
+    pid === undefined ? 0 : Position.y[pid]
+
+  // Choose the opposite side of the arena.
+  // Replace these coordinates with your arena bounds
+  // if your playable area is smaller than this.
+  Position.x[id] =
+    playerX >= 0 ? -BOSS_SPAWN_DISTANCE : BOSS_SPAWN_DISTANCE
+
+  Position.y[id] =
+    playerY >= 0 ? -3 : 3
+
+  BossAI.shootTimer[id] = BOSS_ENTRANCE_DELAY
+
+  // Existing ECS field, reused for entrance protection.
+  BossAI.decisionCooldown[id] = BOSS_ENTRANCE_DELAY
+}
 
 export function waveSystem() {
-    // Wait until the current encounter has been cleared.
-    if (startState.asteroidsRemaining > 0) {
-        return
-    }
+  const state = useGameStore.getState()
 
-    // A boss or asteroid wave is already active.
-    if (bossQuery(world).length > 0 || activeAsteroids.length > 0) {
-        return
-    }
+  if (
+    state.screen !== SCREEN.PLAY ||
+    state.paused ||
+    encounterSpawned ||
+    startState.encounterPhase !== "idle"
+  ) {
+    return
+  }
 
-    const level = useGameStore.getState().level
-    const progression = getProgression(level)
+  // Wait for Home's player-spawn effect.
+  if (playerQuery().length === 0) return
 
-    // Don't spawn another encounter while this one is awaiting completion.
-    if (encounterSpawned) {
-        return
-    }
+  if (
+    activeAsteroids.length > 0 ||
+    bossQuery().length > 0
+  ) {
+    return
+  }
 
-    encounterSpawned = true
+  const progression = getProgression(state.level)
 
-    if (progression.isBoss) {
-        spawnBoss(progression.boss)
-        return
-    }
-
+  if (!progression.isBoss) {
     const count = progression.config?.asteroidCount
 
-    if (count == null) {
-        console.error("[WAVE SYSTEM] Missing asteroid configuration", {
-            level,
-            zone: progression.zone.id,
-            wave: progression.wave,
-        })
+    if (
+      !Number.isInteger(count) ||
+      count <= 0
+    ) {
+      console.error(
+        "[waveSystem] Invalid asteroid count:",
+        count
+      )
 
-        encounterSpawned = false
-        return
+      return
     }
+  }
 
-    spawnAsteroidWave(count)
+  encounterSpawned = true
+  startState.encounterPhase = "active"
+
+  if (progression.isBoss) {
+    spawnBossEncounter(progression.boss)
+  } else {
+    spawnAsteroidWave(
+      progression.config.asteroidCount
+    )
+  }
 }
-
-// ============================================================
-// SPAWN ASTEROID WAVE
-// ============================================================
-
-function spawnAsteroidWave(count) {
-
-    startState.asteroidsRemaining = count
-
-    for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2
-        spawnAsteroid(Math.cos(angle) * SPAWN_RADIUS, Math.sin(angle) * SPAWN_RADIUS)
-    }
-}
-
-// ============================================================
-// SKIP CURRENT ENCOUNTER - DEBUG ONLY
-// ============================================================
 
 export function skipWave() {
+  if (!import.meta.env.DEV) return
 
-    // --------------------------------------------------------
-    // Remove asteroids
-    // --------------------------------------------------------
+  while (activeAsteroids.length > 0) {
+    releaseAsteroidEntity(
+      activeAsteroids[activeAsteroids.length - 1]
+    )
+  }
 
-    for (let i = activeAsteroids.length - 1; i >= 0; i--) {
-        releaseAsteroidEntity(activeAsteroids[i])
-    }
+  for (const id of [...bossQuery()]) {
+    removeEntity(world, id)
+  }
 
-    // --------------------------------------------------------
-    // Remove bosses
-    // --------------------------------------------------------
+  startState.asteroidsRemaining = 0
+  startState.encounterPhase = "completed"
 
-    for (const id of bossQuery()) {
-        removeEntity(world, id)
-    }
-
-    // --------------------------------------------------------
-    // Clear runtime encounter state
-    // --------------------------------------------------------
-
-    startState.asteroidsRemaining = 0
-
-    // --------------------------------------------------------
-    // Complete encounter
-    //
-    // Do NOT advance the level here.
-    // --------------------------------------------------------
-
-    useGameStore
-        .getState()
-        .completeLevel()
+  useGameStore.getState().completeLevel()
 }
 
 export function resetWaveSystem() {
-    encounterSpawned = false
+  encounterSpawned = false
 }

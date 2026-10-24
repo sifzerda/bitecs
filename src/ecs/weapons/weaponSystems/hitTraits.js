@@ -1,89 +1,37 @@
 // src/ecs/systems/hitTraits.js
 
-import { Health } from "../../constants/components.js"
+import { entityExists } from "bitecs"
+import { world } from "../../constants/world.js"
+import { Health, Position } from "../../constants/components.js"
 import { explodeAt, chainLightning } from "./weaponEffects.js"
 import { applyStatusEffects } from "../../systems/statusEffectSystem.js"
 import { emitEffect } from "../../../fx/effects.js"
 import { EFFECT } from "../../../fx/FXTypes.js"
 
-// Each trait: (present on weapon?) -> apply(ctx).
-// ctx = {
-//     x,
-//     y,
-//     targetId,
-//     weapon,
-//     owner,
-//     kill,
-//     asteroids,
-//     bosses,
-//     big
-// }
-//
-// Traits run in this order for every hit.
-// Each is independent and optional.
+// Explosion owns damage for explosive projectiles; do not double-hit the primary target.
 
-export const HIT_TRAITS = [
+export function resolveHit({ x, y, targetId, weapon, kill, asteroids, bosses, big = false }) {
 
-    // --------------------------------------------------------
-    // Explosion
-    // --------------------------------------------------------
+    if (!entityExists(world, targetId) || Health.current[targetId] <= 0)
+        return false
 
-    {
-        applies: w => w.explosive,
-        apply: ({ x, y, weapon, asteroids, bosses }) => explodeAt(x, y, weapon, asteroids, bosses),
-    },
+    const targetX = Position.x[targetId], targetY = Position.y[targetId]
 
-    // --------------------------------------------------------
-    // Status effects
-    // --------------------------------------------------------
-
-    {
-        applies: w => w.corrosion || w.freezeDuration,
-        apply: ({ targetId, weapon }) => applyStatusEffects(targetId, weapon),
-    },
-
-    // --------------------------------------------------------
-    // Chain lightning
-    // --------------------------------------------------------
-
-    {
-        applies: w => w.chainCount,
-        apply: ({ x, y, weapon, asteroids, targetId }) => chainLightning(x, y, weapon, asteroids, targetId),
-    },
-
-    // --------------------------------------------------------
-    // Impact spark
-    // --------------------------------------------------------
-
-    {
-        applies: w => !w.explosive,
-        apply: ({ x, y, big }) => emitEffect(EFFECT.SPARK_BURST, { x, y, count: big ? 26 : 20, speed: big ? 10 : 8, big: !!big }),
-    },
-]
-
-// ============================================================
-// Resolve hit
-// ============================================================
-
-export function resolveHit({ x, y, targetId, weapon, owner, kill, asteroids, bosses, big = false }) {
-
-    if (weapon.directDamage > 0) {
-        Health.current[targetId] -= weapon.directDamage
+    if (weapon.explosive) {
+        explodeAt(x, y, weapon, asteroids, bosses);
+        return Health.current[targetId] <= 0
     }
 
-    const ctx = { x, y, targetId, weapon, owner, asteroids, bosses, big }
+    Health.current[targetId] -= weapon.directDamage ?? 0
 
-    for (const trait of HIT_TRAITS) {
+    if (Health.current[targetId] > 0 && (weapon.corrosion || weapon.freezeDuration))
+        applyStatusEffects(targetId, weapon)
+    if (weapon.chainCount)
+        chainLightning(targetX, targetY, weapon, asteroids, targetId)
 
-        if (trait.applies(weapon)) {
-            trait.apply(ctx)
-        }
-    }
+    emitEffect(EFFECT.SPARK_BURST, { x, y, count: big ? 26 : 20, speed: big ? 10 : 8, big })
 
-    if (Health.current[targetId] <= 0) {
-        kill(targetId, x, y)
-        return true
-    }
+    if (Health.current[targetId] <= 0) { kill(targetId, targetX, targetY); return true }
 
     return false
 }

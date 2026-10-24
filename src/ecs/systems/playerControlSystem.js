@@ -57,7 +57,6 @@ export function syncPlayerMotion(playerId) {
 
 // Linear movement
 const THRUST = 20
-const BRAKE = 35
 const MAX_SPEED = 22
 // Passive space drag
 const LINEAR_DRAG = 0.8
@@ -76,7 +75,8 @@ const KEYBOARD_TURN_ACCELERATION = 22
 // OTHER SETTINGS
 // ============================================================
 
-const DEFLECT_BUFFER = 0.6
+const DEFLECT_BUFFER = 0.18
+const DEFLECT_COOLDOWN = 0.7
 
 export default function playerControlSystem(shootState) {
 
@@ -163,22 +163,16 @@ export default function playerControlSystem(shootState) {
         Velocity.y[pid] += forwardY * THRUST * dt
     }
 
-// ========================================================
-// REVERSE THRUST / BRAKING
-// ========================================================
+    // ========================================================
+    // REVERSE THRUST / BRAKING
+    // ========================================================
 
-if (input.brake) {
+    if (input.brake) {
+        const brakeFactor = Math.exp(-ACTIVE_BRAKE * dt)
 
-    // Reverse thrust
-    Velocity.x[pid] -= forwardX * BRAKE * dt
-    Velocity.y[pid] -= forwardY * BRAKE * dt
-
-    // Additional velocity damping
-    const brakeFactor = Math.exp(-ACTIVE_BRAKE * dt)
-
-    Velocity.x[pid] *= brakeFactor
-    Velocity.y[pid] *= brakeFactor
-}
+        Velocity.x[pid] *= brakeFactor
+        Velocity.y[pid] *= brakeFactor
+    }
 
     // ========================================================
     // LINEAR SPEED LIMIT
@@ -197,14 +191,14 @@ if (input.brake) {
         Velocity.y[pid] *= scale
     }
 
-// ========================================================
-// SPACE DRAG
-// ========================================================
+    // ========================================================
+    // SPACE DRAG
+    // ========================================================
 
-const drag = Math.exp(-LINEAR_DRAG * dt)
+    const drag = Math.exp(-LINEAR_DRAG * dt)
 
-Velocity.x[pid] *= drag
-Velocity.y[pid] *= drag
+    Velocity.x[pid] *= drag
+    Velocity.y[pid] *= drag
 
     // ========================================================
     // DEFLECT
@@ -215,15 +209,23 @@ Velocity.y[pid] *= drag
         startState.deflectBufferTime - dt
     )
 
+    startState.deflectCooldownTime = Math.max(
+        0,
+        startState.deflectCooldownTime - dt
+    )
+
     startState.deflectFlashTimer = Math.max(
         0,
         startState.deflectFlashTimer - dt
     )
 
     if (input.deflect) {
+        if (startState.deflectCooldownTime === 0) {
+            startState.deflectBufferTime = DEFLECT_BUFFER
+            startState.deflectCooldownTime = DEFLECT_COOLDOWN
+        }
 
-        startState.deflectBufferTime = DEFLECT_BUFFER
-
+        // Input is an activation request, not a held action.
         input.deflect = false
     }
 
@@ -233,43 +235,71 @@ Velocity.y[pid] *= drag
 
     const weapon = getWeapon(startState.currentWeapon)
 
-    if (!getAction(weapon).continuous) {
+    if (!weapon) return
 
-        shootState.timer -= dt
+    const action = getAction(weapon)
 
-        if (input.fire && shootState.timer <= 0) {
+    if (!action || action.continuous) {
+        shootState.timer = 0
+        return
+    }
 
-            const rot = Rotation[pid]
+    // Reset cooldown when the equipped weapon changes.
+    if (shootState.weaponId !== weapon.id) {
+        shootState.weaponId = weapon.id
+        shootState.timer = 0
+    }
 
-            const angle = Math.atan2(
-                Math.cos(-rot),
-                Math.sin(-rot)
-            )
+    shootState.timer = Math.max(
+        -dt,
+        shootState.timer - dt
+    )
 
-            const size =
-                0.8 + (weapon.hitRadius ?? 0.5) * 0.6
+    if (!input.fire) {
+        shootState.timer = Math.max(
+            0,
+            shootState.timer
+        )
 
-            const { origins } = spawnPlayerBullet(
-                Position.x[pid],
-                Position.y[pid],
-                rot,
-                weapon.id,
-                BULLET_OWNER.PLAYER,
-                pid
-            )
+        return
+    }
 
-            for (const o of origins) {
+    if (shootState.timer > 0) return
 
-                emitEffect(EFFECT.FLASH, {
-                    x: o.x,
-                    y: o.y,
-                    angle,
-                    size,
-                    color: weapon.glowColor
-                })
-            }
+    const rot = Rotation[pid]
 
-            shootState.timer = weapon.fireRate
+    const angle = Math.atan2(
+        Math.cos(-rot),
+        Math.sin(-rot)
+    )
+
+    const size =
+        0.8 + (weapon.hitRadius ?? 0.5) * 0.6
+
+    const result = spawnPlayerBullet(
+        Position.x[pid],
+        Position.y[pid],
+        rot,
+        weapon.id,
+        BULLET_OWNER.PLAYER,
+        pid
+    )
+
+    if (result.ids.length > 0) {
+        for (const origin of result.origins) {
+            emitEffect(EFFECT.FLASH, {
+                x: origin.x,
+                y: origin.y,
+                angle,
+                size,
+                color: weapon.glowColor,
+            })
         }
     }
+
+    // Add the interval instead of discarding timing overshoot.
+    shootState.timer += Math.max(
+        dt,
+        weapon.fireRate ?? 0.15
+    )
 }

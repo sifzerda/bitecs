@@ -1,12 +1,13 @@
 // src/renderers/ExhaustRenderer.jsx
 
+import { world } from "../ecs/constants/world.js"
+import { useGameStore, SCREEN } from "../../store/gameStore.js"
 import { useMemo, useRef, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { exhaustSources } from "../fx/gpu/ExhaustState"
 
 const PARTICLE_SIZE = 128
-
 // Matches the shader's lifespan formula: 0.5 + seed * 0.5, seed in [0,1]
 const MAX_LIFESPAN = 1.0
 
@@ -147,7 +148,7 @@ const renderFragmentShader = /* glsl */
     float d = length(gl_PointCoord - vec2(0.5));
     if (d > 0.5) discard;
 
-    float alpha = smoothstep(0.5, 0.0, d) * clamp(vLife, 0.0, 1.0) * 0.15;
+    float alpha = (1.0 - smoothstep(0.0, 0.5, d)) * clamp(vLife, 0.0, 1.0) * 0.15;
 
     vec3 color = mix(uHotCore, uFireColor, smoothstep(0.0, 0.15, vAge));
     color = mix(color, uSmokeColor, smoothstep(0.15, 1.0, vAge));
@@ -200,7 +201,7 @@ function createRenderTarget(size) {
 // nozzleOffset / engineGap: tune per ship silhouette (player vs boss hull size)
 // colors: optional override for the fire->smoke gradient (e.g. boss could run hotter/redder)
 
-export function ExhaustRenderer({
+export default function ExhaustRenderer({
   size = 4,
   slot = 0,
   nozzleOffset = -0.70,
@@ -316,9 +317,13 @@ export function ExhaustRenderer({
   }, [initialPosTexture, rtA, rtB, simMaterial, renderMaterial, pointsGeometry])
 
   useFrame((state, delta) => {
+        const game = useGameStore.getState()
+        if (game.screen === SCREEN.PLAY && game.paused) return
+        delta = Math.min(delta, 0.05)
+
 
     const ship = exhaustSources.find(s => s.slot === slot)
-    const now = state.clock.elapsedTime
+    const now = world.time.elapsed
     const emitting = !!(ship && ship.emitting)
 
     if (emitting) {
@@ -341,7 +346,7 @@ export function ExhaustRenderer({
 
     simMaterial.uniforms.uPosTex.value = readTexture.current
     simMaterial.uniforms.uDelta.value = Math.min(delta, 0.1)
-    simMaterial.uniforms.uTime.value = state.clock.elapsedTime
+    simMaterial.uniforms.uTime.value = world.time.elapsed
 
     if (ship) {
       simMaterial.uniforms.uShipPos.value.set(ship.x, ship.y)

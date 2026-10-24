@@ -1,161 +1,125 @@
 // src/screens/PlayScreen.jsx
 
-import { useFrame } from '@react-three/fiber'
-import {
-    EffectComposer, Bloom, ChromaticAberration, Vignette, Noise, SMAA,
-    // ShockWave,
-    // Glitch
-} from '@react-three/postprocessing';
-import { Canvas } from '@react-three/fiber'
-import { BlendFunction } from 'postprocessing'
-import {
-    Environment,
-    //Trail -- effect to make moving things trail 
-    //Float -- effect for floating power-ups
-} from '@react-three/drei'
-import { useRef, useEffect } from 'react'
-import { HUD } from '../components/HUD.jsx'
-import { world } from '../ecs/constants/world.js'
-import { gameLoop } from '../state/gameLoop.js'
+import { Suspense, useRef } from "react"
+import { Canvas, useFrame } from "@react-three/fiber"
+import { Environment, Stats } from "@react-three/drei"
+import { EffectComposer, Bloom, Vignette, Noise, SMAA } from "@react-three/postprocessing"
+import { HUD } from "../components/HUD.jsx"
+import { world } from "../ecs/constants/world.js"
+import { gameLoop } from "../state/gameLoop.js"
+import { useGameStore, SCREEN } from "../../store/gameStore.js"
+import { useSettings, QUALITY_DPR } from "../ecs/systems/settings.js"
+import MouseWorldTracker from "../ecs/systems/MouseWorldTracker.jsx"
+import { PlayerRenderer, BossRenderer } from "../renderers/ShipRenderer.jsx"
+import { AsteroidRenderer } from "../renderers/AsteroidRenderer.jsx"
+import { BulletRenderer } from "../renderers/BulletRenderer.jsx"
+import { MissileRenderer } from "../renderers/MissileRenderer.jsx"
+import { ArcRenderer } from "../renderers/ArcRenderer.jsx"
+import { GrenadeRenderer } from "../renderers/GrenadeRenderer.jsx"
+import { LaserRenderer } from "../renderers/LaserRenderer.jsx"
+import { ThrowerRenderer } from "../renderers/ThrowerRenderer.jsx"
+import { DeflectRenderer } from "../renderers/DeflectRenderer.jsx"
+import { StarfieldRenderer } from "../renderers/StarfieldRenderer.jsx"
+import { FlashRenderer } from "../renderers/FlashRenderer.jsx"
+import { SparkRenderer } from "../renderers/SparkRenderer.jsx"
+import { ExplosionRenderer } from "../renderers/ExplosionRenderer.jsx"
+import { GunMount } from "../renderers/GunMount.jsx"
+import { DebrisRenderer } from "../renderers/DebrisRenderer.jsx"
+import ExhaustRenderer from "../renderers/ExhaustRenderer.jsx"
+import { SmokeRenderer } from "../renderers/SmokeRenderer.jsx"
+import { TrailRenderer } from "../renderers/TrailRenderer.jsx"
 
-import MouseWorldTracker from '../ecs/systems/MouseWorldTracker.jsx'
+const STEP = 1 / 60
 
-import { PlayerRenderer, BossRenderer } from '../renderers/ShipRenderer.jsx'
-import { AsteroidRenderer } from '../renderers/AsteroidRenderer.jsx'
-import { BulletRenderer } from '../renderers/BulletRenderer.jsx'
-import { MissileRenderer } from '../renderers/MissileRenderer.jsx'
+export function GameLoop({ paused }) {
 
-import { ArcRenderer } from '../renderers/ArcRenderer.jsx'
-import { GrenadeRenderer } from '../renderers/GrenadeRenderer.jsx'
-
-import { LaserRenderer } from '../renderers/LaserRenderer.jsx'
-import { ThrowerRenderer } from '../renderers/ThrowerRenderer.jsx'
-import { DeflectRenderer } from '../renderers/DeflectRenderer.jsx'
-
-import { StarfieldRenderer } from '../renderers/StarfieldRenderer.jsx'
-
-import { FlashRenderer } from '../renderers/FlashRenderer.jsx'
-import { SparkRenderer } from '../renderers/SparkRenderer.jsx'
-import { ExplosionRenderer } from '../renderers/ExplosionRenderer.jsx'
-
-import { GunMount } from '../renderers/GunMount.jsx'
-
-import { DebrisRenderer } from '../renderers/DebrisRenderer.jsx'
-import { ExhaustRenderer } from '../renderers/ExhaustRenderer.jsx'
-import { SmokeRenderer } from '../renderers/SmokeRenderer.jsx'
-import { TrailRenderer } from '../renderers/TrailRenderer.jsx'
-
-export function GameLoop({ keysRef, paused }) {
-    const shootState = useRef({ timer: 0 })
+    const accumulator = useRef(0), shoot = useRef({ timer: 0 })
 
     useFrame((_, delta) => {
+        const state = useGameStore.getState()
 
-        if (paused) return
+        if (paused || state.paused || state.screen !== SCREEN.PLAY) { accumulator.current = 0; return }
+        accumulator.current += Math.min(delta, 0.1)
+        let steps = 0
 
-        world.time.delta = Math.min(delta, 0.05)
-        world.time.elapsed += world.time.delta
+        while (accumulator.current >= STEP && steps < 6) {
+            const latest = useGameStore.getState()
 
-        gameLoop(shootState.current, world.time.delta)
-
-    })
+            if (latest.paused || latest.screen !== SCREEN.PLAY) { accumulator.current = 0; break }
+            world.time.delta = STEP; world.time.elapsed += STEP
+            gameLoop(shoot.current, STEP); accumulator.current -= STEP; steps++
+        }
+        if (steps === 6 && accumulator.current >= STEP) accumulator.current %= STEP
+    }, -1)
 
     return null
 }
+export function PlayScreen({ paused, onPause }) {
 
-export function PlayScreen({ keysRef, paused, onPause }) {
+    const settings = useSettings()
+
     return (
-        <div className="border-2 border-green-400 flex flex-col h-[calc(100vh-120px)]">
+        <div className="flex h-[calc(100vh-120px)] flex-col border-2 border-green-400">
 
             <HUD paused={paused} onPause={onPause} />
 
-            <div className="relative flex-1 px-4">
+            <div className="relative min-h-0 flex-1">
+                <Canvas orthographic camera={{ zoom: 60, position: [0, 0, 10], near: 0.1, far: 100 }} gl={{ antialias: false, powerPreference: "high-performance" }} dpr={[1, QUALITY_DPR[settings.quality]]}>
+                  
+                    <Suspense fallback={null}>
+                       
+                        <MouseWorldTracker />
+                      
+                        <GameLoop paused={paused} />
+                        <ambientLight intensity={1.1} />
+                        <directionalLight position={[5, 8, 6]} intensity={2} />
+                        <pointLight position={[0, 0, 6]} intensity={4} />
+                        
+                        <StarfieldRenderer />
+                        <Environment preset="sunset" />
+                        
+                        <PlayerRenderer />
+                        <BossRenderer />
+                       
+                        <GunMount />
+                       
+                        <DeflectRenderer />
+                       
+                        <ExhaustRenderer slot={0} />
+                        <ExhaustRenderer slot={1} size={5} nozzleOffset={-0.8} engineGap={0.35} hotCore="#ff8a1a" fireColor="#ff5a12" />
+                       
+                        <AsteroidRenderer />
+                       
+                        <BulletRenderer />
+                       
+                        <MissileRenderer />
+                        <GrenadeRenderer />
+                       
+                        <LaserRenderer source="player" />
+                        <LaserRenderer source="boss" />
+                        <ArcRenderer source="player" />
+                        <ArcRenderer source="boss" renderChainLinks={false} />
+                        <ThrowerRenderer source="player" />
+                        <ThrowerRenderer source="boss" />
+                       
+                        <TrailRenderer />
+                        <SparkRenderer />
+                        <SmokeRenderer />
+                        <DebrisRenderer />
+                        <ExplosionRenderer />
+                        <FlashRenderer />
 
-                <Canvas
-                    orthographic
-                    camera={{ zoom: 60, position: [0, 0, 10], near: 0.1, far: 100 }}
-                    gl={{ antialias: false, powerPreference: "high-performance" }}
-                    dpr={[1, 2]}>
+                        <EffectComposer multisampling={0}>
+                            {settings.bloom && <Bloom intensity={1.65} luminanceThreshold={0.35} luminanceSmoothing={0.6} radius={0.9} mipmapBlur />}
+                            <Vignette eskil={false} offset={0.25} darkness={0.45} />
+                            <Noise opacity={0.018} />
+                            <SMAA />
+                        </EffectComposer>
+                        {settings.fps && <Stats />}
 
-                    <MouseWorldTracker />
+                    </Suspense>
 
-                    <GameLoop keysRef={keysRef} paused={paused} />
-
-                    <ambientLight intensity={1.1} />
-                    <directionalLight position={[5, 8, 6]} intensity={2.0} />
-                    <pointLight position={[0, 0, 6]} intensity={4} color="#ffffff" />
-
-                    <StarfieldRenderer />
-                    <Environment preset="sunset" />
-
-                    <PlayerRenderer />
-
-                    <DeflectRenderer />
-                    <GunMount />
-
-                    {/* Player */}
-                    <ExhaustRenderer slot={0} />
-
-                    {/* Bosses */}
-                    <ExhaustRenderer
-                        slot={1}
-                        size={5}
-                        nozzleOffset={-0.8}
-                        engineGap={0.35}
-                        hotCore="#ff8a1a"
-                        fireColor="#ff5a12"
-                    />
-
-                    <AsteroidRenderer />
-                    <BulletRenderer />
-                    <TrailRenderer />
-                    <MissileRenderer />
-                    <GrenadeRenderer />
-
-                    <LaserRenderer source="player" />
-                    <LaserRenderer source="boss" />
-
-                    <ArcRenderer source="player" />   {/* renderChainLinks defaults true */}
-                    <ArcRenderer source="boss" renderChainLinks={false} />    {/* avoid drawing the shared chain pool twice */}
-
-                    <ThrowerRenderer source="player" />
-                    <ThrowerRenderer source="boss" />
-
-                    <SparkRenderer />
-
-                    <SmokeRenderer // debug colors and props
-                        hotCore="#ffffff"
-                        fireColor="#00ffff"
-                        smokeColor="#0088ff"
-                        baseOpacity={0.9}
-                        sizeMultiplier={4}
-                    />
-
-                    <DebrisRenderer />
-                    <ExplosionRenderer />
-                    <FlashRenderer />
-
-                    <BossRenderer />
-
-                    <EffectComposer multisampling={0}>
-                        {/* === FIRE BLOOM SETUP === */}
-                        <Bloom
-                            intensity={1.65}           // Overall glow strength
-                            luminanceThreshold={0.35}  // Lower = more things glow (good for fire)
-                            luminanceSmoothing={0.6}   // Softer transition
-                            radius={0.9}               // How wide the glow spreads
-                            mipmapBlur                 // Better quality
-                        />
-
-                        {/* Optional */}
-                        <Vignette eskil={false} offset={0.25} darkness={0.45} />
-                        <Noise opacity={0.018} />
-
-                        {/* <ChromaticAberration offset={[0.001, 0.001]} /> */}
-                    </EffectComposer>
-
-                    <SMAA />
                 </Canvas>
-
             </div>
         </div>
     )

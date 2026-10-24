@@ -1,286 +1,72 @@
 // src/ecs/constants/progression.js
 
-// ============================================================
-// ZONES
-//
-// Each zone contains:
-//   - waves
-//   - one boss
-//
-// A level represents exactly one encounter:
-//   Wave 1
-//   Wave 2
-//   Wave 3
-//   Boss
-//
-// Add another zone here and the rest of the game automatically
-// scales to it.
-// ============================================================
-
 export const ZONES = [
 
-    {
-        id: 1,
-        name: "ASTEROID BELT",
-        boss: "shotgun",
+    ["ASTEROID BELT", "shotgun", 6, 8, 10], ["DEEP SPACE", "machinegun", 8, 10, 12],
+    ["FROZEN SECTOR", "cryogun", 10, 12, 14], ["VOLCANIC SECTOR", "flamethrowergun", 12, 15, 18],
+    ["MINEFIELD", "grenadegun", 14, 17, 20], ["TOXIC EXPANSE", "acidthrowergun", 16, 19, 22],
+    ["MARS BLOCKADE", "missilegun", 18, 21, 24], ["ALIEN NEBULA", "lasergun", 20, 23, 26],
+    ["ION STORM", "arcgun", 22, 25, 28], ["PLASMA RIFT", "plasmagun", 24, 27, 30],
+    ["THE ABYSS", "octopus", 26, 29, 32],
 
-        waves: [
-            { asteroidCount: 6 },
-            { asteroidCount: 8 },
-            { asteroidCount: 10 },
-        ],
-    },
+].map(([name, boss, ...counts], i) => ({ id: i + 1, name, boss, waves: counts.map(asteroidCount => ({ asteroidCount })) }))
 
-    {
-        id: 2,
-        name: "DEEP SPACE",
-        boss: "machinegun",
-
-        waves: [
-            { asteroidCount: 8 },
-            { asteroidCount: 10 },
-            { asteroidCount: 12 },
-        ],
-    },
-
-    {
-        id: 3,
-        name: "FROZEN SECTOR",
-        boss: "cryogun",
-
-        waves: [
-            { asteroidCount: 10 },
-            { asteroidCount: 12 },
-            { asteroidCount: 14 },
-        ],
-    },
-
-    {
-        id: 4,
-        name: "VOLCANIC SECTOR",
-        boss: "flamethrowergun",
-
-        waves: [
-            { asteroidCount: 12 },
-            { asteroidCount: 15 },
-            { asteroidCount: 18 },
-        ],
-    },
-
- {
-        id: 5,
-        name: "MINEFIELD",
-        boss: "grenadegun",
-        waves: [
-            { asteroidCount: 14 },
-            { asteroidCount: 17 },
-            { asteroidCount: 20 },
-        ],
-    },
-
-    {
-        id: 6,
-        name: "TOXIC EXPANSE",
-        boss: "acidthrowergun",
-        waves: [
-            { asteroidCount: 16 },
-            { asteroidCount: 19 },
-            { asteroidCount: 22 },
-        ],
-    },
-
-    {
-        id: 7,
-        name: "MARS BLOCKADE",
-        boss: "missilegun",
-        waves: [
-            { asteroidCount: 18 },
-            { asteroidCount: 21 },
-            { asteroidCount: 24 },
-        ],
-    },
-
-    {
-        id: 8,
-        name: "ALIEN NEBULA",
-        boss: "lasergun",
-        waves: [
-            { asteroidCount: 20 },
-            { asteroidCount: 23 },
-            { asteroidCount: 26 },
-        ],
-    },
-
-    {
-        id: 9,
-        name: "ION STORM",
-        boss: "arcgun",
-        waves: [
-            { asteroidCount: 22 },
-            { asteroidCount: 25 },
-            { asteroidCount: 28 },
-        ],
-    },
-
-    {
-        id: 10,
-        name: "PLASMA RIFT",
-        boss: "plasmagun",
-        waves: [
-            { asteroidCount: 24 },
-            { asteroidCount: 27 },
-            { asteroidCount: 30 },
-        ],
-    },
-
-    {
-        id: 11,
-        name: "THE ABYSS",
-        boss: "octopus",
-        waves: [
-            { asteroidCount: 26 },
-            { asteroidCount: 29 },
-            { asteroidCount: 32 },
-        ],
-    },
-]
-
-
-// ============================================================
-// DERIVED PROGRESSION VALUES
-// ============================================================
-
-export const WAVES_PER_ZONE = ZONES[0]?.waves?.length ?? 0
+export const WAVES_PER_ZONE = ZONES[0].waves.length
 export const ENCOUNTERS_PER_ZONE = WAVES_PER_ZONE + 1
-export const TOTAL_LEVELS = ZONES.reduce((total, zone) => total + zone.waves.length + 1, 0)
-
-// ============================================================
-// LEVEL → PROGRESSION
-//
-// This is the SINGLE source of truth for:
-//
-//   level
-//   zone
-//   wave
-//   boss
-//   encounter type
-// ============================================================
+export const TOTAL_LEVELS = ZONES.reduce((sum, z) => sum + z.waves.length + 1, 0)
 
 export function getProgression(level) {
-
-    const safeLevel = Math.max(1, Math.min(Number(level) || 1, TOTAL_LEVELS))
+    
+    const number = Number(level)
+    const safeLevel = Math.max(1, Math.min(Number.isFinite(number) ? Math.trunc(number) : 1, TOTAL_LEVELS))
     let remaining = safeLevel - 1
-
+   
     for (let zoneIndex = 0; zoneIndex < ZONES.length; zoneIndex++) {
+       
+        const zone = ZONES[zoneIndex], count = zone.waves.length + 1
+        if (remaining < count) {
 
-        const zone = ZONES[zoneIndex]
-        const encounterCount = zone.waves.length + 1
-
-        if (remaining < encounterCount) {
-
-            const encounterIndex = remaining
-            const isBoss = encounterIndex === zone.waves.length
+            const isBoss = remaining === zone.waves.length;
 
             return {
-
                 level: safeLevel,
-                zone,
-                zoneIndex,
-                encounterIndex,
+                zone, zoneIndex,
+                encounterIndex: remaining,
                 type: isBoss ? "boss" : "wave",
-                isBoss,
-                wave: isBoss ? null : encounterIndex + 1,
+                isBoss, wave: isBoss ? null : remaining + 1,
                 boss: isBoss ? zone.boss : null,
-                config: isBoss ? null : zone.waves[encounterIndex],
+                config: isBoss ? null : zone.waves[remaining]
             }
         }
-
-        remaining -= encounterCount
-    }
-
-    // --------------------------------------------------------
-    // Safety fallback
-    // --------------------------------------------------------
-
-    const lastZone = ZONES[ZONES.length - 1]
-    const lastEncounterIndex = lastZone.waves.length
-
-    return {
-
-        level: TOTAL_LEVELS,
-        zone: lastZone,
-        zoneIndex: ZONES.length - 1,
-        encounterIndex: lastEncounterIndex,
-        type: "boss",
-        isBoss: true,
-        wave: null,
-        boss: lastZone.boss,
-        config: null,
+        remaining -= count
     }
 }
 
-// ============================================================
-// CONVENIENCE HELPERS
-//
-// Kept because your existing UI/code already uses them.
-// ============================================================
+export const getZone = level => getProgression(level).zone.id
+export const getWave = level => getProgression(level).wave
+export const isBossLevel = level => getProgression(level).isBoss
+export const getBossKey = level => getProgression(level).boss
 
-export function getZone(level) {
-    return getProgression(level).zone.id
-}
+export function getLevelFromZoneWave(zoneId, wave) {
 
-export function getWave(level) {
-    return getProgression(level).wave
-}
+    const index = ZONES.findIndex(z => z.id === Number(zoneId));
 
-export function isBossLevel(level) {
-    return getProgression(level).isBoss
-}
-
-export function getBossKey(level) {
-    return getProgression(level).boss
-}
-
-// ============================================================
-// ZONE + WAVE → LEVEL
-//
-// Useful for level-select UI.
-//
-// Boss is represented by wave = 0 or "boss" if desired,
-// but normal waves remain fully compatible.
-// ============================================================
-
-export function getLevelFromZoneWave(zone, wave) {
-
-    const zoneIndex = ZONES.findIndex(item => item.id === Number(zone))
-
-    if (zoneIndex < 0) {
+    if (index < 0)
         return 1
-    }
 
-    let level = 1
+    const zone = ZONES[index]
+    const boss = wave === 0 || wave === "0" || wave === "boss"
+    const value = boss ? zone.waves.length + 1 : Number(wave)
 
-    for (let i = 0; i < zoneIndex; i++) {
-
-        level += ZONES[i].waves.length + 1
-    }
-
-    return level + Number(wave) - 1
+    if (!Number.isInteger(value) || value < 1 || value > zone.waves.length + 1)
+        return 1
+    return 1 + ZONES.slice(0, index).reduce((sum, z) => sum + z.waves.length + 1, 0) + value - 1
 }
-
-// ============================================================
-// DISPLAY LABEL
-// ============================================================
 
 export function formatLevelLabel(level) {
 
-    const progression = getProgression(level)
-
-    const { zone, wave, isBoss } = progression
-
-    if (isBoss) {
-        return `ZONE ${zone.id} · BOSS`
-    }
-
-    return `ZONE ${zone.id} · WAVE ${wave}`
+    const p = getProgression(level);
+    return (
+        `ZONE ${p.zone.id} · ${p.isBoss ? "BOSS" : `WAVE ${p.wave}`}`
+    )
 }

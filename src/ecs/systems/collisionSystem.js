@@ -7,8 +7,7 @@ import { BOSSES } from "../constants/bosses.js"
 import { applyPlayerAngularImpulse } from "./playerControlSystem.js"
 import { killBoss } from "./entityDeath.js"
 import { activeAsteroids } from "../pools/asteroidPool.js"
-import { useGameStore } from "../../../store/gameStore.js"
-import { startState } from "../../state/startState.js"
+import { damagePlayer } from "./playerDamage.js"
 
 // ============================================================
 // COLLISION CONFIGURATION
@@ -36,9 +35,6 @@ const BOSS_RESTITUTION = 0.8
 
 const BOSS_PLAYER_KNOCKBACK = 2.0
 const BOSS_CONTACT_DAMAGE = 1.0
-
-// Player protection after any collision.
-const PLAYER_INVULNERABILITY_DURATION = 2.0
 
 // ============================================================
 // HELPERS
@@ -144,29 +140,6 @@ function resolveAsteroidCollisions(asteroids) {
 }
 
 // ============================================================
-// PLAYER LIFE LOSS
-// ============================================================
-
-function losePlayerLife(pid) {
-
-    startState.lives--
-
-    if (startState.lives <= 0) {
-
-        useGameStore
-            .getState()
-            .gameOver()
-
-        return false
-    }
-
-    Health.current[pid] = Health.max[pid]
-    Invulnerability.remaining[pid] = PLAYER_INVULNERABILITY_DURATION
-
-    return true
-}
-
-// ============================================================
 // ASTEROID <-> PLAYER
 // ============================================================
 
@@ -232,7 +205,7 @@ function resolveAsteroidPlayerCollisions(pid, asteroids) {
             Velocity.y[aid] -= tangentY * tangentImpulse / ASTEROID_MASS
         }
 
-        losePlayerLife(pid)
+        damagePlayer(pid, 25)
 
         return true
     }
@@ -313,7 +286,7 @@ function resolveBossPlayerCollisions(pid, bosses) {
         // Player loses a life
         // ----------------------------------------------------
 
-        losePlayerLife(pid)
+        damagePlayer(pid, 40)
 
         return true
     }

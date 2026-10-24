@@ -116,7 +116,7 @@ void main(){
     vec3 color = vColor * vColorWeight + core * body * 0.35 + core * coreLine * 0.5;
 
     float pulse = fract(x * 3.0 - uTime * 4.0);
-    pulse = smoothstep(0.0, 0.4, pulse) * smoothstep(1.0, 0.6, pulse);
+    pulse = smoothstep(0.0, 0.4, pulse) * (1.0 - smoothstep(0.6, 1.0, pulse));
     color += vColor * pulse * 0.25 * tail * width;
 
     color *= vFlicker;

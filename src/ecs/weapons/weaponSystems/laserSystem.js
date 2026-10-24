@@ -1,8 +1,9 @@
 // src/ecs/weapons/weaponSystems/laserSystem.js
 
+import { BOSSES } from "../../constants/bosses.js"
 import { world } from "../../constants/world.js"
 import { playerQuery, bossQuery } from "../../constants/queries.js"
-import { Position, Rotation, Health } from "../../constants/components.js"
+import { Position, Rotation, Health, Asteroid, BossType } from "../../constants/components.js"
 import { getEmissionPoint, PLAYER_CONFIG } from '../../constants/emission.js'
 
 import { input } from "../../systems/input.js"
@@ -32,18 +33,15 @@ function findNearestHit(list, radius, originX, originY, dirX, dirY, maxT) {
         const cx = Position.x[eid] - originX
         const cy = Position.y[eid] - originY
 
-        const t = cx * dirX + cy * dirY
-        if (t < 0 || t > bestT) continue
+        if (Health.current[eid] <= 0) continue
+        const r = (typeof radius === "function" ? radius(eid) : radius)
+        const projection = cx * dirX + cy * dirY
+        const d2 = cx * cx + cy * cy
+        const perpendicularSq = Math.max(0, d2 - projection * projection)
+        if (d2 > r * r && (projection <= 0 || perpendicularSq > r * r)) continue
+        const t = d2 <= r * r ? 0 : Math.max(0, projection - Math.sqrt(r * r - perpendicularSq))
+        if (t <= bestT) { bestT = t; bestId = eid }
 
-        const closestX = dirX * t
-        const closestY = dirY * t
-        const dx = cx - closestX
-        const dy = cy - closestY
-
-        if (dx * dx + dy * dy <= radius * radius) {
-            bestT = t
-            bestId = eid
-        }
     }
 
     return { t: bestT, id: bestId }
@@ -51,8 +49,8 @@ function findNearestHit(list, radius, originX, originY, dirX, dirY, maxT) {
 
 function resolveBeam(originX, originY, dirX, dirY, weapon, dps, asteroids, bosses) {
 
-    const asteroidHit = findNearestHit(asteroids, ASTEROID_RADIUS, originX, originY, dirX, dirY, weapon.range)
-    const bossHit = findNearestHit(bosses, BOSS_RADIUS, originX, originY, dirX, dirY, asteroidHit.id !== -1 ? asteroidHit.t : weapon.range)
+    const asteroidHit = findNearestHit(asteroids, id => Asteroid.radius[id], originX, originY, dirX, dirY, weapon.range)
+    const bossHit = findNearestHit(bosses, id => BOSSES[BossType.typeIndex[id]]?.hitRadius ?? BOSS_RADIUS, originX, originY, dirX, dirY, asteroidHit.id !== -1 ? asteroidHit.t : weapon.range)
 
     let hitId = -1
     let hitType = null
@@ -116,7 +114,7 @@ export function laserSystem() {
     const dt = world.time.delta
     const weapon = getWeapon(startState.currentWeapon)
 
-    if (weapon.category !== "beam") {
+    if (!weapon || weapon.category !== "beam" || startState.encounterPhase !== "active") {
         laserState.active = false
         laserState.lockTargetId = -1
         laserState.lockTime = 0
@@ -190,8 +188,8 @@ export function laserSystem() {
 
         if (weapon.rampTime && beamCount === 1) {
 
-            const asteroidHit = findNearestHit(asteroids, ASTEROID_RADIUS, centerX, centerY, dirX, dirY, weapon.range)
-            const bossHit = findNearestHit(bosses, BOSS_RADIUS, centerX, centerY, dirX, dirY, asteroidHit.id !== -1 ? asteroidHit.t : weapon.range)
+            const asteroidHit = findNearestHit(asteroids, id => Asteroid.radius[id], centerX, centerY, dirX, dirY, weapon.range)
+            const bossHit = findNearestHit(bosses, id => BOSSES[BossType.typeIndex[id]]?.hitRadius ?? BOSS_RADIUS, centerX, centerY, dirX, dirY, asteroidHit.id !== -1 ? asteroidHit.t : weapon.range)
             const targetId = bossHit.id !== -1 ? bossHit.id : asteroidHit.id
 
             if (targetId !== -1 && targetId === laserState.lockTargetId) {
@@ -259,7 +257,7 @@ export function laserSystem() {
 
                     const aid = asteroids[k]
 
-                    if (used.has(aid))
+                    if (used.has(aid) || Health.current[aid] <= 0)
                         continue
 
                     const dx = Position.x[aid] - chainX

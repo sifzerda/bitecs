@@ -1,63 +1,7 @@
 // src/fx/managers/SmokeManager.js
 
-import { registerEffect } from "../effects"
-import { EFFECT } from "../FXTypes"
+import { registerParticleEffect } from "./registerParticleEffect.js"
+import { EFFECT } from "../FXTypes.js"
+import { emitSmoke, updateSmokeEmitter, smokePool } from "../gpu/SmokeEmitter.js"
 
-import {
-    emitSmoke,
-    updateSmokeEmitter,
-    smokePool
-} from "../gpu/SmokeEmitter.js"
-
-import { world } from "../../ecs/constants/world.js"
-
-
-const pending = []
-
-
-const smokeManager = {
-
-
-    emit(effect) {
-
-        pending.push(effect)
-
-    },
-
-
-    update() {
-
-
-        // spawn queued smoke
-        while (pending.length) {
-
-            emitSmoke(
-                pending.pop()
-            )
-
-        }
-
-
-        // update typed arrays
-        updateSmokeEmitter(
-            world.time.delta
-        )
-
-    },
-
-
-    clear() {
-
-        pending.length = 0
-
-        smokePool.clear()
-
-    }
-
-}
-
-
-registerEffect(
-    EFFECT.SMOKE,
-    smokeManager
-)
+registerParticleEffect(EFFECT.SMOKE, emitSmoke, updateSmokeEmitter, smokePool)

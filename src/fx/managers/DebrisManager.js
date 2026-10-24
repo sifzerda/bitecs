@@ -1,37 +1,7 @@
 // src/fx/managers/DebrisManager.js
 
-import { registerEffect } from "../effects"
-import { EFFECT } from "../FXTypes"
-import { emitDebrisBurst } from "../gpu/DebrisEmitter"
+import { registerParticleEffect } from "./registerParticleEffect.js"
+import { EFFECT } from "../FXTypes.js"
+import { emitDebrisBurst, updateDebrisEmitter, debrisPool, spawnedDebris } from "../gpu/DebrisEmitter.js"
 
-const pending = []
-
-const manager = {
-
-    emit(effect) {
-
-        pending.push(effect)
-
-    },
-
-    update() {
-
-        while (pending.length) {
-
-            emitDebrisBurst(
-                pending.pop()
-            )
-
-        }
-
-    },
-
-    clear() {
-
-        pending.length = 0
-
-    }
-
-}
-
-registerEffect(EFFECT.DEBRIS, manager)
+registerParticleEffect(EFFECT.DEBRIS, emitDebrisBurst, updateDebrisEmitter, debrisPool, () => { spawnedDebris.length = 0 })

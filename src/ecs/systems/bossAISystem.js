@@ -316,6 +316,13 @@ function updateBoss(id, pid, dt) {
 
     const action = getAction(weapon)
 
+    BossAI.decisionCooldown[id] = Math.max(0, BossAI.decisionCooldown[id] - dt)
+
+    if (BossAI.decisionCooldown[id] > 0) {
+        BossAI.beamActive[id] = 0
+        return
+    }
+
     // --------------------------------------------------------
     // Target information
     // --------------------------------------------------------
