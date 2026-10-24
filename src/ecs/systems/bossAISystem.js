@@ -7,13 +7,8 @@ import { BOSS_INDEX_BY_KEY } from "../constants/bosses.js"
 import { spawnBossBullet } from "../spawn.js"
 import { getWeapon } from "../weapons/config/weapons.js"
 import { getAction } from "../weapons/config/weaponActions.js"
-
 import { updateBossBehavior } from "./bossBehaviorTree.js"
-
-import {
-    updateBossSteering,
-    cleanupBossSteering,
-} from "./bossSteeringSystem.js"
+import { updateBossSteering, cleanupBossSteering } from "./bossSteeringSystem.js"
 
 // ============================================================
 // CONFIGURATION
