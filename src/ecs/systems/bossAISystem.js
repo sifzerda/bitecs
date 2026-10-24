@@ -2,429 +2,234 @@
 
 import { world } from "../constants/world.js"
 import { bossAIQuery, playerQuery } from "../constants/queries.js"
-import { Position, Velocity, Rotation, BossAI, BossType } from "../constants/components.js"
-import { BOSS_INDEX_BY_KEY } from "../constants/bosses.js"
-import { spawnBossBullet } from "../spawn.js"
+import { Position, Velocity, Rotation, Health, StatusEffect, Asteroid, BossAI, BossType } from "../constants/components.js"
+import { BOSSES } from "../constants/bosses.js"
+import { getBossEmissionConfig, getEmissionPoint } from "../constants/emission.js"
 import { getWeapon } from "../weapons/config/weapons.js"
-import { getAction } from "../weapons/config/weaponActions.js"
-import { updateBossBehavior } from "./bossBehaviorTree.js"
-import { updateBossSteering, cleanupBossSteering } from "./bossSteeringSystem.js"
+import { spawnBossBullet } from "../spawn.js"
+import { bossLaserState } from "../weapons/weaponState/bossLaserState.js"
+import { bossThrowerState } from "../weapons/weaponState/bossThrowerState.js"
+import { activeAsteroids } from "../pools/asteroidPool.js"
+import { killAsteroid } from "./entityDeath.js"
+import { damagePlayer } from "./playerDamage.js"
+import { applyStatusEffects } from "./statusEffectSystem.js"
+import { startState } from "../../state/startState.js"
+import { useGameStore, SCREEN } from "../../../store/gameStore.js"
 
-// ============================================================
-// CONFIGURATION
-// ============================================================
+// All ship-boss tuning is here. No behaviour tree or steering module required.
+// attack = seconds firing, recover = an opening to approach and return fire.
+const BASE = { range: 8, speed: 4.2, orbit: 2.3, warning: 0.85, attack: 0.8, recover: 1.4, shots: 2, gap: 0.28, turn: 2.6, lead: 0.2, sweep: 0 }
 
-const CONFIG = {
-
-    turning: {
-        speed: 4.5,
-        fireAngle: 0.28,
-    },
-
-    shooting: {
-        defaultInterval: 1.1,
-        minInterval: 0.65,
-    },
-
-    aiming: {
-        accuracy: 0.75,
-        trackingError: 0.25,
-        //aimDelay: 0.35,
-        errorChangeInterval: 0.8,
-    },
+export const BOSS_PATTERNS = {
+  shotgun:          { range: 6, warning: 0.8, shots: 2, gap: 0.4, attack: 0.65, recover: 1.4 },
+  machinegun:       { range: 8, warning: 0.8, shots: 6, gap: 0.12, attack: 0.8, recover: 1.5, sweep: 0.24 },
+  cryogun:          { range: 3.8, speed: 3.8, warning: 0.9, attack: 1.0, recover: 1.5, lead: 0 },
+  grenadegun:       { range: 8, warning: 0.95, shots: 2, gap: 0.55, attack: 0.8, recover: 1.6, lead: 0.35 },
+  acidthrowergun:   { range: 3.8, speed: 4.0, warning: 0.9, attack: 1.0, recover: 1.5, lead: 0 },
+  missilegun:       { range: 9, warning: 1.0, shots: 1, attack: 0.35, recover: 1.8, lead: 0 },
+  flamethrowergun:  { range: 4.3, speed: 4.0, warning: 1.0, attack: 1.1, recover: 1.6, lead: 0 },
+  lasergun:        { range: 10, warning: 1.15, attack: 0.85, recover: 1.7, lead: 0 },
+  arcgun:          { range: 8, warning: 1.0, attack: 0.7, recover: 1.7, lead: 0 },
+  plasmagun:       { range: 10, warning: 1.1, attack: 1.0, recover: 1.6, lead: 0 },
 }
 
-// ============================================================
-// ANGLE HELPERS
-// ============================================================
+export const bossFightState = {
+  eid: -1, type: -1, weaponId: -1, phase: "entrance", timer: 0,
+  aim: 0, lockedAngle: 0, shots: 0, shotTimer: 0, cycles: 0,
+  orbitDirection: 1, pattern: null, warning: false, frozen: false,
+  originX: 0, originY: 0, dirX: 0, dirY: 1, range: 10, coneAngle: 0,
+  width: 24, height: 14, gap: 0,
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v))
+const angleDifference = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b))
+function rotateToward(a, b, max) { return a + clamp(angleDifference(b, a), -max, max) }
 
-function normalizeAngle(angle) {
-
-    while (angle > Math.PI) angle -= Math.PI * 2
-    while (angle < -Math.PI) angle += Math.PI * 2
-
-    return angle
+function clearWeapons() {
+  bossLaserState.active = false; bossLaserState.beamCount = 0; bossLaserState.hitLegacy = false
+  bossLaserState.hit.fill(0)
+  bossThrowerState.active = false
 }
 
-function angleDifference(target, current) {
-    return normalizeAngle(target - current)
+export function resetBossAI() {
+  Object.assign(bossFightState, { eid: -1, type: -1, weaponId: -1, phase: "entrance", timer: 0, warning: false, frozen: false, shots: 0, cycles: 0 })
+  clearWeapons()
 }
 
-function rotateToward(current, target, maxStep) {
-
-    const difference = angleDifference(target, current)
-
-    if (Math.abs(difference) <= maxStep) {
-        return target
-    }
-
-    return current + Math.sign(difference) * maxStep
+export function setBossArenaSize(width, height) {
+  if (width > 0 && height > 0) { bossFightState.width = width; bossFightState.height = height }
 }
 
-function randomRange(min, max) {
-    return min + Math.random() * (max - min)
+function enter(phase) {
+  const s = bossFightState
+  s.phase = phase; s.timer = 0
+  if (phase === "attack") { s.lockedAngle = Rotation[s.eid]; s.shots = 0; s.shotTimer = 0 }
+  if (phase === "recover") { s.cycles++; s.orbitDirection *= -1 }
 }
 
-function randomSign() {
-    return Math.random() < 0.5 ? -1 : 1
+function steer(id, pid, p, dt) {
+  const s = bossFightState
+  const dx = Position.x[id] - Position.x[pid], dy = Position.y[id] - Position.y[pid]
+  const distance = Math.hypot(dx, dy), ax = distance > 0.001 ? dx / distance : 1, ay = distance > 0.001 ? dy / distance : 0
+  let vx = 0, vy = 0
+  if (s.phase === "approach") {
+    const radial = clamp((distance - p.range) * 1.4, -p.speed, p.speed)
+    vx = -ax * radial - ay * p.orbit * s.orbitDirection
+    vy = -ay * radial + ax * p.orbit * s.orbitDirection
+  } else if (s.phase === "recover") {
+    vx = -ay * p.orbit * 0.35 * s.orbitDirection
+    vy = ax * p.orbit * 0.35 * s.orbitDirection
+  }
+  // Keep ship bosses on screen, with a margin for their hull.
+  const mx = Math.max(1, s.width / 2 - 2.1), my = Math.max(1, s.height / 2 - 2.1)
+  vx += clamp((-mx - Position.x[id]) * 3, 0, p.speed) - clamp((Position.x[id] - mx) * 3, 0, p.speed)
+  vy += clamp((-my - Position.y[id]) * 3, 0, p.speed) - clamp((Position.y[id] - my) * 3, 0, p.speed)
+  // Do not accelerate into a player who approaches the stationary attack.
+  const speed = Math.hypot(vx, vy)
+  if (speed > p.speed) { vx *= p.speed / speed; vy *= p.speed / speed }
+  const response = s.phase === "approach" ? 3 : 8
+  let fx = (vx - Velocity.x[id]) * response, fy = (vy - Velocity.y[id]) * response
+  const force = Math.hypot(fx, fy)
+  if (force > 12) { fx *= 12 / force; fy *= 12 / force }
+  Velocity.x[id] += fx * dt; Velocity.y[id] += fy * dt
+  return distance
 }
 
-// ============================================================
-// TARGET INFORMATION
-// ============================================================
-
-function getTargetInfo(id, pid) {
-
-    const dx = Position.x[pid] - Position.x[id]
-    const dy = Position.y[pid] - Position.y[id]
-
-    const distance = Math.hypot(dx, dy) || 0.001
-
-    return {
-        dx,
-        dy,
-        distance,
-        directionX: dx / distance,
-        directionY: dy / distance,
-        angle: Math.atan2(dy, dx),
-    }
+function aimAtPlayer(id, pid, lead) {
+  return -Math.atan2(
+    Position.x[pid] + Velocity.x[pid] * lead - Position.x[id],
+    Position.y[pid] + Velocity.y[pid] * lead - Position.y[id]
+  )
 }
 
-// ============================================================
-// MOVEMENT AI
-//
-// The boss has independent movement and aiming.
-//
-// It can move sideways while keeping its weapons aimed
-// at the player, like a strafing spaceship.
-// ============================================================
-
-
-// ============================================================
-// AIMING
-// ============================================================
-
-function updateAimError(id, dt) {
-
-    BossAI.aimErrorTimer[id] -= dt
-
-    if (BossAI.aimErrorTimer[id] <= 0) {
-
-        const accuracy = CONFIG.aiming.accuracy
-
-        const maxError =
-            (1 - accuracy) * CONFIG.aiming.trackingError * 4
-
-        BossAI.aimError[id] =
-            randomRange(-maxError, maxError)
-
-        BossAI.aimErrorTimer[id] =
-            CONFIG.aiming.errorChangeInterval
-    }
-
-    return BossAI.aimError[id]
+function emission(id, category, angle) {
+  const cfg = getBossEmissionConfig(id, category)
+  const point = getEmissionPoint(Position.x[id], Position.y[id], angle, cfg)
+  return { x: point.x, y: point.y, gap: cfg.gunGap ?? cfg.engineGap ?? 0 }
 }
 
-function calculateAim(id, pid, weapon, action, dt) {
-
-    let aimX = Position.x[pid]
-    let aimY = Position.y[pid]
-
-    const dx = aimX - Position.x[id]
-    const dy = aimY - Position.y[id]
-
-    // Predict player movement for projectile weapons.
-
-    const leadTarget = action?.ai?.leadTarget
-
-    if (leadTarget && weapon.speed > 0) {
-
-        const distance = Math.hypot(dx, dy)
-
-        const travelTime = Math.min(
-            distance / weapon.speed,
-            1.2
-        )
-
-        aimX += Velocity.x[pid] * travelTime
-        aimY += Velocity.y[pid] * travelTime
-    }
-
-    // Ship rotation convention:
-    // Rotation 0 points upwards (+Y).
-
-    const perfectAim = -Math.atan2(
-        aimX - Position.x[id],
-        aimY - Position.y[id]
-    )
-
-    const aimError = updateAimError(id, dt)
-
-    return perfectAim + aimError
+// Distance to the first entry into a circular hitbox along a unit ray.
+export function rayCircle(x, y, dx, dy, cx, cy, radius, maxLength) {
+  const rx = cx - x, ry = cy - y, d2 = rx * rx + ry * ry
+  if (d2 <= radius * radius) return 0
+  const projection = rx * dx + ry * dy
+  if (projection < 0) return Infinity
+  const perpendicularSq = Math.max(0, d2 - projection * projection)
+  if (perpendicularSq > radius * radius) return Infinity
+  const t = Math.max(0, projection - Math.sqrt(radius * radius - perpendicularSq))
+  return t <= maxLength ? t : Infinity
 }
 
-function updateAiming(id, aimRotation, dt) {
-
-    BossAI.targetRotation[id] = aimRotation
-
-    Rotation[id] = rotateToward(
-        Rotation[id],
-        aimRotation,
-        CONFIG.turning.speed * dt
-    )
-
-    const error = Math.abs(
-        angleDifference(aimRotation, Rotation[id])
-    )
-
-    return error <= CONFIG.turning.fireAngle
+export function coneHits(x, y, dx, dy, angle, range, cx, cy, radius) {
+  const rx = cx - x, ry = cy - y, distance = Math.hypot(rx, ry)
+  if (distance > range + radius) return false
+  if (distance <= radius) return true
+  return (rx * dx + ry * dy) / distance >= Math.cos(Math.min(Math.PI, angle / 2 + Math.asin(Math.min(1, radius / distance))))
 }
 
-// ============================================================
-// SHOOTING
-// ============================================================
-
-function fireProjectile(id, weapon, aimRotation, action) {
-
-    const ai = action?.ai ?? {}
-
-    const jitter =
-        weapon.aiSpreadJitter ??
-        ai.spreadJitter ??
-        0
-
-    const fireRotation =
-        aimRotation +
-        (Math.random() - 0.5) * 2 * jitter
-
-    spawnBossBullet(
-        Position.x[id],
-        Position.y[id],
-        fireRotation,
-        weapon.id,
-        id
-    )
+function damageWithStatus(pid, amount, weapon) {
+  if (damagePlayer(pid, amount, { periodic: true }) && (weapon.corrosion || weapon.freezeDuration)) applyStatusEffects(pid, weapon)
 }
 
-function updateShooting(id, weapon, action, aligned, dt) {
-
-    // Beam and thrower weapons use their own systems.
-
-    if (!action || action.continuous || weapon.category === "beam" || weapon.category === "thrower") {
-        return
+function fireBeam(id, pid, weapon, dt) {
+  const angle = Rotation[id], dx = Math.sin(-angle), dy = Math.cos(-angle)
+  const m = emission(id, "beam", angle), sideX = Math.cos(-angle), sideY = -Math.sin(-angle)
+  const count = m.gap ? 2 : 1, range = weapon.range ?? 20, width = (weapon.beamWidth ?? 0.1) * 0.5
+  bossLaserState.active = true; bossLaserState.beamCount = count
+  for (let n = 0; n < count; n++) {
+    const gap = count === 1 ? 0 : (n === 0 ? m.gap : -m.gap)
+    const x = m.x + sideX * gap, y = m.y + sideY * gap
+    let length = range, target = -1, asteroid = false
+    const playerT = rayCircle(x, y, dx, dy, Position.x[pid], Position.y[pid], 0.6 + width, range)
+    if (playerT !== Infinity) { length = playerT; target = pid }
+    for (const aid of activeAsteroids) {
+      if (Health.current[aid] <= 0) continue
+      const t = rayCircle(x, y, dx, dy, Position.x[aid], Position.y[aid], Asteroid.radius[aid] + width, length)
+      if (t < length) { length = t; target = aid; asteroid = true }
     }
-
-    // Give the player an opportunity to approach.
-    if (BossAI.state[id] === 1) {
-        return
+    const damage = (weapon.directDamage ?? 0) * dt / count
+    if (target === pid && !asteroid) damageWithStatus(pid, damage, weapon)
+    else if (target >= 0) {
+      Health.current[target] -= damage
+      if (Health.current[target] <= 0) killAsteroid(target, Position.x[target], Position.y[target])
     }
-
-    // Keep the firing timer running.
-
-    BossAI.shootTimer[id] -= dt
-
-    // Do not fire until properly aimed.
-
-    if (!aligned) {
-        return
-    }
-
-    // --------------------------------------------------------
-    // Start a new burst
-    // --------------------------------------------------------
-
-    if (BossAI.burstRemaining[id] === 0) {
-
-        if (BossAI.shootTimer[id] > 0) {
-            return
-        }
-
-        const ai = action.ai ?? {}
-        const burstCount = weapon.aiBurstCount ?? ai.burstCount ?? 1
-
-        BossAI.burstRemaining[id] = burstCount
-        BossAI.burstGapTimer[id] = 0
-    }
-
-    // --------------------------------------------------------
-    // Fire burst
-    // --------------------------------------------------------
-
-    BossAI.burstGapTimer[id] -= dt
-
-    if (BossAI.burstGapTimer[id] > 0) {
-        return
-    }
-
-    fireProjectile(
-        id,
-        weapon,
-        BossAI.targetRotation[id],
-        action
-    )
-
-    BossAI.burstRemaining[id]--
-
-    const ai = action.ai ?? {}
-
-    const burstGap =
-        weapon.aiBurstGap ??
-        ai.burstGap ??
-        0.08
-
-    BossAI.burstGapTimer[id] = burstGap
-
-    // --------------------------------------------------------
-    // Finish burst
-    // --------------------------------------------------------
-
-    if (BossAI.burstRemaining[id] <= 0) {
-
-        BossAI.burstRemaining[id] = 0
-
-        BossAI.shootTimer[id] = Math.max(
-            CONFIG.shooting.minInterval,
-            weapon.fireRate ??
-            CONFIG.shooting.defaultInterval
-        )
-
-        // Additional breathing room after firing.
-        BossAI.shootTimer[id] += randomRange(0.4, 0.9)
-    }
+    bossLaserState.originX[n] = x; bossLaserState.originY[n] = y
+    bossLaserState.dirX[n] = dx; bossLaserState.dirY[n] = dy
+    bossLaserState.hitT[n] = length
+    bossLaserState.hitX[n] = x + dx * length; bossLaserState.hitY[n] = y + dy * length
+    bossLaserState.hit[n] = target >= 0 ? 1 : 0
+  }
+  bossLaserState.hitLegacy = bossLaserState.hit[0] !== 0
+  bossLaserState.hitXLegacy = bossLaserState.hitX[0]; bossLaserState.hitYLegacy = bossLaserState.hitY[0]
+  bossLaserState.length = bossLaserState.hitT[0]
 }
 
-// ============================================================
-// BOSS UPDATE
-// ============================================================
-
-function updateBoss(id, pid, dt) {
-
-    // --------------------------------------------------------
-    // Identify weapon
-    // --------------------------------------------------------
-
-    const weapon = getWeapon(BossAI.weapon[id])
-
-    if (!weapon) {
-        return
-    }
-
-    const action = getAction(weapon)
-
-    BossAI.decisionCooldown[id] = Math.max(0, BossAI.decisionCooldown[id] - dt)
-
-    if (BossAI.decisionCooldown[id] > 0) {
-        BossAI.beamActive[id] = 0
-        return
-    }
-
-    // --------------------------------------------------------
-    // Target information
-    // --------------------------------------------------------
-
-    const target = getTargetInfo(id, pid)
-
-    // Behaviour state timer.
-    // Previously handled by chooseMovement(), which was removed
-    // when Yuka took over movement.
-    BossAI.stateTimer[id] = Math.max(
-        0,
-        BossAI.stateTimer[id] - dt
-    )
-
-    updateBossBehavior(id, target, BossAI)
-
-    // --------------------------------------------------------
-    // YUKA STEERING
-    // --------------------------------------------------------
-
-    updateBossSteering(
-        id,
-        pid,
-        target,
-        dt,
-        BossAI.state[id],
-        BossAI.strafeDirection[id]
-    )
-
-    if (
-        Velocity.x[id] !== 0 ||
-        Velocity.y[id] !== 0
-    ) {
-        BossAI.moveRotation[id] = Math.atan2(
-            Velocity.y[id],
-            Velocity.x[id]
-        )
-    }
-
-    // --------------------------------------------------------
-    // Aiming
-    // --------------------------------------------------------
-
-    const aimRotation = calculateAim(
-        id,
-        pid,
-        weapon,
-        action,
-        dt
-    )
-
-    const aligned = updateAiming(
-        id,
-        aimRotation,
-        dt
-    )
-
-    // --------------------------------------------------------
-    // Shooting
-    // --------------------------------------------------------
-
-    updateShooting(
-        id,
-        weapon,
-        action,
-        aligned,
-        dt
-    )
-
-    BossAI.attackTimer[id] += dt
+function fireThrower(id, pid, weapon, dt) {
+  const angle = Rotation[id], dx = Math.sin(-angle), dy = Math.cos(-angle)
+  const m = emission(id, "thrower", angle), sx = Math.cos(-angle) * m.gap, sy = -Math.sin(-angle) * m.gap
+  const s = bossThrowerState
+  s.active = true; s.originX = m.x; s.originY = m.y
+  s.originAX = m.x + sx; s.originAY = m.y + sy; s.originBX = m.x - sx; s.originBY = m.y - sy
+  s.dirX = dx; s.dirY = dy; s.range = s.length = weapon.range ?? 5; s.coneAngle = weapon.coneAngle ?? 0.55
+  const hitA = coneHits(s.originAX, s.originAY, dx, dy, s.coneAngle, s.range, Position.x[pid], Position.y[pid], 0.6)
+  const hitB = coneHits(s.originBX, s.originBY, dx, dy, s.coneAngle, s.range, Position.x[pid], Position.y[pid], 0.6)
+  if (hitA || hitB) damageWithStatus(pid, (weapon.directDamage ?? 0) * dt, weapon)
 }
-
-// ============================================================
-// MAIN SYSTEM
-// ============================================================
 
 export function bossAISystem() {
-
-    const dt = Math.min(world.time.delta, 0.05)
-
-    if (dt <= 0) return
-
-    const bosses = bossAIQuery()
-
-    // Remove steering agents belonging to destroyed bosses.
-    cleanupBossSteering(bosses)
-
-    const players = playerQuery()
-
-    if (bosses.length === 0 || players.length === 0) {
-        return
+  clearWeapons()
+  const game = useGameStore.getState(), s = bossFightState
+  if (game.screen !== SCREEN.PLAY || game.paused || startState.encounterPhase !== "active") { s.warning = false; return }
+  const id = bossAIQuery().find(eid => BOSSES[BossType.typeIndex[eid]]?.isShip !== false)
+  const pid = playerQuery()[0]
+  if (id === undefined || pid === undefined) { resetBossAI(); return }
+  const type = BossType.typeIndex[id], weaponId = BossAI.weapon[id], boss = BOSSES[type], weapon = getWeapon(weaponId)
+  if (!weapon || Health.current[id] <= 0 || Health.current[pid] <= 0) return
+  if (s.eid !== id || s.type !== type || s.weaponId !== weaponId) {
+    resetBossAI();s.eid = id;s.type = type;s.weaponId = weaponId
+    s.pattern = { ...BASE, ...BOSS_PATTERNS[boss?.key], ...boss?.ai }
+    s.orbitDirection = type % 2 ? 1 : -1
+  }
+  const dt = Math.min(Math.max(world.time.delta, 0), 0.05), p = s.pattern
+  s.warning = false; s.frozen = StatusEffect.frozen[id] > 0
+  BossAI.beamActive[id] = 0
+  if (s.frozen || dt <= 0) return
+  BossAI.decisionCooldown[id] = Math.max(0, BossAI.decisionCooldown[id] - dt)
+  s.timer += dt
+  const distance = steer(id, pid, p, dt)
+  if (s.phase === "entrance") {
+    if (s.timer >= 1.5 && BossAI.decisionCooldown[id] <= 0) enter("approach")
+  } else if (s.phase === "approach") {
+    Rotation[id] = rotateToward(Rotation[id], aimAtPlayer(id, pid, 0), p.turn * dt)
+    const reach = weapon.category === "bullet" ? (weapon.speed ?? 10) * (weapon.lifetime ?? 1) : (weapon.range ?? p.range)
+    if (s.timer >= 0.65 && distance <= Math.min(p.range + 2, reach + 0.5)) {
+      s.aim = aimAtPlayer(id, pid, p.lead); enter("warning")
     }
-
-    const pid = players[0]
-
-    for (let i = 0; i < bosses.length; i++) {
-
-        const id = bosses[i]
-
-        // The central octopus has its own dedicated AI.
-        if (
-            BossType.typeIndex[id] ===
-            BOSS_INDEX_BY_KEY.octopus
-        ) {
-            continue
-        }
-
-        updateBoss(id, pid, dt)
-    }
+  } else if (s.phase === "warning") {
+    // Aim is locked at warning entry. No perfect player tracking during an attack.
+    Rotation[id] = rotateToward(Rotation[id], s.aim, p.turn * dt)
+    s.warning = true
+    if (s.timer >= p.warning) { enter("attack"); s.warning = false }
+  } else if (s.phase === "attack") {
+    Rotation[id] = s.lockedAngle
+    BossAI.beamActive[id] = 1
+    if (weapon.category === "bullet") {
+      s.shotTimer -= dt
+      if (s.shots < p.shots && s.shotTimer <= 0) {
+        const fraction = p.shots > 1 ? s.shots / (p.shots - 1) - 0.5 : 0
+        // Sweeping bursts are bounded and deterministic, not fresh aimbot shots.
+        spawnBossBullet(Position.x[id], Position.y[id], s.lockedAngle + fraction * p.sweep, weapon.id, id)
+        s.shots++; s.shotTimer += Math.max(1 / 60, p.gap)
+      }
+    } else if (weapon.category === "beam") fireBeam(id, pid, weapon, dt)
+    else if (weapon.category === "thrower") fireThrower(id, pid, weapon, dt)
+    if (s.timer >= p.attack) { enter("recover"); clearWeapons(); BossAI.beamActive[id] = 0 }
+  } else if (s.phase === "recover" && s.timer >= p.recover) enter("approach")
+  const category = weapon.category === "bullet" ? "projectile" : weapon.category
+  const m = emission(id, category, Rotation[id])
+  s.originX = m.x; s.originY = m.y; s.dirX = Math.sin(-Rotation[id]); s.dirY = Math.cos(-Rotation[id])
+  s.range = weapon.range ?? (weapon.speed ?? 10) * (weapon.lifetime ?? 1)
+  s.gap = m.gap
+  s.coneAngle = (weapon.coneAngle ?? weapon.spreadAngle ?? 0) + (p.sweep ?? 0)
+  BossAI.targetRotation[id] = s.aim
+  BossAI.state[id] = s.phase === "attack" ? 0 : s.phase === "recover" ? 1 : 2
 }

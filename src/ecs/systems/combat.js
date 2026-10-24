@@ -2,10 +2,7 @@
 
 import { world } from "../constants/world.js"
 
-import {
-  bossQuery,
-  playerQuery,
-} from "../constants/queries.js"
+import { bossQuery, playerQuery } from "../constants/queries.js"
 
 import {
   Position,

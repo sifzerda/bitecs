@@ -1,17 +1,10 @@
 // src/ecs/systems/input.js
 
 import { startState } from "../../state/startState.js"
-
-import {
-  WEAPONS,
-} from "../weapons/config/weapons.js"
-
+import { WEAPONS } from "../weapons/config/weapons.js"
 import { settings } from "./settings.js"
 
-import {
-  useGameStore,
-  SCREEN,
-} from "../../../store/gameStore.js"
+import { useGameStore, SCREEN } from "../../../store/gameStore.js"
 
 const DEBUG_WEAPON_SWITCH = import.meta.env.DEV
 
@@ -72,12 +65,7 @@ function isPlaying() {
 
 function isEditable(target) {
   return (
-    target instanceof Element &&
-    (
-      target.closest(
-        "input, textarea, select, [contenteditable]"
-      ) !== null
-    )
+    target instanceof Element && (target.closest("input, textarea, select, [contenteditable]") !== null)
   )
 }
 
@@ -110,12 +98,7 @@ export function isMouseControlEnabled() {
 function cycleWeapon(direction) {
   if (WEAPONS.length === 0) return
 
-  startState.currentWeapon =
-    (
-      startState.currentWeapon +
-      direction +
-      WEAPONS.length
-    ) % WEAPONS.length
+  startState.currentWeapon = (startState.currentWeapon + direction + WEAPONS.length) % WEAPONS.length
 }
 
 export function initializeInput(onPause) {
@@ -128,9 +111,7 @@ export function initializeInput(onPause) {
     const { screen } = useGameStore.getState()
 
     if (
-      (code === "KeyP" || code === "Escape") &&
-      screen === SCREEN.PLAY
-    ) {
+      (code === "KeyP" || code === "Escape") && screen === SCREEN.PLAY) {
       event.preventDefault()
 
       if (!event.repeat) {
@@ -158,10 +139,7 @@ export function initializeInput(onPause) {
       return
     }
 
-    if (
-      !DEBUG_WEAPON_SWITCH ||
-      event.repeat
-    ) {
+    if (!DEBUG_WEAPON_SWITCH || event.repeat) {
       return
     }
 
@@ -172,10 +150,7 @@ export function initializeInput(onPause) {
     } else {
       const index = WEAPON_KEYS[code]
 
-      if (
-        index !== undefined &&
-        index < WEAPONS.length
-      ) {
+      if (index !== undefined && index < WEAPONS.length) {
         startState.currentWeapon = index
       }
     }
@@ -192,19 +167,12 @@ export function initializeInput(onPause) {
   }
 
   function mouseDown(event) {
-    if (
-      !isPlaying() ||
-      !isMouseControlEnabled() ||
-      isEditable(event.target)
-    ) {
+    if (!isPlaying() || !isMouseControlEnabled() || isEditable(event.target)) {
       return
     }
 
     // Ignore HUD buttons and other page controls.
-    if (
-      !(event.target instanceof Element) ||
-      event.target.tagName !== "CANVAS"
-    ) {
+    if (!(event.target instanceof Element) || event.target.tagName !== "CANVAS") {
       return
     }
 
@@ -225,24 +193,13 @@ export function initializeInput(onPause) {
   }
 
   function contextMenu(event) {
-    if (
-      isPlaying() &&
-      isMouseControlEnabled() &&
-      event.target instanceof Element &&
-      event.target.tagName === "CANVAS"
-    ) {
+    if (isPlaying() && isMouseControlEnabled() && event.target instanceof Element && event.target.tagName === "CANVAS") {
       event.preventDefault()
     }
   }
 
   function wheel(event) {
-    if (
-      !DEBUG_WEAPON_SWITCH ||
-      !isPlaying() ||
-      event.deltaY === 0 ||
-      !(event.target instanceof Element) ||
-      event.target.tagName !== "CANVAS"
-    ) {
+    if (!DEBUG_WEAPON_SWITCH || !isPlaying() || event.deltaY === 0 || !(event.target instanceof Element) || event.target.tagName !== "CANVAS") {
       return
     }
 
@@ -256,10 +213,7 @@ export function initializeInput(onPause) {
 
     const state = useGameStore.getState()
 
-    if (
-      state.screen === SCREEN.PLAY &&
-      !state.paused
-    ) {
+    if (state.screen === SCREEN.PLAY && !state.paused) {
       state.setPaused(true)
     }
   }
@@ -270,10 +224,7 @@ export function initializeInput(onPause) {
 
   const unsubscribe = useGameStore.subscribe(
     (state, previous) => {
-      if (
-        state.screen !== previous.screen ||
-        state.paused !== previous.paused
-      ) {
+      if (state.screen !== previous.screen || state.paused !== previous.paused) {
         clearInput()
       }
     }
@@ -287,16 +238,9 @@ export function initializeInput(onPause) {
   window.addEventListener("contextmenu", contextMenu)
   window.addEventListener("blur", onBlur)
 
-  window.addEventListener(
-    "wheel",
-    wheel,
-    { passive: false }
-  )
+  window.addEventListener("wheel", wheel, { passive: false })
 
-  document.addEventListener(
-    "visibilitychange",
-    visibilityChange
-  )
+  document.addEventListener("visibilitychange", visibilityChange)
 
   cleanup = () => {
     window.removeEventListener("keydown", keyDown)
@@ -308,10 +252,7 @@ export function initializeInput(onPause) {
     window.removeEventListener("blur", onBlur)
     window.removeEventListener("wheel", wheel)
 
-    document.removeEventListener(
-      "visibilitychange",
-      visibilityChange
-    )
+    document.removeEventListener("visibilitychange", visibilityChange)
 
     unsubscribe()
     clearInput()

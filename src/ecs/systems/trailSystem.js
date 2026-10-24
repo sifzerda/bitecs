@@ -22,6 +22,7 @@ export function trailSystem() {
         const weapon = WEAPONS[Bullet.type[id]];
         if (!weapon?.trail)
             continue
+        
         seen.add(id)
         const x = Position.x[id]
         const y = Position.y[id]

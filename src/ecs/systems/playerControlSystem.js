@@ -1,22 +1,13 @@
 // src/ecs/systems/playerControlSystem.js
 
-
 import { playerQuery } from "../constants/queries.js"
 import { world } from "../constants/world.js"
-import {
-    Position,
-    Velocity,
-    Rotation,
-    BULLET_OWNER
-} from "../constants/components.js"
-
+import { Position, Velocity, Rotation, BULLET_OWNER } from "../constants/components.js"
 import { spawnPlayerBullet } from "../spawn.js"
 import { input, isMouseControlEnabled } from "./input.js"
 import { startState } from "../../state/startState.js"
-
 import { getWeapon } from "../weapons/config/weapons.js"
 import { getAction } from "../weapons/config/weaponActions.js"
-
 import { emitEffect } from "../../fx/effects.js"
 import { EFFECT } from "../../fx/FXTypes.js"
 
@@ -108,42 +99,24 @@ export default function playerControlSystem(shootState) {
         // Shortest angular distance to target
         let delta = targetRot - Rotation[pid]
 
-        delta = Math.atan2(
-            Math.sin(delta),
-            Math.cos(delta)
-        )
-
+        delta = Math.atan2(Math.sin(delta), Math.cos(delta))
         // Proportional steering with rotational damping
-        angularAcceleration =
-            delta * MOUSE_TURN_GAIN -
-            angularVelocity * TURN_DAMPING
+        angularAcceleration = delta * MOUSE_TURN_GAIN - angularVelocity * TURN_DAMPING
 
     } else {
 
         // Keyboard rotation
-        const turnInput =
-            (input.left ? 1 : 0) -
-            (input.right ? 1 : 0)
+        const turnInput = (input.left ? 1 : 0) - (input.right ? 1 : 0)
 
-        angularAcceleration =
-            turnInput * KEYBOARD_TURN_ACCELERATION -
-            angularVelocity * TURN_DAMPING
+        angularAcceleration = turnInput * KEYBOARD_TURN_ACCELERATION - angularVelocity * TURN_DAMPING
     }
 
     // Limit angular acceleration
-    angularAcceleration = Math.max(
-        -TURN_ACCELERATION,
-        Math.min(TURN_ACCELERATION, angularAcceleration)
-    )
-
+    angularAcceleration = Math.max(-TURN_ACCELERATION, Math.min(TURN_ACCELERATION, angularAcceleration))
     // Integrate angular velocity
     angularVelocity += angularAcceleration * dt
-
     // Limit maximum rotation speed
-    angularVelocity = Math.max(
-        -MAX_TURN_SPEED,
-        Math.min(MAX_TURN_SPEED, angularVelocity)
-    )
+    angularVelocity = Math.max(-MAX_TURN_SPEED, Math.min(MAX_TURN_SPEED, angularVelocity))
 
     // Apply rotation
     Rotation[pid] += angularVelocity * dt
@@ -178,10 +151,7 @@ export default function playerControlSystem(shootState) {
     // LINEAR SPEED LIMIT
     // ========================================================
 
-    const speed = Math.hypot(
-        Velocity.x[pid],
-        Velocity.y[pid]
-    )
+    const speed = Math.hypot(Velocity.x[pid], Velocity.y[pid])
 
     if (speed > MAX_SPEED) {
 
@@ -204,20 +174,9 @@ export default function playerControlSystem(shootState) {
     // DEFLECT
     // ========================================================
 
-    startState.deflectBufferTime = Math.max(
-        0,
-        startState.deflectBufferTime - dt
-    )
-
-    startState.deflectCooldownTime = Math.max(
-        0,
-        startState.deflectCooldownTime - dt
-    )
-
-    startState.deflectFlashTimer = Math.max(
-        0,
-        startState.deflectFlashTimer - dt
-    )
+    startState.deflectBufferTime = Math.max(0, startState.deflectBufferTime - dt)
+    startState.deflectCooldownTime = Math.max(0, startState.deflectCooldownTime - dt)
+    startState.deflectFlashTimer = Math.max(0, startState.deflectFlashTimer - dt)
 
     if (input.deflect) {
         if (startState.deflectCooldownTime === 0) {
@@ -250,16 +209,10 @@ export default function playerControlSystem(shootState) {
         shootState.timer = 0
     }
 
-    shootState.timer = Math.max(
-        -dt,
-        shootState.timer - dt
-    )
+    shootState.timer = Math.max(-dt, shootState.timer - dt)
 
     if (!input.fire) {
-        shootState.timer = Math.max(
-            0,
-            shootState.timer
-        )
+        shootState.timer = Math.max(0, shootState.timer)
 
         return
     }
@@ -267,23 +220,9 @@ export default function playerControlSystem(shootState) {
     if (shootState.timer > 0) return
 
     const rot = Rotation[pid]
-
-    const angle = Math.atan2(
-        Math.cos(-rot),
-        Math.sin(-rot)
-    )
-
-    const size =
-        0.8 + (weapon.hitRadius ?? 0.5) * 0.6
-
-    const result = spawnPlayerBullet(
-        Position.x[pid],
-        Position.y[pid],
-        rot,
-        weapon.id,
-        BULLET_OWNER.PLAYER,
-        pid
-    )
+    const angle = Math.atan2(Math.cos(-rot), Math.sin(-rot))
+    const size = 0.8 + (weapon.hitRadius ?? 0.5) * 0.6
+    const result = spawnPlayerBullet(Position.x[pid], Position.y[pid], rot, weapon.id, BULLET_OWNER.PLAYER, pid)
 
     if (result.ids.length > 0) {
         for (const origin of result.origins) {
@@ -298,8 +237,5 @@ export default function playerControlSystem(shootState) {
     }
 
     // Add the interval instead of discarding timing overshoot.
-    shootState.timer += Math.max(
-        dt,
-        weapon.fireRate ?? 0.15
-    )
+    shootState.timer += Math.max(dt, weapon.fireRate ?? 0.15)
 }

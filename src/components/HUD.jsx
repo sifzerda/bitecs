@@ -82,7 +82,7 @@ export function HUD({ onPause, paused }) {
         {boss && (<span className="text-[10px] text-yellow-400/80">BOSS</span>)}
       </div>
 
-      {/* SKIP WAVE - DEVELOPMENT ONLY */}
+      {/* ------------------------DEVELOPMENT ONLY ---------------------------*/}
 
       {import.meta.env.DEV && !paused && !boss && (
         <button type="button" tabIndex={-1}
@@ -93,13 +93,9 @@ export function HUD({ onPause, paused }) {
           }}>⏭ SKIP WAVE</button>
       )}
 
-      {/* SKIP TO FINAL BOSS - DEVELOPMENT ONLY */}
+      {import.meta.env.DEV && (<button onClick={() => useGameStore.getState().startLevel(44)}>Test final boss</button>)}
 
-      {import.meta.env.DEV && (
-        <button onClick={() => useGameStore.getState().startLevel(44)}>
-          Test final boss
-        </button>
-      )}
+            {/* -----------------------------------------------END DEVELOPMENT ONLY */}
 
       {/* PAUSE */}
 

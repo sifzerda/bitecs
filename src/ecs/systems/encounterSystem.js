@@ -10,11 +10,11 @@ import {
 const CLEAR_DURATION = 1.2
 
 export function beginEncounterClear() {
+  
   const { screen } = useGameStore.getState()
 
   if (
-    screen !== SCREEN.PLAY ||
-    startState.encounterPhase !== "active"
+    screen !== SCREEN.PLAY || startState.encounterPhase !== "active"
   ) {
     return false
   }
@@ -31,10 +31,7 @@ export function encounterSystem(dt) {
     return
   }
 
-  startState.clearTimer = Math.max(
-    0,
-    startState.clearTimer - dt
-  )
+  startState.clearTimer = Math.max(0, startState.clearTimer - dt)
 
   if (startState.clearTimer > 0) return
 

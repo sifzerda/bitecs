@@ -29,9 +29,8 @@ import ExhaustRenderer from "../renderers/ExhaustRenderer.jsx"
 import { SmokeRenderer } from "../renderers/SmokeRenderer.jsx"
 import { TrailRenderer } from "../renderers/TrailRenderer.jsx"
 
-import {
-  TentacleBossRenderer,
-} from "../renderers/TentacleBossRenderer.jsx"
+import { BossTelegraphRenderer } from "../renderers/BossTelegraphRenderer.jsx"
+import { TentacleBossRenderer } from "../renderers/TentacleBossRenderer.jsx"
 
 const STEP = 1 / 60
 
@@ -69,45 +68,47 @@ export function PlayScreen({ paused, onPause }) {
 
             <div className="relative min-h-0 flex-1">
                 <Canvas orthographic camera={{ zoom: 60, position: [0, 0, 10], near: 0.1, far: 100 }} gl={{ antialias: false, powerPreference: "high-performance" }} dpr={[1, QUALITY_DPR[settings.quality]]}>
-                  
+
                     <Suspense fallback={null}>
-                       
+
                         <MouseWorldTracker />
-                      
+
                         <GameLoop paused={paused} />
                         <ambientLight intensity={1.1} />
                         <directionalLight position={[5, 8, 6]} intensity={2} />
                         <pointLight position={[0, 0, 6]} intensity={4} />
-                        
+
                         <StarfieldRenderer />
                         <Environment preset="sunset" />
-                        
+
                         <PlayerRenderer />
                         <BossRenderer />
 
+                        <BossTelegraphRenderer />
+
                         <TentacleBossRenderer />
-                       
+
                         <GunMount />
-                       
+
                         <DeflectRenderer />
-                       
+
                         <ExhaustRenderer slot={0} />
                         <ExhaustRenderer slot={1} size={5} nozzleOffset={-0.8} engineGap={0.35} hotCore="#ff8a1a" fireColor="#ff5a12" />
-                       
+
                         <AsteroidRenderer />
-                       
+
                         <BulletRenderer />
-                       
+
                         <MissileRenderer />
                         <GrenadeRenderer />
-                       
+
                         <LaserRenderer source="player" />
                         <LaserRenderer source="boss" />
                         <ArcRenderer source="player" />
                         <ArcRenderer source="boss" renderChainLinks={false} />
                         <ThrowerRenderer source="player" />
                         <ThrowerRenderer source="boss" />
-                       
+
                         <TrailRenderer />
                         <SparkRenderer />
                         <SmokeRenderer />

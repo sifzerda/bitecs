@@ -85,20 +85,15 @@ function spawnBossEncounter(key) {
 
   const pid = playerQuery()[0]
 
-  const playerX =
-    pid === undefined ? 0 : Position.x[pid]
-
-  const playerY =
-    pid === undefined ? 0 : Position.y[pid]
+  const playerX = pid === undefined ? 0 : Position.x[pid]
+  const playerY = pid === undefined ? 0 : Position.y[pid]
 
   // Choose the opposite side of the arena.
   // Replace these coordinates with your arena bounds
   // if your playable area is smaller than this.
-  Position.x[id] =
-    playerX >= 0 ? -BOSS_SPAWN_DISTANCE : BOSS_SPAWN_DISTANCE
+  Position.x[id] = playerX >= 0 ? -BOSS_SPAWN_DISTANCE : BOSS_SPAWN_DISTANCE
 
-  Position.y[id] =
-    playerY >= 0 ? -3 : 3
+  Position.y[id] = playerY >= 0 ? -3 : 3
 
   BossAI.shootTimer[id] = BOSS_ENTRANCE_DELAY
 
@@ -109,22 +104,14 @@ function spawnBossEncounter(key) {
 export function waveSystem() {
   const state = useGameStore.getState()
 
-  if (
-    state.screen !== SCREEN.PLAY ||
-    state.paused ||
-    encounterSpawned ||
-    startState.encounterPhase !== "idle"
-  ) {
+  if (state.screen !== SCREEN.PLAY || state.paused || encounterSpawned || startState.encounterPhase !== "idle") {
     return
   }
 
   // Wait for Home's player-spawn effect.
   if (playerQuery().length === 0) return
 
-  if (
-    activeAsteroids.length > 0 ||
-    bossQuery().length > 0
-  ) {
+  if (activeAsteroids.length > 0 || bossQuery().length > 0) {
     return
   }
 
@@ -133,14 +120,8 @@ export function waveSystem() {
   if (!progression.isBoss) {
     const count = progression.config?.asteroidCount
 
-    if (
-      !Number.isInteger(count) ||
-      count <= 0
-    ) {
-      console.error(
-        "[waveSystem] Invalid asteroid count:",
-        count
-      )
+    if (!Number.isInteger(count) || count <= 0) {
+      console.error("[waveSystem] Invalid asteroid count:", count)
 
       return
     }
@@ -152,9 +133,7 @@ export function waveSystem() {
   if (progression.isBoss) {
     spawnBossEncounter(progression.boss)
   } else {
-    spawnAsteroidWave(
-      progression.config.asteroidCount
-    )
+    spawnAsteroidWave(progression.config.asteroidCount)
   }
 }
 
@@ -162,9 +141,7 @@ export function skipWave() {
   if (!import.meta.env.DEV) return
 
   while (activeAsteroids.length > 0) {
-    releaseAsteroidEntity(
-      activeAsteroids[activeAsteroids.length - 1]
-    )
+    releaseAsteroidEntity(activeAsteroids[activeAsteroids.length - 1])
   }
 
   for (const id of [...bossQuery()]) {
