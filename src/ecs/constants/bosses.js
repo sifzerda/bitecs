@@ -209,7 +209,7 @@ export const BOSSES = [
     {
         key: "missilegun",
         name: "Rogue Mars Missiler",
-        gun: { typeId: "06_missilelauncher" , offsetX: 0.93, offsetY: -0.01, scale: 0.9, rotation: 0 }, // mount.offsetX = 0.48
+        gun: { typeId: "06_missilelauncher", offsetX: 0.93, offsetY: -0.01, scale: 0.9, rotation: 0 }, // mount.offsetX = 0.48
 
 
         emission: {
@@ -408,6 +408,16 @@ export const BOSSES = [
         },
 
     },
+
+    {
+        key: "octopus",
+        isShip: false,
+        gunVisible: false,
+        health: 1500,
+        hitRadius: 0.85,
+    },
+
+
 
 ]
 

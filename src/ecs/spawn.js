@@ -3,7 +3,22 @@
 import { addEntity, addComponent } from "bitecs"
 import * as THREE from "three"
 import { world } from "./constants/world.js"
-import { Position, Velocity, Rotation, Health, Invulnerability, Lifetime, Asteroid, PlayerTag, Bullet, BULLET_OWNER, BossTag, BossAI, BossType, StatusEffect } from "./constants/components.js"
+import {
+    Position,
+    Velocity,
+    Rotation,
+    Health,
+    Invulnerability,
+    Lifetime,
+    Asteroid,
+    PlayerTag,
+    Bullet,
+    BULLET_OWNER,
+    BossTag,
+    BossAI,
+    BossType,
+    StatusEffect
+} from "./constants/components.js"
 import { BOSS_INDEX_BY_KEY, BOSSES } from "./constants/bosses.js"
 import { acquireBulletEntity } from "./pools/bulletPool.js"
 import { acquireAsteroidEntity } from "./pools/asteroidPool.js"
@@ -11,24 +26,27 @@ import { getGunTypeById } from "./weapons/config/gunConfigs.js"
 import { getWeapon } from "./weapons/config/weapons.js"
 import { getBossEmissionConfig, PLAYER_CONFIG } from "./constants/emission.js"
 
+import { resetOctopusBoss } from "./systems/octopusBossSystem.js"
+
+
 // Cache projectile colours helper
 
 const projectileColors = new Map()
 
 function getProjectileColor(weapon) {
-  let color = projectileColors.get(weapon.id)
+    let color = projectileColors.get(weapon.id)
 
-  if (!color) {
-    color = new THREE.Color(
-      weapon.glowColor ?? weapon.color
-    )
+    if (!color) {
+        color = new THREE.Color(
+            weapon.glowColor ?? weapon.color
+        )
 
-    color.offsetHSL(0, 0.3, 0)
+        color.offsetHSL(0, 0.3, 0)
 
-    projectileColors.set(weapon.id, color)
-  }
+        projectileColors.set(weapon.id, color)
+    }
 
-  return color
+    return color
 }
 
 // ============================================================
@@ -416,6 +434,8 @@ export function spawnBoss(bossKey = "shotgun") {
     // --------------------------------------------------------
 
     BossType.typeIndex[id] = bossIndex
+
+    if (bossCfg?.key === "octopus") resetOctopusBoss(id)
 
     return id
 }

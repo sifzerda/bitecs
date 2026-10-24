@@ -29,6 +29,10 @@ import ExhaustRenderer from "../renderers/ExhaustRenderer.jsx"
 import { SmokeRenderer } from "../renderers/SmokeRenderer.jsx"
 import { TrailRenderer } from "../renderers/TrailRenderer.jsx"
 
+import {
+  TentacleBossRenderer,
+} from "../renderers/TentacleBossRenderer.jsx"
+
 const STEP = 1 / 60
 
 export function GameLoop({ paused }) {
@@ -80,6 +84,8 @@ export function PlayScreen({ paused, onPause }) {
                         
                         <PlayerRenderer />
                         <BossRenderer />
+
+                        <TentacleBossRenderer />
                        
                         <GunMount />
                        

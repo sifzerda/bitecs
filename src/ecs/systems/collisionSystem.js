@@ -223,6 +223,8 @@ function resolveBossPlayerCollisions(pid, bosses) {
 
         const bid = bosses[i]
 
+        if (BOSSES[BossType.typeIndex[bid]]?.key === "octopus") continue
+
         const bossRadius = getBossHitRadius(bid)
         const collisionDistance = PLAYER_RADIUS + bossRadius
         const dx = Position.x[pid] - Position.x[bid]

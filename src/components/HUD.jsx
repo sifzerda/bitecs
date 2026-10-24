@@ -93,6 +93,14 @@ export function HUD({ onPause, paused }) {
           }}>⏭ SKIP WAVE</button>
       )}
 
+      {/* SKIP TO FINAL BOSS - DEVELOPMENT ONLY */}
+
+      {import.meta.env.DEV && (
+        <button onClick={() => useGameStore.getState().startLevel(44)}>
+          Test final boss
+        </button>
+      )}
+
       {/* PAUSE */}
 
       <button type="button" tabIndex={-1} className="bg-transparent border-2 border-green-400 text-green-400 font-mono text-xs px-2 py-1 hover:bg-green-400 hover:text-black transition-colors"
