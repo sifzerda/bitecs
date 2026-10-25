@@ -6,6 +6,7 @@ import { Position, Velocity, Rotation } from "../../ecs/constants/components"
 import { playerQuery, bossAIQuery } from "../../ecs/constants/queries"
 import { input } from "../../ecs/systems/input"
 import { acquireExhaust } from "../../ecs/pools/exhaustPool"
+import { playerMotion } from "../../ecs/systems/playerControlSystem.js"
 
 export function exhaustEmitter() {
 
@@ -23,7 +24,7 @@ export function exhaustEmitter() {
         effect.vx = Velocity.x[id]
         effect.vy = Velocity.y[id]
         effect.rot = Rotation[id]
-        effect.emitting = input.thrust
+        effect.emitting = input.thrust || playerMotion.boostRemaining > 0
 
         emitEffect(EFFECT.EXHAUST, effect)
 

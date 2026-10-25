@@ -6,6 +6,7 @@ import { useMemo, useRef, useEffect } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { exhaustSources } from "../fx/gpu/ExhaustState"
+import { playerMotion } from "../ecs/systems/playerControlSystem.js"
 
 const PARTICLE_SIZE = 128
 // Matches the shader's lifespan formula: 0.5 + seed * 0.5, seed in [0,1]
@@ -133,25 +134,64 @@ const renderVertexShader = /* glsl */
   }
 `
 
-const renderFragmentShader = /* glsl */
-  `
+const renderFragmentShader = /* glsl */ `
   precision highp float;
+
   varying float vLife;
   varying float vAge;
+
   uniform vec3 uHotCore;
   uniform vec3 uFireColor;
   uniform vec3 uSmokeColor;
 
+  uniform float uBoost;
+
   void main() {
     if (vLife <= 0.0) discard;
 
-    float d = length(gl_PointCoord - vec2(0.5));
+    float d = length(
+      gl_PointCoord - vec2(0.5)
+    );
+
     if (d > 0.5) discard;
 
-    float alpha = (1.0 - smoothstep(0.0, 0.5, d)) * clamp(vLife, 0.0, 1.0) * 0.15;
+    // Original opacity: unchanged.
+    float alpha =
+      (1.0 - smoothstep(0.0, 0.5, d)) *
+      clamp(vLife, 0.0, 1.0) *
+      0.15;
 
-    vec3 color = mix(uHotCore, uFireColor, smoothstep(0.0, 0.15, vAge));
-    color = mix(color, uSmokeColor, smoothstep(0.15, 1.0, vAge));
+    // Original normal exhaust colours.
+    vec3 color = mix(
+      uHotCore,
+      uFireColor,
+      smoothstep(0.0, 0.15, vAge)
+    );
+
+    color = mix(
+      color,
+      uSmokeColor,
+      smoothstep(0.15, 1.0, vAge)
+    );
+
+    // Boost changes colour and brightness only.
+    vec3 boostColor = mix(
+      vec3(0.55, 0.95, 1.0),
+      vec3(0.0, 0.55, 1.0),
+      smoothstep(0.0, 0.2, vAge)
+    );
+
+    boostColor = mix(
+      boostColor,
+      vec3(0.03, 0.15, 1.0),
+      smoothstep(0.2, 1.0, vAge)
+    );
+
+    color = mix(
+      color,
+      boostColor * 2.2,
+      uBoost
+    );
 
     gl_FragColor = vec4(color, alpha);
   }
@@ -271,6 +311,7 @@ export default function ExhaustRenderer({
       uHotCore: { value: new THREE.Color(hotCore) },
       uFireColor: { value: new THREE.Color(fireColor) },
       uSmokeColor: { value: new THREE.Color(smokeColor) },
+      uBoost: { value: 0 },
     },
     vertexShader: renderVertexShader,
     fragmentShader: renderFragmentShader,
@@ -317,10 +358,11 @@ export default function ExhaustRenderer({
   }, [initialPosTexture, rtA, rtB, simMaterial, renderMaterial, pointsGeometry])
 
   useFrame((state, delta) => {
-        const game = useGameStore.getState()
-        if (game.screen === SCREEN.PLAY && game.paused) return
-        delta = Math.min(delta, 0.05)
+    const game = useGameStore.getState()
+    if (game.screen === SCREEN.PLAY && game.paused) return
+    delta = Math.min(delta, 0.05)
 
+    renderMaterial.uniforms.uBoost.value = slot === 0 && playerMotion.boostRemaining > 0 ? 1 : 0
 
     const ship = exhaustSources.find(s => s.slot === slot)
     const now = world.time.elapsed
