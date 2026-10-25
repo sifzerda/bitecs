@@ -3,14 +3,7 @@
 import { useLayoutEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import * as THREE from "three"
-
-import {
-    OCTOPUS,
-    octopusState as s,
-    setOctopusViewport,
-    findOctopusBoss,
-} from "../ecs/systems/octopusBossSystem.js"
-
+import { OCTOPUS, octopusState as s, setOctopusViewport, findOctopusBoss } from "../ecs/systems/octopusBossSystem.js"
 import { Health } from "../ecs/constants/components.js"
 import { startState } from "../state/startState.js"
 
@@ -69,7 +62,7 @@ const fragmentShader = /* glsl */ `
 
 function buildBuffers() {
     const vertices = OCTOPUS.count * OCTOPUS.segments * 2
-
+    
     const positions = new Float32Array(vertices * 3)
     const uvs = new Float32Array(vertices * 2)
     const seeds = new Float32Array(vertices)

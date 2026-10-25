@@ -32,7 +32,7 @@ export function useScreenKeys(actions) {
   }, [])
 }
 
-export const actionClass = "cursor-pointer border border-cyan-400/50 bg-black/60 px-5 py-3 text-xs uppercase tracking-[0.2em] text-cyan-200 transition hover:bg-cyan-400/10 focus-visible:outline-2 focus-visible:outline-cyan-200 disabled:cursor-not-allowed disabled:opacity-30"
+export const actionClass = "cursor-pointer border border-green-400/40 bg-black/60 px-5 py-3 text-xs uppercase tracking-[0.2em] text-gray-300 transition hover:bg-cyan-400/10 hover:text-green-400 focus-visible:outline-2 focus-visible:outline-cyan-200 disabled:cursor-not-allowed disabled:opacity-30"
 
 export function ScreenActions({ items }) {
 

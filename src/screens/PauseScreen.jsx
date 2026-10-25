@@ -16,6 +16,7 @@ export default function PauseScreen({ onResume, onMenu }) {
             if (previous instanceof HTMLElement && previous.isConnected) previous.focus()
         }
     }, [])
+
     function trapFocus(event) {
 
         if (event.key !== "Tab") return
@@ -36,22 +37,21 @@ export default function PauseScreen({ onResume, onMenu }) {
         }
     }
     return (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm font-mono">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm font-mono">
 
             <section ref={panel}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="pause-title"
                 onKeyDown={trapFocus}
-                className="w-[min(90vw,420px)] border border-cyan-400/50 bg-slate-950 p-8 text-center">
+                className="w-[min(90vw,420px)] border border-green-400/40 bg-slate-950 p-8 text-center">
 
-                <h2 id="pause-title" className="text-2xl tracking-[0.3em] text-cyan-300">PAUSED</h2>
-                <p className="my-5 text-xs text-white/50">Combat and effects suspended.</p>
-                <div className="flex flex-col gap-3">
+                <h2 id="pause-title" className="text-2xl pb-2 tracking-[0.3em] text-cyan-300">PAUSED</h2>
+                <div className="flex flex-col gap-3 ">
                     <button className={actionClass} onClick={onResume}>Resume</button>
                     <button className={actionClass} onClick={onMenu}>Main menu</button>
                 </div>
-                <p className="mt-5 text-xs text-white/40">P / ESC — RESUME</p>
+                <p className="pt-3 mt-5 text-xs text-white/40">P / ESC — RESUME</p>
             </section>
 
         </div>
