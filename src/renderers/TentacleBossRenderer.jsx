@@ -13,7 +13,6 @@ import {
 
 import { Health } from "../ecs/constants/components.js"
 import { startState } from "../state/startState.js"
-import { TentacleRenderer } from "./TentacleRenderer.jsx"
 
 const vertexShader = /* glsl */ `
     attribute float aSeed;
@@ -28,10 +27,7 @@ const vertexShader = /* glsl */ `
         vSeed = aSeed;
         vWarning = aWarning;
 
-        gl_Position =
-            projectionMatrix *
-            modelViewMatrix *
-            vec4(position, 1.0);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
     }
 `
 
@@ -51,43 +47,21 @@ const fragmentShader = /* glsl */ `
         float along = vUv.x;
         float edge = abs(vUv.y - 0.5) * 2.0;
 
-        float softEdge =
-            1.0 - smoothstep(0.55, 1.0, edge);
+        float softEdge = 1.0 - smoothstep(0.55, 1.0, edge);
+        float tipFade = 1.0 - smoothstep(0.85, 1.0, along);
+        float baseFade = smoothstep(0.0, 0.04, along);
 
-        float tipFade =
-            1.0 - smoothstep(0.85, 1.0, along);
+        vec3 color = mix(uHotCore, uFireColor, smoothstep(0.0, 0.15, along));
 
-        float baseFade =
-            smoothstep(0.0, 0.04, along);
-
-        vec3 color = mix(
-            uHotCore,
-            uFireColor,
-            smoothstep(0.0, 0.15, along)
-        );
-
-        color = mix(
-            color,
-            uSmokeColor,
-            smoothstep(0.15, 1.0, along)
-        );
-
+        color = mix(color, uSmokeColor, smoothstep(0.15, 1.0, along));
         color *= mix(0.85, 1.15, vSeed);
 
         // Highlight the arm that is preparing to strike.
         float pulse = 0.5 + 0.5 * sin(uTime * 12.0);
 
-        color = mix(
-            color,
-            vec3(1.0, 0.70, 0.10),
-            vWarning * (0.55 + pulse * 0.20)
-        );
+        color = mix(color, vec3(1.0, 0.70, 0.10), vWarning * (0.55 + pulse * 0.20));
 
-        float alpha =
-            softEdge *
-            tipFade *
-            baseFade *
-            0.18;
+        float alpha = softEdge * tipFade * baseFade * 0.18;
 
         gl_FragColor = vec4(color, alpha);
     }
@@ -100,10 +74,7 @@ function buildBuffers() {
     const uvs = new Float32Array(vertices * 2)
     const seeds = new Float32Array(vertices)
     const warnings = new Float32Array(vertices)
-
-    const indices = new Uint32Array(
-        OCTOPUS.count * (OCTOPUS.segments - 1) * 6
-    )
+    const indices = new Uint32Array(OCTOPUS.count * (OCTOPUS.segments - 1) * 6)
 
     let cursor = 0
 
@@ -166,17 +137,12 @@ export function TentacleBossRenderer() {
 
         if (!mesh || !body || !marker) return
 
-        const alive =
-            s.eid >= 0 &&
-            findOctopusBoss() === s.eid
+        const alive = s.eid >= 0 && findOctopusBoss() === s.eid
 
         mesh.visible = alive
         body.visible = alive
 
-        marker.visible =
-            alive &&
-            s.warning &&
-            startState.encounterPhase === "active"
+        marker.visible = alive && s.warning && startState.encounterPhase === "active"
 
         if (!alive) return
 
@@ -184,39 +150,23 @@ export function TentacleBossRenderer() {
 
         body.position.set(s.coreX, s.coreY, 0.1)
 
-        const healthFraction = THREE.MathUtils.clamp(
-            Health.current[s.eid] /
-                Math.max(1, Health.max[s.eid]),
-            0,
-            1
-        )
+        const healthFraction = THREE.MathUtils.clamp(Health.current[s.eid] / Math.max(1, Health.max[s.eid]), 0, 1)
 
-        body.material.emissiveIntensity =
-            0.6 +
-            (1 - healthFraction) +
-            Math.sin(s.time * 4) * 0.15
+        body.material.emissiveIntensity = 0.6 + (1 - healthFraction) + Math.sin(s.time * 4) * 0.15
 
         marker.position.set(s.targetX, s.targetY, 0.2)
-
-        marker.scale.setScalar(
-            1 + Math.sin(s.time * 18) * 0.12
-        )
+        marker.scale.setScalar(1 + Math.sin(s.time * 18) * 0.12)
 
         for (let arm = 0; arm < OCTOPUS.count; arm++) {
             const base = arm * OCTOPUS.segments
 
-            const preparing =
-                arm === s.attack && s.warning ? 1 : 0
+            const preparing = arm === s.attack && s.warning ? 1 : 0
 
             for (let j = 0; j < OCTOPUS.segments; j++) {
                 const i = base + j
 
                 const previous = base + Math.max(0, j - 1)
-
-                const next = base + Math.min(
-                    OCTOPUS.segments - 1,
-                    j + 1
-                )
+                const next = base + Math.min(OCTOPUS.segments - 1, j + 1)
 
                 const dx = s.x[next] - s.x[previous]
                 const dy = s.y[next] - s.y[previous]
@@ -229,20 +179,11 @@ export function TentacleBossRenderer() {
                 const vertex = i * 2
                 const offset = vertex * 3
 
-                buffers.positions[offset] =
-                    s.x[i] + nx * radius
-
-                buffers.positions[offset + 1] =
-                    s.y[i] + ny * radius
-
+                buffers.positions[offset] = s.x[i] + nx * radius
+                buffers.positions[offset + 1] = s.y[i] + ny * radius
                 buffers.positions[offset + 2] = 0.06
-
-                buffers.positions[offset + 3] =
-                    s.x[i] - nx * radius
-
-                buffers.positions[offset + 4] =
-                    s.y[i] - ny * radius
-
+                buffers.positions[offset + 3] = s.x[i] - nx * radius
+                buffers.positions[offset + 4] = s.y[i] - ny * radius
                 buffers.positions[offset + 5] = 0.06
 
                 buffers.warnings[vertex] = preparing
@@ -256,8 +197,6 @@ export function TentacleBossRenderer() {
 
     return (
         <>
-            {/* Original decorative bundles remain unchanged. */}
-            <TentacleRenderer />
 
             {/* Six gameplay tentacles use the same thin ribbon style. */}
             <mesh ref={arms} visible={false} frustumCulled={false}>
@@ -302,9 +241,7 @@ export function TentacleBossRenderer() {
             </mesh>
 
             <mesh ref={core} visible={false}>
-                <sphereGeometry
-                    args={[OCTOPUS.coreRadius, 20, 14]}
-                />
+                <sphereGeometry args={[OCTOPUS.coreRadius, 20, 14]} />
 
                 <meshStandardMaterial
                     color="#37245c"
@@ -314,11 +251,7 @@ export function TentacleBossRenderer() {
                 />
             </mesh>
 
-            <mesh
-                ref={warning}
-                visible={false}
-                renderOrder={100}
-            >
+            <mesh ref={warning} visible={false} renderOrder={100}>
                 <ringGeometry args={[0.55, 0.65, 32]} />
 
                 <meshBasicMaterial
