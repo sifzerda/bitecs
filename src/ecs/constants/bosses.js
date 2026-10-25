@@ -418,6 +418,16 @@ export const BOSSES = [
     },
 
 
+    {
+        key: "eldritch",
+        name: "Eldritch Swarm",
+        isShip: false,
+        gunVisible: false,
+        health: 1800,
+        hitRadius: 1.2,
+    },
+
+
 
 ]
 

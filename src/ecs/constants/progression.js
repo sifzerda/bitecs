@@ -13,6 +13,7 @@ export const ZONES = [
     ["ION STORM", "arcgun", 22, 25, 28],
     ["PLASMA RIFT", "plasmagun", 24, 27, 30],
     ["THE ABYSS", "octopus", 26, 29, 32],
+    ["ELDRITCH EXPANSE", "eldritch", 28, 31, 34],
 
 ].map(([name, boss, ...counts], i) => ({
     id: i + 1, name, boss, waves: counts.map(asteroidCount => ({ asteroidCount }))

@@ -4,17 +4,27 @@ import { useMemo, useRef } from "react"
 import { useFrame } from "@react-three/fiber"
 import { useControls } from "leva"
 import * as THREE from "three"
-import { playerQuery, tentacleQuery } from "../ecs/constants/queries.js"
-import { Position, Tentacle } from "../ecs/constants/components.js"
+
+
+
+import {
+    findOctopusBoss,
+} from "../ecs/systems/octopusBossSystem.js"
+import {
+    useGameStore,
+    SCREEN,
+} from "../../store/gameStore.js"
+//import { playerQuery, tentacleQuery } from "../ecs/constants/queries.js"
+//import { Position, Tentacle } from "../ecs/constants/components.js"
 
 // Must match the `key` used for the octopus entry in bosses.js.
 
-const PHASE = { HIDDEN: 0, EMERGING: 1, ACTIVE: 2, RETRACTING: 3 }
+//const PHASE = { HIDDEN: 0, EMERGING: 1, ACTIVE: 2, RETRACTING: 3 }
 
 const BUNDLE_COUNT_DEFAULT = 2
 const TENTACLES_PER_BUNDLE_DEFAULT = 20
-const MAX_BUNDLES = 8         
-const MAX_PER_BUNDLE = 20     
+const MAX_BUNDLES = 8
+const MAX_PER_BUNDLE = 20
 const MAX_TENTACLES = MAX_BUNDLES * MAX_PER_BUNDLE
 
 // ============================================================
@@ -214,7 +224,7 @@ void main() {
 export function TentacleRenderer() {
 
     const cfg = useControls('Eldritch / Organic Tentacles', {
-        debugForceVisible: { value: false, label: '[DEBUG] Force Visible' },
+        debugForceVisible: { value: true, label: '[DEBUG] Force Visible' },
         bundleCount: { value: BUNDLE_COUNT_DEFAULT, min: 1, max: MAX_BUNDLES, step: 1 },
         tentaclesPerBundle: { value: TENTACLES_PER_BUNDLE_DEFAULT, min: 1, max: MAX_PER_BUNDLE, step: 1 },
         bundleSpread: { value: 0.30, min: 0, max: 0.3, step: 0.005, label: 'bundle fan spread' },
@@ -247,10 +257,12 @@ export function TentacleRenderer() {
         coreWidth: { value: 0.55, min: 0, max: 0.95, step: 0.02, label: 'solid core width' },
     }, { collapsed: false })
 
+
+
     const totalTentacles = cfg.bundleCount * cfg.tentaclesPerBundle
     const pointsPerTentacle = Math.max(cfg.nodeCount - 1, 2)
     const quadsPerTentacle = pointsPerTentacle - 1
-    const vertsPerTentacle = pointsPerTentacle * 2 
+    const vertsPerTentacle = pointsPerTentacle * 2
     const totalVerts = MAX_TENTACLES * vertsPerTentacle
     const totalTris = MAX_TENTACLES * quadsPerTentacle * 2
 
@@ -361,7 +373,17 @@ export function TentacleRenderer() {
     const meshRef = useRef()
 
     useFrame((frameState, dt) => {
-        if (!meshRef.current) return
+        const mesh = meshRef.current
+        if (!mesh) return
+
+        const game = useGameStore.getState()
+
+        const visible = cfg.debugForceVisible ||
+            (game.screen === SCREEN.PLAY && findOctopusBoss() >= 0)
+
+        mesh.visible = visible
+
+        if (!visible || game.paused) return
 
         const t = frameState.clock.elapsedTime
         const viewportW = frameState.viewport.width
@@ -372,10 +394,10 @@ export function TentacleRenderer() {
         const { tentacles: sims, reachWeights } = stateRef.current
         const positions = positionAttr.array
 
-        const bundleEntities = tentacleQuery()
-        const players = playerQuery()
-        const hasPlayer = players.length > 0
-        const playerEid = hasPlayer ? players[0] : null
+        //const bundleEntities = tentacleQuery()
+        //const players = playerQuery()
+        //const hasPlayer = players.length > 0
+        // const playerEid = hasPlayer ? players[0] : null
 
         for (let i = totalTentacles; i < MAX_TENTACLES; i++) {
             const vBase = i * vertsPerTentacle
@@ -388,19 +410,20 @@ export function TentacleRenderer() {
         }
 
         for (let b = 0; b < cfg.bundleCount; b++) {
-            const active = b < bundleEntities.length
-            const eid = active ? bundleEntities[b] : null
+            const deployT = 1
+            const visible = true
 
-            const deployT = cfg.debugForceVisible ? 1 : (active ? Tentacle.deployT[eid] : 0)
-            const visible = cfg.debugForceVisible || deployT > 0.001
+            // Both default bundles emerge from the left side.
+            const edge = 0
 
-            const edge = active ? Tentacle.edge[eid] : (b % 4)
-            const bundleAlong = active ? Tentacle.along[eid] : ((b / cfg.bundleCount) - 0.5) * 0.8
+            const bundleAlong = cfg.bundleCount === 1
+                ? 0
+                : (b / (cfg.bundleCount - 1) - 0.5) * 0.6
 
-            const isActivePhase = active && Tentacle.phase[eid] === PHASE.ACTIVE
-            const reachActive = isActivePhase && hasPlayer
-            const reachX = reachActive ? Position.x[playerEid] : 0
-            const reachY = reachActive ? Position.y[playerEid] : 0
+            // Purely visual: no player tracking.
+            const reachActive = false
+            const reachX = 0
+            const reachY = 0
 
             for (let k = 0; k < cfg.tentaclesPerBundle; k++) {
                 const i = b * cfg.tentaclesPerBundle + k
@@ -420,6 +443,10 @@ export function TentacleRenderer() {
                 const along = bundleAlong + sim.alongJitter * cfg.bundleSpread
                 const anchor = edgeAnchor(edge, along, viewportW, viewportH)
 
+                // Place the roots slightly inside the visible screen.
+                anchor.x += anchor.nx * 0.35
+                anchor.y += anchor.ny * 0.35
+
                 const effSpacing = cfg.spacing * deployT
                 const radii = buildTaper(cfg.nodeCount, cfg.baseRadius * deployT, cfg.tipRadius * deployT)
 
@@ -436,7 +463,10 @@ export function TentacleRenderer() {
                 updateTentacle(
                     sim.nodes, sim.outer, sim.inner,
                     anchor.x, anchor.y,
-                    effSpacing, cfg.friction, cfg.gravity, cfg.wind,
+                    effSpacing,
+                    cfg.friction,
+                    cfg.gravity,
+                    Math.abs(cfg.wind),
                     radii,
                     reachActive, reachX, reachY, cfg.reachStrength, reachWeights,
                     sim.seed, t, cfg.wanderStrength, cfg.wanderSpeed,
@@ -445,12 +475,6 @@ export function TentacleRenderer() {
                     cfg.detailAmplitude, cfg.detailFrequency, cfg.detailSpeed,
                     cfg.curvatureSmoothing, cfg.smoothIterations
                 )
-
-                if (active && k === 0) {
-                    const tip = sim.nodes[sim.nodes.length - 1]
-                    Position.x[eid] = tip.x
-                    Position.y[eid] = tip.y
-                }
 
                 for (let p = 0; p < pointsPerTentacle; p++) {
                     const o = sim.outer[p]

@@ -32,6 +32,8 @@ import { TrailRenderer } from "../renderers/TrailRenderer.jsx"
 import { BossTelegraphRenderer } from "../renderers/BossTelegraphRenderer.jsx"
 import { TentacleBossRenderer } from "../renderers/TentacleBossRenderer.jsx"
 
+import { TentacleRenderer } from "../renderers/TentacleRenderer.jsx"
+
 const STEP = 1 / 60
 
 export function GameLoop({ paused }) {
@@ -87,6 +89,8 @@ export function PlayScreen({ paused, onPause }) {
                         <BossTelegraphRenderer />
 
                         <TentacleBossRenderer />
+
+                        <TentacleRenderer />
 
                         <GunMount />
 
