@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { useScreenKeys, actionClass } from "../components/ScreenActions.jsx"
+import BG from "../components/BG.jsx"
 
 export default function PauseScreen({ onResume, onMenu }) {
 
@@ -37,23 +38,27 @@ export default function PauseScreen({ onResume, onMenu }) {
         }
     }
     return (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm font-mono">
+        <>
+            <BG />
 
-            <section ref={panel}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="pause-title"
-                onKeyDown={trapFocus}
-                className="w-[min(90vw,420px)] border border-green-400/40 bg-slate-950 p-8 text-center">
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm font-mono">
 
-                <h2 id="pause-title" className="text-2xl pb-2 tracking-[0.3em] text-cyan-300">PAUSED</h2>
-                <div className="flex flex-col gap-3 ">
-                    <button className={actionClass} onClick={onResume}>Resume</button>
-                    <button className={actionClass} onClick={onMenu}>Main menu</button>
-                </div>
-                <p className="pt-3 mt-5 text-xs text-white/40">P / ESC — RESUME</p>
-            </section>
+                <section ref={panel}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="pause-title"
+                    onKeyDown={trapFocus}
+                    className="w-[min(90vw,420px)] border border-green-400/40 bg-slate-950 p-8 text-center">
 
-        </div>
+                    <h2 id="pause-title" className="text-2xl pb-2 tracking-[0.3em] text-cyan-300">PAUSED</h2>
+                    <div className="flex flex-col gap-3 ">
+                        <button className={actionClass} onClick={onResume}>Resume</button>
+                        <button className={actionClass} onClick={onMenu}>Main menu</button>
+                    </div>
+                    <p className="pt-3 mt-5 text-xs text-white/40">P / ESC — RESUME</p>
+                </section>
+
+            </div>
+        </>
     )
 }
