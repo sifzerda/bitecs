@@ -48,11 +48,11 @@ npm install
 - [bitECS](https://github.com/sifzerda/bitecs)
 - [Three.js](https://threejs.org/) + [Fiber](https://github.com/pmndrs/fiber) + [Drei](https://github.com/pmndrs/drei) + [Postprocessing](https://github.com/pmndrs/postprocessing) 
 - [useMemo](https://react.dev/reference/react/useMemo)
-- [Leva](https://github.com/pmndrs/leva): config panel to create ship parts
+- [Leva](https://github.com/pmndrs/leva): debug config panels and used to create object parts
 - [Muscular Hydrostats](https://github.com/soulwire/Muscular-Hydrostats): for tentacles
 
-- [Behaviour3JS](https://github.com/behavior3js/behavior3js): for boss AI
-- [Yuka](https://github.com/mrdoob/yuka): for boss AI
+- ~~[Behaviour3JS](https://github.com/behavior3js/behavior3js): for boss AI~~
+- ~~[Yuka](https://github.com/mrdoob/yuka): for boss AI~~
 
 ## Support
 
@@ -139,6 +139,6 @@ Make config screen for emission point, using a dot to show emission points on sh
 
  -  Verlet mesh, chain etc physics, or engine
 
- - [ ] weaponActions and Spawn currently has some BOSS AI functions, maybe put all Boss AI into separate file/system. maybe other files have boss AI scattered, need to be centralized 
+ - [x] weaponActions and Spawn currently has some BOSS AI functions, maybe put all Boss AI into separate file/system. maybe other files have boss AI scattered, need to be centralized 
 
- - restyle and format pages to remove gaps and extra space, scrolling
+ - [ ] restyle and format pages to remove gaps and extra space, scrolling

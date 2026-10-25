@@ -10,8 +10,11 @@ export function resetWeaponVisuals() {
     for (
         const state of [laserState, bossLaserState]
     ) {
-        state.active = false; state.beamCount = 0; state.sparkTimer = 0
-        state.lockTargetId = -1; state.lockTime = 0
+        state.active = false; 
+        state.beamCount = 0; 
+        state.sparkTimer = 0
+        state.lockTargetId = -1; 
+        state.lockTime = 0
         state.hitActive?.fill(0)
     }
 

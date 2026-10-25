@@ -1,11 +1,7 @@
 // src/ecs/systems/encounterSystem.js
 
 import { startState } from "../../state/startState.js"
-
-import {
-  useGameStore,
-  SCREEN,
-} from "../../../store/gameStore.js"
+import { useGameStore, SCREEN } from "../../../store/gameStore.js"
 
 const CLEAR_DURATION = 1.2
 
@@ -13,9 +9,7 @@ export function beginEncounterClear() {
   
   const { screen } = useGameStore.getState()
 
-  if (
-    screen !== SCREEN.PLAY || startState.encounterPhase !== "active"
-  ) {
+  if (screen !== SCREEN.PLAY || startState.encounterPhase !== "active") {
     return false
   }
 

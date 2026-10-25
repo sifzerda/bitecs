@@ -6,7 +6,6 @@ import { world } from "../constants/world.js"
 export function createPool({ size, components, activeField, resetFields }) {
 
     const [component, key] = activeField
-
     const pool = []
     const active = []
     const free = []
@@ -22,9 +21,14 @@ export function createPool({ size, components, activeField, resetFields }) {
 
         for (let i = 0; i < size; i++) {
             const id = addEntity(world)
-            for (const c of components) addComponent(world, id, c)
-            component[key][id] = 0; resetFields?.(id)
-            pool.push(id); free.push(i); slotById.set(id, i)
+
+            for (const c of components)
+                addComponent(world, id, c)
+            component[key][id] = 0;
+            resetFields?.(id)
+            pool.push(id);
+            free.push(i);
+            slotById.set(id, i)
         }
         initialized = true
     }
@@ -36,8 +40,10 @@ export function createPool({ size, components, activeField, resetFields }) {
 
         const id = pool[free.pop()]
 
-        resetFields?.(id); component[key][id] = 1
-        indexById.set(id, active.length); active.push(id)
+        resetFields?.(id);
+        component[key][id] = 1
+        indexById.set(id, active.length);
+        active.push(id)
 
         return id
     }
@@ -54,12 +60,13 @@ export function createPool({ size, components, activeField, resetFields }) {
             indexById.set(moved, index)
         }
         indexById.delete(id);
-        component[key][id] = 0; resetFields?.(id);
+        component[key][id] = 0; 
+        resetFields?.(id);
         free.push(slotById.get(id))
     }
 
     function dispose() {
-        
+
         if (!initialized)
             return
         for (const id of pool) removeEntity(world, id)

@@ -2,27 +2,34 @@
 
 export const ZONES = [
 
-    ["ASTEROID BELT", "shotgun", 6, 8, 10], ["DEEP SPACE", "machinegun", 8, 10, 12],
-    ["FROZEN SECTOR", "cryogun", 10, 12, 14], ["VOLCANIC SECTOR", "flamethrowergun", 12, 15, 18],
-    ["MINEFIELD", "grenadegun", 14, 17, 20], ["TOXIC EXPANSE", "acidthrowergun", 16, 19, 22],
-    ["MARS BLOCKADE", "missilegun", 18, 21, 24], ["ALIEN NEBULA", "lasergun", 20, 23, 26],
-    ["ION STORM", "arcgun", 22, 25, 28], ["PLASMA RIFT", "plasmagun", 24, 27, 30],
+    ["ASTEROID BELT", "shotgun", 6, 8, 10],
+    ["DEEP SPACE", "machinegun", 8, 10, 12],
+    ["FROZEN SECTOR", "cryogun", 10, 12, 14],
+    ["VOLCANIC SECTOR", "flamethrowergun", 12, 15, 18],
+    ["MINEFIELD", "grenadegun", 14, 17, 20],
+    ["TOXIC EXPANSE", "acidthrowergun", 16, 19, 22],
+    ["MARS BLOCKADE", "missilegun", 18, 21, 24],
+    ["ALIEN NEBULA", "lasergun", 20, 23, 26],
+    ["ION STORM", "arcgun", 22, 25, 28],
+    ["PLASMA RIFT", "plasmagun", 24, 27, 30],
     ["THE ABYSS", "octopus", 26, 29, 32],
 
-].map(([name, boss, ...counts], i) => ({ id: i + 1, name, boss, waves: counts.map(asteroidCount => ({ asteroidCount })) }))
+].map(([name, boss, ...counts], i) => ({
+    id: i + 1, name, boss, waves: counts.map(asteroidCount => ({ asteroidCount }))
+}))
 
 export const WAVES_PER_ZONE = ZONES[0].waves.length
 export const ENCOUNTERS_PER_ZONE = WAVES_PER_ZONE + 1
 export const TOTAL_LEVELS = ZONES.reduce((sum, z) => sum + z.waves.length + 1, 0)
 
 export function getProgression(level) {
-    
+
     const number = Number(level)
     const safeLevel = Math.max(1, Math.min(Number.isFinite(number) ? Math.trunc(number) : 1, TOTAL_LEVELS))
     let remaining = safeLevel - 1
-   
+
     for (let zoneIndex = 0; zoneIndex < ZONES.length; zoneIndex++) {
-       
+
         const zone = ZONES[zoneIndex], count = zone.waves.length + 1
         if (remaining < count) {
 
