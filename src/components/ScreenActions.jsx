@@ -37,7 +37,7 @@ export const actionClass = "cursor-pointer border border-green-400/40 bg-black/6
 export function ScreenActions({ items }) {
 
   return (
-    <div className="mt-8 flex flex-wrap justify-center gap-3">
+    <div className="mt-2 flex flex-wrap justify-center gap-3">
       {items.filter(Boolean).map(item =>
         <button key={item.label} type="button" className={actionClass} disabled={item.disabled} onClick={item.action}>{item.label}</button>
       )}

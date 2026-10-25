@@ -120,7 +120,7 @@ export default function FlightLayout2({
         {/* INNER FRAME */}
         <div className="absolute inset-3 border border-[#39ff14]/10" />
         {/* PANEL CONTENT */}
-        <div className="relative z-10 p-6 md:p-8">
+        <div className="relative z-10 p-2 md:p-4">
 
           {/* ========================================================= */}
           {/* TITLE */}
@@ -176,7 +176,7 @@ export default function FlightLayout2({
           {/* ========================================================= */}
           {/* FOOTER */}
           {/* ========================================================= */}
-          <div className="mt-8 flex items-center justify-between border-t border-[#39ff14]/20 pt-3 font-mono text-[10px] tracking-[0.25em] text-[#39ff14]/60">
+          <div className="mt-4 flex items-center justify-between border-t border-[#39ff14]/20 pt-3 font-mono text-[10px] tracking-[0.25em] text-[#39ff14]/60">
 
             <span>NAV READY</span>
             <span>{footer || 'SYS NOMINAL'}</span>

@@ -26,14 +26,10 @@ export default function PauseScreen({ onResume, onMenu }) {
         const first = buttons[0]
         const last = buttons.at(-1)
 
-        if (
-            event.shiftKey && document.activeElement === first
-        ) {
+        if (event.shiftKey && document.activeElement === first) {
             event.preventDefault(); last.focus()
         }
-        else if (
-            !event.shiftKey && document.activeElement === last
-        ) {
+        else if (!event.shiftKey && document.activeElement === last) {
             event.preventDefault(); first.focus()
         }
     }
