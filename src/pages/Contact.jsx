@@ -89,16 +89,14 @@ export default function Contact() {
 
                     <form onSubmit={handleSubmit} className="space-y-4 flex flex-col items-center">
 
-                        <input
-                            type="text"
+                        <input type="text"
                             name="name"
                             placeholder="NAME"
                             required
                             className="w-full border border-[#39ff14]/40 bg-black/30 px-3 py-2 text-xs tracking-[0.2em] text-white outline-none focus:border-[#39ff14]"
                         />
 
-                        <textarea
-                            name="message"
+                        <textarea name="message"
                             placeholder="MESSAGE"
                             rows={9}
                             required
@@ -121,11 +119,8 @@ export default function Contact() {
                             />
                         </div>
 
-                        <button
-                            type="submit"
-                            disabled={sending}
-                            className="border border-[#39ff14] px-6 py-2 text-xs tracking-[0.25em] text-[#39ff14] transition hover:bg-[#39ff14] hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
-                        >
+                        <button type="submit" disabled={sending}
+                            className="cursor-pointer border border-[#39ff14] px-6 py-2 text-xs tracking-[0.25em] text-[#39ff14] transition hover:bg-[#39ff14] hover:text-black disabled:cursor-not-allowed disabled:opacity-50">
                             {sending ? 'SENDING...' : 'SEND MESSAGE'}
                         </button>
 
@@ -133,11 +128,7 @@ export default function Contact() {
 
                     )}
 
-                    {!sent && status && (
-                        <p className="mt-4 text-xs tracking-[0.2em] text-[#39ff14]">
-                            {status}
-                        </p>
-                    )}
+                    {!sent && status && (<p className="mt-4 text-xs tracking-[0.2em] text-[#39ff14]">{status}</p>)}
 
                 </div>
             </FlightLayout>

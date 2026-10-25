@@ -144,7 +144,6 @@ export const useGameStore = create((set, get) => ({
 
 
         set({
-
             screen: SCREEN.MENU,
             level: 1,
             highestLevelReached: 1,
@@ -249,12 +248,7 @@ export const useGameStore = create((set, get) => ({
             return false
         }
 
-        set({
-            unlockedWeapons: [
-                ...state.unlockedWeapons,
-                weaponId,
-            ],
-
+        set({ unlockedWeapons: [ ...state.unlockedWeapons, weaponId ],
             pendingUnlockWeapon: weaponId,
         })
 
