@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react"
 import BG from "../components/BG"
+
 import MenuScreen from "../screens/MenuScreen"
 import HowToPlayScreen from "../screens/HowToPlayScreen"
 import { PlayScreen } from "../screens/PlayScreen"
@@ -12,6 +13,8 @@ import { GunsScreen } from "../screens/GunsScreen.jsx"
 import { GameOverScreen } from "../screens/GameOverScreen"
 import HighscoresScreen from "../screens/HighscoresScreen"
 import PauseScreen from "../screens/PauseScreen.jsx"
+import GameCompleteScreen from "../screens/GameCompleteScreen.jsx"
+
 import { useGameStore, SCREEN, TOTAL_LEVELS } from "../../store/gameStore.js"
 import { spawnPlayer } from "../ecs/spawn.js"
 import { playerQuery } from "../ecs/constants/queries.js"
@@ -91,7 +94,8 @@ export default function Home() {
     }
 
     function menu() {
-        useGameStore.setState({ screen: SCREEN.MENU, paused: false })
+        useGameStore.getState().returnToMenu()
+        runId.current = null
     }
 
     function newRun() {
@@ -114,14 +118,26 @@ export default function Home() {
     }
 
     function continueLevel() {
-        // Last encounter's victory is also a completed run.
-        if (level >= TOTAL_LEVELS) recordHighscore({
-            id: runId.current ?? crypto.randomUUID(),
-            score: startState.score,
-            level,
-            outcome: "completed"
-        })
-        useGameStore.getState().continueLevel()
+        const state = useGameStore.getState()
+
+        if (state.screen !== SCREEN.LEVEL_COMPLETE) {
+            return
+        }
+
+        if (state.level === TOTAL_LEVELS) {
+            const saved = recordHighscore({
+                id: runId.current ?? crypto.randomUUID(),
+                score: startState.score,
+                level: state.level,
+                outcome: "completed",
+            })
+
+            if (!saved) {
+                setScoreError(true)
+            }
+        }
+
+        state.continueLevel()
     }
 
     // ========================================================
@@ -144,6 +160,7 @@ export default function Home() {
             {screen === SCREEN.SETTINGS && <SettingsScreen onBack={menu} />}
             {screen === SCREEN.HOW_TO_PLAY && <HowToPlayScreen onBack={menu} />}
             {screen === SCREEN.HIGHSCORES && <HighscoresScreen onBack={menu} />}
+            {screen === SCREEN.GAME_COMPLETE && <GameCompleteScreen onRestart={newRun} onMenu={menu} />}
 
         </div>
     )

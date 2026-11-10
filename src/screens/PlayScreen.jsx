@@ -28,9 +28,13 @@ import { DebrisRenderer } from "../renderers/DebrisRenderer.jsx"
 import ExhaustRenderer from "../renderers/ExhaustRenderer.jsx"
 import { SmokeRenderer } from "../renderers/SmokeRenderer.jsx"
 import { TrailRenderer } from "../renderers/TrailRenderer.jsx"
+import CameraShake from "../renderers/CameraShake.jsx"
 
 import { BossTelegraphRenderer } from "../renderers/BossTelegraphRenderer.jsx"
 import { TentacleBossRenderer } from "../renderers/TentacleBossRenderer.jsx"
+
+import { SpawnWarningRenderer } from "../renderers/SpawnWarningRenderer.jsx"
+import ArenaBoundsTracker from "../ecs/systems/ArenaBoundsTracker.jsx"
 
 const STEP = 1 / 60
 
@@ -67,10 +71,13 @@ export function PlayScreen({ paused, onPause }) {
             <HUD paused={paused} onPause={onPause} />
 
             <div className="relative min-h-0 flex-1">
-                <Canvas orthographic camera={{ zoom: 60, position: [0, 0, 10], near: 0.1, far: 100 }} gl={{ antialias: false, powerPreference: "high-performance" }} dpr={[1, QUALITY_DPR[settings.quality]]}>
+                <Canvas
+                    orthographic camera={{ zoom: 60, position: [0, 0, 10], near: 0.1, far: 100 }}
+                    gl={{ antialias: false, powerPreference: "high-performance" }}
+                    dpr={[1, QUALITY_DPR[settings.quality]]}>
 
                     <Suspense fallback={null}>
-
+                        <ArenaBoundsTracker />
                         <MouseWorldTracker />
 
                         <GameLoop paused={paused} />
@@ -80,6 +87,8 @@ export function PlayScreen({ paused, onPause }) {
 
                         <StarfieldRenderer />
                         <Environment preset="sunset" />
+
+                        <CameraShake />
 
                         <PlayerRenderer />
                         <BossRenderer />
@@ -94,7 +103,7 @@ export function PlayScreen({ paused, onPause }) {
 
                         <ExhaustRenderer slot={0} />
                         <ExhaustRenderer slot={1} size={5} nozzleOffset={-0.8} engineGap={0.35} hotCore="#ff8a1a" fireColor="#ff5a12" />
-
+                        <SpawnWarningRenderer />
                         <AsteroidRenderer />
 
                         <BulletRenderer />

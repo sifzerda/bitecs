@@ -3,11 +3,18 @@
 import { query, removeEntity } from "bitecs";
 import { world } from "../ecs/constants/world.js";
 import { Position, AsteroidTag, BulletTag } from "../ecs/constants/components.js";
-import { activeAsteroids, releaseAsteroidEntity } from "../ecs/pools/asteroidPool.js";
+import { activeAsteroids } from "../ecs/pools/asteroidPool.js";
+import { despawnAsteroid } from "../ecs/asteroids/AsteroidManager.js";
 import { activeBullets, releaseBulletEntity } from "../ecs/pools/bulletPool.js";
 import { clearEffects } from "../fx/effects.js";
 import { sparkPool } from "../fx/gpu/SparkEmitter.js";
 import { explosionPool } from "../fx/gpu/ExplosionEmitter.js";
+import {
+    resetNearMissSystem,
+} from "../ecs/combat/nearMissSystem.js"
+import {
+    resetImpactFeedback,
+} from "../ecs/combat/impactFeedback.js"
 
 function clearTypedPool(pool) {
     while (pool.activeCount > 0) {
@@ -18,9 +25,10 @@ function clearTypedPool(pool) {
 }
 
 export function resetLevelWorld() {
+    resetImpactFeedback()
     // Release pooled entities properly so their slots can be reused.
     while (activeAsteroids.length > 0) {
-        releaseAsteroidEntity(activeAsteroids[activeAsteroids.length - 1]);
+        despawnAsteroid(activeAsteroids[activeAsteroids.length - 1]);
     }
 
     while (activeBullets.length > 0) {
@@ -49,6 +57,8 @@ export function resetLevelWorld() {
 
     // Clear any additional effects whose managers implement clear().
     clearEffects();
+
+    resetNearMissSystem()
 
     // Avoid carrying timing state into the next encounter.
     world.time.delta = 0;

@@ -1,55 +1,74 @@
 // src/renderers/SmokeRenderer.jsx
 
-import { useMemo } from 'react'
-import { useFrame } from '@react-three/fiber'
-import * as THREE from 'three'
+import { useCallback, useMemo } from "react"
+import * as THREE from "three"
+
 import { PoolParticles } from "./PoolParticles.jsx"
 import { smokePool } from "../fx/gpu/SmokeEmitter.js"
 
-// ------------------------------------------------------------
-// Renderer
-// ------------------------------------------------------------
+export function SmokeRenderer({
+    hotCore = "#ff2614",
+    fireColor = "#8a1f52",
+    smokeColor = "#0a1a4a",
+    baseOpacity = 0.6,
+    sizeMultiplier = 4,
+}) {
+    const colors = useMemo(() => ({
+        hot: new THREE.Color(hotCore),
+        fire: new THREE.Color(fireColor),
+        smoke: new THREE.Color(smokeColor),
+        temp: new THREE.Color(),
+    }), [hotCore, fireColor, smokeColor])
 
-export function SmokeRenderer({ hotCore = "#ff2614", fireColor = "#8a1f52", smokeColor = "#0a1a4a", baseOpacity = 0.6, sizeMultiplier = 4 }) {
+    const sample = useCallback((pool, id, out) => {
+        const j = id * 3
 
-  const [hot, fire, smoke, temp] = useMemo(() => [
-    new THREE.Color(hotCore),
-    new THREE.Color(fireColor),
-    new THREE.Color(smokeColor),
-    new THREE.Color()], [hotCore, fireColor, smokeColor]
-  )
+        out.x = pool.instancePosition[j]
+        out.y = pool.instancePosition[j + 1]
+        out.z = pool.instancePosition[j + 2]
 
-  function sample(p, id, s) {
+        out.rotation = pool.instanceRotation[id]
 
-    const j = id * 3
+        const age = THREE.MathUtils.clamp(
+            pool.age[id],
+            0,
+            1
+        )
 
-    s.x = p.instancePosition[j];
-    s.y = p.instancePosition[j + 1];
-    s.z = p.instancePosition[j + 2]
+        const size =
+            pool.instanceScale[id] *
+            sizeMultiplier *
+            (1 + age * 0.6)
 
-    s.rotation = p.instanceRotation[id]
+        out.width = size
+        out.height = size
 
-    s.r = p.instanceColor[j];
-    s.g = p.instanceColor[j + 1];
-    s.b = p.instanceColor[j + 2]
+        if (age < 0.15) {
+            colors.temp.copy(colors.hot).lerp(
+                colors.fire,
+                age / 0.15
+            )
+        } else {
+            colors.temp.copy(colors.fire).lerp(
+                colors.smoke,
+                (age - 0.15) / 0.85
+            )
+        }
 
-    s.alpha = p.instanceAlpha[id]
-    s.width = s.height = p.instanceScale[id]
+        out.r = colors.temp.r
+        out.g = colors.temp.g
+        out.b = colors.temp.b
 
-    const age = p.age[id]
+        out.alpha =
+            pool.instanceAlpha[id] *
+            baseOpacity
+    }, [colors, baseOpacity, sizeMultiplier])
 
-    s.width = s.height = p.instanceScale[id] * sizeMultiplier * (1 + age * 0.6)
-
-    const c = age < 0.15 ? temp.copy(hot).lerp(fire, age / 0.15) : temp.copy(fire).lerp(smoke, (age - 0.15) / 0.85)
-
-    s.r = c.r;
-    s.g = c.g;
-    s.b = c.b;
-    s.alpha *= baseOpacity
-  }
-
-  return (
-    <PoolParticles pool={smokePool} sample={sample} additive={false} />
-  )
-
+    return (
+        <PoolParticles
+            pool={smokePool}
+            sample={sample}
+            additive={false}
+        />
+    )
 }

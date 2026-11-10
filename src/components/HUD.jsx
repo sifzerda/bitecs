@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { startState } from "../state/startState.js"
-import { skipWave } from "../ecs/systems/waveSystem.js"
+import { skipWave } from "../ecs/waves/waveSystem.js"
 import { useGameStore, formatLevelLabel, isBossLevel } from "../../store/gameStore.js"
 
 export function HUD({ onPause, paused }) {

@@ -3,50 +3,67 @@
 export const DEFAULT_WEAPON = 0
 
 export const startState = {
-  score: 0,
-  lives: 3,
-  health: 100,
+    score: 0,
+    lives: 3,
+    health: 100,
 
-  currentWeapon: DEFAULT_WEAPON,
-  unlockedWeapons: [DEFAULT_WEAPON],
+    currentWeapon: DEFAULT_WEAPON,
+    unlockedWeapons: [DEFAULT_WEAPON],
 
-  asteroidsRemaining: 0,
+    asteroidsRemaining: 0,
 
-  // idle -> active -> clearing -> completed
-  encounterPhase: "idle",
-  clearTimer: 0,
+    // idle -> active -> clearing -> completed
+    encounterPhase: "idle",
+    clearTimer: 0,
 
-  deflectBufferTime: 0,
-  deflectCooldownTime: 0,
+    // Combat scoring
+    comboKills: 0,
+    comboMultiplier: 1,
+    comboTimer: 0,
+    comboBest: 0,
+    lastScoreAward: 0,
 
-  deflectFlashTimer: 0,
-  deflectFlashX: 0,
-  deflectFlashY: 0,
+    deflectBufferTime: 0,
+    deflectCooldownTime: 0,
 
-  gunSkinOverride: null,
+    deflectFlashTimer: 0,
+    deflectFlashX: 0,
+    deflectFlashY: 0,
+
+    gunSkinOverride: null,
+}
+
+export function resetComboState() {
+    startState.comboKills = 0
+    startState.comboMultiplier = 1
+    startState.comboTimer = 0
+    startState.lastScoreAward = 0
 }
 
 export function resetstartState() {
-  startState.score = 0
-  startState.lives = 3
-  startState.health = 100
-  startState.currentWeapon = DEFAULT_WEAPON
+    startState.score = 0
+    startState.lives = 3
+    startState.health = 100
+    startState.currentWeapon = DEFAULT_WEAPON
+    startState.comboBest = 0
 
-  resetstartStateForLevel()
+    resetstartStateForLevel()
 }
 
 export function resetstartStateForLevel() {
-  startState.asteroidsRemaining = 0
+    startState.asteroidsRemaining = 0
 
-  startState.encounterPhase = "idle"
-  startState.clearTimer = 0
+    startState.encounterPhase = "idle"
+    startState.clearTimer = 0
 
-  startState.deflectBufferTime = 0
-  startState.deflectCooldownTime = 0
+    resetComboState()
 
-  startState.deflectFlashTimer = 0
-  startState.deflectFlashX = 0
-  startState.deflectFlashY = 0
+    startState.deflectBufferTime = 0
+    startState.deflectCooldownTime = 0
 
-  startState.gunSkinOverride = null
+    startState.deflectFlashTimer = 0
+    startState.deflectFlashX = 0
+    startState.deflectFlashY = 0
+
+    startState.gunSkinOverride = null
 }

@@ -1,12 +1,10 @@
 // src/renderers/StarfieldRenderer.jsx
 
-// src/renderers/StarfieldRenderer.jsx
-
-import { world } from "../ecs/constants/world.js"
-import { useGameStore, SCREEN } from "../../store/gameStore.js"
-import { useMemo, useRef, useEffect } from "react"
-import { useThree, useFrame } from "@react-three/fiber"
 import * as THREE from "three"
+import { useEffect, useMemo, useRef } from "react"
+import { useFrame, useThree } from "@react-three/fiber"
+
+import { useGameStore, SCREEN } from "../../store/gameStore.js"
 
 // ============================================================
 // CONFIG
@@ -14,609 +12,635 @@ import * as THREE from "three"
 
 const FIELD_Z = -5
 const PADDING = 1.4
-
-// One combined particle buffer.
-const SMALL_STAR_COUNT = 2000
-const MILKY_WAY_STAR_COUNT = 2200
-const CLUSTER_STAR_COUNT = 700
-const DUST_LAYER_COUNT = 500
-
-const BRIGHT_STAR_COUNT = 55
-
-// Shooting stars are pooled rather than created dynamically.
-const MAX_SHOOTING_STARS = 24
-const STAR_TOTAL = SMALL_STAR_COUNT + MILKY_WAY_STAR_COUNT + CLUSTER_STAR_COUNT + DUST_LAYER_COUNT
 const DPR_LIMIT = 1.5
 
-const COLORS = {
-    white: "#eef4ff",
-    amber: "#e2541f",
-    pink: "#f0207a",
-    violet: "#5a24d6",
-    cyan: "#1fa8ff",
+const STAR_COUNTS = [2000, 2200, 700, 500, 55]
+const STAR_TOTAL = STAR_COUNTS.reduce((a, b) => a + b, 0)
+
+const MAX_METEORS = 24
+const NEBULA_FPS = 10
+const NEBULA_SCALE = 0.5
+
+const ANGLE = THREE.MathUtils.degToRad(-32)
+const COS = Math.cos(ANGLE)
+const SIN = Math.sin(ANGLE)
+
+const COLORS = [
+    "#eef4ff",
+    "#1fa8ff",
+    "#5a24d6",
+    "#f0207a",
+    "#e2541f",
+]
+
+const METEOR_COLORS = [
+    [0.27, 0.67, 1],
+    [0.59, 0.35, 0.92],
+    [0.94, 0.2, 0.51],
+    [0.89, 0.35, 0.16],
+]
+
+const rand = (min = 0, max = 1) =>
+    min + Math.random() * (max - min)
+
+const gaussian = () =>
+    Math.sqrt(-2 * Math.log(Math.max(Math.random(), 1e-8))) *
+    Math.cos(Math.random() * Math.PI * 2)
+
+function isPaused() {
+    const game = useGameStore.getState()
+    return game.screen === SCREEN.PLAY && game.paused
+}
+
+function makeMaterial(vertexShader, fragmentShader, uniforms = {}, options = {}) {
+    return new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        uniforms: Object.fromEntries(
+            Object.entries(uniforms).map(([key, value]) => [
+                key,
+                { value },
+            ])
+        ),
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        toneMapped: false,
+        ...options,
+    })
 }
 
 // ============================================================
-// SHARED NOISE (2D simplex)
-// Reduced from 6 FBM octaves to 4.
+// BACKGROUND SHADERS
 // ============================================================
 
-const noiseGLSL = /* glsl */ `
-vec3 mod289(vec3 x) {
-    return x - floor(x * (1.0 / 289.0)) * 289.0;
+const planeVertex = /* glsl */ `
+varying vec2 vUv;
+
+void main() {
+    vUv = uv;
+    gl_Position =
+        projectionMatrix *
+        modelViewMatrix *
+        vec4(position, 1.0);
+}
+`
+
+
+const skyFragment = /* glsl */ `
+varying vec2 vUv;
+
+void main() {
+    vec3 bottom = vec3(0.004, 0.003, 0.012);
+    vec3 top = vec3(0.001, 0.002, 0.007);
+
+    gl_FragColor = vec4(
+        mix(bottom, top, vUv.y),
+        1.0
+    );
+}
+`
+
+// Three-octave value noise.
+// Evaluated at reduced resolution rather than full-screen.
+
+const nebulaFragment = /* glsl */ `
+precision highp float;
+
+varying vec2 vUv;
+
+uniform float uTime;
+
+float hash(vec2 p) {
+    return fract(
+        sin(dot(p, vec2(127.1, 311.7))) *
+        43758.5453
+    );
 }
 
-vec2 mod289(vec2 x) {
-    return x - floor(x * (1.0 / 289.0)) * 289.0;
-}
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
 
-vec3 permute(vec3 x) {
-    return mod289(((x * 34.0) + 1.0) * x);
-}
+    f = f * f * (3.0 - 2.0 * f);
 
-float snoise(vec2 v) {
-    const vec4 C = vec4(0.21, 0.36, -0.58, 0.024);
-
-    vec2 i = floor(v + dot(v, C.yy));
-    vec2 x0 = v - i + dot(i, C.xx);
-    vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-    vec4 x12 = x0.xyxy + C.xxzz;
-
-    x12.xy -= i1;
-
-    i = mod289(i);
-
-    vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
-    vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
-
-    m *= m;
-    m *= m;
-
-    vec3 x = 2.0 * fract(p * C.www) - 1.0;
-    vec3 h = abs(x) - 0.5;
-    vec3 ox = floor(x + 0.5);
-    vec3 a0 = x - ox;
-
-    m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
-
-    vec3 g;
-
-    g.x = a0.x * x0.x + h.x * x0.y;
-    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-
-    return 130.0 * dot(m, g);
+    return mix(
+        mix(
+            hash(i),
+            hash(i + vec2(1.0, 0.0)),
+            f.x
+        ),
+        mix(
+            hash(i + vec2(0.0, 1.0)),
+            hash(i + vec2(1.0, 1.0)),
+            f.x
+        ),
+        f.y
+    );
 }
 
 float fbm(vec2 p) {
     float value = 0.0;
     float amplitude = 0.5;
 
-    for (int i = 0; i < 4; i++) {
-        value += amplitude * snoise(p);
-        p *= 2.03;
-        amplitude *= 0.55;
+    for (int i = 0; i < 3; i++) {
+        value += noise(p) * amplitude;
+        p *= 2.05;
+        amplitude *= 0.5;
     }
 
     return value;
 }
-`
-
-// ============================================================
-// SKY
-// ============================================================
-
-const skyVertexShader = /* glsl */ `
-varying vec2 vUv;
 
 void main() {
-    vUv = uv;
-
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}
-`
-
-const skyFragmentShader = /* glsl */ `
-precision highp float;
-
-uniform vec3 uColorTop;
-uniform vec3 uColorBottom;
-
-varying vec2 vUv;
-
-void main() {
-    vec3 color = mix(uColorBottom, uColorTop, smoothstep(0.0, 1.0, vUv.y));
-    gl_FragColor = vec4(color, 1.0);
-}
-`
-
-function SkyBase() {
-    const viewport = useThree((s) => s.viewport)
-
-    const material = useMemo(() => {
-        return new THREE.ShaderMaterial({
-            vertexShader: skyVertexShader,
-            fragmentShader: skyFragmentShader,
-            uniforms: {
-                uColorTop: { value: new THREE.Color("#02020a") },
-                uColorBottom: { value: new THREE.Color("#0a0616") },
-            },
-            depthWrite: false,
-            depthTest: false,
-        })
-    }, [])
-
-    useEffect(() => {
-        return () => material.dispose()
-    }, [material])
-
-    const width = viewport.width * PADDING * 1.7
-    const height = viewport.height * PADDING * 1.7
-
-    return (
-        <mesh position={[0, 0, FIELD_Z - 4]} renderOrder={-10} material={material}>
-            <planeGeometry args={[width, height]} />
-        </mesh>
-    )
-}
-
-// ============================================================
-// PROCEDURAL MILKY WAY / NEBULA
-// ============================================================
-
-const dustBandFragmentShader = /* glsl */ `
-precision highp float;
-
-uniform float uTime;
-
-uniform vec3 uColorAmber;
-uniform vec3 uColorPink;
-uniform vec3 uColorViolet;
-uniform vec3 uColorCyan;
-
-varying vec2 vUv;
-
-${noiseGLSL}
-
-void main() {
-
     vec2 uv = vUv * 2.0 - 1.0;
 
-    float angle = radians(-32.0);
+    float a = radians(-32.0);
 
-    mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-    vec2 p = rot * uv;
+    mat2 rotation = mat2(
+        cos(a), -sin(a),
+        sin(a), cos(a)
+    );
 
-    float band = exp(-pow(p.y, 2.0) * 7.0);
-    float haze = 0.5 + 0.5 * fbm(p * 1.05 + vec2(uTime * 0.004, 0.0));
-    float wisps = smoothstep(0.18, 0.82, fbm(p * 1.8 - 10.0 + uTime * 0.002));
-    float colorNoise = 0.5 + 0.5 * fbm(p * 0.55 + uTime * 0.006);
+    vec2 p = rotation * uv;
 
-    vec3 color = mix(uColorAmber, uColorPink, colorNoise);
+    p.x += uTime * 0.002;
 
-    color = mix(color, uColorViolet, smoothstep(0.25, 0.75, haze));
-    color = mix(color, uColorCyan, smoothstep(0.55, 0.95, haze));
+    float band = exp(-p.y * p.y * 7.0);
 
-    float alpha = band * haze * wisps * 0.28;
-    float vignette = smoothstep(1.65, 0.25, length(uv));
+    float clouds = fbm(p * 3.0 + 5.0);
+    float detail = fbm(p * 8.0 - 12.0);
 
-    alpha *= vignette;
+    float density =
+        band *
+        smoothstep(0.25, 0.75, clouds) *
+        (0.5 + detail);
 
-    gl_FragColor = vec4(color, alpha);
-}
-`
+vec3 cyan = vec3(0.01, 0.24, 0.42);
+vec3 blue = vec3(0.005, 0.035, 0.22);
+vec3 violet = vec3(0.10, 0.015, 0.25);
 
-function DustBand() {
-    const viewport = useThree((s) => s.viewport)
+    vec3 color = mix(blue, cyan, clouds);
+    color = mix(color, violet, detail * 0.5);
 
-    const material = useMemo(() => {
-        return new THREE.ShaderMaterial({
-            vertexShader: skyVertexShader,
-            fragmentShader: dustBandFragmentShader,
+    float vignette =
+        1.0 - smoothstep(0.8, 1.6, length(uv));
 
-            uniforms: {
-                uTime: { value: 0 },
-                uColorAmber: { value: new THREE.Color("#b0fcff") },
-                uColorPink: { value: new THREE.Color("#00e1ff") },
-                uColorViolet: { value: new THREE.Color("#0077ff") },
-                uColorCyan: { value: new THREE.Color("#0077ff") },
-            },
-
-            transparent: true,
-            depthWrite: false,
-            // depthTest on so this layer doesn't paint over opaque objects
-            // (asteroids, ships) that are actually in front of it.
-            depthTest: true,
-            blending: THREE.AdditiveBlending,
-        })
-    }, [])
-
-    useEffect(() => {
-        return () => material.dispose()
-    }, [material])
-
-    useFrame((_, delta) => {
-        const game = useGameStore.getState()
-        if (game.screen === SCREEN.PLAY && game.paused) return
-        delta = Math.min(delta, 0.05)
-
-        material.uniforms.uTime.value += delta
-    })
-
-    const width = viewport.width * PADDING * 1.6
-    const height = viewport.height * PADDING * 1.6
-
-    return (
-        <mesh position={[0, 0, FIELD_Z - 3]} renderOrder={-9} material={material}>
-            <planeGeometry args={[width, height]} />
-        </mesh>
-    )
-}
-
-// ============================================================
-// STAR PARTICLES
-// ============================================================
-
-const starVertexShader = /* glsl */ `
-precision highp float;
-
-attribute float aPhase;
-attribute float aSpeed;
-attribute float aSize;
-attribute float aHue;
-attribute float aKind;
-attribute float aSeed;
-
-uniform float uTime;
-uniform float uPixelRatio;
-uniform float uBaseSize;
-
-varying float vAlpha;
-varying float vHue;
-varying float vKind;
-
-${noiseGLSL}
-
-void main() {
-
-    vec3 pos = position;
-
-    if (aKind > 2.5) {
-
-        float t = uTime * 0.025;
-
-        pos.x += snoise(pos.xy * 0.08 + aSeed * 19.0 + t) * 0.45;
-        pos.y += snoise(pos.xy * 0.08 + aSeed * 31.0 - t) * 0.45;
-    }
-
-    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-
-    gl_Position = projectionMatrix * mvPosition;
-
-    float twinkle = 0.45 + 0.55 * sin(uTime * aSpeed + aPhase);
-
-    if (aKind < 0.5) {
-        vAlpha = twinkle * 0.8;
-    }
-    else if (aKind < 1.5) {
-        vAlpha = twinkle * 0.65;
-    }
-    else if (aKind < 2.5) {
-        vAlpha = twinkle * 0.85;
-    }
-    else {
-        vAlpha = 0.3 + 0.3 * sin(uTime * 0.25 + aPhase);
-    }
-
-    vHue = aHue;
-    vKind = aKind;
-
-    gl_PointSize = aSize * uBaseSize * uPixelRatio * (1.0 / max(-mvPosition.z, 0.001));
-}
-`
-
-const starFragmentShader = /* glsl */ `
-precision highp float;
-
-uniform vec3 uColorAmber;
-uniform vec3 uColorPink;
-uniform vec3 uColorViolet;
-uniform vec3 uColorCyan;
-uniform vec3 uColorWhite;
-
-varying float vAlpha;
-varying float vHue;
-varying float vKind;
-
-void main() {
-
-    vec2 uv = gl_PointCoord - 0.5;
-
-    float d = length(uv) * 2.0;
-    float glow = (1.0 - smoothstep(0.0, 1.0, d));
-
-    glow = pow(glow, 1.65);
-
-    if (vKind > 2.5) {
-        glow = pow(glow, 1.8);
-    }
-
-    vec3 color;
-
-    if (vHue < 0.25) {
-
-        color = mix(uColorWhite, uColorCyan, vHue / 0.25);
-
-    }
-    else if (vHue < 0.5) {
-
-        color = mix(uColorCyan, uColorViolet, (vHue - 0.25) / 0.25);
-
-    }
-    else if (vHue < 0.75) {
-
-        color = mix(uColorViolet, uColorPink, (vHue - 0.5) / 0.25);
-
-    }
-    else {
-
-        color = mix(uColorPink, uColorAmber, (vHue - 0.75) / 0.25);
-    }
-
-    gl_FragColor = vec4(color, glow * vAlpha);
+gl_FragColor = vec4(
+    color * density * vignette * 0.16,
+    1.0
+);
 }
 `
 
 // ============================================================
-// RANDOM HELPERS
+// HALF-RESOLUTION NEBULA
 // ============================================================
 
-function gaussianRandom() {
-    let u = 0
-    let v = 0
-
-    while (u === 0) {
-        u = Math.random()
-    }
-
-    while (v === 0) {
-        v = Math.random()
-    }
-
-    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
-}
-
-// ============================================================
-// COMBINED STAR GENERATION
-// ============================================================
-
-function generateStars(w, h) {
-
-    const positions = new Float32Array(STAR_TOTAL * 3)
-    const phases = new Float32Array(STAR_TOTAL)
-    const speeds = new Float32Array(STAR_TOTAL)
-    const sizes = new Float32Array(STAR_TOTAL)
-    const hues = new Float32Array(STAR_TOTAL)
-    const kinds = new Float32Array(STAR_TOTAL)
-    const seeds = new Float32Array(STAR_TOTAL)
-
-    let index = 0
-
-    // --------------------------------------------------------
-    // NORMAL STARS
-    // --------------------------------------------------------
-
-    for (let i = 0; i < SMALL_STAR_COUNT; i++) {
-
-        positions[index * 3] = (Math.random() - 0.5) * w
-        positions[index * 3 + 1] = (Math.random() - 0.5) * h
-        positions[index * 3 + 2] = FIELD_Z
-
-        phases[index] = Math.random() * Math.PI * 2
-        speeds[index] = 0.6 + Math.random() * 2.2
-        sizes[index] = 0.9 + Math.random() * Math.random() * 2.1
-        hues[index] = Math.random() < 0.35 ? Math.random() : 0
-
-        kinds[index] = 0
-        seeds[index] = Math.random()
-
-        index++
-    }
-
-    // --------------------------------------------------------
-    // MILKY WAY
-    // --------------------------------------------------------
-
-    const angle = THREE.MathUtils.degToRad(-32)
-
-    const dir = new THREE.Vector2(Math.cos(angle), Math.sin(angle))
-    const normal = new THREE.Vector2(-dir.y, dir.x)
-
-    const trailLength = w * 1.5
-
-    for (let i = 0; i < MILKY_WAY_STAR_COUNT; i++) {
-
-        const t = Math.random()
-
-        const wave = Math.sin(t * Math.PI * 2.2 + 1.3) * 0.55 + Math.sin(t * Math.PI * 5.3 + 4.1) * 0.22
-        const taper = 0.25 + 0.75 * Math.sin(t * Math.PI)
-        const spread = (Math.random() - 0.5) * (Math.random() - 0.5) * 4.0
-        const along = (t - 0.5) * trailLength
-        const across = (wave + spread) * taper * h * 0.18
-
-        positions[index * 3] = dir.x * along + normal.x * across
-        positions[index * 3 + 1] = dir.y * along + normal.y * across
-        positions[index * 3 + 2] = FIELD_Z - 0.4 + Math.random() * 1.2
-        phases[index] = Math.random() * Math.PI * 2
-        speeds[index] = 0.5 + Math.random() * 1.8
-        sizes[index] = 0.5 + Math.random() * Math.random() * 1.4
-        hues[index] = Math.random() < 0.3 ? Math.random() : 0
-        kinds[index] = 1
-        seeds[index] = Math.random()
-
-        index++
-    }
-
-    // --------------------------------------------------------
-    // CLUSTERS
-    // --------------------------------------------------------
-
-    const CLUSTER_COUNT = 6
-
-    const centers = []
-
-    for (let c = 0; c < CLUSTER_COUNT; c++) {
-
-        centers.push({
-            x: (Math.random() - 0.5) * w * 0.85,
-            y: (Math.random() - 0.5) * h * 0.85,
-            radius: 0.18 + Math.random() * 0.4,
-            weight: 0.6 + Math.random() * 0.8,
-        })
-    }
-
-    const totalWeight = centers.reduce((sum, c) => sum + c.weight, 0)
-
-    for (let i = 0; i < CLUSTER_STAR_COUNT; i++) {
-
-        let r = Math.random() * totalWeight
-        let chosen = centers[0]
-
-        for (const center of centers) {
-
-            if (r < center.weight) {
-                chosen = center
-                break
-            }
-
-            r -= center.weight
+function createNebula(gl, width, height) {
+    const target = new THREE.WebGLRenderTarget(
+        Math.max(1, width),
+        Math.max(1, height),
+        {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.LinearFilter,
+            format: THREE.RGBAFormat,
+            depthBuffer: false,
+            stencilBuffer: false,
+            generateMipmaps: false,
         }
+    )
 
-        positions[index * 3] = chosen.x + gaussianRandom() * chosen.radius
-        positions[index * 3 + 1] = chosen.y + gaussianRandom() * chosen.radius
-        positions[index * 3 + 2] = FIELD_Z - 0.3 + Math.random()
+    const material = makeMaterial(
+        planeVertex,
+        nebulaFragment,
+        { uTime: 0 },
+        {
+            transparent: false,
+            blending: THREE.NoBlending,
+            depthTest: false,
+        }
+    )
 
-        phases[index] = Math.random() * Math.PI * 2
-        speeds[index] = 0.6 + Math.random() * 2.0
-        sizes[index] = 1.0 + Math.random() * Math.random() * 2.4
-        hues[index] = Math.random() < 0.3 ? Math.random() : 0
+    const geometry = new THREE.PlaneGeometry(2, 2)
+    const scene = new THREE.Scene()
+    const camera = new THREE.OrthographicCamera(
+        -1, 1, 1, -1, 0, 1
+    )
 
-        kinds[index] = 2
-        seeds[index] = Math.random()
+    const quad = new THREE.Mesh(geometry, material)
+    scene.add(quad)
 
-        index++
+    return {
+        target,
+        material,
+
+        render(time) {
+            material.uniforms.uTime.value = time
+
+            const previous = gl.getRenderTarget()
+            const previousAutoClear = gl.autoClear
+
+            try {
+                gl.autoClear = true
+                gl.setRenderTarget(target)
+                gl.render(scene, camera)
+            } finally {
+                gl.setRenderTarget(previous)
+                gl.autoClear = previousAutoClear
+            }
+        },
+
+        dispose() {
+            scene.remove(quad)
+            geometry.dispose()
+            material.dispose()
+            target.dispose()
+        },
     }
-
-    // --------------------------------------------------------
-    // DUST
-    // --------------------------------------------------------
-
-    const bandAngle = THREE.MathUtils.degToRad(-32)
-    const dustDir = new THREE.Vector2(Math.cos(bandAngle), Math.sin(bandAngle))
-    const dustNormal = new THREE.Vector2(-dustDir.y, dustDir.x)
-
-    for (let i = 0; i < DUST_LAYER_COUNT; i++) {
-
-        const along = (Math.random() - 0.5) * w * 1.3
-        const across = (Math.random() - 0.5) * (Math.random() - 0.5) * h * 1.4
-
-        positions[index * 3] = dustDir.x * along + dustNormal.x * across
-        positions[index * 3 + 1] = dustDir.y * along + dustNormal.y * across
-        positions[index * 3 + 2] = FIELD_Z - 1 + Math.random() * 2
-
-        phases[index] = Math.random() * Math.PI * 2
-        speeds[index] = 0.5 + Math.random()
-
-        sizes[index] = 1.4 + Math.random() * 3.2
-        hues[index] = Math.random()
-
-        kinds[index] = 3
-        seeds[index] = Math.random()
-
-        index++
-    }
-
-    return { positions, phases, speeds, sizes, hues, kinds, seeds }
 }
 
-// ============================================================
-// COMBINED STARS
-// ============================================================
-
-function StarParticles() {
-
-    const viewport = useThree((s) => s.viewport)
+function Background({ width, height, clock, dpr }) {
     const gl = useThree((s) => s.gl)
-    const materialRef = useRef(null)
-    const pixelRatio = Math.min(gl.getPixelRatio(), DPR_LIMIT)
 
-    const { geometry, material } = useMemo(() => {
+    const nebulaRef = useRef(null)
+    const displayRef = useRef(null)
+    const accumulator = useRef(0)
 
-        const w = viewport.width * PADDING
-        const h = viewport.height * PADDING
-        const data = generateStars(w, h)
+    const skyMaterial = useMemo(
+        () => makeMaterial(
+            planeVertex,
+            skyFragment,
+            {},
+            {
+                transparent: false,
+                blending: THREE.NoBlending,
+                depthTest: false,
+            }
+        ),
+        []
+    )
 
-        const geometry = new THREE.BufferGeometry()
-
-        geometry.setAttribute("position", new THREE.BufferAttribute(data.positions, 3))
-        geometry.setAttribute("aPhase", new THREE.BufferAttribute(data.phases, 1))
-        geometry.setAttribute("aSpeed", new THREE.BufferAttribute(data.speeds, 1))
-        geometry.setAttribute("aSize", new THREE.BufferAttribute(data.sizes, 1))
-        geometry.setAttribute("aHue", new THREE.BufferAttribute(data.hues, 1))
-        geometry.setAttribute("aKind", new THREE.BufferAttribute(data.kinds, 1))
-        geometry.setAttribute("aSeed", new THREE.BufferAttribute(data.seeds, 1))
-
-        const material = new THREE.ShaderMaterial({
-
-            vertexShader: starVertexShader,
-            fragmentShader: starFragmentShader,
-
-            uniforms: {
-                uTime: { value: 0 },
-                uPixelRatio: { value: pixelRatio },
-                uBaseSize: { value: 18 },
-                uColorWhite: { value: new THREE.Color(COLORS.white) },
-                uColorAmber: { value: new THREE.Color(COLORS.amber) },
-                uColorPink: { value: new THREE.Color(COLORS.pink) },
-                uColorViolet: { value: new THREE.Color(COLORS.violet) },
-                uColorCyan: { value: new THREE.Color(COLORS.cyan) },
-            },
-
+    const displayMaterial = useMemo(
+        () => new THREE.MeshBasicMaterial({
             transparent: true,
             depthWrite: false,
             depthTest: true,
             blending: THREE.AdditiveBlending,
             toneMapped: false,
-        })
-
-        return { geometry, material }
-
-    }, [viewport.width, viewport.height, pixelRatio])
-
-    materialRef.current = material
+        }),
+        []
+    )
 
     useEffect(() => {
+        const pixels = gl.getSize(new THREE.Vector2())
+
+        const nebula = createNebula(
+            gl,
+            Math.floor(pixels.x * dpr * NEBULA_SCALE),
+            Math.floor(pixels.y * dpr * NEBULA_SCALE)
+        )
+
+        nebulaRef.current = nebula
+        displayMaterial.map = nebula.target.texture
+        displayMaterial.needsUpdate = true
+
+        // First render happens in useFrame, when the
+        // WebGL renderer is ready.
+        accumulator.current = 1 / NEBULA_FPS
 
         return () => {
-            geometry.dispose()
-            material.dispose()
+            nebulaRef.current = null
+            displayMaterial.map = null
+            nebula.dispose()
         }
+    }, [gl, width, height, dpr, displayMaterial])
 
-    }, [geometry, material])
+    useEffect(() => () => {
+        skyMaterial.dispose()
+        displayMaterial.dispose()
+    }, [skyMaterial, displayMaterial])
 
     useFrame((_, delta) => {
-        const game = useGameStore.getState()
-        if (game.screen === SCREEN.PLAY && game.paused) return
-        delta = Math.min(delta, 0.05)
+        const nebula = nebulaRef.current
+        if (!nebula) return
 
-        if (!materialRef.current) return
+        if (!isPaused()) {
+            accumulator.current += Math.min(delta, 0.05)
+        }
 
-        materialRef.current.uniforms.uTime.value += delta
+        if (accumulator.current < 1 / NEBULA_FPS) {
+            return
+        }
+
+        accumulator.current = 0
+        nebula.render(clock.current)
+    }, -1)
+
+    const planeWidth = width * 1.7
+    const planeHeight = height * 1.7
+
+    return (
+        <>
+            <mesh
+                material={skyMaterial}
+                position={[0, 0, FIELD_Z - 4]}
+                renderOrder={-10}
+            >
+                <planeGeometry
+                    args={[planeWidth, planeHeight]}
+                />
+            </mesh>
+
+            <mesh
+                ref={displayRef}
+                material={displayMaterial}
+                position={[0, 0, FIELD_Z - 3]}
+                renderOrder={-9}
+            >
+                <planeGeometry
+                    args={[planeWidth, planeHeight]}
+                />
+            </mesh>
+        </>
+    )
+}
+
+// ============================================================
+// STAR SHADERS
+// ============================================================
+
+const starVertex = /* glsl */ `
+precision highp float;
+
+attribute float aSize;
+attribute float aPhase;
+attribute float aSpeed;
+attribute float aHue;
+attribute float aKind;
+
+uniform float uTime;
+uniform float uDpr;
+
+varying float vAlpha;
+varying float vHue;
+varying float vKind;
+
+void main() {
+    vec4 mv = modelViewMatrix *
+        vec4(position, 1.0);
+
+    gl_Position = projectionMatrix * mv;
+
+    float twinkle =
+        0.65 +
+        0.35 * sin(uTime * aSpeed + aPhase);
+
+    vKind = aKind;
+    vHue = aHue;
+
+vAlpha = twinkle * (
+    aKind > 3.5 ? 0.95 :
+    aKind > 2.5 ? 0.16 :
+    aKind > 1.5 ? 0.65 :
+    aKind > 0.5 ? 0.40 : 0.55
+);
+
+    float scale = aKind > 3.5 ? 2.4 : 1.0;
+
+    gl_PointSize =
+        aSize * scale * 18.0 * uDpr /
+        max(-mv.z, 0.001);
+}
+`
+
+const starFragment = /* glsl */ `
+precision highp float;
+
+uniform vec3 uColors[5];
+
+varying float vAlpha;
+varying float vHue;
+varying float vKind;
+
+void main() {
+    vec2 uv = gl_PointCoord - 0.5;
+    float d = length(uv) * 2.0;
+
+    if (d >= 1.0) discard;
+
+    float h = clamp(vHue, 0.0, 0.999) * 4.0;
+    float t = fract(h);
+
+    vec3 color;
+
+    if (h < 1.0)
+        color = mix(uColors[0], uColors[1], t);
+    else if (h < 2.0)
+        color = mix(uColors[1], uColors[2], t);
+    else if (h < 3.0)
+        color = mix(uColors[2], uColors[3], t);
+    else
+        color = mix(uColors[3], uColors[4], t);
+
+    float glow = pow(1.0 - d, 1.7);
+
+    // Procedural sparkle for the 55 bright stars.
+    if (vKind > 3.5) {
+        float cross =
+            exp(-abs(uv.x) * 30.0) +
+            exp(-abs(uv.y) * 30.0);
+
+        glow = max(
+            glow,
+            cross * (1.0 - d) * 0.7
+        );
+    }
+
+    gl_FragColor = vec4(
+        color,
+        glow * vAlpha
+    );
+}
+`
+
+// ============================================================
+// STAR GEOMETRY
+// ============================================================
+
+// Generate in normalized coordinates.
+// Resizing changes the object scale, not the buffers.
+
+function createStars() {
+    const positions = new Float32Array(STAR_TOTAL * 3)
+    const sizes = new Float32Array(STAR_TOTAL)
+    const phases = new Float32Array(STAR_TOTAL)
+    const speeds = new Float32Array(STAR_TOTAL)
+    const hues = new Float32Array(STAR_TOTAL)
+    const kinds = new Float32Array(STAR_TOTAL)
+
+    const clusters = Array.from({ length: 6 }, () => ({
+        x: rand(-0.42, 0.42),
+        y: rand(-0.42, 0.42),
+        radius: rand(0.018, 0.058),
+    }))
+
+    let index = 0
+
+    function add(x, y, z, kind, size) {
+        const i = index++
+
+        positions[i * 3] = x
+        positions[i * 3 + 1] = y
+        positions[i * 3 + 2] = z
+
+        sizes[i] = size
+        phases[i] = rand(0, Math.PI * 2)
+        speeds[i] = rand(0.5, 2.5)
+        hues[i] = Math.random() < 0.35 ? Math.random() : 0
+        kinds[i] = kind
+    }
+
+    // Normal stars
+    for (let i = 0; i < STAR_COUNTS[0]; i++) {
+        add(
+            rand(-0.5, 0.5),
+            rand(-0.5, 0.5),
+            0,
+            0,
+            rand(0.9, 2.8)
+        )
+    }
+
+    // Milky Way
+    for (let i = 0; i < STAR_COUNTS[1]; i++) {
+        const t = Math.random()
+
+        const along = (t - 0.5) * 1.5
+
+        const wave =
+            Math.sin(t * 6.9 + 1.3) * 0.55 +
+            Math.sin(t * 16.6 + 4.1) * 0.22
+
+        const taper =
+            0.25 + 0.75 * Math.sin(t * Math.PI)
+
+        const across =
+            (wave + gaussian() * 0.4) *
+            taper * 0.18
+
+        add(
+            COS * along - SIN * across,
+            SIN * along + COS * across,
+            rand(-0.04, 0.08),
+            1,
+            rand(0.5, 1.9)
+        )
+    }
+
+    // Clusters
+    for (let i = 0; i < STAR_COUNTS[2]; i++) {
+        const c = clusters[
+            Math.floor(Math.random() * clusters.length)
+        ]
+
+        add(
+            c.x + gaussian() * c.radius,
+            c.y + gaussian() * c.radius,
+            rand(-0.03, 0.07),
+            2,
+            rand(1, 3.4)
+        )
+    }
+
+    // Dust
+    for (let i = 0; i < STAR_COUNTS[3]; i++) {
+        const along = rand(-0.65, 0.65)
+        const across = gaussian() * 0.13
+
+        add(
+            COS * along - SIN * across,
+            SIN * along + COS * across,
+            rand(-0.1, 0.1),
+            3,
+            rand(1.4, 4.6)
+        )
+    }
+
+    // Bright stars
+    for (let i = 0; i < STAR_COUNTS[4]; i++) {
+        add(
+            rand(-0.5, 0.5),
+            rand(-0.5, 0.5),
+            0.02,
+            4,
+            rand(2.2, 4.4)
+        )
+    }
+
+    const geometry = new THREE.BufferGeometry()
+
+    const attributes = {
+        position: [positions, 3],
+        aSize: [sizes, 1],
+        aPhase: [phases, 1],
+        aSpeed: [speeds, 1],
+        aHue: [hues, 1],
+        aKind: [kinds, 1],
+    }
+
+    for (const [name, [array, size]] of Object.entries(attributes)) {
+        geometry.setAttribute(
+            name,
+            new THREE.BufferAttribute(array, size)
+        )
+    }
+
+    // Keep the local bounding volume correct, even
+    // when some stars extend outside normalized bounds.
+    geometry.computeBoundingSphere()
+
+    return geometry
+}
+
+// ============================================================
+// STAR RENDERER
+// ============================================================
+
+function Stars({ width, height, dpr, clock }) {
+    const geometry = useMemo(createStars, [])
+
+    const material = useMemo(
+        () => makeMaterial(
+            starVertex,
+            starFragment,
+            {
+                uTime: 0,
+                uDpr: dpr,
+                uColors: COLORS.map(
+                    (color) => new THREE.Color(color)
+                ),
+            }
+        ),
+        []
+    )
+
+    useEffect(() => () => {
+        geometry.dispose()
+        material.dispose()
+    }, [geometry, material])
+
+    useFrame(() => {
+        material.uniforms.uTime.value = clock.current
+        material.uniforms.uDpr.value = dpr
     })
 
     return (
         <points
             geometry={geometry}
             material={material}
+            position={[0, 0, FIELD_Z]}
+            scale={[width, height, 1]}
             frustumCulled={false}
             renderOrder={-2}
         />
@@ -624,593 +648,332 @@ function StarParticles() {
 }
 
 // ============================================================
-// BRIGHT STAR TEXTURES
+// METEOR SHADERS
 // ============================================================
 
-function makeSparkleTexture() {
-
-    const size = 64
-    const canvas = document.createElement("canvas")
-
-    canvas.width = size
-    canvas.height = size
-
-    const ctx = canvas.getContext("2d")
-    const c = size / 2
-
-    const glow = ctx.createRadialGradient(c, c, 0, c, c, c)
-
-    glow.addColorStop(0, "rgba(255,255,255,1)")
-    glow.addColorStop(0.35, "rgba(255,255,255,0.55)")
-    glow.addColorStop(1, "rgba(255,255,255,0)")
-
-    ctx.fillStyle = glow
-    ctx.fillRect(0, 0, size, size)
-
-    ctx.strokeStyle = "rgba(255,255,255,0.9)"
-    ctx.lineCap = "round"
-    ctx.lineWidth = 1.4
-
-    ctx.beginPath()
-
-    ctx.moveTo(c, 2)
-    ctx.lineTo(c, size - 2)
-    ctx.moveTo(2, c)
-    ctx.lineTo(size - 2, c)
-
-    ctx.stroke()
-
-    ctx.lineWidth = 0.8
-    ctx.globalAlpha = 0.5
-
-    ctx.beginPath()
-
-    ctx.moveTo(c - c * 0.6, c - c * 0.6)
-    ctx.lineTo(c + c * 0.6, c + c * 0.6)
-    ctx.moveTo(c - c * 0.6, c + c * 0.6)
-    ctx.lineTo(c + c * 0.6, c - c * 0.6)
-
-    ctx.stroke()
-
-    const texture = new THREE.CanvasTexture(canvas)
-
-    texture.needsUpdate = true
-
-    return texture
-}
-
-function makeHaloTexture() {
-
-    const size = 128
-
-    const canvas = document.createElement("canvas")
-
-    canvas.width = size
-    canvas.height = size
-
-    const ctx = canvas.getContext("2d")
-
-    const c = size / 2
-
-    const glow = ctx.createRadialGradient(c, c, 0, c, c, c)
-
-    glow.addColorStop(0, "rgba(255,255,255,0.9)")
-    glow.addColorStop(0.4, "rgba(255,255,255,0.35)")
-    glow.addColorStop(1, "rgba(255,255,255,0)")
-
-    ctx.fillStyle = glow
-    ctx.fillRect(0, 0, size, size)
-
-    const texture = new THREE.CanvasTexture(canvas)
-
-    texture.needsUpdate = true
-
-    return texture
-}
-
-// ============================================================
-// BRIGHT STARS
-// ============================================================
-
-const sparkleVertexShader = /* glsl */ `
-precision highp float;
-
-attribute float aPhase;
-attribute float aSize;
-attribute float aHue;
-
-uniform float uTime;
-uniform float uPixelRatio;
-uniform float uBaseSize;
-
-varying float vAlpha;
-varying float vHue;
-
-void main() {
-
-    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-
-    gl_Position = projectionMatrix * mvPosition;
-
-    vAlpha = 0.7 + 0.3 * sin(uTime * 0.8 + aPhase);
-
-    vHue = aHue;
-
-    gl_PointSize = aSize * uBaseSize * uPixelRatio * (1.0 / max(-mvPosition.z, 0.001));
-}
-`
-
-const sparkleFragmentShader = /* glsl */ `
-precision highp float;
-
-uniform sampler2D uMap;
-
-varying float vAlpha;
-
-void main() {
-
-    vec4 tex = texture2D(uMap, gl_PointCoord);
-
-    gl_FragColor = vec4(tex.rgb, tex.a * vAlpha);
-}
-`
-
-const haloFragmentShader = /* glsl */ `
-precision highp float;
-
-uniform sampler2D uMap;
-
-uniform vec3 uColorAmber;
-uniform vec3 uColorPink;
-uniform vec3 uColorViolet;
-uniform vec3 uColorCyan;
-
-varying float vAlpha;
-varying float vHue;
-
-void main() {
-
-    vec4 tex = texture2D(uMap, gl_PointCoord);
-
-    vec3 color;
-
-    if (vHue < 0.33) {
-
-        color = mix(uColorCyan, uColorViolet, vHue / 0.33);
-
-    }
-    else if (vHue < 0.66) {
-
-        color = mix(uColorViolet, uColorPink, (vHue - 0.33) / 0.33);
-
-    }
-    else {
-
-        color = mix(uColorPink, uColorAmber, (vHue - 0.66) / 0.34);
-    }
-
-    gl_FragColor = vec4(color, tex.a * vAlpha * 0.55);
-}
-`
-
-function BrightStars() {
-
-    const viewport = useThree((s) => s.viewport)
-    const gl = useThree((s) => s.gl)
-    const sparkleMatRef = useRef(null)
-    const haloMatRef = useRef(null)
-
-    const {
-        geometry,
-        sparkleMaterial,
-        haloMaterial,
-        sparkleTex,
-        haloTex,
-    } = useMemo(() => {
-
-        const w = viewport.width * PADDING
-        const h = viewport.height * PADDING
-
-        const positions = new Float32Array(BRIGHT_STAR_COUNT * 3)
-        const phases = new Float32Array(BRIGHT_STAR_COUNT)
-        const sizes = new Float32Array(BRIGHT_STAR_COUNT)
-        const hues = new Float32Array(BRIGHT_STAR_COUNT)
-
-        for (let i = 0; i < BRIGHT_STAR_COUNT; i++) {
-
-            positions[i * 3] = (Math.random() - 0.5) * w
-            positions[i * 3 + 1] = (Math.random() - 0.5) * h
-            positions[i * 3 + 2] = FIELD_Z + 0.2
-            phases[i] = Math.random() * Math.PI * 2
-            sizes[i] = 2.2 + Math.random() * 2.2
-            hues[i] = Math.random()
-        }
-
-        const geometry = new THREE.BufferGeometry()
-
-        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3))
-        geometry.setAttribute("aPhase", new THREE.BufferAttribute(phases, 1))
-        geometry.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1))
-        geometry.setAttribute("aHue", new THREE.BufferAttribute(hues, 1))
-
-        const sparkleTex = makeSparkleTexture()
-        const haloTex = makeHaloTexture()
-
-        const sparkleMaterial = new THREE.ShaderMaterial({
-            vertexShader: sparkleVertexShader,
-            fragmentShader: sparkleFragmentShader,
-            uniforms: {
-                uTime: { value: 0 },
-                uPixelRatio: { value: Math.min(gl.getPixelRatio(), DPR_LIMIT) },
-                uBaseSize: { value: 16 },
-                uMap: { value: sparkleTex },
-            },
-
-            transparent: true,
-            depthWrite: false,
-            depthTest: true,
-            blending: THREE.AdditiveBlending,
-            toneMapped: false,
-        })
-
-        const haloMaterial = new THREE.ShaderMaterial({
-
-            vertexShader: sparkleVertexShader,
-            fragmentShader: haloFragmentShader,
-
-            uniforms: {
-                uTime: { value: 0 },
-                uPixelRatio: { value: Math.min(gl.getPixelRatio(), DPR_LIMIT) },
-                uBaseSize: { value: 58 },
-                uMap: { value: haloTex },
-                uColorAmber: { value: new THREE.Color(COLORS.amber) },
-                uColorPink: { value: new THREE.Color(COLORS.pink) },
-                uColorViolet: { value: new THREE.Color(COLORS.violet) },
-                uColorCyan: { value: new THREE.Color(COLORS.cyan) },
-            },
-
-            transparent: true,
-            depthWrite: false,
-            depthTest: true,
-            blending: THREE.AdditiveBlending,
-            toneMapped: false,
-        })
-
-        return {
-            geometry,
-            sparkleMaterial,
-            haloMaterial,
-            sparkleTex,
-            haloTex,
-        }
-
-    }, [viewport.width, viewport.height, gl])
-
-    sparkleMatRef.current = sparkleMaterial
-    haloMatRef.current = haloMaterial
-
-    useEffect(() => {
-
-        return () => {
-            geometry.dispose()
-            sparkleMaterial.dispose()
-            haloMaterial.dispose()
-            sparkleTex.dispose()
-            haloTex.dispose()
-        }
-
-    }, [geometry, sparkleMaterial, haloMaterial, sparkleTex, haloTex])
-
-    useFrame((_, delta) => {
-        const game = useGameStore.getState()
-        if (game.screen === SCREEN.PLAY && game.paused) return
-        delta = Math.min(delta, 0.05)
-
-        if (!sparkleMatRef.current || !haloMatRef.current) return
-
-        sparkleMatRef.current.uniforms.uTime.value += delta
-        haloMatRef.current.uniforms.uTime.value += delta
-    })
-
-    return (
-        <>
-            <points
-                geometry={geometry}
-                material={haloMaterial}
-                frustumCulled={false}
-                renderOrder={-1.5}
-            />
-
-            <points
-                geometry={geometry}
-                material={sparkleMaterial}
-                frustumCulled={false}
-                renderOrder={-1}
-            />
-        </>
-    )
-}
-
-// ============================================================
-// SHOOTING STARS
-// ============================================================
-
-const shootingStarVertexShader = /* glsl */ `
-precision highp float;
-
+const meteorVertex = /* glsl */ `
 attribute vec3 aOffset;
 attribute vec2 aScale;
 attribute float aRotation;
 attribute float aOpacity;
 attribute vec3 aColor;
 
-varying float vOpacity;
-varying vec3 vColor;
 varying vec2 vUv;
+varying vec3 vColor;
+varying float vOpacity;
 
 void main() {
-
-    vec3 p = position;
-
     float c = cos(aRotation);
     float s = sin(aRotation);
 
-    // Scale first (length along local x, thickness along local y), then
-    // rotate, so the quad is a thin streak aligned with its travel direction.
-    vec2 scaled = p.xy * aScale;
-    vec2 rotated = vec2(scaled.x * c - scaled.y * s, scaled.x * s + scaled.y * c);
+    vec2 p = position.xy * aScale;
 
-    p.xy = rotated;
-    p += aOffset;
+    p = vec2(
+        p.x * c - p.y * s,
+        p.x * s + p.y * c
+    );
 
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+    gl_Position =
+        projectionMatrix *
+        modelViewMatrix *
+        vec4(p + aOffset.xy, aOffset.z, 1.0);
 
-    vOpacity = aOpacity;
-    vColor = aColor;
     vUv = uv;
+    vColor = aColor;
+    vOpacity = aOpacity;
 }
 `
 
-const shootingStarFragmentShader = /* glsl */ `
+const meteorFragment = /* glsl */ `
 precision highp float;
 
-varying float vOpacity;
-varying vec3 vColor;
 varying vec2 vUv;
+varying vec3 vColor;
+varying float vOpacity;
 
 void main() {
+    float tail =
+        smoothstep(0.0, 0.9, vUv.x);
 
-    // uv.x runs 0 (tail) -> 1 (head, the direction of travel).
-    // Tail fades out, head is bright, edges soften across the thickness.
-    float trail = smoothstep(0.0, 0.9, vUv.x);
-    float edge = 1.0 - smoothstep(0.25, 0.5, abs(vUv.y - 0.5));
-    float alpha = vOpacity * trail * edge;
+    float edge =
+        1.0 - smoothstep(
+            0.25,
+            0.5,
+            abs(vUv.y - 0.5)
+        );
 
-    gl_FragColor = vec4(vColor, alpha);
+    gl_FragColor = vec4(
+        vColor,
+        vOpacity * tail * edge
+    );
 }
 `
 
-function ShootingStars() {
+// ============================================================
+// METEOR RESOURCES
+// ============================================================
 
-    const viewport = useThree((s) => s.viewport)
-    const meshRef = useRef(null)
-    const stateRef = useRef([])
-    // Shower stars waiting for their delay to elapse. Kept separate from the
-    // active pool so pending entries can't occupy or be overwritten by slots.
-    const pendingRef = useRef([])
+function createMeteorResources() {
+    const base = new THREE.PlaneGeometry(1, 1)
+    const geometry = new THREE.InstancedBufferGeometry()
 
-    const nextSpawnRef = useRef(1.5 + Math.random() * 2.5)
-    const nextShowerRef = useRef(10 + Math.random() * 12)
+    geometry.setIndex(base.index.clone())
 
-    const geometry = useMemo(() => {
+    geometry.setAttribute(
+        "position",
+        base.attributes.position.clone()
+    )
 
-        const base = new THREE.PlaneGeometry(1, 1)
-        const geo = new THREE.InstancedBufferGeometry()
+    geometry.setAttribute(
+        "uv",
+        base.attributes.uv.clone()
+    )
 
-        geo.setIndex(base.index)
-        geo.setAttribute("position", base.attributes.position)
-        geo.setAttribute("uv", base.attributes.uv)
+    base.dispose()
 
-        base.dispose()
-
-        return geo
-
-    }, [])
-
-    const attributes = useMemo(() => {
-
-        const offsets = new Float32Array(MAX_SHOOTING_STARS * 3)
-        const scales = new Float32Array(MAX_SHOOTING_STARS * 2)
-        const rotations = new Float32Array(MAX_SHOOTING_STARS)
-        const opacities = new Float32Array(MAX_SHOOTING_STARS)
-        const colors = new Float32Array(MAX_SHOOTING_STARS * 3)
-
-        opacities.fill(0)
-
-        geometry.setAttribute("aOffset", new THREE.InstancedBufferAttribute(offsets, 3))
-        geometry.setAttribute("aScale", new THREE.InstancedBufferAttribute(scales, 2))
-        geometry.setAttribute("aRotation", new THREE.InstancedBufferAttribute(rotations, 1))
-        geometry.setAttribute("aOpacity", new THREE.InstancedBufferAttribute(opacities, 1))
-        geometry.setAttribute("aColor", new THREE.InstancedBufferAttribute(colors, 3))
-
-        geometry.instanceCount = MAX_SHOOTING_STARS
-
-        return { offsets, scales, rotations, opacities, colors }
-
-    }, [geometry])
-
-    const material = useMemo(() => {
-
-        return new THREE.ShaderMaterial({
-
-            vertexShader: shootingStarVertexShader,
-            fragmentShader: shootingStarFragmentShader,
-            transparent: true,
-            depthWrite: false,
-            depthTest: true,
-            blending: THREE.AdditiveBlending,
-            toneMapped: false,
-            side: THREE.DoubleSide,
-        })
-
-    }, [])
-
-    useEffect(() => {
-
-        return () => {
-            geometry.dispose()
-            material.dispose()
-        }
-
-    }, [geometry, material])
-
-    function createStar(dim = false) {
-
-        const existing = stateRef.current
-        let slot = -1
-
-        for (let i = 0; i < MAX_SHOOTING_STARS; i++) {
-
-            if (!existing[i] || !existing[i].active) {
-                slot = i
-                break
-            }
-        }
-
-        if (slot === -1) return
-
-        const w = viewport.width * PADDING
-        const h = viewport.height * PADDING
-
-        const angle = THREE.MathUtils.degToRad(-18 - Math.random() * 20)
-
-        const speed = (dim ? 3 : 3.5) + Math.random() * 3
-        const length = (dim ? 2.5 : 3.5) + Math.random() * 2.5
-        const margin = Math.max(w, h) * 0.25
-        const startX = -w / 2 - margin
-        const startY = h * (Math.random() * 0.7 - 0.15)
-
-        const colors = [
-            [0.27, 0.67, 1.0],
-            [0.59, 0.35, 0.92],
-            [0.94, 0.2, 0.51],
-            [0.89, 0.35, 0.16],
-        ]
-
-        const color = colors[Math.floor(Math.random() * colors.length)]
-
-        const star = {
-            active: true,
-            x: startX,
-            y: startY,
-            speed,
-            angle,
-            length,
-            travel: 0,
-            maxTravel: w + margin * 2,
-            peakOpacity: dim ? 0.6 : 1.0,
-            dirX: Math.cos(angle),
-            dirY: Math.sin(angle),
-            color,
-        }
-
-        existing[slot] = star
-
-        attributes.offsets[slot * 3] = star.x
-        attributes.offsets[slot * 3 + 1] = star.y
-        attributes.offsets[slot * 3 + 2] = FIELD_Z + 1
-        attributes.scales[slot * 2] = length
-        attributes.scales[slot * 2 + 1] = dim ? 0.015 : 0.025
-        attributes.rotations[slot] = angle
-        attributes.colors[slot * 3] = color[0]
-        attributes.colors[slot * 3 + 1] = color[1]
-        attributes.colors[slot * 3 + 2] = color[2]
-        attributes.opacities[slot] = 0
-
-        geometry.attributes.aRotation.needsUpdate = true
-        geometry.attributes.aScale.needsUpdate = true
-        geometry.attributes.aColor.needsUpdate = true
+    const data = {
+        offsets: new Float32Array(MAX_METEORS * 3),
+        scales: new Float32Array(MAX_METEORS * 2),
+        rotations: new Float32Array(MAX_METEORS),
+        opacities: new Float32Array(MAX_METEORS),
+        colors: new Float32Array(MAX_METEORS * 3),
     }
 
-    useFrame((_, delta) => {
-        const game = useGameStore.getState()
-        if (game.screen === SCREEN.PLAY && game.paused) return
-        delta = Math.min(delta, 0.05)
+    const definitions = {
+        offsets: ["aOffset", 3],
+        scales: ["aScale", 2],
+        rotations: ["aRotation", 1],
+        opacities: ["aOpacity", 1],
+        colors: ["aColor", 3],
+    }
 
-        if (!meshRef.current) return
+    for (const [key, [name, size]] of Object.entries(definitions)) {
+        const attribute = new THREE.InstancedBufferAttribute(
+            data[key],
+            size
+        )
 
-        nextSpawnRef.current -= delta
+        attribute.setUsage(THREE.DynamicDrawUsage)
 
-        if (nextSpawnRef.current <= 0) {
+        geometry.setAttribute(name, attribute)
+    }
 
-            createStar(false)
+    // Start with no visible instances.
+    geometry.instanceCount = 0
 
-            nextSpawnRef.current = 4 + Math.random() * 6
-        }
+    const material = makeMaterial(
+        meteorVertex,
+        meteorFragment,
+        {},
+        { side: THREE.DoubleSide }
+    )
 
-        nextShowerRef.current -= delta
+    return {
+        geometry,
+        material,
+        data,
 
-        if (nextShowerRef.current <= 0) {
+        dispose() {
+            geometry.dispose()
+            material.dispose()
+        },
+    }
+}
 
-            const count = 5 + Math.floor(Math.random() * 6)
+// ============================================================
+// SHOOTING STARS
+// ============================================================
 
-            for (let i = 0; i < count; i++) {
+function ShootingStars({ width, height }) {
+    const resources = useMemo(createMeteorResources, [])
 
-                const delay = i * (0.07 + Math.random() * 0.12)
-                pendingRef.current.push({ delay })
+    const starsRef = useRef(
+        Array(MAX_METEORS).fill(null)
+    )
+
+    const pendingRef = useRef([])
+    const nextSpawnRef = useRef(rand(1.5, 4))
+    const nextShowerRef = useRef(rand(10, 22))
+
+    useEffect(
+        () => () => resources.dispose(),
+        [resources]
+    )
+
+    useFrame((_, rawDelta) => {
+        if (isPaused()) return
+
+        const dt = Math.min(Math.max(rawDelta, 0), 0.05)
+        if (dt <= 0) return
+
+        const { geometry, data } = resources
+        const stars = starsRef.current
+
+        let staticDirty = false
+        let dynamicDirty = false
+
+        function spawn(dim = false) {
+            const slot = stars.findIndex((star) => !star)
+            if (slot < 0) return
+
+            const angle = THREE.MathUtils.degToRad(
+                rand(-38, -18)
+            )
+
+            const speed = rand(
+                dim ? 3 : 3.5,
+                6.5
+            )
+
+            const margin =
+                Math.max(width, height) * 0.25
+
+            const color = METEOR_COLORS[
+                Math.floor(Math.random() * METEOR_COLORS.length)
+            ]
+
+            const star = {
+                x: -width / 2 - margin,
+                y: height * rand(-0.15, 0.55),
+                dx: Math.cos(angle),
+                dy: Math.sin(angle),
+                speed,
+                travel: 0,
+                distance: width + margin * 2,
+                opacity: dim ? 0.6 : 1,
             }
 
-            nextShowerRef.current = 16 + Math.random() * 18
+            stars[slot] = star
+
+            data.offsets[slot * 3] = star.x
+            data.offsets[slot * 3 + 1] = star.y
+            data.offsets[slot * 3 + 2] = FIELD_Z + 1
+
+            data.scales[slot * 2] = rand(
+                dim ? 2.5 : 3.5,
+                dim ? 5 : 6
+            )
+
+            data.scales[slot * 2 + 1] =
+                dim ? 0.015 : 0.025
+
+            data.rotations[slot] = angle
+            data.colors.set(color, slot * 3)
+            data.opacities[slot] = 0
+
+            geometry.instanceCount = Math.max(
+                geometry.instanceCount,
+                slot + 1
+            )
+
+            staticDirty = true
+            dynamicDirty = true
+        }
+
+        // ----------------------------------------------------
+        // INDIVIDUAL METEORS
+        // ----------------------------------------------------
+
+        nextSpawnRef.current -= dt
+
+        if (nextSpawnRef.current <= 0) {
+            spawn()
+            nextSpawnRef.current = rand(4, 10)
+        }
+
+        // ----------------------------------------------------
+        // METEOR SHOWERS
+        // ----------------------------------------------------
+
+        nextShowerRef.current -= dt
+
+        if (nextShowerRef.current <= 0) {
+            const count = Math.floor(rand(5, 11))
+
+            for (let i = 0; i < count; i++) {
+                pendingRef.current.push(
+                    i * rand(0.07, 0.19)
+                )
+            }
+
+            nextShowerRef.current = rand(16, 34)
         }
 
         const pending = pendingRef.current
 
         for (let i = pending.length - 1; i >= 0; i--) {
+            pending[i] -= dt
 
-            pending[i].delay -= delta
-
-            if (pending[i].delay <= 0) {
-
+            if (pending[i] <= 0) {
                 pending.splice(i, 1)
-                createStar(true)
+                spawn(true)
             }
         }
 
-        for (let i = 0; i < MAX_SHOOTING_STARS; i++) {
-            const star = stateRef.current[i]
-            if (!star || !star.active) {
-                attributes.opacities[i] = 0
-                continue
-            }
+        // ----------------------------------------------------
+        // ACTIVE METEOR UPDATES
+        // ----------------------------------------------------
 
-            star.travel += star.speed * delta
-            star.x += star.dirX * star.speed * delta
-            star.y += star.dirY * star.speed * delta
+        for (let i = 0; i < geometry.instanceCount; i++) {
+            const star = stars[i]
+            if (!star) continue
 
-            const t = star.travel / star.maxTravel
+            const step = star.speed * dt
+
+            star.travel += step
+            star.x += star.dx * step
+            star.y += star.dy * step
+
+            const t = star.travel / star.distance
+
             const fadeIn = Math.min(t / 0.06, 1)
-            const fadeOut = 1 - Math.min(Math.max((t - 0.75) / 0.25, 0), 1)
 
-            attributes.offsets[i * 3] = star.x
-            attributes.offsets[i * 3 + 1] = star.y
-            attributes.opacities[i] = star.peakOpacity * fadeIn * fadeOut
+            const fadeOut =
+                1 - THREE.MathUtils.clamp(
+                    (t - 0.75) / 0.25,
+                    0,
+                    1
+                )
+
+            data.offsets[i * 3] = star.x
+            data.offsets[i * 3 + 1] = star.y
+
+            data.opacities[i] =
+                star.opacity * fadeIn * fadeOut
 
             if (t >= 1) {
-
-                star.active = false
-                attributes.opacities[i] = 0
+                data.opacities[i] = 0
+                stars[i] = null
             }
+
+            dynamicDirty = true
         }
 
-        geometry.attributes.aOffset.needsUpdate = true
-        geometry.attributes.aOpacity.needsUpdate = true
+        // ----------------------------------------------------
+        // GPU BUFFER UPDATES
+        // ----------------------------------------------------
+
+        if (staticDirty) {
+            geometry.attributes.aScale.needsUpdate = true
+            geometry.attributes.aRotation.needsUpdate = true
+            geometry.attributes.aColor.needsUpdate = true
+        }
+
+        if (dynamicDirty) {
+            geometry.attributes.aOffset.needsUpdate = true
+            geometry.attributes.aOpacity.needsUpdate = true
+        }
+
+        // No need to draw the meteor pool when empty.
+        if (!stars.some(Boolean)) {
+            geometry.instanceCount = 0
+        }
     })
 
     return (
         <mesh
-            ref={meshRef}
-            geometry={geometry}
-            material={material}
+            geometry={resources.geometry}
+            material={resources.material}
             frustumCulled={false}
             renderOrder={1}
         />
@@ -1222,14 +985,48 @@ function ShootingStars() {
 // ============================================================
 
 export function StarfieldRenderer() {
+    const viewport = useThree((s) => s.viewport)
+    const gl = useThree((s) => s.gl)
+
+    const clock = useRef(0)
+
+    const width = viewport.width * PADDING
+    const height = viewport.height * PADDING
+
+    const dpr = Math.min(
+        gl.getPixelRatio(),
+        DPR_LIMIT
+    )
+
+    useFrame((_, delta) => {
+        if (!isPaused()) {
+            clock.current += Math.min(
+                Math.max(delta, 0),
+                0.05
+            )
+        }
+    }, -2)
 
     return (
         <>
-            <SkyBase />
-            <DustBand />
-            <StarParticles />
-            <BrightStars />
-            <ShootingStars />
+            <Background
+                width={width}
+                height={height}
+                dpr={dpr}
+                clock={clock}
+            />
+
+            <Stars
+                width={width}
+                height={height}
+                dpr={dpr}
+                clock={clock}
+            />
+
+            <ShootingStars
+                width={width}
+                height={height}
+            />
         </>
     )
 }

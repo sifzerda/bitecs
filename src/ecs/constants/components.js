@@ -31,6 +31,27 @@ export const Asteroid = {
     active: new Uint8Array(MAX),
     radius: new Float32Array(MAX),
     scale: new Float32Array(MAX),
+
+    // Asteroid classification
+    type: new Uint8Array(MAX),
+
+    // AI state
+    behaviourTimer: new Float32Array(MAX),
+    turnRate: new Float32Array(MAX),
+    acceleration: new Float32Array(MAX),
+    maxSpeed: new Float32Array(MAX),
+
+    // Stable appearance per entity
+    visualRotation: new Float32Array(MAX),
+    spinSpeed: new Float32Array(MAX),
+
+    // Splitting
+    generation: new Uint8Array(MAX),
+    spawnVersion: new Uint32Array(MAX),
+
+    // Weapon impact feedback
+    hitFlash: new Float32Array(MAX),
+    hitIntensity: new Float32Array(MAX),
 }
 
 export const BossAI = {

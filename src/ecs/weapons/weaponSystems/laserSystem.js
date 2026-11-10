@@ -2,301 +2,700 @@
 
 import { BOSSES } from "../../constants/bosses.js"
 import { world } from "../../constants/world.js"
-import { playerQuery, bossQuery } from "../../constants/queries.js"
-import { Position, Rotation, Health, Asteroid, BossType } from "../../constants/components.js"
-import { getEmissionPoint, PLAYER_CONFIG } from '../../constants/emission.js'
+import {
+    playerQuery,
+    bossQuery,
+} from "../../constants/queries.js"
+
+import {
+    Position,
+    Rotation,
+    Health,
+    Asteroid,
+    BossType,
+} from "../../constants/components.js"
+
+import {
+    getEmissionPoint,
+    PLAYER_CONFIG,
+} from "../../constants/emission.js"
+
+import {
+    raycastAsteroids,
+    forEachAsteroidNear,
+} from "../../constants/spatialGrid.js"
 
 import { input } from "../../systems/input.js"
 import { startState } from "../../../state/startState.js"
 import { getWeapon } from "../config/weapons.js"
 import { laserState } from "../weaponState/laserState.js"
 
-import { killAsteroid, killBoss } from "../../systems/entityDeath.js"
-import { activeAsteroids } from "../../pools/asteroidPool.js"
+import {
+    killAsteroid,
+    killBoss,
+} from "../../systems/entityDeath.js"
+
 import { pushArc } from "../weaponState/arcState.js"
 
 import { emitEffect } from "../../../fx/effects.js"
 import { EFFECT } from "../../../fx/FXTypes.js"
 
-const ASTEROID_RADIUS = 0.7
-const BOSS_RADIUS = 2.0
+import {
+    registerAsteroidImpact,
+} from "../../combat/impactFeedback.js"
+
+// ============================================================
+// CONFIGURATION
+// ============================================================
+
 const MAX_BEAMS = 16
+const DEFAULT_BOSS_RADIUS = 2
+const EPSILON = 1e-9
 
-function findNearestHit(list, radius, originX, originY, dirX, dirY, maxT) {
+// Reused chain-target tracking.
+// Versions protect against recycled asteroid entities.
+const chainStamps = new Uint32Array(Position.x.length)
+const chainVersions = new Uint32Array(Position.x.length)
 
-    let bestT = maxT
-    let bestId = -1
+let chainStamp = 0
 
-    for (let i = 0; i < list.length; i++) {
+function nextChainStamp() {
+    chainStamp = (chainStamp + 1) >>> 0
 
-        const eid = list[i]
-        const cx = Position.x[eid] - originX
-        const cy = Position.y[eid] - originY
-
-        if (Health.current[eid] <= 0) continue
-        const r = (typeof radius === "function" ? radius(eid) : radius)
-        const projection = cx * dirX + cy * dirY
-        const d2 = cx * cx + cy * cy
-        const perpendicularSq = Math.max(0, d2 - projection * projection)
-        if (d2 > r * r && (projection <= 0 || perpendicularSq > r * r)) continue
-        const t = d2 <= r * r ? 0 : Math.max(0, projection - Math.sqrt(r * r - perpendicularSq))
-        if (t <= bestT) { bestT = t; bestId = eid }
-
+    if (chainStamp === 0) {
+        chainStamps.fill(0)
+        chainStamp = 1
     }
 
-    return { t: bestT, id: bestId }
+    return chainStamp
 }
 
-function resolveBeam(originX, originY, dirX, dirY, weapon, dps, asteroids, bosses) {
+function markChainTarget(id, stamp) {
+    chainStamps[id] = stamp
+    chainVersions[id] = Asteroid.spawnVersion[id]
+}
 
-    const asteroidHit = findNearestHit(asteroids, id => Asteroid.radius[id], originX, originY, dirX, dirY, weapon.range)
-    const bossHit = findNearestHit(bosses, id => BOSSES[BossType.typeIndex[id]]?.hitRadius ?? BOSS_RADIUS, originX, originY, dirX, dirY, asteroidHit.id !== -1 ? asteroidHit.t : weapon.range)
+function wasChainTarget(id, stamp) {
+    return (
+        chainStamps[id] === stamp &&
+        chainVersions[id] === Asteroid.spawnVersion[id]
+    )
+}
 
-    let hitId = -1
-    let hitType = null
-    let hitT = weapon.range
+// ============================================================
+// REUSABLE SCRATCH RESULTS
+// ============================================================
 
-    if (bossHit.id !== -1) {
-        hitId = bossHit.id
-        hitType = "boss"
-        hitT = bossHit.t
-    } else if (asteroidHit.id !== -1) {
-        hitId = asteroidHit.id
-        hitType = "asteroid"
-        hitT = asteroidHit.t
+const hitResult = {
+    id: -1,
+    type: null,
+    t: 0,
+    x: 0,
+    y: 0,
+}
+
+const beamResult = {
+    id: -1,
+    type: null,
+    t: 0,
+    x: 0,
+    y: 0,
+    alive: true,
+}
+
+// ============================================================
+// BOSS RAYCAST
+// ============================================================
+
+// Bosses remain a small collection, so a direct scan is
+// cheaper than introducing another broad-phase structure.
+//
+// The asteroid raycast is performed first, allowing this
+// function to stop at the nearest asteroid distance.
+
+function raycastBosses(
+    bosses,
+    originX,
+    originY,
+    dirX,
+    dirY,
+    maxDistance
+) {
+    let bestId = -1
+    let bestT = maxDistance
+
+    for (let i = 0; i < bosses.length; i++) {
+        const id = bosses[i]
+
+        if (Health.current[id] <= 0) continue
+
+        const radius =
+            BOSSES[BossType.typeIndex[id]]?.hitRadius ??
+            DEFAULT_BOSS_RADIUS
+
+        const ox = Position.x[id] - originX
+        const oy = Position.y[id] - originY
+
+        const projection = ox * dirX + oy * dirY
+
+        const centerDistSq = ox * ox + oy * oy
+        const radiusSq = radius * radius
+
+        const perpendicularSq = Math.max(
+            0,
+            centerDistSq - projection * projection
+        )
+
+        if (perpendicularSq > radiusSq) continue
+
+        const offset = Math.sqrt(
+            Math.max(0, radiusSq - perpendicularSq)
+        )
+
+        const t = centerDistSq <= radiusSq
+            ? 0
+            : projection - offset
+
+        if (t < 0 || t > bestT) continue
+
+        bestT = t
+        bestId = id
     }
 
-    const hitX = originX + dirX * hitT
-    const hitY = originY + dirY * hitT
+    return {
+        id: bestId,
+        t: bestT,
+    }
+}
 
-    let alive = true
+// ============================================================
+// FIND NEAREST BEAM TARGET
+// ============================================================
 
-    if (hitId !== -1) {
+// One spatial raycast per beam.
+// Bosses are compared against the asteroid result.
+//
+// Result object is reused to avoid per-frame allocation.
 
-        Health.current[hitId] -= dps * world.time.delta
+function findBeamTarget(
+    originX,
+    originY,
+    dirX,
+    dirY,
+    range,
+    bosses
+) {
+    const asteroidHit = raycastAsteroids(
+        originX,
+        originY,
+        dirX,
+        dirY,
+        range
+    )
 
-        if (Health.current[hitId] <= 0) {
-            alive = false
-            if (hitType === "asteroid") killAsteroid(hitId, hitX, hitY)
-            else killBoss(hitId, hitX, hitY)
+    const asteroidT = asteroidHit?.t ?? range
+
+    const bossHit = raycastBosses(
+        bosses,
+        originX,
+        originY,
+        dirX,
+        dirY,
+        asteroidT
+    )
+
+    let id = -1
+    let type = null
+    let t = range
+
+    if (bossHit.id !== -1) {
+        id = bossHit.id
+        type = "boss"
+        t = bossHit.t
+    } else if (asteroidHit) {
+        id = asteroidHit.id
+        type = "asteroid"
+        t = asteroidHit.t
+    }
+
+    hitResult.id = id
+    hitResult.type = type
+    hitResult.t = t
+
+    hitResult.x = originX + dirX * t
+    hitResult.y = originY + dirY * t
+
+    return hitResult
+}
+
+// ============================================================
+// APPLY BEAM DAMAGE
+// ============================================================
+
+function applyBeamDamage(
+    target,
+    dirX,
+    dirY,
+    dps,
+    dt
+) {
+    const id = target.id
+
+    beamResult.id = id
+    beamResult.type = target.type
+    beamResult.t = target.t
+    beamResult.x = target.x
+    beamResult.y = target.y
+    beamResult.alive = true
+
+    if (id === -1) return beamResult
+
+    const damage = Math.max(0, dps * dt)
+
+    if (damage <= 0) return beamResult
+
+    Health.current[id] -= damage
+
+    if (target.type === "asteroid") {
+        registerAsteroidImpact({
+            id,
+            damage,
+            directionX: dirX,
+            directionY: dirY,
+            x: target.x,
+            y: target.y,
+            continuous: true,
+            sparks: false,
+        })
+    }
+
+    if (Health.current[id] <= 0) {
+        beamResult.alive = false
+
+        if (target.type === "asteroid") {
+            killAsteroid(id, target.x, target.y)
+        } else {
+            killBoss(id, target.x, target.y)
         }
     }
 
-    return { hitId, hitType, hitT, hitX, hitY, alive }
+    return beamResult
 }
 
-// --------------------------------------------------------
-// Twin-gun muzzle offset
+// ============================================================
+// CHAIN LIGHTNING
+// ============================================================
+
+// Chain lightning searches locally around the previous hit,
+// rather than scanning the entire asteroid pool.
 //
-// Mirrors the perpendicular offset math spawnBullet/spawnPlayerBullet
-// use for twin bullet guns: the two muzzles sit gunGap either side of
-// the ship's centerline, perpendicular to its facing direction.
-//
-// Purely visual — hit detection below still raycasts from the single
-// centered muzzle point, so adding gunGap does NOT double beam DPS.
-// --------------------------------------------------------
+// Query callbacks only select a candidate. Damage and entity
+// destruction occur after the query has completed.
 
-function getTwinOrigins(centerX, centerY, rot, gap) {
+function applyChainLightning(
+    initialId,
+    initialX,
+    initialY,
+    dirX,
+    dirY,
+    weapon,
+    dt,
+    emitSparks
+) {
+    const count = Math.max(
+        0,
+        Math.floor(weapon.chainCount ?? 0)
+    )
 
-    if (!gap) return [{ x: centerX, y: centerY }]
+    const range = weapon.chainRange ?? 0
 
-    const perpX = Math.cos(-rot)
-    const perpY = -Math.sin(-rot)
+    if (count === 0 || range <= 0) return
 
-    return [
-        { x: centerX + perpX * gap, y: centerY + perpY * gap },
-        { x: centerX - perpX * gap, y: centerY - perpY * gap },
-    ]
+    const damagePerSecond =
+        weapon.chainDamage ??
+        (weapon.directDamage ?? 0) * 0.4
+
+    const damage = Math.max(
+        0,
+        damagePerSecond * dt
+    )
+
+    const stamp = nextChainStamp()
+
+    markChainTarget(initialId, stamp)
+
+    let chainX = initialX
+    let chainY = initialY
+
+    for (let chain = 0; chain < count; chain++) {
+        let bestId = -1
+        let bestDistSq = range * range
+
+        forEachAsteroidNear(
+            chainX,
+            chainY,
+            range,
+            (id) => {
+                if (
+                    wasChainTarget(id, stamp) ||
+                    Health.current[id] <= 0
+                ) {
+                    return
+                }
+
+                const dx = Position.x[id] - chainX
+                const dy = Position.y[id] - chainY
+
+                const distSq = dx * dx + dy * dy
+
+                if (distSq < bestDistSq) {
+                    bestDistSq = distSq
+                    bestId = id
+                }
+            }
+        )
+
+        if (bestId === -1) break
+
+        markChainTarget(bestId, stamp)
+
+        const targetX = Position.x[bestId]
+        const targetY = Position.y[bestId]
+
+        const deltaX = targetX - chainX
+        const deltaY = targetY - chainY
+
+        const length = Math.hypot(
+            deltaX,
+            deltaY
+        )
+
+        const nx = length > EPSILON
+            ? deltaX / length
+            : dirX
+
+        const ny = length > EPSILON
+            ? deltaY / length
+            : dirY
+
+        // The arc renderer owns these points.
+        pushArc(
+            [
+                { x: chainX, y: chainY },
+                { x: targetX, y: targetY },
+            ],
+            0.12
+        )
+
+        if (damage > 0) {
+            Health.current[bestId] -= damage
+
+            registerAsteroidImpact({
+                id: bestId,
+                damage,
+                directionX: nx,
+                directionY: ny,
+                x: targetX,
+                y: targetY,
+                continuous: true,
+                sparks: false,
+            })
+        }
+
+        if (emitSparks) {
+            emitEffect(EFFECT.SPARK_BURST, {
+                x: targetX,
+                y: targetY,
+                count: 4,
+                speed: 3,
+                direction: Math.atan2(ny, nx),
+                spread: Math.PI * 0.65,
+            })
+        }
+
+        if (Health.current[bestId] <= 0) {
+            killAsteroid(
+                bestId,
+                targetX,
+                targetY
+            )
+        }
+
+        chainX = targetX
+        chainY = targetY
+    }
 }
+
+// ============================================================
+// RESET LASER VISUAL STATE
+// ============================================================
+
+function deactivateLaser() {
+    laserState.active = false
+    laserState.lockTargetId = -1
+    laserState.lockTime = 0
+    laserState.beamCount = 0
+    laserState.hitLegacy = false
+}
+
+// ============================================================
+// MAIN LASER SYSTEM
+// ============================================================
 
 export function laserSystem() {
-
     const dt = world.time.delta
-    const weapon = getWeapon(startState.currentWeapon)
 
-    if (!weapon || weapon.category !== "beam" || startState.encounterPhase !== "active") {
-        laserState.active = false
-        laserState.lockTargetId = -1
-        laserState.lockTime = 0
-        laserState.beamCount = 0
+    const weapon = getWeapon(
+        startState.currentWeapon
+    )
+
+    if (
+        !weapon ||
+        weapon.category !== "beam" ||
+        startState.encounterPhase !== "active"
+    ) {
+        deactivateLaser()
         return
     }
 
-    const players = playerQuery()
-    if (players.length === 0 || !input.fire) {
-        laserState.active = false
-        laserState.lockTargetId = -1
-        laserState.lockTime = 0
-        laserState.beamCount = 0
+    const pid = playerQuery()[0]
+
+    if (pid === undefined || !input.fire) {
+        deactivateLaser()
         return
     }
 
-    const pid = players[0]
+    // --------------------------------------------------------
+    // EMISSION / DIRECTION
+    // --------------------------------------------------------
 
-    const emissionCfg = PLAYER_CONFIG.emission.beam
+    const rotation = Rotation[pid]
+
+    const cfg = PLAYER_CONFIG.emission.beam
 
     const point = getEmissionPoint(
         Position.x[pid],
         Position.y[pid],
-        Rotation[pid],
-        emissionCfg
+        rotation,
+        cfg
     )
-
-    laserState.active = true
 
     const centerX = point.x
     const centerY = point.y
 
-    const baseDirX = Math.sin(-Rotation[pid])
-    const baseDirY = Math.cos(-Rotation[pid])
+    const baseDirX = Math.sin(-rotation)
+    const baseDirY = Math.cos(-rotation)
 
-    const asteroids = activeAsteroids
     const bosses = bossQuery()
 
-    const beamCount = weapon.beamCount ?? 1
-    const beamSpread = weapon.beamSpread ?? 0
+    const requestedBeams = Math.max(
+        1,
+        Math.floor(weapon.beamCount ?? 1)
+    )
 
-    // Add `gunGap` to PLAYER_CONFIG.emission.beam in emission.js to
-    // split each fanned beam into two parallel visual streams.
-    const gap = emissionCfg.gunGap ?? 0
-    const origins = getTwinOrigins(centerX, centerY, Rotation[pid], gap)
+    const spread = weapon.beamSpread ?? 0
+
+    // Twin muzzles affect rendering only.
+    // Damage is calculated once per fan beam.
+    const gap = cfg.gunGap ?? 0
+
+    const twin = gap !== 0
+
+    const streamsPerBeam = twin ? 2 : 1
+
+    const beamCount = Math.min(
+        requestedBeams,
+        Math.floor(MAX_BEAMS / streamsPerBeam)
+    )
+
+    const perpendicularX = Math.cos(-rotation)
+    const perpendicularY = -Math.sin(-rotation)
+
+    const originAX =
+        centerX + perpendicularX * gap
+
+    const originAY =
+        centerY + perpendicularY * gap
+
+    const originBX =
+        centerX - perpendicularX * gap
+
+    const originBY =
+        centerY - perpendicularY * gap
+
+    laserState.active = true
+
+    laserState.sparkTimer -= dt
+
+    const emitSparks =
+        laserState.sparkTimer <= 0
 
     let outIndex = 0
+
     let primaryHitId = -1
     let primaryHitX = centerX
     let primaryHitY = centerY
 
-    const chainHitPoints = []
+    // --------------------------------------------------------
+    // BEAM LOOP
+    // --------------------------------------------------------
 
     for (let i = 0; i < beamCount; i++) {
-
         const angleOffset = beamCount > 1
-            ? -beamSpread / 2 + (beamSpread / (beamCount - 1)) * i
+            ? -spread * 0.5 +
+              (spread / (beamCount - 1)) * i
             : 0
 
         const cos = Math.cos(angleOffset)
         const sin = Math.sin(angleOffset)
-        const dirX = baseDirX * cos - baseDirY * sin
-        const dirY = baseDirX * sin + baseDirY * cos
 
-        // -------------------------
-        // Damage / ramp-up — single raycast from the centered muzzle
-        // point, unaffected by gunGap.
-        // -------------------------
+        const dirX =
+            baseDirX * cos - baseDirY * sin
 
-        let dps = weapon.directDamage
+        const dirY =
+            baseDirX * sin + baseDirY * cos
 
-        if (weapon.rampTime && beamCount === 1) {
+        // ----------------------------------------------------
+        // SINGLE TARGET QUERY
+        // ----------------------------------------------------
 
-            const asteroidHit = findNearestHit(asteroids, id => Asteroid.radius[id], centerX, centerY, dirX, dirY, weapon.range)
-            const bossHit = findNearestHit(bosses, id => BOSSES[BossType.typeIndex[id]]?.hitRadius ?? BOSS_RADIUS, centerX, centerY, dirX, dirY, asteroidHit.id !== -1 ? asteroidHit.t : weapon.range)
-            const targetId = bossHit.id !== -1 ? bossHit.id : asteroidHit.id
+        const target = findBeamTarget(
+            centerX,
+            centerY,
+            dirX,
+            dirY,
+            weapon.range,
+            bosses
+        )
 
-            if (targetId !== -1 && targetId === laserState.lockTargetId) {
-                laserState.lockTime = Math.min(laserState.lockTime + dt, weapon.rampTime)
+        // ----------------------------------------------------
+        // DAMAGE RAMP-UP
+        // ----------------------------------------------------
+
+        let dps = weapon.directDamage ?? 0
+
+        if (
+            weapon.rampTime > 0 &&
+            beamCount === 1
+        ) {
+            if (
+                target.id !== -1 &&
+                target.id === laserState.lockTargetId
+            ) {
+                laserState.lockTime = Math.min(
+                    laserState.lockTime + dt,
+                    weapon.rampTime
+                )
             } else {
-                laserState.lockTargetId = targetId
+                laserState.lockTargetId = target.id
                 laserState.lockTime = 0
             }
 
-            const t = laserState.lockTime / weapon.rampTime
-            dps = weapon.directDamage + (weapon.maxDamage - weapon.directDamage) * t
+            const ramp = Math.min(
+                1,
+                laserState.lockTime /
+                    weapon.rampTime
+            )
+
+            const maxDamage =
+                weapon.maxDamage ?? dps
+
+            dps += (maxDamage - dps) * ramp
+        } else {
+            laserState.lockTargetId = -1
+            laserState.lockTime = 0
         }
 
-        const result = resolveBeam(centerX, centerY, dirX, dirY, weapon, dps, asteroids, bosses)
+        // ----------------------------------------------------
+        // APPLY DAMAGE
+        // ----------------------------------------------------
+
+        const result = applyBeamDamage(
+            target,
+            dirX,
+            dirY,
+            dps,
+            dt
+        )
 
         if (i === 0) {
-            primaryHitId = result.hitId
-            primaryHitX = result.hitX
-            primaryHitY = result.hitY
+            primaryHitId = result.id
+            primaryHitX = result.x
+            primaryHitY = result.y
         }
 
-        // -------------------------
-        // Emit one visual beam entry per muzzle (1 or 2), sharing this
-        // fan beam's direction/hitT/hit-status but drawn from its own
-        // origin so twin beams render parallel.
-        // -------------------------
+        // ----------------------------------------------------
+        // VISUAL STREAMS
+        // ----------------------------------------------------
 
-        for (let o = 0; o < origins.length && outIndex < MAX_BEAMS; o++) {
+        for (
+            let stream = 0;
+            stream < streamsPerBeam;
+            stream++
+        ) {
+            const originX = twin
+                ? stream === 0
+                    ? originAX
+                    : originBX
+                : centerX
 
-            const origin = origins[o]
+            const originY = twin
+                ? stream === 0
+                    ? originAY
+                    : originBY
+                : centerY
 
-            laserState.originX[outIndex] = origin.x
-            laserState.originY[outIndex] = origin.y
+            laserState.originX[outIndex] = originX
+            laserState.originY[outIndex] = originY
+
             laserState.dirX[outIndex] = dirX
             laserState.dirY[outIndex] = dirY
-            laserState.hitT[outIndex] = result.hitT
-            laserState.hitX[outIndex] = origin.x + dirX * result.hitT
-            laserState.hitY[outIndex] = origin.y + dirY * result.hitT
-            laserState.hitActive[outIndex] = result.hitId !== -1
+
+            laserState.hitT[outIndex] = result.t
+
+            laserState.hitX[outIndex] =
+                originX + dirX * result.t
+
+            laserState.hitY[outIndex] =
+                originY + dirY * result.t
+
+            laserState.hitActive[outIndex] =
+                result.id !== -1
 
             outIndex++
         }
 
-        // -------------------------
-        // Chain lightning (unchanged — still keyed off the single
-        // centered raycast result, not per visual beam)
-        // -------------------------
+        // ----------------------------------------------------
+        // CHAIN LIGHTNING
+        // ----------------------------------------------------
 
-        if (weapon.chainCount && result.hitType === "asteroid" && result.alive) {
-
-            const chainRangeSq = weapon.chainRange * weapon.chainRange
-            const chainDps = weapon.chainDamage ?? weapon.directDamage * 0.4
-
-            const used = new Set([result.hitId])
-
-            let chainX = result.hitX
-            let chainY = result.hitY
-
-            for (let chain = 0; chain < weapon.chainCount; chain++) {
-
-                let bestId = -1
-                let bestDistSq = chainRangeSq
-
-                for (let k = 0; k < asteroids.length; k++) {
-
-                    const aid = asteroids[k]
-
-                    if (used.has(aid) || Health.current[aid] <= 0)
-                        continue
-
-                    const dx = Position.x[aid] - chainX
-                    const dy = Position.y[aid] - chainY
-                    const distSq = dx * dx + dy * dy
-
-                    if (distSq < bestDistSq) {
-                        bestDistSq = distSq
-                        bestId = aid
-                    }
-                }
-
-                if (bestId === -1)
-                    break
-
-                used.add(bestId)
-
-                const secX = Position.x[bestId]
-                const secY = Position.y[bestId]
-
-                Health.current[bestId] -= chainDps * dt
-
-                pushArc([{ x: chainX, y: chainY }, { x: secX, y: secY }], 0.12)
-
-                if (Health.current[bestId] <= 0) {
-                    killAsteroid(bestId, secX, secY)
-                } else {
-                    chainHitPoints.push({ x: secX, y: secY })
-                }
-
-                chainX = secX
-                chainY = secY
-            }
+        if (
+            weapon.chainCount > 0 &&
+            result.type === "asteroid" &&
+            result.alive
+        ) {
+            applyChainLightning(
+                result.id,
+                result.x,
+                result.y,
+                dirX,
+                dirY,
+                weapon,
+                dt,
+                emitSparks
+            )
         }
     }
 
+    // --------------------------------------------------------
+    // UPDATE VISUAL STATE
+    // --------------------------------------------------------
+
     laserState.beamCount = outIndex
 
-    laserState.hitLegacy = primaryHitId !== -1
+    laserState.hitLegacy =
+        primaryHitId !== -1
+
     laserState.hitXLegacy = primaryHitX
     laserState.hitYLegacy = primaryHitY
 
@@ -304,26 +703,34 @@ export function laserSystem() {
         ? laserState.hitT[0]
         : weapon.range
 
-    laserState.sparkTimer -= dt
+    // --------------------------------------------------------
+    // IMPACT SPARKS
+    // --------------------------------------------------------
 
-    if (laserState.sparkTimer <= 0) {
-
-        for (let i = 0; i < laserState.beamCount; i++) {
-
-            if (!laserState.hitActive[i]) continue
+    if (emitSparks) {
+        for (
+            let i = 0;
+            i < laserState.beamCount;
+            i++
+        ) {
+            if (!laserState.hitActive[i]) {
+                continue
+            }
 
             emitEffect(EFFECT.SPARK_BURST, {
                 x: laserState.hitX[i],
                 y: laserState.hitY[i],
                 count: 6,
                 speed: 4,
+                direction: Math.atan2(
+                    laserState.dirY[i],
+                    laserState.dirX[i]
+                ),
+                spread: Math.PI * 0.5,
             })
         }
 
-        for (const p of chainHitPoints) {
-            emitEffect(EFFECT.SPARK_BURST, { x: p.x, y: p.y, count: 4, speed: 3 })
-        }
-
-        laserState.sparkTimer = weapon.tickSparkInterval
+        laserState.sparkTimer =
+            weapon.tickSparkInterval ?? 0.1
     }
 }

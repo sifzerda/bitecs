@@ -142,3 +142,12 @@ Make config screen for emission point, using a dot to show emission points on sh
  - [x] weaponActions and Spawn currently has some BOSS AI functions, maybe put all Boss AI into separate file/system. maybe other files have boss AI scattered, need to be centralized 
 
  - [ ] restyle and format pages to remove gaps and extra space, scrolling
+
+
+
+
+
+ [ ] a lot of optimization has been done remaining tasks:
+
+ - [ ] possibly reducing files or combining them
+ - [ ] improving boss AI (see bosses folder), reducing delays in boss targeting player

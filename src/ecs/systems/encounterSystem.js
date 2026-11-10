@@ -1,36 +1,68 @@
 // src/ecs/systems/encounterSystem.js
 
 import { startState } from "../../state/startState.js"
-import { useGameStore, SCREEN } from "../../../store/gameStore.js"
+
+import {
+    useGameStore,
+    SCREEN,
+} from "../../../store/gameStore.js"
+
+import { bossQuery } from "../constants/queries.js"
+
+import {
+    getRemainingAsteroidCount,
+} from "../waves/waveState.js"
 
 const CLEAR_DURATION = 1.2
 
+function encounterIsEmpty() {
+    return (
+        getRemainingAsteroidCount() === 0 &&
+        bossQuery().length === 0
+    )
+}
+
 export function beginEncounterClear() {
-  
-  const { screen } = useGameStore.getState()
+    const state = useGameStore.getState()
 
-  if (screen !== SCREEN.PLAY || startState.encounterPhase !== "active") {
-    return false
-  }
+    if (
+        state.screen !== SCREEN.PLAY ||
+        startState.encounterPhase !== "active" ||
+        !encounterIsEmpty()
+    ) {
+        return false
+    }
 
-  startState.encounterPhase = "clearing"
-  startState.clearTimer = CLEAR_DURATION
-  startState.deflectBufferTime = 0
+    startState.encounterPhase = "clearing"
+    startState.clearTimer = CLEAR_DURATION
+    startState.deflectBufferTime = 0
 
-  return true
+    return true
 }
 
 export function encounterSystem(dt) {
-  if (startState.encounterPhase !== "clearing") {
-    return
-  }
+    if (startState.encounterPhase !== "clearing") {
+        return
+    }
 
-  startState.clearTimer = Math.max(0, startState.clearTimer - dt)
+    if (!encounterIsEmpty()) {
+        startState.encounterPhase = "active"
+        startState.clearTimer = 0
+        return
+    }
 
-  if (startState.clearTimer > 0) return
+    const delta = Number.isFinite(dt)
+        ? Math.max(0, dt)
+        : 0
 
-  // Mark completed before changing screens.
-  startState.encounterPhase = "completed"
+    startState.clearTimer = Math.max(
+        0,
+        startState.clearTimer - delta
+    )
 
-  useGameStore.getState().completeLevel()
+    if (startState.clearTimer > 0) return
+
+    startState.encounterPhase = "completed"
+
+    useGameStore.getState().completeLevel()
 }

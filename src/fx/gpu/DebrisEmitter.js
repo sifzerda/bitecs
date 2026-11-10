@@ -1,107 +1,214 @@
 // src/fx/gpu/DebrisEmitter.js
-//
-// Two looks, chosen by the burst's kind:
-//   "rock"  -> zero-G drift: slow, long-lived pieces on gently curving paths
-//   "metal" -> ricochet shards: thin slivers that point along their flight and glint
-//
-// Exports are unchanged: debrisPool, kind, spawnedDebris, emitDebrisBurst, updateDebrisEmitter.
-//
-// heat and glint are extra per-instance values for DebrisRenderer.jsx. The old renderer
-// ignores them, so the emitter works with either.
 
 import { createTypedEffectPool } from "../effectPool.js"
 
 const MAX_DEBRIS = 256
 const TAU = Math.PI * 2
 
+// Debris uses unit-radius icosahedrons.
+// These limits are world-space scale values.
+const MAX_ROCK_SCALE = 0.32
+const MAX_METAL_SCALE = 0.55
+const MIN_SCALE = 0.005
+
 export const debrisPool = createTypedEffectPool(
     MAX_DEBRIS,
-    ["spinSpeed", "seedAngle", "seed", "age", "mass", "heat", "glint", "align"],
-    ["scale", "axis", "baseScale"],
+    [
+        "spinSpeed",
+        "seedAngle",
+        "seed",
+        "age",
+        "mass",
+        "heat",
+        "glint",
+        "align",
+    ],
+    ["scale", "axis", "baseScale"]
 )
+
 export const kind = new Uint8Array(MAX_DEBRIS)
-export const spawnedDebris = []
-const KIND_MAP = { rock: 0, metal: 1 }
 
-// ---------------------------------------------------------------------------
-// The two looks, indexed by kind value (0 = rock, 1 = metal).
-//
-//  drag        velocity kept per 1/60 s (lower = stops sooner)
-//  massDrag    0..1  big pieces keep momentum, small ones stall
-//  spin        max rad/s;  spinSizeBias  small pieces spin faster (0..1)
-//  lifeMul     scales maxLife
-//  shrinkFrom  life fraction where pieces start shrinking to nothing
-//  curl        rad/s of sideways arc applied to velocity (sign random per piece)
-//  heat        rim glow at birth (0..1), cooling by (1 - t) ^ heatCurve; 0 = none
-//  glintRate   rad/s of the specular flash (0 = none)
-//  tiers       size classes: w weight, size/speed ranges, stretch (long axis),
-//              life, align (0..1 chance to point along travel)
-// ---------------------------------------------------------------------------
+const KIND_MAP = {
+    rock: 0,
+    metal: 1,
+}
+
 const LOOKS = [
-
-    // ROCK: zero-G drift
+    // ROCK: slow zero-G drift
     {
-        drag: 0.9975, massDrag: 0.3, spin: 3.2, spinSizeBias: 0.4, lifeMul: 2.4, shrinkFrom: 0.78,
-        curl: 0.5, heat: 1, heatCurve: 4, glintRate: 0,
+        drag: 0.9975,
+        massDrag: 0.3,
+        spin: 3.2,
+        spinSizeBias: 0.4,
+        lifeMul: 2.4,
+        shrinkFrom: 0.78,
+        curl: 0.5,
+        heat: 1,
+        heatCurve: 4,
+        glintRate: 0,
         tiers: [
-            { w: 0.25, size: [0.7, 1.1], speed: [0.12, 0.3], stretch: 1, life: 1.1 },
-            { w: 0.45, size: [0.35, 0.65], speed: [0.2, 0.5], stretch: 1.15, life: 1.0 },
-            { w: 0.3, size: [0.12, 0.25], speed: [0.3, 0.7], stretch: 1.3, life: 0.85 },
+            {
+                w: 0.25,
+                size: [0.7, 1.1],
+                speed: [0.12, 0.3],
+                stretch: 1,
+                life: 1.1,
+            },
+            {
+                w: 0.45,
+                size: [0.35, 0.65],
+                speed: [0.2, 0.5],
+                stretch: 1.15,
+                life: 1,
+            },
+            {
+                w: 0.3,
+                size: [0.12, 0.25],
+                speed: [0.3, 0.7],
+                stretch: 1.3,
+                life: 0.85,
+            },
         ],
     },
 
-    // METAL: ricochet shards
+    // METAL: fast ricocheting shards
     {
-        drag: 0.99, massDrag: 0.4, spin: 2, spinSizeBias: 0, lifeMul: 0.9, shrinkFrom: 0.7,
-        curl: 0, heat: 0, heatCurve: 1, glintRate: 14,
+        drag: 0.99,
+        massDrag: 0.4,
+        spin: 2,
+        spinSizeBias: 0,
+        lifeMul: 0.9,
+        shrinkFrom: 0.7,
+        curl: 0,
+        heat: 0,
+        heatCurve: 1,
+        glintRate: 14,
         tiers: [
-            { w: 0.3, size: [0.3, 0.55], speed: [1.0, 1.8], stretch: 3.2, life: 1.0, align: 1 },
-            { w: 0.5, size: [0.12, 0.24], speed: [1.4, 2.6], stretch: 2.6, life: 0.8, align: 1 },
-            { w: 0.2, size: [0.06, 0.12], speed: [1.8, 3.0], stretch: 1.4, life: 0.45, align: 0.5 },
+            {
+                w: 0.3,
+                size: [0.3, 0.55],
+                speed: [1, 1.8],
+                stretch: 3.2,
+                life: 1,
+                align: 1,
+            },
+            {
+                w: 0.5,
+                size: [0.12, 0.24],
+                speed: [1.4, 2.6],
+                stretch: 2.6,
+                life: 0.8,
+                align: 1,
+            },
+            {
+                w: 0.2,
+                size: [0.06, 0.12],
+                speed: [1.8, 3],
+                stretch: 1.4,
+                life: 0.45,
+                align: 0.5,
+            },
         ],
     },
 ]
 
-function rand(a, b) {
-    return a + Math.random() * (b - a)
+function rand(min, max) {
+    return min + Math.random() * (max - min)
+}
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value))
+}
+
+function safeNumber(value, fallback = 0) {
+    return Number.isFinite(value) ? value : fallback
 }
 
 function pickTier(tiers) {
     let total = 0
-    for (let i = 0; i < tiers.length; i++)
+
+    for (let i = 0; i < tiers.length; i++) {
         total += tiers[i].w
+    }
+
     let r = Math.random() * total
+
     for (let i = 0; i < tiers.length; i++) {
         r -= tiers[i].w
-        if (r <= 0)
-            return tiers[i]
+
+        if (r <= 0) return tiers[i]
     }
+
     return tiers[tiers.length - 1]
 }
 
-export function emitDebrisBurst({ x, y, count = 10, speed = 8, size = 1, kind: type = "rock", maxLife = 1.4, spread = TAU, direction = 0 }) {
+function setInitialScale(pool, index, x, y, z, maxScale) {
+    const j = index * 3
 
+    // Scale proportionally instead of clamping each axis
+    // independently, preserving shard proportions.
+    const largest = Math.max(x, y, z)
+
+    const factor = largest > maxScale
+        ? maxScale / largest
+        : 1
+
+    pool.baseScale[j] = Math.max(MIN_SCALE, x * factor)
+    pool.baseScale[j + 1] = Math.max(MIN_SCALE, y * factor)
+    pool.baseScale[j + 2] = Math.max(MIN_SCALE, z * factor)
+
+    pool.scale[j] = pool.baseScale[j]
+    pool.scale[j + 1] = pool.baseScale[j + 1]
+    pool.scale[j + 2] = pool.baseScale[j + 2]
+}
+
+export function emitDebrisBurst({
+    x,
+    y,
+    count = 10,
+    speed = 8,
+    size = 1,
+    kind: type = "rock",
+    maxLife = 1.4,
+    spread = TAU,
+    direction = 0,
+}) {
     const p = debrisPool
+
     const kindValue = KIND_MAP[type] ?? 0
     const look = LOOKS[kindValue]
 
-    for (let i = 0; i < count; i++) {
+    const burstSize = Math.max(0, safeNumber(size, 1))
+    const burstSpeed = Math.max(0, safeNumber(speed, 8))
+    const burstLife = Math.max(0.001, safeNumber(maxLife, 1.4))
+    const burstCount = Math.max(
+        0,
+        Math.floor(safeNumber(count))
+    )
 
+    const maxScale = kindValue === 0
+        ? MAX_ROCK_SCALE
+        : MAX_METAL_SCALE
+
+    for (let n = 0; n < burstCount; n++) {
         const id = p.allocate()
 
-        if (id < 0)
-            break
-
-        // Track active ids if something else needs them
-        spawnedDebris.push(id)
+        if (id < 0) break
 
         const tier = pickTier(look.tiers)
+        const j = id * 3
 
-        const angle = direction + (Math.random() - 0.5) * spread
-        const velocity = speed * rand(tier.speed[0], tier.speed[1])
+        const angle =
+            direction +
+            (Math.random() - 0.5) * spread
 
-        p.x[id] = x + (Math.random() - 0.5) * 0.2
-        p.y[id] = y + (Math.random() - 0.5) * 0.2
+        const velocity = burstSpeed * rand(
+            tier.speed[0],
+            tier.speed[1]
+        )
+
+        p.x[id] = x + rand(-0.1, 0.1)
+        p.y[id] = y + rand(-0.1, 0.1)
 
         const vx = Math.cos(angle) * velocity
         const vy = Math.sin(angle) * velocity
@@ -109,52 +216,77 @@ export function emitDebrisBurst({ x, y, count = 10, speed = 8, size = 1, kind: t
         p.vx[id] = vx
         p.vy[id] = vy
 
-        const rel = rand(tier.size[0], tier.size[1])
-        const s = size * rel
-        const mass = Math.min(1, Math.max(0, (rel - 0.1) / 1.1))
-        const sp = id * 3
+        const relativeSize = rand(
+            tier.size[0],
+            tier.size[1]
+        )
 
-        const sx = s * tier.stretch * (0.7 + Math.random() * 0.6)
-        const sy = s * (0.7 + Math.random() * 0.6)
-        const sz = s * (0.7 + Math.random() * 0.6)
+        const sizeValue = burstSize * relativeSize
 
-        p.scale[sp] = p.baseScale[sp] = sx
-        p.scale[sp + 1] = p.baseScale[sp + 1] = sy
-        p.scale[sp + 2] = p.baseScale[sp + 2] = sz
+        const mass = clamp(
+            (relativeSize - 0.1) / 1.1,
+            0,
+            1
+        )
 
-        const aligned = Math.random() < (tier.align || 0)
+        const sx =
+            sizeValue *
+            tier.stretch *
+            rand(0.7, 1.3)
+
+        const sy = sizeValue * rand(0.7, 1.3)
+        const sz = sizeValue * rand(0.7, 1.3)
+
+        setInitialScale(
+            p,
+            id,
+            sx,
+            sy,
+            sz,
+            maxScale
+        )
+
+        const aligned =
+            Math.random() < (tier.align ?? 0)
 
         if (aligned) {
-
-            // Long axis follows the direction of travel
-            p.axis[sp] = 0
-            p.axis[sp + 1] = 0
-            p.axis[sp + 2] = 1
+            p.axis[j] = 0
+            p.axis[j + 1] = 0
+            p.axis[j + 2] = 1
 
             p.seedAngle[id] = Math.atan2(vy, vx)
             p.spinSpeed[id] = 0
-
         } else {
+            const ax = rand(-1, 1)
+            const ay = rand(-1, 1)
+            const az = rand(-1, 1)
 
-            const ax = Math.random() * 2 - 1
-            const ay = Math.random() * 2 - 1
-            const az = Math.random() * 2 - 1
+            const length =
+                Math.hypot(ax, ay, az) || 1
 
-            const len = Math.sqrt(ax * ax + ay * ay + az * az) || 1
+            p.axis[j] = ax / length
+            p.axis[j + 1] = ay / length
+            p.axis[j + 2] = az / length
 
-            p.axis[sp] = ax / len
-            p.axis[sp + 1] = ay / len
-            p.axis[sp + 2] = az / len
+            p.seedAngle[id] = rand(0, TAU)
 
-            p.seedAngle[id] = Math.random() * TAU
-            p.spinSpeed[id] = (Math.random() - 0.5) * 2 * look.spin * (1 + look.spinSizeBias * (1 - 2 * mass))
+            p.spinSpeed[id] =
+                rand(-look.spin, look.spin) *
+                (
+                    1 +
+                    look.spinSizeBias *
+                    (1 - 2 * mass)
+                )
         }
 
         p.align[id] = aligned ? 1 : 0
-
         kind[id] = kindValue
 
-        const life = maxLife * look.lifeMul * tier.life * rand(0.7, 1.3)
+        const life =
+            burstLife *
+            look.lifeMul *
+            tier.life *
+            rand(0.7, 1.3)
 
         p.life[id] = life
         p.maxLife[id] = life
@@ -165,9 +297,10 @@ export function emitDebrisBurst({ x, y, count = 10, speed = 8, size = 1, kind: t
         p.heat[id] = look.heat
         p.glint[id] = 0
 
-        p.instancePosition[sp] = p.x[id]
-        p.instancePosition[sp + 1] = p.y[id]
-        p.instancePosition[sp + 2] = 0.15
+        p.instancePosition[j] = p.x[id]
+        p.instancePosition[j + 1] = p.y[id]
+        p.instancePosition[j + 2] = 0.15
+
         p.instanceRotation[id] = p.seedAngle[id]
     }
 
@@ -175,99 +308,146 @@ export function emitDebrisBurst({ x, y, count = 10, speed = 8, size = 1, kind: t
 }
 
 export function updateDebrisEmitter(dt) {
-
     const p = debrisPool
+
+    if (!Number.isFinite(dt) || dt <= 0) return
+
     const frames = dt * 60
 
-    // Walk backwards so killing a piece never skips another
+    // Reverse iteration preserves swap-removal safety
+    // if the pool's release mechanism removes active IDs.
     for (let n = p.activeCount - 1; n >= 0; n--) {
+        const id = p.activeIds[n]
+        const look = LOOKS[kind[id]]
 
-        const i = p.activeIds[n]
-        const look = LOOKS[kind[i]]
+        p.life[id] -= dt
 
-        p.life[i] -= dt
-
-        if (p.life[i] <= 0) {
-
-            // Remove from spawnedDebris list
-            const index = spawnedDebris.indexOf(i)
-            if (index !== -1)
-                spawnedDebris.splice(index, 1)
-
-            p.kill(i)
+        // Remove expired debris and recycle its pool slot.
+        if (p.life[id] <= 0) {
+            p.kill(id)
             continue
         }
 
-        const maxLife = p.maxLife[i]
-        const elapsed = maxLife - p.life[i]
-        const t = elapsed / maxLife
+        const maxLife = Math.max(
+            0.001,
+            p.maxLife[id]
+        )
 
-        // Big pieces keep momentum, small ones stall
-        const k = 1 + look.massDrag * (1 - 2 * p.mass[i])
-        const drag = Math.pow(look.drag, frames * k)
+        const elapsed = maxLife - p.life[id]
 
-        let vx = p.vx[i] * drag
-        let vy = p.vy[i] * drag
+        // Critical: never let t exceed 1.
+        const t = clamp(elapsed / maxLife, 0, 1)
 
-        if (look.curl) {
+        const k =
+            1 +
+            look.massDrag *
+            (1 - 2 * p.mass[id])
 
-            const w = look.curl * (p.seed[i] * 2 - 1) * dt
+        const drag = Math.pow(
+            look.drag,
+            frames * k
+        )
+
+        let vx = p.vx[id] * drag
+        let vy = p.vy[id] * drag
+
+        if (look.curl !== 0) {
+            const w =
+                look.curl *
+                (p.seed[id] * 2 - 1) *
+                dt
+
             const c = Math.cos(w)
             const s = Math.sin(w)
 
-            const nx = vx * c - vy * s
-            vy = vx * s + vy * c
-            vx = nx
+            const nextVx = vx * c - vy * s
+            const nextVy = vx * s + vy * c
+
+            vx = nextVx
+            vy = nextVy
         }
 
-        p.vx[i] = vx
-        p.vy[i] = vy
+        p.vx[id] = vx
+        p.vy[id] = vy
 
-        p.x[i] += vx * dt
-        p.y[i] += vy * dt
+        p.x[id] += vx * dt
+        p.y[id] += vy * dt
 
-        const pos = i * 3
+        const j = id * 3
 
-        p.instancePosition[pos] = p.x[i]
-        p.instancePosition[pos + 1] = p.y[i]
+        p.instancePosition[j] = p.x[id]
+        p.instancePosition[j + 1] = p.y[id]
+        p.instancePosition[j + 2] = 0.15
 
-        p.age[i] = t
+        p.age[id] = t
 
-        // Tumbling pieces spin in real time, shards follow their heading
-        if (p.align[i] > 0) {
+        // ----------------------------------------------------
+        // ROTATION
+        // ----------------------------------------------------
 
-            const heading = vx * vx + vy * vy > 1e-4 ? Math.atan2(vy, vx) : p.seedAngle[i]
+        if (p.align[id] > 0) {
+            const speedSq = vx * vx + vy * vy
 
-            p.instanceRotation[i] = heading + Math.sin(elapsed * 7 + p.seed[i] * TAU) * 0.1
+            const heading = speedSq > 1e-4
+                ? Math.atan2(vy, vx)
+                : p.seedAngle[id]
 
+            p.instanceRotation[id] =
+                heading +
+                Math.sin(
+                    elapsed * 7 +
+                    p.seed[id] * TAU
+                ) * 0.1
         } else {
-
-            p.instanceRotation[i] = p.seedAngle[i] + elapsed * p.spinSpeed[i]
+            p.instanceRotation[id] =
+                p.seedAngle[id] +
+                elapsed * p.spinSpeed[id]
         }
 
-        // Shrink away instead of popping out
+        // ----------------------------------------------------
+        // SHRINK
+        // ----------------------------------------------------
+
         let fade = 1
 
         if (t > look.shrinkFrom) {
+            const u = clamp(
+                (t - look.shrinkFrom) /
+                (1 - look.shrinkFrom),
+                0,
+                1
+            )
 
-            const u = (t - look.shrinkFrom) / (1 - look.shrinkFrom)
-
+            // Smoothstep shrinking.
             fade = 1 - u * u * (3 - 2 * u)
         }
 
-        p.scale[pos] = p.baseScale[pos] * fade
-        p.scale[pos + 1] = p.baseScale[pos + 1] * fade
-        p.scale[pos + 2] = p.baseScale[pos + 2] * fade
+        p.scale[j] = p.baseScale[j] * fade
+        p.scale[j + 1] = p.baseScale[j + 1] * fade
+        p.scale[j + 2] = p.baseScale[j + 2] * fade
 
-        // Shader inputs: rim glow cooling over life, and a specular flash for metal
-        p.heat[i] = look.heat > 0 ? look.heat * Math.pow(1 - t, look.heatCurve) : 0
+        // ----------------------------------------------------
+        // HEAT / GLINT
+        // ----------------------------------------------------
+
+        p.heat[id] = look.heat > 0
+            ? look.heat *
+            Math.pow(1 - t, look.heatCurve)
+            : 0
 
         if (look.glintRate > 0) {
+            const sn = Math.sin(
+                p.seed[id] * 40 +
+                elapsed * look.glintRate
+            )
 
-            const sn = Math.sin(p.seed[i] * 40 + elapsed * look.glintRate)
-
-            p.glint[i] = sn > 0 ? Math.pow(sn, 9) : 0
+            p.glint[id] = sn > 0
+                ? Math.pow(sn, 9)
+                : 0
+        } else {
+            p.glint[id] = 0
         }
+
     }
 
     p.dirty = true

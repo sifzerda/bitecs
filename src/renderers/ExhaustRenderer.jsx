@@ -1,426 +1,353 @@
 // src/renderers/ExhaustRenderer.jsx
 
+import * as THREE from "three"
+import { useEffect, useRef } from "react"
+import { useFrame, useThree } from "@react-three/fiber"
+
 import { world } from "../ecs/constants/world.js"
 import { useGameStore, SCREEN } from "../../store/gameStore.js"
-import { useMemo, useRef, useEffect } from 'react'
-import { useFrame, useThree } from '@react-three/fiber'
-import * as THREE from 'three'
 import { exhaustSources } from "../fx/gpu/ExhaustState"
 import { playerMotion } from "../ecs/systems/playerControlSystem.js"
+import { createGPUParticles } from "../fx/gpu/gpuParticleUtils.js"
 
-const PARTICLE_SIZE = 128
-// Matches the shader's lifespan formula: 0.5 + seed * 0.5, seed in [0,1]
-const MAX_LIFESPAN = 1.0
+const SIZE = 128
+const MAX_LIFE = 1
 
-// ---------------------------------------------------------------------------
+const simVertex = /* glsl */ `
+varying vec2 vUv;
 
-const simVertexShader = /* glsl */
-  `
-  varying vec2 vUv;
-  void main() {
+void main() {
     vUv = uv;
     gl_Position = vec4(position.xy, 0.0, 1.0);
-  }
+}
 `
 
-const simFragmentShader = /* glsl */
-  `
-  precision highp float;
-  varying vec2 vUv;
+const simFragment = /* glsl */ `
+precision highp float;
 
-  uniform sampler2D uPosTex;
-  uniform vec2 uShipPos;
-  uniform vec2 uShipVel;
-  uniform float uShipRot;
-  uniform float uDelta;
-  uniform float uTime;
-  uniform float uEmitting;
-  uniform float uNozzleOffset;
-  uniform float uEngineGap;
+varying vec2 vUv;
 
-  vec2 curl(vec2 p) {
-    float n1 = sin(p.y * 0.05 + uTime * 1.5);
-    float n2 = cos(p.x * 0.05 - uTime * 1.5);
-    return vec2(n1, n2);
-  }
+uniform sampler2D uPosTex;
+uniform vec2 uShipPos, uShipVel;
 
-  void main() {
-    vec4 data = texture2D(uPosTex, vUv);
+uniform float uShipRot, uDelta, uTime;
+uniform float uEmitting, uNozzleOffset, uEngineGap;
 
-    vec2 pos = data.xy;
-    float life = data.z;
-    float seed = data.w;
+void main() {
+    vec4 p = texture2D(uPosTex, vUv);
 
-    float engineSide = seed < 0.5 ? -1.0 : 1.0;
+    vec2 pos = p.xy;
+    float life = p.z;
+    float seed = p.w;
 
-    vec2 backward = vec2(-sin(uShipRot), cos(uShipRot));
-    vec2 right = vec2(cos(uShipRot), sin(uShipRot));
+    float side = seed < 0.5 ? -1.0 : 1.0;
+
+    vec2 backward = vec2(
+        -sin(uShipRot),
+        cos(uShipRot)
+    );
+
+    vec2 right = vec2(
+        cos(uShipRot),
+        sin(uShipRot)
+    );
 
     if (life > 0.0) {
+        life -= uDelta;
 
-      life -= uDelta;
+        float lifespan = 0.5 + seed * 0.5;
+        float age = 1.0 - clamp(
+            life / lifespan,
+            0.0,
+            1.0
+        );
 
-      float lifespan = 0.5 + seed * 0.5;
-      float age = 1.0 - clamp(life / lifespan, 0.0, 1.0);
+        vec2 turbulence = vec2(
+            sin(pos.y * 0.05 + uTime * 1.5),
+            cos(pos.x * 0.05 - uTime * 1.5)
+        ) * 1.5;
 
-      vec2 expand = right * engineSide * age * 0.9;
-      float velFade = 1.0 - smoothstep(0.0, 0.35, age);
-      vec2 exhaustVel = -uShipVel * 0.85 * velFade + curl(pos) * 1.5 + expand;
-      pos += exhaustVel * uDelta;
+        vec2 expansion =
+            right * side * age * 0.9;
 
-      if (life <= 0.0) {
-        life = -(0.05 + seed * 0.35);
-      }
-    } else {
+        float velocityFade =
+            1.0 - smoothstep(0.0, 0.35, age);
 
-      life += uDelta;
+        vec2 velocity =
+            -uShipVel * 0.85 * velocityFade +
+            turbulence +
+            expansion;
 
-      if (life >= 0.0) {
-        if (uEmitting > 0.5) {
+        pos += velocity * uDelta;
 
-          float subSeed = fract(seed * 91.345);
-          float nozzleJitter = (subSeed - 0.5) * 0.06;
-          float engineOffset = engineSide * uEngineGap + nozzleJitter;
-          pos = uShipPos + backward * uNozzleOffset + right * engineOffset;
-          life = 0.5 + seed * 0.5;
-        } else {
-          life = -(0.05 + seed * 0.90);
+        if (life <= 0.0) {
+            life = -(0.05 + seed * 0.35);
         }
-      }
+    } else {
+        life += uDelta;
+
+        if (life >= 0.0) {
+            if (uEmitting > 0.5) {
+                float jitter =
+                    (fract(seed * 91.345) - 0.5) *
+                    0.06;
+
+                float offset =
+                    side * uEngineGap + jitter;
+
+                pos =
+                    uShipPos +
+                    backward * uNozzleOffset +
+                    right * offset;
+
+                life = 0.5 + seed * 0.5;
+            } else {
+                life = -(0.05 + seed * 0.90);
+            }
+        }
     }
 
     gl_FragColor = vec4(pos, life, seed);
-  }
+}
 `
 
-const renderVertexShader = /* glsl */
-  `
-  attribute vec2 particleUv;
-  varying float vLife;
-  varying float vAge;
-  varying float vEnvelope;
+const renderVertex = /* glsl */ `
+attribute vec2 particleUv;
 
-  uniform sampler2D uPosTex;
-  uniform float uSize;
+uniform sampler2D uPosTex;
+uniform float uSize;
 
-  void main() {
-    vec4 data = texture2D(uPosTex, particleUv);
+varying float vLife;
+varying float vAge;
+varying float vEnvelope;
 
-    vLife = data.z;
-    float seed = data.w;
-    float lifespan = 0.5 + seed * 0.5;
+void main() {
+    vec4 p = texture2D(uPosTex, particleUv);
 
-    // 1.0 at spawn, 0.0 at death — normalized, unlike raw vLife which
-    // varies in absolute scale depending on each particle's random
-    // lifespan (0.5–1.0), so short-lived particles used to never reach
-    // full size.
-    float lifeFrac = clamp(vLife / lifespan, 0.0, 1.0);
+    vLife = p.z;
+
+    float lifespan = 0.5 + p.w * 0.5;
+
+    float lifeFrac = clamp(
+        vLife / lifespan,
+        0.0,
+        1.0
+    );
+
     vAge = 1.0 - lifeFrac;
 
-    // Smooth envelope: fade in over the first ~8% of life, hold, fade
-    // out over the last ~25%. Drives both size and alpha (in the
-    // fragment shader) so particles never hard-pop in or out.
-    vEnvelope = smoothstep(0.0, 0.08, lifeFrac) * (1.0 - smoothstep(0.75, 1.0, vAge));
+    vEnvelope =
+        smoothstep(0.0, 0.08, lifeFrac) *
+        (1.0 - smoothstep(0.75, 1.0, vAge));
 
-    vec3 pos = vec3(data.xy, 0.0);
-    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+    float variance = mix(
+        0.75,
+        1.25,
+        fract(p.w * 13.7)
+    );
 
-    // Per-particle size variance from the seed (stable per-particle, not
-    // re-randomized per frame) so the exhaust cloud reads as less uniform.
-    float sizeVariance = mix(0.75, 1.25, fract(seed * 13.7));
+    vec4 mv = modelViewMatrix *
+        vec4(p.xy, 0.0, 1.0);
 
-    gl_PointSize = uSize * sizeVariance * vEnvelope * (40.0 / -mvPosition.z);
-    gl_Position = projectionMatrix * mvPosition;
-  }
+    gl_PointSize =
+        uSize *
+        variance *
+        vEnvelope *
+        (40.0 / max(-mv.z, 0.001));
+
+    gl_Position = projectionMatrix * mv;
+}
 `
 
-const renderFragmentShader = /* glsl */ `
-  precision highp float;
+const renderFragment = /* glsl */ `
+precision highp float;
 
-  varying float vLife;
-  varying float vAge;
+varying float vLife;
+varying float vAge;
+varying float vEnvelope;
 
-  uniform vec3 uHotCore;
-  uniform vec3 uFireColor;
-  uniform vec3 uSmokeColor;
+uniform vec3 uHotCore;
+uniform vec3 uFireColor;
+uniform vec3 uSmokeColor;
+uniform float uBoost;
 
-  uniform float uBoost;
-
-  void main() {
+void main() {
     if (vLife <= 0.0) discard;
 
-    float d = length(
-      gl_PointCoord - vec2(0.5)
-    );
+    float d = length(gl_PointCoord - 0.5);
 
     if (d > 0.5) discard;
 
-    // Original opacity: unchanged.
     float alpha =
-      (1.0 - smoothstep(0.0, 0.5, d)) *
-      clamp(vLife, 0.0, 1.0) *
-      0.15;
+        (1.0 - smoothstep(0.0, 0.5, d)) *
+        clamp(vLife, 0.0, 1.0) *
+        vEnvelope * 0.15;
 
-    // Original normal exhaust colours.
     vec3 color = mix(
-      uHotCore,
-      uFireColor,
-      smoothstep(0.0, 0.15, vAge)
+        uHotCore,
+        uFireColor,
+        smoothstep(0.0, 0.15, vAge)
     );
 
     color = mix(
-      color,
-      uSmokeColor,
-      smoothstep(0.15, 1.0, vAge)
+        color,
+        uSmokeColor,
+        smoothstep(0.15, 1.0, vAge)
     );
 
-    // Boost changes colour and brightness only.
-    vec3 boostColor = mix(
-      vec3(0.55, 0.95, 1.0),
-      vec3(0.0, 0.55, 1.0),
-      smoothstep(0.0, 0.2, vAge)
+    vec3 boost = mix(
+        vec3(0.55, 0.95, 1.0),
+        vec3(0.0, 0.55, 1.0),
+        smoothstep(0.0, 0.2, vAge)
     );
 
-    boostColor = mix(
-      boostColor,
-      vec3(0.03, 0.15, 1.0),
-      smoothstep(0.2, 1.0, vAge)
+    boost = mix(
+        boost,
+        vec3(0.03, 0.15, 1.0),
+        smoothstep(0.2, 1.0, vAge)
     );
 
-    color = mix(
-      color,
-      boostColor * 2.2,
-      uBoost
-    );
+    color = mix(color, boost * 2.2, uBoost);
 
     gl_FragColor = vec4(color, alpha);
-  }
+}
 `
 
-// ---------------------------------------------------------------------------
-// helpers
-// ---------------------------------------------------------------------------
-
-function createInitialPosTexture(size) {
-  const data = new Float32Array(size * size * 4)
-
-  for (let i = 0; i < size * size; i++) {
-    data[i * 4 + 0] = 0
-    data[i * 4 + 1] = 0
-    data[i * 4 + 2] = -Math.random() * 0.5
-    data[i * 4 + 3] = Math.random()
-  }
-
-  const tex = new THREE.DataTexture(data, size, size, THREE.RGBAFormat, THREE.FloatType)
-  tex.needsUpdate = true
-  tex.minFilter = THREE.NearestFilter
-  tex.magFilter = THREE.NearestFilter
-  return tex
-}
-
-function createRenderTarget(size) {
-  return new THREE.WebGLRenderTarget(size, size, {
-    type: THREE.FloatType,
-    format: THREE.RGBAFormat,
-    minFilter: THREE.NearestFilter,
-    magFilter: THREE.NearestFilter,
-    depthBuffer: false,
-    stencilBuffer: false,
-  })
-}
-
-// ---------------------------------------------------------------------------
-// component
-// ---------------------------------------------------------------------------
-//
-// getShip: () => { x, y, vx, vy, rot, emitting } | null
-//   Called every frame. Return null when the source entity doesn't exist
-//   (e.g. boss slot empty) — the sim keeps ticking so any live particles
-//   fade out naturally instead of freezing or popping.
-//
-// nozzleOffset / engineGap: tune per ship silhouette (player vs boss hull size)
-// colors: optional override for the fire->smoke gradient (e.g. boss could run hotter/redder)
-
 export default function ExhaustRenderer({
-  size = 4,
-  slot = 0,
-  nozzleOffset = -0.70,
-  engineGap = 0.15,
-  hotCore = '#ff2614',
-  fireColor = '#ff3308',
-  smokeColor = '#04bfff',
+    size = 4,
+    slot = 0,
+    nozzleOffset = -0.7,
+    engineGap = 0.15,
+    hotCore = "#ff2614",
+    fireColor = "#ff3308",
+    smokeColor = "#04bfff",
 }) {
-  const { gl } = useThree()
+    const { gl } = useThree()
 
-  const pointsRef = useRef()
+    const pointsRef = useRef(null)
+    const gpuRef = useRef(null)
+    const remainingRef = useRef(0)
 
-  // Tracks how long to keep simulating after emission stops. Reset forward
-  // to (now + MAX_LIFESPAN) every frame the ship is actively emitting; once
-  // "now" passes this, every particle that could still be alive has already
-  // fully decayed (matches the shader's own lifespan formula), so the sim
-  // pass and the points draw are both skipped entirely — pure GPU cost with
-  // zero visual difference, since nothing would be visible anyway.
-  const activeUntilRef = useRef(0)
+    useEffect(() => {
+        const gpu = createGPUParticles({
+            size: SIZE,
+            simVertex,
+            simFragment,
+            renderVertex,
+            renderFragment,
 
-  const simScene = useMemo(() => new THREE.Scene(), [])
-  const simCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), [])
+            simUniforms: {
+                uShipPos: new THREE.Vector2(),
+                uShipVel: new THREE.Vector2(),
+                uShipRot: 0,
+                uDelta: 0,
+                uTime: 0,
+                uEmitting: 0,
+                uNozzleOffset: nozzleOffset,
+                uEngineGap: engineGap,
+            },
 
-  const initialPosTexture = useMemo(() => createInitialPosTexture(PARTICLE_SIZE), [])
-  const rtA = useMemo(() => createRenderTarget(PARTICLE_SIZE), [])
-  const rtB = useMemo(() => createRenderTarget(PARTICLE_SIZE), [])
+            renderUniforms: {
+                uSize: size,
+                uHotCore: new THREE.Color(hotCore),
+                uFireColor: new THREE.Color(fireColor),
+                uSmokeColor: new THREE.Color(smokeColor),
+                uBoost: 0,
+            },
+        })
 
-  const readTexture = useRef(initialPosTexture)
-  const writeTarget = useRef(rtA)
-  const otherTarget = useRef(rtB)
+        gpuRef.current = gpu
 
-  const simMaterial = useMemo(() => new THREE.ShaderMaterial({
-    uniforms: {
-      uPosTex: { value: null },
-      uShipPos: { value: new THREE.Vector2() },
-      uShipVel: { value: new THREE.Vector2() },
-      uShipRot: { value: 0 },
-      uDelta: { value: 0 },
-      uTime: { value: 0 },
-      uEmitting: { value: 0 },
-      uNozzleOffset: { value: nozzleOffset },
-      uEngineGap: { value: engineGap },
-    },
-    vertexShader: simVertexShader,
-    fragmentShader: simFragmentShader,
-  }), [nozzleOffset, engineGap])
+        if (pointsRef.current) {
+            pointsRef.current.geometry = gpu.geometry
+            pointsRef.current.material = gpu.render
+        }
 
-  // Side effect (adding the quad to the sim scene) belongs in useEffect, not
-  // useMemo — useMemo has no cleanup, so if simMaterial ever changed
-  // identity (e.g. nozzleOffset/engineGap props change on a live instance)
-  // this would silently add a second quad on top of the first instead of
-  // replacing it.
-  useEffect(() => {
-    const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), simMaterial)
-    simScene.add(quad)
+        return () => {
+            gpuRef.current = null
 
-    return () => {
-      simScene.remove(quad)
-      quad.geometry.dispose()
-    }
-  }, [simScene, simMaterial])
+            if (pointsRef.current) {
+                pointsRef.current.visible = false
+            }
 
-  const renderMaterial = useMemo(() => new THREE.ShaderMaterial({
-    uniforms: {
-      uPosTex: { value: null },
-      uSize: { value: size },
-      uHotCore: { value: new THREE.Color(hotCore) },
-      uFireColor: { value: new THREE.Color(fireColor) },
-      uSmokeColor: { value: new THREE.Color(smokeColor) },
-      uBoost: { value: 0 },
-    },
-    vertexShader: renderVertexShader,
-    fragmentShader: renderFragmentShader,
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-  }), [size, hotCore, fireColor, smokeColor])
+            gpu.dispose()
+        }
+    }, [])
 
-  const pointsGeometry = useMemo(() => {
-    const geo = new THREE.BufferGeometry()
-    const uv = new Float32Array(PARTICLE_SIZE * PARTICLE_SIZE * 2)
-    const positions = new Float32Array(PARTICLE_SIZE * PARTICLE_SIZE * 3)
+    useFrame((_, delta) => {
+        const gpu = gpuRef.current
+        const points = pointsRef.current
 
-    let ptr = 0
-    let posPtr = 0
-    for (let y = 0; y < PARTICLE_SIZE; y++) {
-      for (let x = 0; x < PARTICLE_SIZE; x++) {
-        uv[ptr++] = (x + 0.5) / PARTICLE_SIZE
-        uv[ptr++] = (y + 0.5) / PARTICLE_SIZE
-        positions[posPtr++] = 0
-        positions[posPtr++] = 0
-        positions[posPtr++] = 0
-      }
-    }
+        if (!gpu || !points) return
 
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    geo.setAttribute('particleUv', new THREE.BufferAttribute(uv, 2))
+        const game = useGameStore.getState()
 
-    return geo
-  }, [])
+        if (game.screen !== SCREEN.PLAY) {
+            points.visible = false
+            return
+        }
 
-  // Dispose every GPU resource this component owns when it unmounts.
-  // None of this existed before — rtA/rtB/initialPosTexture/simMaterial/
-  // renderMaterial/pointsGeometry were all leaking on unmount.
-  useEffect(() => {
-    return () => {
-      initialPosTexture.dispose()
-      rtA.dispose()
-      rtB.dispose()
-      simMaterial.dispose()
-      renderMaterial.dispose()
-      pointsGeometry.dispose()
-    }
-  }, [initialPosTexture, rtA, rtB, simMaterial, renderMaterial, pointsGeometry])
+        if (game.paused) return
 
-  useFrame((state, delta) => {
-    const game = useGameStore.getState()
-    if (game.screen === SCREEN.PLAY && game.paused) return
-    delta = Math.min(delta, 0.05)
+        const ship = exhaustSources.find(
+            (source) => source.slot === slot
+        )
 
-    renderMaterial.uniforms.uBoost.value = slot === 0 && playerMotion.boostRemaining > 0 ? 1 : 0
+        const emitting = !!ship?.emitting
+        const dt = Math.min(Math.max(delta, 0), 0.05)
 
-    const ship = exhaustSources.find(s => s.slot === slot)
-    const now = world.time.elapsed
-    const emitting = !!(ship && ship.emitting)
+        if (dt <= 0) return
 
-    if (emitting) {
-      activeUntilRef.current = now + MAX_LIFESPAN
-    }
+        if (emitting) {
+            remainingRef.current = MAX_LIFE
+        } else {
+            remainingRef.current = Math.max(
+                0,
+                remainingRef.current - dt
+            )
+        }
 
-    const isActive = now < activeUntilRef.current
+        if (!emitting && remainingRef.current <= 0) {
+            points.visible = false
+            return
+        }
 
-    if (pointsRef.current) {
-      pointsRef.current.visible = isActive
-    }
+        const s = gpu.sim.uniforms
+        const r = gpu.render.uniforms
 
-    // Nothing could possibly be alive or spawning this frame — skip the
-    // sim pass and the points draw entirely rather than paying for a
-    // 128x128 fragment shader pass and a 16,384-point draw call that would
-    // render nothing visible (every particle already discards on life <= 0).
-    if (!isActive) {
-      return
-    }
+        s.uDelta.value = dt
+        s.uTime.value = world.time.elapsed
+        s.uEmitting.value = emitting ? 1 : 0
+        s.uNozzleOffset.value = nozzleOffset
+        s.uEngineGap.value = engineGap
 
-    simMaterial.uniforms.uPosTex.value = readTexture.current
-    simMaterial.uniforms.uDelta.value = Math.min(delta, 0.1)
-    simMaterial.uniforms.uTime.value = world.time.elapsed
+        r.uSize.value = size
+        r.uBoost.value =
+            slot === 0 &&
+            playerMotion.boostRemaining > 0
+                ? 1
+                : 0
 
-    if (ship) {
-      simMaterial.uniforms.uShipPos.value.set(ship.x, ship.y)
-      simMaterial.uniforms.uShipVel.value.set(ship.vx, ship.vy)
-      simMaterial.uniforms.uShipRot.value = ship.rot
-      simMaterial.uniforms.uEmitting.value = ship.emitting ? 1 : 0
-    } else {
-      // no source this frame (e.g. boss slot empty) — stop emitting,
-      // let any already-living particles finish their fade
-      simMaterial.uniforms.uEmitting.value = 0
-    }
+        r.uHotCore.value.set(hotCore)
+        r.uFireColor.value.set(fireColor)
+        r.uSmokeColor.value.set(smokeColor)
 
-    const prevTarget = gl.getRenderTarget()
+        if (ship) {
+            s.uShipPos.value.set(ship.x, ship.y)
+            s.uShipVel.value.set(ship.vx, ship.vy)
+            s.uShipRot.value = ship.rot
+        }
 
-    gl.setRenderTarget(writeTarget.current)
-    gl.render(simScene, simCamera)
-    gl.setRenderTarget(prevTarget)
+        gpu.update(gl)
+        points.visible = true
+    })
 
-    readTexture.current = writeTarget.current.texture
-    renderMaterial.uniforms.uPosTex.value = readTexture.current
-
-    const tmp = writeTarget.current
-    writeTarget.current = otherTarget.current
-    otherTarget.current = tmp
-  })
-
-  return (
-    <points
-      ref={pointsRef}
-      geometry={pointsGeometry}
-      material={renderMaterial}
-      frustumCulled={false}
-    />
-  )
+    return (
+        <points
+            ref={pointsRef}
+            visible={false}
+            frustumCulled={false}
+            dispose={null}
+        />
+    )
 }

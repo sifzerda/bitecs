@@ -2,8 +2,10 @@
 
 import { useLayoutEffect, useMemo, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
-import * as THREE from "three"
-import { bossFightState as s, setBossArenaSize } from "../ecs/systems/bossAISystem.js"
+import {
+    bossFightState as s,
+    setBossArenaSize,
+} from "../ecs/bosses/bossState.js"
 import { Position, BossType } from "../ecs/constants/components.js"
 import { bossAIQuery } from "../ecs/constants/queries.js"
 import { BOSSES } from "../ecs/constants/bosses.js"

@@ -4,7 +4,10 @@ import { create } from "zustand"
 import { resetstartState, resetstartStateForLevel } from "../src/state/startState.js"
 import { TOTAL_LEVELS, getProgression, isBossLevel, getZone, getWave, getBossKey, formatLevelLabel } from "../src/ecs/constants/progression.js"
 import { resetLevelWorld } from "../src/state/resetLevel.js"
-import { resetWaveSystem } from "../src/ecs/systems/waveSystem.js"
+import { resetWaveSystem } from "../src/ecs/waves/waveSystem.js"
+import {
+    resetCompositionAdaptation,
+} from "../src/ecs/difficulty/compositionAdaptation.js"
 
 // ============================================================
 // SCREEN
@@ -21,7 +24,7 @@ export const SCREEN = {
     HOW_TO_PLAY: "howtoplay",
     GUNS: "guns",
     LEVEL_COMPLETE: "levelcomplete",
-
+    GAME_COMPLETE: "gamecomplete",
     //DEBUG: "debug",
 }
 
@@ -92,7 +95,7 @@ export const useGameStore = create((set, get) => ({
 
     startLevel: (level = 1) => {
         const safeLevel = clampLevel(level)
-
+        resetCompositionAdaptation()
         resetWaveSystem()
         resetLevelWorld()
         resetstartStateForLevel()
@@ -114,7 +117,7 @@ export const useGameStore = create((set, get) => ({
     // ========================================================
 
     resetRun: () => {
-
+        resetCompositionAdaptation()
         resetstartState()
         resetWaveSystem()
         resetLevelWorld()
@@ -131,13 +134,33 @@ export const useGameStore = create((set, get) => ({
     },
 
     // ========================================================
+    // PLAY AGAIN
+    // Resets the current run.
+    // Does NOT erase campaign progression.
+    // ========================================================
+
+    playAgain: () => {
+        resetCompositionAdaptation()
+        resetstartState()
+        resetWaveSystem()
+        resetLevelWorld()
+
+        set({
+            level: 1,
+            screen: SCREEN.PLAY,
+            paused: false,
+            pendingUnlockWeapon: null,
+        })
+    },
+
+    // ========================================================
     // RESET CAMPAIGN
     //
     // Completely wipes progression.
     // ========================================================
 
     resetProgress: () => {
-
+        resetCompositionAdaptation()
         resetstartState()
         resetWaveSystem()
         resetLevelWorld()
@@ -170,17 +193,26 @@ export const useGameStore = create((set, get) => ({
     // ========================================================
 
     completeLevel: () => {
-        const { level, highestLevelReached, screen } = get()
+        const {
+            level,
+            highestLevelReached,
+            screen,
+        } = get()
 
-        // Prevent duplicate completion events.
         if (screen !== SCREEN.PLAY) return
 
         resetLevelWorld()
 
-        const nextLevel = Math.min(level + 1, TOTAL_LEVELS)
+        const nextLevel = Math.min(
+            level + 1,
+            TOTAL_LEVELS
+        )
 
         set({
-            highestLevelReached: Math.max(highestLevelReached, nextLevel),
+            highestLevelReached: Math.max(
+                highestLevelReached,
+                nextLevel
+            ),
             paused: true,
             screen: SCREEN.LEVEL_COMPLETE,
         })
@@ -197,32 +229,38 @@ export const useGameStore = create((set, get) => ({
     continueLevel: () => {
         const state = get()
 
-        // Continue is valid only from the completion screen.
-        if (state.screen !== SCREEN.LEVEL_COMPLETE) return
-
-        const nextLevel = state.level + 1
-
-        if (nextLevel > TOTAL_LEVELS) {
-            set({
-                screen: SCREEN.MENU,
-                paused: false,
-                pendingUnlockWeapon: null,
-            })
+        if (state.screen !== SCREEN.LEVEL_COMPLETE) {
             return
         }
 
-        // Start from a completely reset simulation.
+        const nextLevel = state.level + 1
+
+        // Campaign completed.
+        if (nextLevel > TOTAL_LEVELS) {
+            set({
+                screen: SCREEN.GAME_COMPLETE,
+                paused: true,
+                pendingUnlockWeapon: null,
+            })
+
+            return
+        }
+
+        // Normal level progression.
         resetWaveSystem()
         resetLevelWorld()
         resetstartStateForLevel()
 
         set({
             level: nextLevel,
-            highestLevelReached: Math.max(state.highestLevelReached, nextLevel),
+            highestLevelReached: Math.max(
+                state.highestLevelReached,
+                nextLevel
+            ),
             screen: SCREEN.PLAY,
             paused: false,
             pendingUnlockWeapon: null,
-        });
+        })
     },
 
     // ========================================================
@@ -231,6 +269,21 @@ export const useGameStore = create((set, get) => ({
 
     gameOver: () => {
         set({ screen: SCREEN.GAME_OVER, paused: true })
+    },
+
+    // ========================================================
+    // RETURN TO MENU
+    // ========================================================
+
+    returnToMenu: () => {
+        resetWaveSystem()
+        resetLevelWorld()
+
+        set({
+            screen: SCREEN.MENU,
+            paused: false,
+            pendingUnlockWeapon: null,
+        })
     },
 
     // ========================================================
@@ -248,7 +301,8 @@ export const useGameStore = create((set, get) => ({
             return false
         }
 
-        set({ unlockedWeapons: [ ...state.unlockedWeapons, weaponId ],
+        set({
+            unlockedWeapons: [...state.unlockedWeapons, weaponId],
             pendingUnlockWeapon: weaponId,
         })
 
