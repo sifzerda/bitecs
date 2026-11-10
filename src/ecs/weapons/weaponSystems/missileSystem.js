@@ -1,89 +1,108 @@
 // src/ecs/weapons/weaponSystems/missileSystem.js
 
 import { world } from "../../constants/world.js"
-import { playerQuery } from "../../constants/queries.js"
-import { Position, Velocity, Bullet, BULLET_OWNER } from "../../constants/components.js"
+import { playerQuery, bossQuery } from "../../constants/queries.js"
+import {
+    Position,
+    Velocity,
+    Bullet,
+    BULLET_OWNER,
+    Health,
+} from "../../constants/components.js"
 import { getWeapon } from "../config/weapons.js"
 import { activeBullets } from "../../pools/bulletPool.js"
-import { findNearestAsteroid, findNearestBoss } from "../../constants/spatialGrid.js"
+import { activeAsteroids } from "../../pools/asteroidPool.js"
+
+function nearestTarget(x, y, asteroids, bosses) {
+    let target = -1
+    let bestDistSq = Infinity
+
+    for (let i = 0; i < asteroids.length; i++) {
+        const id = asteroids[i]
+        if (Health.current[id] <= 0) continue
+
+        const dx = Position.x[id] - x
+        const dy = Position.y[id] - y
+        const distSq = dx * dx + dy * dy
+
+        if (distSq < bestDistSq) {
+            bestDistSq = distSq
+            target = id
+        }
+    }
+
+    for (let i = 0; i < bosses.length; i++) {
+        const id = bosses[i]
+        if (Health.current[id] <= 0) continue
+
+        const dx = Position.x[id] - x
+        const dy = Position.y[id] - y
+        const distSq = dx * dx + dy * dy
+
+        if (distSq < bestDistSq) {
+            bestDistSq = distSq
+            target = id
+        }
+    }
+
+    return target
+}
 
 export function missileSystem() {
-
     const dt = world.time.delta
-    const bullets = activeBullets
     const players = playerQuery()
+    const bosses = bossQuery()
 
-    for (let i = 0; i < bullets.length; i++) {
-
-        const id = bullets[i]
+    for (let i = 0; i < activeBullets.length; i++) {
+        const id = activeBullets[i]
         const weapon = getWeapon(Bullet.type[id])
 
-        if (!weapon.homing)
-            continue
+        if (!weapon?.homing) continue
 
         let targetId = -1
 
         if (Bullet.owner[id] === BULLET_OWNER.PLAYER) {
-
-            const asteroid = findNearestAsteroid(Position.x[id], Position.y[id])
-            const boss = findNearestBoss(Position.x[id], Position.y[id])
-
-            if (asteroid === -1) {
-                targetId = boss
-
-            } else if (boss === -1) {
-                targetId = asteroid
-                
-            } else {
-
-                const adx = Position.x[asteroid] - Position.x[id]
-                const ady = Position.y[asteroid] - Position.y[id]
-
-                const bdx = Position.x[boss] - Position.x[id]
-                const bdy = Position.y[boss] - Position.y[id]
-
-                const asteroidDistSq = adx * adx + ady * ady
-                const bossDistSq = bdx * bdx + bdy * bdy
-
-                targetId = asteroidDistSq < bossDistSq
-                    ? asteroid
-                    : boss
-            }
-
+            targetId = nearestTarget(
+                Position.x[id],
+                Position.y[id],
+                activeAsteroids,
+                bosses
+            )
         } else if (players.length > 0) {
-
             targetId = players[0]
-
         }
 
-        if (targetId === -1)
-            continue
+        if (targetId === -1) continue
 
-        const speed = Math.hypot(Velocity.x[id], Velocity.y[id])
+        const vx = Velocity.x[id]
+        const vy = Velocity.y[id]
+        const speed = Math.hypot(vx, vy)
 
-        if (speed === 0)
-            continue
+        if (speed <= 1e-8) continue
 
-        const curAngle = Math.atan2(Velocity.y[id], Velocity.x[id])
+        const currentAngle = Math.atan2(vy, vx)
 
         const dx = Position.x[targetId] - Position.x[id]
         const dy = Position.y[targetId] - Position.y[id]
 
         const targetAngle = Math.atan2(dy, dx)
 
-        let diff = targetAngle - curAngle
+        const difference = Math.atan2(
+            Math.sin(targetAngle - currentAngle),
+            Math.cos(targetAngle - currentAngle)
+        )
 
-        while (diff > Math.PI)
-            diff -= Math.PI * 2
+        const turnRate = Math.max(0, weapon.turnRate ?? 3)
+        const maxTurn = turnRate * dt
 
-        while (diff < -Math.PI)
-            diff += Math.PI * 2
+        const turn = Math.max(
+            -maxTurn,
+            Math.min(maxTurn, difference)
+        )
 
-        const maxTurn = weapon.turnRate * dt
-        const turn = Math.max(-maxTurn, Math.min(maxTurn, diff))
-        const newAngle = curAngle + turn
+        const angle = currentAngle + turn
 
-        Velocity.x[id] = Math.cos(newAngle) * speed
-        Velocity.y[id] = Math.sin(newAngle) * speed
+        Velocity.x[id] = Math.cos(angle) * speed
+        Velocity.y[id] = Math.sin(angle) * speed
     }
 }

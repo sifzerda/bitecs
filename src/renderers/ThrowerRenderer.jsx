@@ -592,11 +592,6 @@ export function ThrowerRenderer({
   })
 
   return (
-    <points
-      ref={pointsRef}
-      visible={false}
-      frustumCulled={false}
-      dispose={null}
-    />
+    <points ref={pointsRef} visible={false} frustumCulled={false} dispose={null} />
   )
 }

@@ -1,20 +1,20 @@
 // src/renderers/BulletRenderer.jsx
 
-import { useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Position, Velocity, Bullet } from '../ecs/constants/components.js'
 import { WEAPONS } from '../ecs/weapons/config/weapons.js'
 import { activeBullets } from '../ecs/pools/bulletPool.js'
 
-const MAX_BULLETS = 512
+const MAX_BULLETS = 2000
 const BULLET_LENGTH = 1.0
 const BULLET_WIDTH = 0.2
 
 export function BulletRenderer() {
 
-    const meshRef = useRef()
     const geometry = useMemo(() => {
+        
         const geo = new THREE.InstancedBufferGeometry()
         const plane = new THREE.PlaneGeometry(1, 1)
 
@@ -215,7 +215,7 @@ void main(){
     })
 
     return (
-        <mesh ref={meshRef} geometry={geometry} material={material} frustumCulled={false} />
+        <mesh geometry={geometry} material={material} frustumCulled={false} />
     )
 
 }

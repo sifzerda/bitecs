@@ -1,116 +1,89 @@
 // src/ecs/constants/spatialGrid.js
 
-import { Position } from "./components.js"
+import {
+  Position,
+  Health,
+  Asteroid,
+} from "./components.js"
 
 const CELL_SIZE = 4
+
 const asteroidGrid = new Map()
 const bossGrid = new Map()
 
 function cellKey(x, y) {
-    return `${x},${y}`
+  return `${x},${y}`
 }
-
-/*
---------------------------------------------------
-CLEAR GRIDS
---------------------------------------------------
-*/
 
 export function clearSpatialGrids() {
-    asteroidGrid.clear()
-    bossGrid.clear()
+  asteroidGrid.clear()
+  bossGrid.clear()
 }
 
-/*
---------------------------------------------------
-INSERT ASTEROID
---------------------------------------------------
-*/
+function insert(grid, id) {
+  const x = Math.floor(Position.x[id] / CELL_SIZE)
+  const y = Math.floor(Position.y[id] / CELL_SIZE)
+
+  const key = cellKey(x, y)
+
+  let bucket = grid.get(key)
+
+  if (!bucket) {
+    bucket = []
+    grid.set(key, bucket)
+  }
+
+  bucket.push(id)
+}
 
 export function insertAsteroid(id) {
-
-    const key = cellKey(Math.floor(Position.x[id] / CELL_SIZE), Math.floor(Position.y[id] / CELL_SIZE))
-
-    let bucket = asteroidGrid.get(key)
-
-    if (!bucket) {
-        bucket = []
-        asteroidGrid.set(key, bucket)
-    }
-
-    bucket.push(id)
+  if (!Asteroid.active[id]) return
+  insert(asteroidGrid, id)
 }
-
-/*
---------------------------------------------------
-INSERT BOSS
---------------------------------------------------
-*/
 
 export function insertBoss(id) {
-
-    const key = cellKey(Math.floor(Position.x[id] / CELL_SIZE), Math.floor(Position.y[id] / CELL_SIZE))
-
-    let bucket = bossGrid.get(key)
-
-    if (!bucket) {
-        bucket = []
-        bossGrid.set(key, bucket)
-    }
-
-    bucket.push(id)
+  insert(bossGrid, id)
 }
 
-/*
---------------------------------------------------
-SHARED NEAREST SEARCH
---------------------------------------------------
-*/
+function findNearest(grid, x, y, isValid) {
+  let bestId = -1
+  let bestDistSq = Infinity
 
-function findNearest(grid, x, y) {
+  for (const bucket of grid.values()) {
+    for (let i = 0; i < bucket.length; i++) {
+      const id = bucket[i]
 
-    const cellX = Math.floor(x / CELL_SIZE)
-    const cellY = Math.floor(y / CELL_SIZE)
+      if (!isValid(id)) continue
 
-    let bestId = -1
-    let bestDistSq = Infinity
+      const dx = Position.x[id] - x
+      const dy = Position.y[id] - y
 
-    for (let yy = -1; yy <= 1; yy++) {
+      const distSq = dx * dx + dy * dy
 
-        for (let xx = -1; xx <= 1; xx++) {
-
-            const bucket = grid.get(cellKey(cellX + xx, cellY + yy))
-            if (!bucket) continue
-
-            for (let i = 0; i < bucket.length; i++) {
-
-                const id = bucket[i]
-
-                const dx = Position.x[id] - x
-                const dy = Position.y[id] - y
-                const distSq = dx * dx + dy * dy
-
-                if (distSq < bestDistSq) {
-                    bestDistSq = distSq
-                    bestId = id
-                }
-            }
-        }
+      if (distSq < bestDistSq) {
+        bestDistSq = distSq
+        bestId = id
+      }
     }
+  }
 
-    return bestId
+  return bestId
 }
-
-/*
---------------------------------------------------
-PUBLIC SEARCHES
---------------------------------------------------
-*/
 
 export function findNearestAsteroid(x, y) {
-    return findNearest(asteroidGrid, x, y)
+  return findNearest(
+    asteroidGrid,
+    x,
+    y,
+    id => Asteroid.active[id] && Health.current[id] > 0
+  )
 }
 
 export function findNearestBoss(x, y) {
-    return findNearest(bossGrid, x, y)
+  return findNearest(
+    bossGrid,
+    x,
+    y,
+    id => Health.current[id] > 0
+  )
 }

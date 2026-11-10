@@ -114,8 +114,8 @@ function reflectBullet(bid, pid) {
 
   // Already travelling away: keep it travelling outward.
   if (dot >= 0) {
-    reflectedX = nx
-    reflectedY = ny
+    reflectedX = vx
+    reflectedY = vy
   }
 
   const reflectedLength = Math.hypot(

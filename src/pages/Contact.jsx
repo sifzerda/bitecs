@@ -89,17 +89,11 @@ export default function Contact() {
 
                     <form onSubmit={handleSubmit} className="space-y-4 flex flex-col items-center">
 
-                        <input type="text"
-                            name="name"
-                            placeholder="NAME"
-                            required
+                        <input type="text" name="name" placeholder="NAME" required
                             className="w-full border border-[#39ff14]/40 bg-black/30 px-3 py-2 text-xs tracking-[0.2em] text-white outline-none focus:border-[#39ff14]"
                         />
 
-                        <textarea name="message"
-                            placeholder="MESSAGE"
-                            rows={9}
-                            required
+                        <textarea name="message" placeholder="MESSAGE" rows={9} required
                             className="w-full resize-none border border-[#39ff14]/40 bg-black/30 px-3 py-2 text-xs tracking-[0.2em] text-white outline-none focus:border-[#39ff14]"
                         />
 

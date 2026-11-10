@@ -112,17 +112,11 @@ function isInterfaceControl(target) {
 }
 
 function syncActions() {
-  for (
-    const [action, codes]
-    of Object.entries(ACTION_KEYS)
-  ) {
-    input[action] = codes.some(
-      code => heldKeys.has(code)
-    )
+  for (const [action, codes] of Object.entries(ACTION_KEYS)) {
+    input[action] = codes.some(code => heldKeys.has(code))
   }
 
-  input.fire =
-    input.fire || mouseFire
+  input.fire = heldKeys.has("Space") || mouseFire
 }
 
 export function clearInput() {

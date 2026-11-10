@@ -38,7 +38,11 @@ export function killAsteroid(id, x, y) {
   emitEffect(EFFECT.SMOKE, { x, y, direction, count: 14 })
   emitEffect(EFFECT.DEBRIS, { x, y, count: 10, speed: 10, size: 0.6, kind: "rock", maxLife: 1.2 })
 
-  if (activeAsteroids.length === 0 && bossQuery().length === 0) {
+  if (
+    startState.encounterPhase === "active" &&
+    activeAsteroids.length === 0 &&
+    bossQuery().length === 0
+  ) {
     beginEncounterClear()
   }
 
@@ -68,7 +72,10 @@ export function killBoss(id, x, y) {
   emitEffect(EFFECT.SMOKE, { x, y, direction, count: 40 })
   emitEffect(EFFECT.DEBRIS, { x, y, count: 24, speed: 8, size: 1, kind: "metal", maxLife: 2.2 })
 
-  if (bossQuery().length === 0 && activeAsteroids.length === 0) {
+  if (startState.encounterPhase === "active" 
+    && activeAsteroids.length === 0 
+    && bossQuery().length === 0
+  ) {
     beginEncounterClear()
   }
 

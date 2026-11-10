@@ -1,54 +1,59 @@
 // src/ecs/pools/asteroidPool.js
 
-import { createPool } from './createPool'
+import { createPool } from "./createPool.js"
+
 import {
+  Position,
+  Velocity,
+  Health,
+  AsteroidTag,
+  StatusEffect,
+  Asteroid,
+} from "../constants/components.js"
+
+const pool = createPool({
+  size: 64,
+
+  components: [
     Position,
     Velocity,
     Health,
     AsteroidTag,
     StatusEffect,
-    Asteroid
-} from '../constants/components'
+    Asteroid,
+  ],
 
-const pool = createPool({
-    size: 64,
+  activeField: [Asteroid, "active"],
 
-    components: [
-        Position,
-        Velocity,
-        Health,
-        AsteroidTag,
-        StatusEffect,
-        Asteroid
-    ],
+  resetFields(id) {
+    Position.x[id] = 0
+    Position.y[id] = 0
 
-    activeField: [Asteroid, 'active'],
+    Velocity.x[id] = 0
+    Velocity.y[id] = 0
 
-    resetFields(id) {
-        Position.x[id] = 0
-        Position.y[id] = 0
+    Health.current[id] = 0
+    Health.max[id] = 0
 
-        Velocity.x[id] = 0
-        Velocity.y[id] = 0
+    StatusEffect.frozen[id] = 0
+    StatusEffect.corrosionDamage[id] = 0
+    StatusEffect.corrosionRemaining[id] = 0
 
-        Health.current[id] = 0
-        Health.max[id] = 0
-
-        StatusEffect.frozen[id] = 0
-
-        Asteroid.scale[id] = 0
-        Asteroid.radius[id] = 0
-    }
+    Asteroid.scale[id] = 0
+    Asteroid.radius[id] = 0
+  },
 })
 
 export const activeAsteroids = pool.active
+
 export const initializeAsteroidPool = pool.initialize
 export const disposeAsteroidPool = pool.dispose
+
 export const acquireAsteroidEntity = pool.acquire
 export const releaseAsteroidEntity = pool.release
 
 if (import.meta.hot) {
-    import.meta.hot.dispose(() => {
-        pool.dispose()
-    })
+  import.meta.hot.dispose(() => {
+    pool.dispose()
+  })
 }

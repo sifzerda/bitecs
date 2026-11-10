@@ -31,6 +31,7 @@ function Glow({ core, x, y, z }) {
     }), [])
 
     useFrame(() => { uniforms.time.value = world.time.elapsed })
+
     useEffect(() => {
         uniforms.color.value.set(core.color ?? "#00e5ff")
         uniforms.high.value = core.intensity ?? 1
@@ -43,11 +44,8 @@ function Glow({ core, x, y, z }) {
     const radius = core.size ?? 0.2
 
     return (
-        <mesh position={[
-            x + (core.offsetX ?? 0),
-            y + (core.offsetY ?? 0),
-            z + 0.01
-        ]} renderOrder={RENDER_ORDER.gunGlow}>
+        <mesh position={[x + (core.offsetX ?? 0), y + (core.offsetY ?? 0), z + 0.01]}
+            renderOrder={RENDER_ORDER.gunGlow}>
             <planeGeometry args={[core.width ?? radius * 2, core.height ?? radius * 2]} />
             <shaderMaterial uniforms={uniforms} transparent depthTest={false} depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending}
                 vertexShader={
@@ -71,16 +69,7 @@ function Glow({ core, x, y, z }) {
     )
 }
 
-function Gun({
-    gunType,
-    mount,
-    x,
-    y,
-    z,
-    scale,
-    rotation,
-    core
-}) {
+function Gun({ gunType, mount, x, y, z, scale, rotation, core }) {
 
     const texture = useTexture(gunType.svg)
 
@@ -118,8 +107,7 @@ export function WeaponMount({ gunCfg, configOverride = null }) {
     return (
         <>
             <Gun {...props} x={x} />
-            {gunCfg.mirrored !== false && <Gun {...props} x={-x}
-            />}
+            {gunCfg.mirrored !== false && <Gun {...props} x={-x} />}
         </>
     )
 }

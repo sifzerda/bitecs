@@ -24,9 +24,7 @@ function FollowingGuns({ eid, gunCfg, player = false }) {
             g.visible = false; return
         }
 
-        g.visible = !player
-            || Invulnerability.remaining[id] <= 0
-            || Math.floor(world.time.elapsed * 10) % 2 === 0
+        g.visible = !player || Invulnerability.remaining[id] <= 0 || Math.floor(world.time.elapsed * 10) % 2 === 0
         g.position.set(Position.x[id], Position.y[id], player ? 0 : 0.15)
         g.rotation.z = Rotation[id]
     })
@@ -38,11 +36,7 @@ function FollowingGuns({ eid, gunCfg, player = false }) {
 }
 
 export function GunMount() {
-    const [weapon, setWeapon] = useState(() => ({
-        id: startState.currentWeapon,
-        skin: startState.gunSkinOverride
-    }))
-
+    const [weapon, setWeapon] = useState(() => ({ id: startState.currentWeapon, skin: startState.gunSkinOverride }))
     const [bosses, setBosses] = useState([])
     const cache = useRef({ id: weapon.id, skin: weapon.skin, bosses: "" })
 

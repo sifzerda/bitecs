@@ -6,7 +6,6 @@ import * as THREE from 'three'
 import { activeBullets } from '../ecs/pools/bulletPool.js'
 import { Position, Velocity, Bullet } from '../ecs/constants/components.js'
 import { getWeapon } from '../ecs/weapons/config/weapons.js'
-import { world } from "../ecs/constants/world.js"
 
 const CAPACITY = 2000
 

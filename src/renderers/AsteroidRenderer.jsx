@@ -51,7 +51,6 @@ export function AsteroidRenderer() {
     const asteroidGeometry = useMemo(() => {
 
         const geo = new THREE.IcosahedronGeometry(0.55, 2)
-
         const pos = geo.attributes.position
         const v = new THREE.Vector3()
 
@@ -61,29 +60,10 @@ export function AsteroidRenderer() {
 
             const dir = v.clone().normalize()
             // low-frequency base shape (large bumps/dents)
-            const base =
-                Math.sin(dir.x * 2.3) * 0.22 +
-                Math.sin(dir.y * 5.7) * 0.15 +
-                Math.sin(dir.z * 9.1) * 0.10
-
-            const jagged =
-                Math.sin(dir.x * 18.0 + dir.y * 7.0) * 0.05 +
-                Math.sin(dir.y * 23.0 + dir.z * 11.0) * 0.04 +
-                Math.sin(dir.z * 27.0 + dir.x * 13.0) * 0.035
-
-            // spike is now purely a function of direction (no per-vertex
-            // Math.random() gate). A random on/off per vertex is uncorrelated
-            // with neighboring vertices, so it creates near-discontinuous
-            // displacement between adjacent verts — that's what was folding
-            // faces and inverting normals. This version still picks out a
-            // sparse set of "peaks" via the sin curve's own shape, but it
-            // varies smoothly across the surface instead of jumping.
-            const spikeMask = Math.pow(
-                Math.max(0, Math.sin(dir.x * 31.0 + dir.z * 17.0)),
-                6.0
-            )
+            const base = Math.sin(dir.x * 2.3) * 0.22 + Math.sin(dir.y * 5.7) * 0.15 + Math.sin(dir.z * 9.1) * 0.10
+            const jagged = Math.sin(dir.x * 18.0 + dir.y * 7.0) * 0.05 + Math.sin(dir.y * 23.0 + dir.z * 11.0) * 0.04 + Math.sin(dir.z * 27.0 + dir.x * 13.0) * 0.035
+            const spikeMask = Math.pow(Math.max(0, Math.sin(dir.x * 31.0 + dir.z * 17.0)), 6.0)
             const spike = spikeMask * 0.06
-
             // clamp total displacement so no vertex can be pushed far enough,
             // relative to its neighbors, to fold the local surface over
             const noise = THREE.MathUtils.clamp(base + jagged + spike, -0.3, 0.3)
@@ -93,11 +73,7 @@ export function AsteroidRenderer() {
             pos.setXYZ(i, v.x, v.y, v.z)
         }
 
-        geo.scale(
-            0.9 + Math.random() * 0.3,
-            0.9 + Math.random() * 0.3,
-            0.9 + Math.random() * 0.3
-        )
+        geo.scale(0.9 + Math.random() * 0.3, 0.9 + Math.random() * 0.3, 0.9 + Math.random() * 0.3)
 
         // random orientation so the silhouette isn't aligned
         geo.rotateX(Math.random() * Math.PI * 2)
@@ -109,10 +85,7 @@ export function AsteroidRenderer() {
 
         // per-instance health attribute — driven each frame from Health.current/max,
         // read by the shader injection below to drive the damage glow
-        geo.setAttribute(
-            'instanceHealth',
-            new THREE.InstancedBufferAttribute(new Float32Array(MAX_ASTEROIDS).fill(1), 1)
-        )
+        geo.setAttribute('instanceHealth', new THREE.InstancedBufferAttribute(new Float32Array(MAX_ASTEROIDS).fill(1), 1))
 
         return geo
 
@@ -127,30 +100,14 @@ export function AsteroidRenderer() {
         return Array.from({ length: MAX_ASTEROIDS }, () => {
 
             const spinScale = 0.35
+            const color = colours[Math.floor(Math.random() * colours.length)].clone()
 
-            const color =
-                colours[Math.floor(Math.random() * colours.length)].clone()
-
-            color.offsetHSL(
-                (Math.random() - 0.5) * 0.02,
-                (Math.random() - 0.5) * 0.10,
-                (Math.random() - 0.5) * 0.18
-            )
+            color.offsetHSL((Math.random() - 0.5) * 0.02, (Math.random() - 0.5) * 0.10, (Math.random() - 0.5) * 0.18)
 
             return {
 
-                rotation: new THREE.Euler(
-                    Math.random() * Math.PI * 2,
-                    Math.random() * Math.PI * 2,
-                    Math.random() * Math.PI * 2
-                ),
-
-                spin: new THREE.Vector3(
-                    (Math.random() - 0.5) * spinScale,
-                    (Math.random() - 0.5) * spinScale,
-                    (Math.random() - 0.5) * spinScale
-                ),
-
+                rotation: new THREE.Euler(Math.random() * Math.PI * 2, Math.random() * Math.PI * 2,  Math.random() * Math.PI * 2),
+                spin: new THREE.Vector3((Math.random() - 0.5) * spinScale, (Math.random() - 0.5) * spinScale, (Math.random() - 0.5) * spinScale),
                 color
 
             }

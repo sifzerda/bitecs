@@ -1,8 +1,15 @@
-
 // src/ecs/systems/collisionSystem.js
 
 import { playerQuery, bossQuery } from "../constants/queries.js"
-import { Asteroid, Position, Velocity, Health, Invulnerability, BossType } from "../constants/components.js"
+import {
+    Asteroid,
+    Position,
+    Velocity,
+    Health,
+    Invulnerability,
+    BossType,
+} from "../constants/components.js"
+
 import { BOSSES } from "../constants/bosses.js"
 import { applyPlayerAngularImpulse } from "./playerControlSystem.js"
 import { killBoss } from "./entityDeath.js"
@@ -16,17 +23,18 @@ import { damagePlayer } from "./playerDamage.js"
 const PLAYER_RADIUS = 0.6
 
 // Asteroid collisions
-const ASTEROID_RESTITUTION = 1.0
-const PLAYER_SPIN_FACTOR = 0.35
-
-const PLAYER_MASS = 4.0
+const ASTEROID_RESTITUTION = 0.9
 const ASTEROID_MASS = 1.0
 
+// Player collisions
+const PLAYER_MASS = 4.0
 const PLAYER_RESTITUTION = 1.0
 const PLAYER_KNOCKBACK = 2.0
+const PLAYER_SPIN_FACTOR = 0.35
 const TANGENTIAL_IMPULSE = 0.25
 
-const PLAYER_INERTIA = 0.5 * PLAYER_MASS * PLAYER_RADIUS * PLAYER_RADIUS
+const PLAYER_INERTIA =
+    0.5 * PLAYER_MASS * PLAYER_RADIUS * PLAYER_RADIUS
 
 // Boss collisions
 const DEFAULT_BOSS_RADIUS = 2.0
@@ -41,20 +49,16 @@ const BOSS_CONTACT_DAMAGE = 1.0
 // ============================================================
 
 function getBossHitRadius(id) {
-    return BOSSES[BossType.typeIndex[id]]?.hitRadius ?? DEFAULT_BOSS_RADIUS
+    return (
+        BOSSES[BossType.typeIndex[id]]?.hitRadius ??
+        DEFAULT_BOSS_RADIUS
+    )
 }
 
-function separateEntities(a, b, nx, ny, overlap, massA, massB) {
-    const totalMass = massA + massB
+function getAsteroidMass(id) {
+    const scale = Math.max(0.3, Asteroid.scale[id])
 
-    const correctionA = overlap * (massB / totalMass)
-    const correctionB = overlap * (massA / totalMass)
-
-    Position.x[a] -= nx * correctionA
-    Position.y[a] -= ny * correctionA
-
-    Position.x[b] += nx * correctionB
-    Position.y[b] += ny * correctionB
+    return ASTEROID_MASS * scale * scale
 }
 
 function getCollisionNormal(dx, dy) {
@@ -64,7 +68,7 @@ function getCollisionNormal(dx, dy) {
         return {
             nx: 1,
             ny: 0,
-            distance: 0.0001,
+            distance: 0,
         }
     }
 
@@ -75,66 +79,140 @@ function getCollisionNormal(dx, dy) {
     }
 }
 
+/**
+ * Separate two overlapping entities according to mass.
+ *
+ * The lighter entity moves farther than the heavier one.
+ */
+function separateEntities(
+    a,
+    b,
+    nx,
+    ny,
+    overlap,
+    massA,
+    massB
+) {
+    const totalMass = massA + massB
+
+    if (totalMass <= 0 || overlap <= 0) {
+        return
+    }
+
+    const correctionA =
+        overlap * (massB / totalMass)
+
+    const correctionB =
+        overlap * (massA / totalMass)
+
+    Position.x[a] -= nx * correctionA
+    Position.y[a] -= ny * correctionA
+
+    Position.x[b] += nx * correctionB
+    Position.y[b] += ny * correctionB
+}
+
 // ============================================================
 // ASTEROID <-> ASTEROID
 // ============================================================
 
 function resolveAsteroidCollisions(asteroids) {
+    const count = asteroids.length
 
-    for (let i = 0; i < asteroids.length; i++) {
-
+    for (let i = 0; i < count; i++) {
         const a = asteroids[i]
 
-        for (let j = i + 1; j < asteroids.length; j++) {
-
+        for (let j = i + 1; j < count; j++) {
             const b = asteroids[j]
 
-            const dx = Position.x[b] - Position.x[a]
-            const dy = Position.y[b] - Position.y[a]
+            const dx =
+                Position.x[b] - Position.x[a]
 
-            const radiusA = Asteroid.radius[a]
-            const radiusB = Asteroid.radius[b]
+            const dy =
+                Position.y[b] - Position.y[a]
 
-            const minDistance = radiusA + radiusB
+            const minDistance =
+                Asteroid.radius[a] +
+                Asteroid.radius[b]
+
             const distSq = dx * dx + dy * dy
 
-            if (distSq >= minDistance * minDistance) {
+            if (
+                distSq >=
+                minDistance * minDistance
+            ) {
                 continue
             }
 
-            const collision = getCollisionNormal(dx, dy)
-            const { nx, ny, distance } = collision
+            const { nx, ny, distance } =
+                getCollisionNormal(dx, dy)
 
-            // Separate.
+            // --------------------------------------------
+            // Resolve overlap
+            // --------------------------------------------
+
             const overlap = minDistance - distance
 
-            Position.x[a] -= nx * overlap * 0.5
-            Position.y[a] -= ny * overlap * 0.5
+            const massA = getAsteroidMass(a)
+            const massB = getAsteroidMass(b)
 
-            Position.x[b] += nx * overlap * 0.5
-            Position.y[b] += ny * overlap * 0.5
+            separateEntities(
+                a,
+                b,
+                nx,
+                ny,
+                overlap,
+                massA,
+                massB
+            )
 
-            // Relative velocity.
-            const relativeVx = Velocity.x[b] - Velocity.x[a]
-            const relativeVy = Velocity.y[b] - Velocity.y[a]
+            // --------------------------------------------
+            // Relative velocity
+            // --------------------------------------------
 
-            const velocityAlongNormal = relativeVx * nx + relativeVy * ny
+            const relativeVx =
+                Velocity.x[b] - Velocity.x[a]
 
-            if (velocityAlongNormal > 0) {
+            const relativeVy =
+                Velocity.y[b] - Velocity.y[a]
+
+            const velocityAlongNormal =
+                relativeVx * nx +
+                relativeVy * ny
+
+            // Objects are already moving apart.
+            if (velocityAlongNormal >= 0) {
                 continue
             }
 
-            // Equal-mass collision impulse.
-            const impulse = -(1 + ASTEROID_RESTITUTION) * velocityAlongNormal / 2
+            // --------------------------------------------
+            // Mass-based collision impulse
+            // --------------------------------------------
+
+            const inverseMassA = 1 / massA
+            const inverseMassB = 1 / massB
+
+            const impulse =
+                (
+                    -(1 + ASTEROID_RESTITUTION) *
+                    velocityAlongNormal
+                ) /
+                (inverseMassA + inverseMassB)
 
             const impulseX = impulse * nx
             const impulseY = impulse * ny
 
-            Velocity.x[a] -= impulseX
-            Velocity.y[a] -= impulseY
+            Velocity.x[a] -=
+                impulseX * inverseMassA
 
-            Velocity.x[b] += impulseX
-            Velocity.y[b] += impulseY
+            Velocity.y[a] -=
+                impulseY * inverseMassA
+
+            Velocity.x[b] +=
+                impulseX * inverseMassB
+
+            Velocity.y[b] +=
+                impulseY * inverseMassB
         }
     }
 }
@@ -144,66 +222,153 @@ function resolveAsteroidCollisions(asteroids) {
 // ============================================================
 
 function resolveAsteroidPlayerCollisions(pid, asteroids) {
-
     for (let i = 0; i < asteroids.length; i++) {
-
         const aid = asteroids[i]
-        const asteroidRadius = Asteroid.radius[aid]
-        const collisionDistance = PLAYER_RADIUS + asteroidRadius
 
-        const dx = Position.x[pid] - Position.x[aid]
-        const dy = Position.y[pid] - Position.y[aid]
+        const asteroidMass =
+            getAsteroidMass(aid)
+
+        const asteroidRadius =
+            Asteroid.radius[aid]
+
+        const collisionDistance =
+            PLAYER_RADIUS + asteroidRadius
+
+        const dx =
+            Position.x[pid] - Position.x[aid]
+
+        const dy =
+            Position.y[pid] - Position.y[aid]
 
         const distSq = dx * dx + dy * dy
 
-        if (distSq >= collisionDistance * collisionDistance) {
+        if (
+            distSq >=
+            collisionDistance * collisionDistance
+        ) {
             continue
         }
 
-        const { nx, ny, distance } = getCollisionNormal(dx, dy)
+        const { nx, ny, distance } =
+            getCollisionNormal(dx, dy)
 
-        // Separate objects.
-        const overlap = collisionDistance - distance
+        // --------------------------------------------
+        // Separate player and asteroid
+        // --------------------------------------------
 
-        separateEntities(aid, pid, nx, ny, overlap, ASTEROID_MASS, PLAYER_MASS)
+        const overlap =
+            collisionDistance - distance
 
-        // Relative velocity.
-        const relativeVx = Velocity.x[pid] - Velocity.x[aid]
-        const relativeVy = Velocity.y[pid] - Velocity.y[aid]
-        const velocityAlongNormal = relativeVx * nx + relativeVy * ny
+        separateEntities(
+            aid,
+            pid,
+            nx,
+            ny,
+            overlap,
+            asteroidMass,
+            PLAYER_MASS
+        )
+
+        // --------------------------------------------
+        // Relative velocity
+        // --------------------------------------------
+
+        const relativeVx =
+            Velocity.x[pid] - Velocity.x[aid]
+
+        const relativeVy =
+            Velocity.y[pid] - Velocity.y[aid]
+
+        const velocityAlongNormal =
+            relativeVx * nx +
+            relativeVy * ny
+
+        // --------------------------------------------
+        // Knockback and angular impulse
+        // --------------------------------------------
 
         if (velocityAlongNormal < 0) {
+            const restitution = Math.min(
+                PLAYER_RESTITUTION,
+                ASTEROID_RESTITUTION
+            )
 
-            const restitution = Math.min(PLAYER_RESTITUTION, ASTEROID_RESTITUTION)
-
-            const impulse = -(1 + restitution) * velocityAlongNormal / (1 / PLAYER_MASS + 1 / ASTEROID_MASS)
+            const impulse =
+                (
+                    -(1 + restitution) *
+                    velocityAlongNormal
+                ) /
+                (
+                    1 / PLAYER_MASS +
+                    1 / asteroidMass
+                )
 
             const impulseX = impulse * nx
             const impulseY = impulse * ny
 
-            // Asteroid knockback.
-            Velocity.x[aid] -= impulseX / ASTEROID_MASS
-            Velocity.y[aid] -= impulseY / ASTEROID_MASS
+            // Asteroid receives opposite impulse.
+            Velocity.x[aid] -=
+                impulseX / asteroidMass
 
-            // Player knockback.
-            Velocity.x[pid] += impulseX / PLAYER_MASS * PLAYER_KNOCKBACK
-            Velocity.y[pid] += impulseY / PLAYER_MASS * PLAYER_KNOCKBACK
+            Velocity.y[aid] -=
+                impulseY / asteroidMass
 
-            // Tangential impact.
+            // Player receives stronger knockback.
+            Velocity.x[pid] +=
+                (impulseX / PLAYER_MASS) *
+                PLAYER_KNOCKBACK
+
+            Velocity.y[pid] +=
+                (impulseY / PLAYER_MASS) *
+                PLAYER_KNOCKBACK
+
+            // ----------------------------------------
+            // Tangential collision and player spin
+            // ----------------------------------------
+
             const tangentX = -ny
             const tangentY = nx
 
-            const tangentialVelocity = relativeVx * tangentX + relativeVy * tangentY
-            const tangentImpulse = tangentialVelocity * TANGENTIAL_IMPULSE
-            const angularImpulse = -tangentImpulse * PLAYER_RADIUS * PLAYER_SPIN_FACTOR / PLAYER_INERTIA
+            const tangentialVelocity =
+                relativeVx * tangentX +
+                relativeVy * tangentY
 
-            applyPlayerAngularImpulse(angularImpulse)
+            const tangentImpulse =
+                tangentialVelocity *
+                TANGENTIAL_IMPULSE
 
-            Velocity.x[pid] += tangentX * tangentImpulse / PLAYER_MASS
-            Velocity.y[pid] += tangentY * tangentImpulse / PLAYER_MASS
-            Velocity.x[aid] -= tangentX * tangentImpulse / ASTEROID_MASS
-            Velocity.y[aid] -= tangentY * tangentImpulse / ASTEROID_MASS
+            const angularImpulse =
+                (
+                    -tangentImpulse *
+                    PLAYER_RADIUS *
+                    PLAYER_SPIN_FACTOR
+                ) /
+                PLAYER_INERTIA
+
+            applyPlayerAngularImpulse(
+                angularImpulse
+            )
+
+            Velocity.x[pid] +=
+                (tangentX * tangentImpulse) /
+                PLAYER_MASS
+
+            Velocity.y[pid] +=
+                (tangentY * tangentImpulse) /
+                PLAYER_MASS
+
+            Velocity.x[aid] -=
+                (tangentX * tangentImpulse) /
+                asteroidMass
+
+            Velocity.y[aid] -=
+                (tangentY * tangentImpulse) /
+                asteroidMass
         }
+
+        // --------------------------------------------
+        // Contact damage
+        // --------------------------------------------
 
         damagePlayer(pid, 25)
 
@@ -218,75 +383,125 @@ function resolveAsteroidPlayerCollisions(pid, asteroids) {
 // ============================================================
 
 function resolveBossPlayerCollisions(pid, bosses) {
-
     for (let i = 0; i < bosses.length; i++) {
-
         const bid = bosses[i]
 
-        if (BOSSES[BossType.typeIndex[bid]]?.key === "octopus") continue
-
-        const bossRadius = getBossHitRadius(bid)
-        const collisionDistance = PLAYER_RADIUS + bossRadius
-        const dx = Position.x[pid] - Position.x[bid]
-        const dy = Position.y[pid] - Position.y[bid]
-
-        const distSq = dx * dx + dy * dy
-
-        if (distSq >= collisionDistance * collisionDistance) {
+        // Octopus boss has its own collision handling.
+        if (
+            BOSSES[BossType.typeIndex[bid]]?.key ===
+            "octopus"
+        ) {
             continue
         }
 
-        const { nx, ny, distance } = getCollisionNormal(dx, dy)
+        const bossRadius =
+            getBossHitRadius(bid)
 
-        // ----------------------------------------------------
+        const collisionDistance =
+            PLAYER_RADIUS + bossRadius
+
+        const dx =
+            Position.x[pid] - Position.x[bid]
+
+        const dy =
+            Position.y[pid] - Position.y[bid]
+
+        const distSq = dx * dx + dy * dy
+
+        if (
+            distSq >=
+            collisionDistance * collisionDistance
+        ) {
+            continue
+        }
+
+        const { nx, ny, distance } =
+            getCollisionNormal(dx, dy)
+
+        // --------------------------------------------
         // Separate player and boss
-        // ----------------------------------------------------
+        // --------------------------------------------
 
-        const overlap = collisionDistance - distance
-        separateEntities(bid, pid, nx, ny, overlap, BOSS_MASS, PLAYER_MASS)
+        const overlap =
+            collisionDistance - distance
 
-        // ----------------------------------------------------
+        separateEntities(
+            bid,
+            pid,
+            nx,
+            ny,
+            overlap,
+            BOSS_MASS,
+            PLAYER_MASS
+        )
+
+        // --------------------------------------------
         // Relative velocity
-        // ----------------------------------------------------
+        // --------------------------------------------
 
-        const relativeVx = Velocity.x[pid] - Velocity.x[bid]
-        const relativeVy = Velocity.y[pid] - Velocity.y[bid]
-        const velocityAlongNormal = relativeVx * nx + relativeVy * ny
+        const relativeVx =
+            Velocity.x[pid] - Velocity.x[bid]
 
-        // ----------------------------------------------------
+        const relativeVy =
+            Velocity.y[pid] - Velocity.y[bid]
+
+        const velocityAlongNormal =
+            relativeVx * nx +
+            relativeVy * ny
+
+        // --------------------------------------------
         // Knockback
-        // ----------------------------------------------------
+        // --------------------------------------------
 
         if (velocityAlongNormal < 0) {
-
-            const impulse = -(1 + BOSS_RESTITUTION) * velocityAlongNormal / (1 / PLAYER_MASS + 1 / BOSS_MASS)
+            const impulse =
+                (
+                    -(1 + BOSS_RESTITUTION) *
+                    velocityAlongNormal
+                ) /
+                (
+                    1 / PLAYER_MASS +
+                    1 / BOSS_MASS
+                )
 
             const impulseX = impulse * nx
             const impulseY = impulse * ny
 
-            // Boss receives a smaller knockback.
-            Velocity.x[bid] -= impulseX / BOSS_MASS
-            Velocity.y[bid] -= impulseY / BOSS_MASS
+            // Boss knockback.
+            Velocity.x[bid] -=
+                impulseX / BOSS_MASS
 
-            // Player receives stronger knockback.
-            Velocity.x[pid] += impulseX / PLAYER_MASS * BOSS_PLAYER_KNOCKBACK
-            Velocity.y[pid] += impulseY / PLAYER_MASS * BOSS_PLAYER_KNOCKBACK
+            Velocity.y[bid] -=
+                impulseY / BOSS_MASS
+
+            // Player knockback.
+            Velocity.x[pid] +=
+                (impulseX / PLAYER_MASS) *
+                BOSS_PLAYER_KNOCKBACK
+
+            Velocity.y[pid] +=
+                (impulseY / PLAYER_MASS) *
+                BOSS_PLAYER_KNOCKBACK
         }
 
-        // ----------------------------------------------------
-        // Boss takes minor contact damage
-        // ----------------------------------------------------
+        // --------------------------------------------
+        // Boss contact damage
+        // --------------------------------------------
 
-        Health.current[bid] -= BOSS_CONTACT_DAMAGE
+        Health.current[bid] -=
+            BOSS_CONTACT_DAMAGE
 
         if (Health.current[bid] <= 0) {
-
-            killBoss(bid, Position.x[bid], Position.y[bid])
+            killBoss(
+                bid,
+                Position.x[bid],
+                Position.y[bid]
+            )
         }
 
-        // ----------------------------------------------------
-        // Player loses a life
-        // ----------------------------------------------------
+        // --------------------------------------------
+        // Player contact damage
+        // --------------------------------------------
 
         damagePlayer(pid, 40)
 
@@ -301,40 +516,54 @@ function resolveBossPlayerCollisions(pid, bosses) {
 // ============================================================
 
 export function collisionSystem() {
-
     const asteroids = activeAsteroids
-
     const players = playerQuery()
     const bosses = bossQuery()
 
-    const pid = players.length > 0 ? players[0] : null
-
-    // --------------------------------------------------------
-    // ASTEROID <-> ASTEROID
-    // --------------------------------------------------------
+    // --------------------------------------------
+    // Asteroid collisions
+    // --------------------------------------------
 
     resolveAsteroidCollisions(asteroids)
 
-    if (pid === null) {
+    // --------------------------------------------
+    // Player collisions
+    // --------------------------------------------
+
+    if (players.length === 0) {
         return
     }
 
-    // Dead or invulnerable players cannot take collision damage.
-    if (Health.current[pid] <= 0 || Invulnerability.remaining[pid] > 0) {
+    const pid = players[0]
+
+    // Dead or invulnerable players cannot take
+    // collision damage.
+    if (
+        Health.current[pid] <= 0 ||
+        Invulnerability.remaining[pid] > 0
+    ) {
         return
     }
 
-    // --------------------------------------------------------
-    // ASTEROID <-> PLAYER
-    // --------------------------------------------------------
+    // --------------------------------------------
+    // Asteroid-player collisions
+    // --------------------------------------------
 
-    if (resolveAsteroidPlayerCollisions(pid, asteroids)) {
+    if (
+        resolveAsteroidPlayerCollisions(
+            pid,
+            asteroids
+        )
+    ) {
         return
     }
 
-    // --------------------------------------------------------
-    // BOSS <-> PLAYER
-    // --------------------------------------------------------
+    // --------------------------------------------
+    // Boss-player collisions
+    // --------------------------------------------
 
-    resolveBossPlayerCollisions(pid, bosses)
+    resolveBossPlayerCollisions(
+        pid,
+        bosses
+    )
 }

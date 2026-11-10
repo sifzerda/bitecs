@@ -287,52 +287,81 @@ export function spawnBossBullet(x, y, rot, weaponId = 0, bossId) {
 // ASTEROIDS
 // ============================================================
 
-export function spawnAsteroid(x, y) {
 
+const ASTEROID_CONFIG = Object.freeze({
+    minScale: 0.8,
+    maxScale: 1.5,
+    baseRadius: 0.55,
+
+    baseHealth: 20,
+    minSpeed: 0.8,
+    maxSpeed: 2.2,
+
+    fastChance: 0.15,
+    fastMultiplier: 1.65,
+})
+
+export function spawnAsteroid(x, y, options = {}) {
     const id = acquireAsteroidEntity()
 
-    if (id === -1) {
-        return -1
-    }
+    if (id === -1) return -1
 
-    // --------------------------------------------------------
-    // Position
-    // --------------------------------------------------------
+    const cfg = ASTEROID_CONFIG
+
+    const scale = Math.max(
+        0.3,
+        options.scale ??
+        cfg.minScale +
+        Math.random() *
+        (cfg.maxScale - cfg.minScale)
+    )
+
+    const angle =
+        options.angle ?? Math.random() * Math.PI * 2
+
+    const isFast =
+        options.fast ??
+        Math.random() < cfg.fastChance
+
+    const baseSpeed =
+        cfg.minSpeed +
+        Math.random() * (cfg.maxSpeed - cfg.minSpeed)
+
+    const speed =
+        options.speed ??
+        baseSpeed * (isFast ? cfg.fastMultiplier : 1)
+
+    const health =
+        options.health ??
+        Math.max(
+            5,
+            Math.round(
+                cfg.baseHealth * Math.pow(scale, 1.5)
+            )
+        )
 
     Position.x[id] = x
     Position.y[id] = y
 
-    // --------------------------------------------------------
-    // Velocity
-    // --------------------------------------------------------
+    Velocity.x[id] =
+        options.vx ?? Math.cos(angle) * speed
 
-    Velocity.x[id] = (Math.random() - 0.5) * 2
-    Velocity.y[id] = (Math.random() - 0.5) * 2
+    Velocity.y[id] =
+        options.vy ?? Math.sin(angle) * speed
 
-    // -------------------------------------------------------
-    // Health
-    // --------------------------------------------------------
-
-    Health.current[id] = 20
-    Health.max[id] = 20
-
-    // --------------------------------------------------------
-    // Status
-    // --------------------------------------------------------
+    Health.current[id] = health
+    Health.max[id] = health
 
     StatusEffect.frozen[id] = 0
-
-    // --------------------------------------------------------
-    // Size / collision radius
-    // --------------------------------------------------------
-
-    const scale = 0.8 + Math.random() * 0.7
+    StatusEffect.corrosionDamage[id] = 0
+    StatusEffect.corrosionRemaining[id] = 0
 
     Asteroid.scale[id] = scale
-    Asteroid.radius[id] = 0.55 * scale
+    Asteroid.radius[id] = cfg.baseRadius * scale
 
     return id
 }
+
 
 // ============================================================
 // BOSS
