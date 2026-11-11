@@ -10,21 +10,15 @@ import {
     Health,
     Invulnerability,
     Lifetime,
-    Asteroid,
     PlayerTag,
     Bullet,
     BULLET_OWNER,
- 
-   
- 
-    StatusEffect
 } from "./constants/components.js"
  
 import { acquireBulletEntity } from "./pools/bulletPool.js"
  
 import { getWeapon } from "./weapons/config/weapons.js"
 import { getBossEmissionConfig, PLAYER_CONFIG } from "./constants/emission.js"
- 
  
 // Cache projectile colours helper
 
@@ -278,107 +272,4 @@ export function spawnBossBullet(x, y, rot, weaponId = 0, bossId) {
             { x: right.originX, y: right.originY },
         ],
     }
-}
-
-// ============================================================
-// BOSS
-// ============================================================
-
-export function spawnBoss(bossKey = "shotgun") {
-
-    const id = addEntity(world)
-
-    // --------------------------------------------------------
-    // Components
-    // --------------------------------------------------------
-
-    addComponent(world, id, Position)
-    addComponent(world, id, Velocity)
-    addComponent(world, id, Rotation)
-    addComponent(world, id, Health)
-    addComponent(world, id, StatusEffect)
-
-    // --------------------------------------------------------
-    // Initial transform
-    // --------------------------------------------------------
-
-    Position.x[id] = 0
-    Position.y[id] = 0
-    Velocity.x[id] = 0
-    Velocity.y[id] = 0
-    Rotation[id] = 0
-
-    // --------------------------------------------------------
-    // Boss health
-    // --------------------------------------------------------
-
-    const bossIndex = BOSS_INDEX_BY_KEY[bossKey] ?? 0
-    const bossCfg = BOSSES[bossIndex]
-    const bossHealth = bossCfg?.health ?? 300
-    Health.current[id] = bossHealth
-    Health.max[id] = bossHealth
-    StatusEffect.frozen[id] = 0
-
-    // --------------------------------------------------------
-    // Boss weapon
-    // --------------------------------------------------------
-
-    const gunType = bossCfg?.gun ? getGunTypeById(bossCfg.gun.typeId) : null
-    BossAI.weapon[id] = gunType?.weaponId ?? 0
-
-    // ========================================================
-    // BASIC AI TIMERS
-    // ========================================================
-
-    BossAI.moveTimer[id] = 0
-    BossAI.shootTimer[id] = 0.5 + Math.random() * 0.5
-    BossAI.beamCycleTimer[id] = 3.0
-    BossAI.beamActive[id] = 1
-    BossAI.targetRotation[id] = 0
-
-    // ========================================================
-    // AIMING STATE
-    // ========================================================
-
-    BossAI.aimError[id] = 0
-    BossAI.aimErrorTimer[id] = 0.2 + Math.random() * 0.6
-
-    // ========================================================
-    // BURST STATE
-    // ========================================================
-
-    BossAI.burstRemaining[id] = 0
-    BossAI.burstGapTimer[id] = 0
-
-    // ========================================================
-    // TACTICAL AI
-    //
-    // 0 = attack
-    // 1 = evade
-    // 2 = strafe
-    // 3 = reposition
-    // ========================================================
-
-    BossAI.state[id] = 0
-    BossAI.stateTimer[id] = 1.5 + Math.random() * 1.3
-    BossAI.moveRotation[id] = 0
-    BossAI.strafeDirection[id] = Math.random() < 0.5 ? -1 : 1
-
-    // --------------------------------------------------------
-    // Combat personality
-    // --------------------------------------------------------
-
-    BossAI.aggression[id] = 0.35 + Math.random() * 0.55
-    BossAI.attackTimer[id] = 0
-    BossAI.decisionCooldown[id] = 0
-
-    // --------------------------------------------------------
-    // Boss type
-    // --------------------------------------------------------
-
-    BossType.typeIndex[id] = bossIndex
-
-    if (bossCfg?.key === "octopus") resetOctopusBoss(id)
-
-    return id
 }

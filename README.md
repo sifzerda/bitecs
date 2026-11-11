@@ -151,3 +151,4 @@ Make config screen for emission point, using a dot to show emission points on sh
 
  - [ ] possibly reducing files or combining them
  - [ ] improving boss AI (see bosses folder), reducing delays in boss targeting player
+ - [ ] probably fix the octopus boss

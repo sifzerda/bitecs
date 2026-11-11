@@ -23,6 +23,10 @@ import {
   coneHits,
 } from "./bossTelegraphs.js"
 
+// ============================================================
+// DAMAGE
+// ============================================================
+
 function damageWithStatus(playerId, amount, weapon) {
   const damaged = damagePlayer(
     playerId,
@@ -38,47 +42,56 @@ function damageWithStatus(playerId, amount, weapon) {
   }
 }
 
-function fireBullets(id, weapon, state, dt) {
+// ============================================================
+// PROJECTILES
+// ============================================================
+
+function fireBullets({ id, weapon, state, dt }) {
   const pattern = state.pattern
+
+  if (state.shots >= pattern.shots) return
 
   state.shotTimer -= dt
 
-  if (
-    state.shots >= pattern.shots ||
-    state.shotTimer > 0
-  ) {
-    return
-  }
-
-  const fraction =
-    pattern.shots > 1
-      ? state.shots / (pattern.shots - 1) - 0.5
-      : 0
-
-  spawnBossBullet(
-    Position.x[id],
-    Position.y[id],
-    state.lockedAngle +
-      fraction * pattern.sweep,
-    weapon.id,
-    id
-  )
-
-  state.shots++
-
-  state.shotTimer += Math.max(
+  const gap = Math.max(
     1 / 60,
     pattern.gap
   )
+
+  while (
+    state.shots < pattern.shots &&
+    state.shotTimer <= 0
+  ) {
+    const fraction =
+      pattern.shots > 1
+        ? state.shots / (pattern.shots - 1) - 0.5
+        : 0
+
+    spawnBossBullet(
+      Position.x[id],
+      Position.y[id],
+      state.lockedAngle +
+        fraction * pattern.sweep,
+      weapon.id,
+      id
+    )
+
+    state.shots++
+    state.shotTimer += gap
+  }
 }
 
-function fireBeam(id, playerId, weapon, dt) {
+// ============================================================
+// BEAM
+// ============================================================
+
+function fireBeam({ id, playerId, weapon, dt }) {
   const angle = Rotation[id]
 
   const dx = Math.sin(-angle)
   const dy = Math.cos(-angle)
 
-  const m = getBossEmission(
+  const emission = getBossEmission(
     id,
     "beam",
     angle
@@ -87,7 +100,7 @@ function fireBeam(id, playerId, weapon, dt) {
   const sideX = Math.cos(-angle)
   const sideY = -Math.sin(-angle)
 
-  const count = m.gap ? 2 : 1
+  const count = emission.gap ? 2 : 1
   const range = weapon.range ?? 20
   const width = (weapon.beamWidth ?? 0.1) * 0.5
 
@@ -101,18 +114,21 @@ function fireBeam(id, playerId, weapon, dt) {
       count === 1
         ? 0
         : n === 0
-          ? m.gap
-          : -m.gap
+          ? emission.gap
+          : -emission.gap
 
-    const x = m.x + sideX * gap
-    const y = m.y + sideY * gap
+    const x = emission.x + sideX * gap
+    const y = emission.y + sideY * gap
 
     let length = range
     let target = -1
     let asteroid = false
 
     const playerT = rayCircle(
-      x, y, dx, dy,
+      x,
+      y,
+      dx,
+      dy,
       Position.x[playerId],
       Position.y[playerId],
       0.6 + width,
@@ -125,12 +141,13 @@ function fireBeam(id, playerId, weapon, dt) {
     }
 
     for (const aid of activeAsteroids) {
-      if (Health.current[aid] <= 0) {
-        continue
-      }
+      if (Health.current[aid] <= 0) continue
 
       const t = rayCircle(
-        x, y, dx, dy,
+        x,
+        y,
+        dx,
+        dy,
         Position.x[aid],
         Position.y[aid],
         Asteroid.radius[aid] + width,
@@ -185,33 +202,37 @@ function fireBeam(id, playerId, weapon, dt) {
   s.length = s.hitT[0]
 }
 
-function fireThrower(id, playerId, weapon, dt) {
+// ============================================================
+// THROWER
+// ============================================================
+
+function fireThrower({ id, playerId, weapon, dt }) {
   const angle = Rotation[id]
 
   const dx = Math.sin(-angle)
   const dy = Math.cos(-angle)
 
-  const m = getBossEmission(
+  const emission = getBossEmission(
     id,
     "thrower",
     angle
   )
 
-  const sx = Math.cos(-angle) * m.gap
-  const sy = -Math.sin(-angle) * m.gap
+  const sx = Math.cos(-angle) * emission.gap
+  const sy = -Math.sin(-angle) * emission.gap
 
   const s = bossThrowerState
 
   s.active = true
 
-  s.originX = m.x
-  s.originY = m.y
+  s.originX = emission.x
+  s.originY = emission.y
 
-  s.originAX = m.x + sx
-  s.originAY = m.y + sy
+  s.originAX = emission.x + sx
+  s.originAY = emission.y + sy
 
-  s.originBX = m.x - sx
-  s.originBY = m.y - sy
+  s.originBX = emission.x - sx
+  s.originBY = emission.y - sy
 
   s.dirX = dx
   s.dirY = dy
@@ -222,7 +243,8 @@ function fireThrower(id, playerId, weapon, dt) {
   const hitA = coneHits(
     s.originAX,
     s.originAY,
-    dx, dy,
+    dx,
+    dy,
     s.coneAngle,
     s.range,
     Position.x[playerId],
@@ -233,7 +255,8 @@ function fireThrower(id, playerId, weapon, dt) {
   const hitB = coneHits(
     s.originBX,
     s.originBY,
-    dx, dy,
+    dx,
+    dy,
     s.coneAngle,
     s.range,
     Position.x[playerId],
@@ -250,24 +273,16 @@ function fireThrower(id, playerId, weapon, dt) {
   }
 }
 
-export function executeBossAttack({
-  id,
-  playerId,
-  weapon,
-  state,
-  dt,
-}) {
-  switch (weapon.category) {
-    case "bullet":
-      fireBullets(id, weapon, state, dt)
-      break
+// ============================================================
+// ATTACK DISPATCH
+// ============================================================
 
-    case "beam":
-      fireBeam(id, playerId, weapon, dt)
-      break
+const ATTACK_HANDLERS = {
+  bullet: fireBullets,
+  beam: fireBeam,
+  thrower: fireThrower,
+}
 
-    case "thrower":
-      fireThrower(id, playerId, weapon, dt)
-      break
-  }
+export function executeBossAttack(context) {
+  ATTACK_HANDLERS[context.weapon.category]?.(context)
 }

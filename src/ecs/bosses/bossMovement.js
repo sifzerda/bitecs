@@ -60,7 +60,11 @@ export function steerBoss({
   let vx = 0
   let vy = 0
 
-  if (state.phase === "approach") {
+  if (
+    state.phase === "approach" ||
+    state.phase === "warning" ||
+    state.phase === "attack"
+  ) {
     const radial = clamp(
       (distance - pattern.range) * 1.4,
       -speed,
@@ -144,7 +148,14 @@ export function steerBoss({
     vy *= speed / magnitude
   }
 
-  const response = state.phase === "approach" ? 3 : 8
+  const response =
+    state.phase === "attack"
+      ? 4
+      : state.phase === "warning"
+        ? 4.5
+        : state.phase === "approach"
+          ? 3
+          : 8
 
   let fx = (vx - Velocity.x[id]) * response
   let fy = (vy - Velocity.y[id]) * response
