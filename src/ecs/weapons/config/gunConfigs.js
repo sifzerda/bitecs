@@ -154,21 +154,10 @@ const RAW_TYPES = [
         },
     },
     {
-        id: "09_arcgun",
-        name: "RTL Gun",
-        weaponId: WEAPON_BY_NAME.arcgun.id,
-        svg: "/gun_svgs/09_arcgun.svg",
-        description: "Arcs chain lightning between nearby targets.",
-        overrides: {
-            mount: { width: 1.1, height: 0.4, offsetX: 0.4, offsetY: -0.04 },
-            coreGlow: { color: '#005eff', size: 0.1, intensity: 1, offsetX: 0, offsetY: 1.2 },
-        },
-    },
-    {
-        id: "10_plasmagun",
+        id: "09_plasmagun",
         name: "Plasma Gun",
         weaponId: WEAPON_BY_NAME.plasmagun.id,
-        svg: "/gun_svgs/10_plasmagun.svg",
+        svg: "/gun_svgs/09_plasmagun.svg",
         description: "A superheated plasma laser beam.",
         overrides: {
             mount: { width: 1.3, height: 0.5, offsetX: 0.6, offsetY: -0.3 },

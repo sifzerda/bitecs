@@ -10,7 +10,6 @@ export const ZONES = [
     ["TOXIC EXPANSE", "acidthrowergun", 16, 19, 22],
     ["MARS BLOCKADE", "missilegun", 18, 21, 24],
     ["ALIEN NEBULA", "lasergun", 20, 23, 26],
-    ["ION STORM", "arcgun", 22, 25, 28],
     ["PLASMA RIFT", "plasmagun", 24, 27, 30],
     ["THE ABYSS", "octopus", 26, 29, 32],
     ["ELDRITCH EXPANSE", "eldritch", 28, 31, 34],

@@ -91,12 +91,8 @@ function initializeWeapon(id, config) {
 function initializeMovement(id) {
   BossAI.moveTimer[id] = 0
   BossAI.moveRotation[id] = 0
-
-  BossAI.strafeDirection[id] =
-    Math.random() < 0.5 ? -1 : 1
-
-  BossAI.aggression[id] =
-    0.35 + Math.random() * 0.55
+  BossAI.strafeDirection[id] = Math.random() < 0.5 ? -1 : 1
+  BossAI.aggression[id] = 0.35 + Math.random() * 0.55
 }
 
 function initializeAiming(id) {
@@ -104,14 +100,12 @@ function initializeAiming(id) {
 
   BossAI.aimError[id] = 0
 
-  BossAI.aimErrorTimer[id] =
-    0.2 + Math.random() * 0.6
+  BossAI.aimErrorTimer[id] = 0.2 + Math.random() * 0.6
 }
 
 function initializeCombat(id) {
   // Initial attack delay
-  BossAI.shootTimer[id] =
-    0.5 + Math.random() * 0.5
+  BossAI.shootTimer[id] = 0.5 + Math.random() * 0.5
 
   // Beam state
   BossAI.beamCycleTimer[id] = 3
@@ -123,10 +117,7 @@ function initializeCombat(id) {
 
   // Tactical state
   BossAI.state[id] = 0
-
-  BossAI.stateTimer[id] =
-    1.5 + Math.random() * 1.3
-
+  BossAI.stateTimer[id] = 1.5 + Math.random() * 1.3
   BossAI.attackTimer[id] = 0
   BossAI.decisionCooldown[id] = 0
 }

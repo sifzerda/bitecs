@@ -26,7 +26,6 @@ export const BOSS_MOVEMENT_BY_TYPE = Object.freeze({
   missilegun: BOSS_MOVEMENT.RETREAT,
   flamethrowergun: BOSS_MOVEMENT.CHASE,
   lasergun: BOSS_MOVEMENT.STRAFE,
-  arcgun: BOSS_MOVEMENT.ORBIT,
   plasmagun: BOSS_MOVEMENT.STRAFE,
 })
 

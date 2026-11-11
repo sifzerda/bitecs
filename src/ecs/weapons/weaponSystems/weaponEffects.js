@@ -6,7 +6,6 @@ import { Position, Health, Asteroid, BossType } from "../../constants/components
 import { BOSSES } from "../../constants/bosses.js"
 import { forEachAsteroidNear } from "../../constants/spatialGrid.js"
 import { killAsteroid, killBoss } from "../../systems/entityDeath.js"
-import { pushArc } from "../weaponState/arcState.js"
 import { emitEffect } from "../../../fx/effects.js"
 import { EFFECT } from "../../../fx/FXTypes.js"
 
@@ -470,13 +469,5 @@ export function chainLightning(
 
         currentX = targetX
         currentY = targetY
-    }
-
-    // --------------------------------------------------------
-    // DRAW LIGHTNING
-    // --------------------------------------------------------
-
-    if (points.length > 1) {
-        pushArc(points)
     }
 }

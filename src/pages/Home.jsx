@@ -22,7 +22,6 @@ import { initializeInput } from "../ecs/systems/input.js"
 import { initializeBulletPool } from "../ecs/pools/bulletPool.js"
 import { initializeAsteroidPool } from "../ecs/pools/asteroidPool.js"
 import { resetPlayerMotion } from "../ecs/systems/playerControlSystem.js"
-import { initializeArcPool } from "../ecs/pools/arcPool.js"
 import { startState } from "../state/startState.js"
 import { recordHighscore } from "../state/highscores.js"
 
@@ -56,7 +55,6 @@ export default function Home() {
 
         initializeAsteroidPool();
         initializeBulletPool();
-        initializeArcPool()
 
         return initializeInput(togglePause)
 

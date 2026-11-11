@@ -25,8 +25,7 @@ const BOSS_SVG_BY_KEY = {
     missilegun: '/ship_svgs/06_missilelauncherboss.svg',
     flamethrowergun: '/ship_svgs/07_flamethrowerboss.svg',
     lasergun: '/ship_svgs/08_lasergunboss.svg',
-    arcgun: '/ship_svgs/09_arcgunboss.svg',
-    plasmagun: '/ship_svgs/10_plasmagunboss.svg',
+    plasmagun: '/ship_svgs/09_plasmagunboss.svg',
 }
 
 const FALLBACK_BOSS_SVG = BOSS_SVG_BY_KEY.shotgun

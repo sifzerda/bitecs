@@ -14,7 +14,6 @@ import { PlayerRenderer, BossRenderer } from "../renderers/ShipRenderer.jsx"
 import { AsteroidRenderer } from "../renderers/AsteroidRenderer.jsx"
 import { BulletRenderer } from "../renderers/BulletRenderer.jsx"
 import { MissileRenderer } from "../renderers/MissileRenderer.jsx"
-import { ArcRenderer } from "../renderers/ArcRenderer.jsx"
 import { GrenadeRenderer } from "../renderers/GrenadeRenderer.jsx"
 import { LaserRenderer } from "../renderers/LaserRenderer.jsx"
 import { ThrowerRenderer } from "../renderers/ThrowerRenderer.jsx"
@@ -113,8 +112,6 @@ export function PlayScreen({ paused, onPause }) {
 
                         <LaserRenderer source="player" />
                         <LaserRenderer source="boss" />
-                        <ArcRenderer source="player" />
-                        <ArcRenderer source="boss" renderChainLinks={false} />
                         <ThrowerRenderer source="player" />
                         <ThrowerRenderer source="boss" />
 

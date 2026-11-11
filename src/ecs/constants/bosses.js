@@ -330,49 +330,9 @@ export const BOSSES = [
     },
 
     {
-        key: "arcgun",
-        name: "Electric SpaceProbe",
-        gun: { typeId: "09_arcgun", offsetX: 1.24, offsetY: 0.44, scale: 1.5, rotation: 0 }, // mount.offsetX = 0.48
-
-        emission: {
-            exhaust: {
-                offsetX: 0,
-                offsetY: -1.17,
-                engineGap: 0.48,
-                nozzleOffset: 0,
-            },
-
-            projectile: {
-                offsetX: 0,
-                offsetY: 1.82,
-                gunGap: 1.23,
-            },
-
-            beam: {
-                offsetX: 0,
-                offsetY: 1.82,
-                gunGap: 1.23,
-            },
-
-            missile: {
-                offsetX: 0,
-                offsetY: 1.82,
-                gunGap: 1.23,
-            },
-
-            thrower: {
-                offsetX: 0,
-                offsetY: 1.82,
-                gunGap: 1.23,
-            },
-        },
-
-    },
-
-    {
         key: "plasmagun",
         name: "Starscream",
-        gun: { typeId: "10_plasmagun" }, // mount.offsetX = 0.6
+        gun: { typeId: "09_plasmagun" }, // mount.offsetX = 0.6
 
         emission: {
             exhaust: {

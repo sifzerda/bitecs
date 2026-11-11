@@ -3,7 +3,6 @@
 import { world } from "../constants/world.js"
 
 import {
-  Position,
   Rotation,
   Health,
   StatusEffect,
@@ -161,15 +160,6 @@ export const BOSS_PATTERNS = {
     recover: 1,
     turn: 4.5,
     attackTurn: 1.6,
-    lead: 0,
-  },
-
-  arcgun: {
-    range: 8,
-    warning: 0.35,
-    attack: 0.7,
-    recover: 0.9,
-    attackTurn: 2.2,
     lead: 0,
   },
 

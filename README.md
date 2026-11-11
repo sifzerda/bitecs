@@ -152,3 +152,17 @@ Make config screen for emission point, using a dot to show emission points on sh
  - [ ] possibly reducing files or combining them
  - [ ] improving boss AI (see bosses folder), reducing delays in boss targeting player
  - [ ] probably fix the octopus boss
+
+ - [ ] 
+
+ BOSS AI
+ - [ ] Increase boss health
+ - [ ] increase boss speed possibly and fix their movement
+ - [ ] make boss constantly moving
+ - [ ] remove boost, maybe swap with another power
+ 
+ FX
+ - [ ] remove some effects
+ - smoke, 
+ - possibly add trail renderer to missilerenderer
+ - [ ] maybe remove arc gun

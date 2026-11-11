@@ -116,13 +116,6 @@ const RAW = [
         color: "#ffe0ee", glowColor: "#ff0055", haloColor: "#ff0033",
     },
     {
-        name: "arcgun",
-        category: "beam",
-        jagged: true, range: 14, directDamage: 35, chainDamage: 14,
-        chainCount: 3, chainRange: 5, beamWidth: 0.09, tickSparkInterval: 0.06,
-        color: "#fffbe8", glowColor: "#1F51FF", haloColor: "#0818A8",
-    },
-    {
         name: "plasmagun",
         category: "beam",
         range: 20, directDamage: 22, beamWidth: 0.16, surgeSpeed: 2.2,

@@ -34,10 +34,6 @@ import {
 } from "../ecs/weapons/weaponSystems/throwerSystem.js"
 
 import {
-    updateArcs,
-} from "../ecs/weapons/weaponState/arcState.js"
-
-import {
     statusEffectSystem,
 } from "../ecs/systems/statusEffectSystem.js"
 
@@ -140,7 +136,6 @@ function rebuildSpatialGrid() {
 
 function effects(dt) {
     trailSystem()
-    updateArcs(dt)
     exhaustEmitter()
     updateEffects(dt)
 }
